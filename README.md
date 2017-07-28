@@ -10,6 +10,8 @@ http://www.ibex-lib.org
 
 ./waf install
 
+export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig
+
 In plugins/optim/examples:
 make defaultoptimizer
 
