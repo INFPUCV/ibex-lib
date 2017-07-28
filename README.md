@@ -5,3 +5,7 @@ ibex-lib
 ========
 
 http://www.ibex-lib.org
+
+./waf configure --with-optim  --with-ampl --with-affine --prefix=. --gaol-dir=  --soplex-path=../ibex-dag/soplex-1.7.2
+
+./waf install
