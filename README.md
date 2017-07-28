@@ -12,3 +12,6 @@ http://www.ibex-lib.org
 
 In plugins/optim/examples:
 make defaultoptimizer
+
+Then, to run an example:
+./defaultoptimizer ../benchs/easy/ex14_1_2.bch
