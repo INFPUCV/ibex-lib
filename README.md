@@ -17,3 +17,11 @@ make defaultoptimizer
 
 Then, to run an example:
 ./defaultoptimizer ../benchs/easy/ex14_1_2.bch
+
+
+Optimizer:
+plugins/optim/src/strategy/ibex_Optimizer
+
+Ejemplos de uso:
+plugins/optim/examples
+
