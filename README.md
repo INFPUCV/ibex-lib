@@ -10,7 +10,7 @@ http://www.ibex-lib.org
 
 ./waf install
 
-export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig
+export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig   -> Esto se tiene que hacer cada vez que se conecta a la maquina
 
 In plugins/optim/examples:
 make defaultoptimizer
@@ -25,3 +25,13 @@ plugins/optim/src/strategy/ibex_Optimizer
 Ejemplos de uso:
 plugins/optim/examples
 
+Una vez hecho los cambios.
+
+1.- En la Raiz ./waf install
+
+2.- In plugins/optim/examples:
+rm defaultoptimizer
+make defaultoptimizer
+
+3.- Then, to run an example:
+./defaultoptimizer ../benchs/easy/ex14_1_2.bch
