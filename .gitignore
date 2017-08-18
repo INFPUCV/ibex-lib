@@ -47,3 +47,5 @@ newdoc/_build
 !**/examples/*cpp
 !**/examples/makefile
 
+.ftpconfig
+.ftpignore
