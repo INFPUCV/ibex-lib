@@ -12,50 +12,119 @@
 
 #include "ibex_Random.h"
 #include "ibex_CellBuffer.h"
-#include <set>
+// #include "ibex_Set.h"
 // #include "../strategy/ibex_Cell.h"
 
 namespace ibex {
 
+	class CellBS : public Backtrackable {
+	public:
+		/**
+		 * \brief Constructor for the root node (followed by a call to init_root).
+		 */
+		CellBS() : lb(0.0), depth(0), id(0) {}
 
-template<class T>
-class CellSet : public CellBuffer {
-public:
+		/**
+		 * \brief Duplicate the structure into the left/right nodes
+		 */
+		std::pair<Backtrackable*,Backtrackable*> down(){
+			CellBS* c1=new CellBS();
+			CellBS* c2=new CellBS();
+			c1->depth=depth+1;
+			c2->depth=depth+1;
 
-	CellSet();
+			c1->id=nb_cells++;
+			c2->id=nb_cells++;
+			return std::pair<Backtrackable*,Backtrackable*>(c1,c2);
+		}
 
-	void flush();
+		static int nb_cells;
 
-  /** Return the size of the buffer. */
-  unsigned int size() const;
+		/** lower bound for the box */
+		double lb;
 
-  /** Return true if the buffer is empty. */
-  bool empty() const;
+	    /**unique identifier for comparisons*/
+	    int id;
 
-  /** push a new cell on the stack. */
-  void push(Cell* cell);
+		/** depth of the node **/
+		int depth;
 
-  /** Pop a cell from the stack and return it.*/
-  Cell* pop();
 
-  /** Return the next box (but does not pop it).*/
-  Cell* top() const;
+	};
 
-private:
-	/* Set of Cells */
-	std::set<Cell*, T> cset;
+	template<class T>
+	class CellSet : public CellBuffer {
+	public:
 
-};
+		CellSet();
 
-struct minLB {
-  bool operator() (const Cell* c1, const Cell* c2) const
-  {
-	  if(c1->get<CellBS>().lb != c2->get<CellBS>().lb) return (c1->get<CellBS>().lb < c2->get<CellBS>().lb);
-	  if(c1->get<CellBS>().depth != c2->get<CellBS>().depth) return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
-	  return (c1->get<CellBS>().id > c2->get<CellBS>().id);
-  }
-};
+		void flush();
 
-template class CellSet<minLB>;
+	  /** Return the size of the buffer. */
+	  unsigned int size() const;
 
+	  /** Return true if the buffer is empty. */
+	  bool empty() const;
+
+	  /** push a new cell on the stack. */
+	  void push(Cell* cell);
+
+	  /** Pop a cell from the stack and return it.*/
+	  Cell* pop();
+
+	  /** Return the next box (but does not pop it).*/
+	  Cell* top() const;
+
+	private:
+		/* Set of Cells */
+		std::set<Cell*, T> cset;
+
+	};
+
+	struct minLB {
+	  bool operator() (const Cell* c1, const Cell* c2) const
+	  {
+		  if(c1->get<CellBS>().lb != c2->get<CellBS>().lb) return (c1->get<CellBS>().lb < c2->get<CellBS>().lb);
+		  if(c1->get<CellBS>().depth != c2->get<CellBS>().depth) return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+		  return (c1->get<CellBS>().id > c2->get<CellBS>().id);
+	  }
+	};
+
+	template<class T>
+	void CellSet<T>::flush() {
+		while (!cset.empty()) {
+			delete *cset.begin();
+			cset.erase(cset.begin());
+		}
+	}
+
+	template<class T>
+	unsigned int CellSet<T>::size() const {
+		return cset.size();
+	}
+
+	template<class T>
+	bool CellSet<T>::empty() const {
+		return cset.empty();
+	}
+
+	template<class T>
+	void CellSet<T>::push(Cell* cell) {
+		if (capacity>0 && size() == capacity) throw CellBufferOverflow();
+		cset.insert(cell);
+	}
+
+	template<class T>
+	Cell* CellSet<T>::pop() {
+		Cell* c = *cset.begin();
+		cset.erase(cset.begin());
+		return c;
+	}
+
+	template<class T>
+	Cell* CellSet<T>::top() const{
+		return *cset.begin();
+	}
+	template class CellSet<minLB>;
+}
 #endif // __IBEX_CELL_SET_H__
