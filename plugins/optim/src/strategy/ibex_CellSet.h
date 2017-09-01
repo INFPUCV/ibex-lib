@@ -90,6 +90,12 @@ namespace ibex {
 	  }
 	};
 
+
+	template<class T>
+	CellSet<T>::CellSet() {
+
+	}
+
 	template<class T>
 	void CellSet<T>::flush() {
 		while (!cset.empty()) {

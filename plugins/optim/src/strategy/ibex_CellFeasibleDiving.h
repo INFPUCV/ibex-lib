@@ -9,7 +9,7 @@
 namespace ibex {
 
   //  TODO: verificar que sea CellSet en vez de CellBuffer
-  class CellFeasibleDiving: public CellSet<Cell>, public CellBufferOptim {
+  class CellFeasibleDiving: public CellBufferOptim {
   public:
     CellFeasibleDiving(const ExtendedSystem& sys, int crit2_pr=50,
   			CellCostFunc::criterion crit2=CellCostFunc::UB);
@@ -61,7 +61,9 @@ namespace ibex {
   inline CellFeasibleDiving::~CellFeasibleDiving() { }
 
 // TODO: verificar si cellset tiene add_backtrackable
-  inline void CellFeasibleDiving::add_backtrackable(Cell& root) { }
+  inline void CellFeasibleDiving::add_backtrackable(Cell& root) {
+      // root.add<CellBS>();
+  }
 
    inline std::ostream& CellFeasibleDiving::print(std::ostream& os) const
    {	os << "==============================================================================\n";
@@ -73,6 +75,7 @@ namespace ibex {
     // functions about CellSet
   inline void CellFeasibleDiving::push(Cell* cell) {
       // TODO: imprimir erro cuando ningun nodo sea nulo
+      // cell->get<CellBS>().lb=cell->box[cell->box.size()-1].lb();
       if(cl == NULL) {
         cl = cell;
       } else {
@@ -133,7 +136,7 @@ namespace ibex {
   	// bufferset.contract(new_loup);
   }
 
-  inline double CellFeasibleDiving::minimum() const     { return bufferset.minimum(); }
+  inline double CellFeasibleDiving::minimum() const     { return 0; }
 
 
 } // namespace ibex
