@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
 	args::ValueFlag<double> eps_x(parser, "float", _eps_x.str(), {"eps-x"});
 	args::ValueFlag<double> initial_loup(parser, "float", "Intial \"loup\" (a priori known upper bound).", {"initial-loup"});
 	args::Flag rigor(parser, "rigor", "Activate rigor mode (certify feasibility of equalities).", {"rigor"});
+	args::Flag diving(parser, "diving", "Use the Feasible Diving strategy for selecting the next node.", {"diving"});
 	args::Flag trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag quiet(parser, "quiet", "Print no message and display minimal information "
 			"(for automatic output processing): "
@@ -119,6 +120,11 @@ int main(int argc, char** argv) {
 				cout << "  rigor mode:\tON\t(feasibility of equalities certified)" << endl;
 		}
 
+		if (diving) {
+			if (!quiet)
+				cout << "  diving mode:\tON\t(feasible diving strategy activated)" << endl;
+		}
+
 		if (initial_loup) {
 			if (!quiet)
 				cout << "  initial loup:\t" << initial_loup.Get() << " (a priori upper bound of the minimum)" << endl;
@@ -142,7 +148,7 @@ int main(int argc, char** argv) {
 				rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
 				abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
 				eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
-				rigor, inHC4,
+				rigor, inHC4, diving,
 				random_seed? random_seed.Get() : DefaultOptimizer::default_random_seed
 				);
 
