@@ -19,12 +19,10 @@ namespace ibex {
 	/*================================== inline implementations ========================================*/
 
 
-	    // functions about CellFeasibleDiving
-	CellFeasibleDiving::CellFeasibleDiving(const ExtendedSystem& sys) :
-	  		bufferset(*new CellSet<minLB>),
-	      loup_lb(POS_INFINITY),
-	  		sys(sys) {
-	}
+    // functions about CellFeasibleDiving
+CellFeasibleDiving::CellFeasibleDiving(const ExtendedSystem& sys) :
+  		bufferset(*new CellSet<minLB>), sys(sys) {
+}
 
 	CellFeasibleDiving::~CellFeasibleDiving() { }
 
@@ -42,14 +40,12 @@ namespace ibex {
 	    // functions about CellSet
 	  void CellFeasibleDiving::push(Cell* cell) {
 	      // TODO: imprimir erro cuando ningun nodo sea nulo
-	      if(cell->box[cell->box.size()-1].lb() < loup_lb) {
-	          cell->get<CellBS>().lb=cell->box[cell->box.size()-1].lb();
-	         // std::cout << cell->get<CellBS>().lb << std::endl;
-	          if(cl == NULL) {
-	            cl = cell;
-	          } else {
-	            cr = cell;
-	          }
+	      cell->get<CellBS>().lb=cell->box[cell->box.size()-1].lb();
+	      // std::cout << cell->get<CellBS>().lb << std::endl;
+	      if(cl == NULL) {
+	         cl = cell;
+	      } else {
+	         cr = cell;
 	      }
 	  }
 
@@ -89,7 +85,6 @@ namespace ibex {
 	          cr = NULL;
 	      }
 
-	      CellFeasibleDiving::contract(loup_lb);
 	      return c;
 	  }
 
@@ -125,23 +120,25 @@ namespace ibex {
 
 	  // functions about CellBufferOptim
 	  void CellFeasibleDiving::contract(double new_loup) {
-	      loup_lb = new_loup;
-	      // TODO: Ver cuando se hace el contract guardar el new_loup para no agregar otros
-	      if(new_loup < minimum()) {
-	        CellFeasibleDiving::flush();
-	      }
+		  bufferset.contract(new_loup);
+		  if(cr && cr->box[cr->box.size()-1].lb() > new_loup){
+			  delete cr; cr=NULL;
+		  }
+
+		  if(cl && cl->box[cl->box.size()-1].lb() > new_loup){
+			  delete cl; cl=NULL;
+		  }
 	  }
 
 	  double CellFeasibleDiving::minimum() const  {
-	      Cell *cellBuffer = bufferset.top(), *cellTop = CellFeasibleDiving::top();
-	      if(cellTop == NULL) {
-	        return POS_INFINITY;
-	      }
-	      if(cellBuffer != NULL && cellBuffer->box[cellBuffer->box.size()-1].lb() < cellTop->box[cellTop->box.size()-1].lb()) {
-	          return cellBuffer->box[cellBuffer->box.size()-1].lb();
-	      } else {
-	          return cellTop->box[cellTop->box.size()-1].lb();
-	      }
+		  double min = bufferset.minimum();
+		  if(cr && cr->box[cr->box.size()-1].lb() < min)
+			  min=cr->box[cr->box.size()-1].lb();
+
+		  if(cl && cl->box[cl->box.size()-1].lb() < min)
+			  min=cl->box[cl->box.size()-1].lb();
+
+		  return min;
 	  }
 
 

@@ -10,6 +10,7 @@ namespace ibex {
 
 
   //  TODO: verificar que sea CellSet en vez de CellBuffer
+  // TODO: Agregar descripcion (comentarios) a las funciones
   class CellFeasibleDiving: public CellBufferOptim {
   public:
     CellFeasibleDiving(const ExtendedSystem& sys);
@@ -38,7 +39,7 @@ namespace ibex {
 
   	virtual void contract(double loup);
 
-    CellBuffer& bufferset;
+    CellBufferOptim& bufferset;
 
     protected:
 
@@ -48,8 +49,6 @@ namespace ibex {
       	const ExtendedSystem& sys;
 
         Cell *cl=NULL,*cr=NULL;
-
-        double loup_lb;
   };
 
 

@@ -16,6 +16,7 @@
 #include "ibex_CtcFixPoint.h"
 #include "ibex_CtcPolytopeHull.h"
 #include "ibex_CellDoubleHeap.h"
+#include "ibex_CellFeasibleDiving.h"
 #include "ibex_SmearFunction.h"
 #include "ibex_LoupFinderDefault.h"
 #include "ibex_LoupFinderCertify.h"
@@ -68,7 +69,9 @@ DefaultOptimizer::DefaultOptimizer(const System& sys, double eps_x, double rel_e
 			  rec(new SmearSumRelative(get_ext_sys(sys,eps_h),eps_x)),
 			  rec(rigor? (LoupFinder*) new LoupFinderCertify(sys,rec(new LoupFinderDefault(get_norm_sys(sys,eps_h),inHC4))) :
 						 (LoupFinder*) new LoupFinderDefault(get_norm_sys(sys,eps_h),inHC4)),
-			  (CellBufferOptim&) rec(new CellDoubleHeap(get_ext_sys(sys,eps_h))),
+			  //(CellBufferOptim&) rec(new CellDoubleHeap(get_ext_sys(sys,eps_h))),
+			  (CellFeasibleDiving&) rec(new CellFeasibleDiving(get_ext_sys(sys,eps_h))),
+
 			  get_ext_sys(sys,eps_h).goal_var(),
 			  eps_x,
 			  rel_eps_f,

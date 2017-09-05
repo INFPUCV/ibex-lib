@@ -16,6 +16,8 @@
 // #include "ibex_Set.h"
 // #include "../strategy/ibex_Cell.h"
 
+using namespace std;
+
 namespace ibex {
 
 	class CellBS : public Backtrackable {
@@ -54,7 +56,7 @@ namespace ibex {
 	};
 
 	template<class T>
-	class CellSet : public CellBuffer {
+	class CellSet : public CellBufferOptim {
 	public:
 
 	  CellSet();
@@ -76,9 +78,14 @@ namespace ibex {
 	  /** Return the next box (but does not pop it).*/
 	  Cell* top() const;
 
+
+	  virtual double minimum() const;
+
+	  virtual void contract(double loup);
+
 	private:
 		/* Set of Cells */
-		std::set<Cell*, T> cset;
+		typename std::set<Cell*, T> cset;
 
 	};
 
@@ -132,6 +139,29 @@ namespace ibex {
 	Cell* CellSet<T>::top() const{
 		return *cset.begin();
 	}
+
+	template<class T>
+	double CellSet<T>::minimum() const{
+	      if(size()==0)
+	        return POS_INFINITY;
+	      else
+	    	return top()->box[top()->box.size()-1].lb();
+	}
+
+	template<class T>
+	void CellSet<T>::contract(double loup){
+		  typename std::set<Cell*, T>::iterator it= cset.begin();
+
+		  while(it!= cset.end()){
+			  if( (*it)->box[(*it)->box.size()-1].lb() > loup ){
+				  typename std::set<Cell*, T>::iterator it2=it; it2++;
+				  cset.erase(it);
+				  it=it2;
+			  }else it++;
+		  }
+	}
+
+
 	template class CellSet<minLB>;
 }
 #endif // __IBEX_CELL_SET_H__
