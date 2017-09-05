@@ -19,6 +19,12 @@ Then, to run an example:
 ./defaultoptimizer ../benchs/easy/ex14_1_2.bch
 
 
+Para compilar todo en una sola linea yo hago lo siguiente:
+1. ingreso al directorio raiz de ibex (solo la primera vez)
+2. cd plugins/optim/examples (solo la primera vez)
+3. cd -; sudo ./waf install; cd -; rm defaultoptimizer; make defaultoptimizer (cada vez que quiero re-compilar todo)
+
+
 Optimizer:
 plugins/optim/src/strategy/ibex_Optimizer
 
