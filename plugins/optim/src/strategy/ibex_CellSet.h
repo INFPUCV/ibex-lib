@@ -12,6 +12,7 @@
 
 #include "ibex_Random.h"
 #include "ibex_CellBuffer.h"
+#include <set>
 // #include "ibex_Set.h"
 // #include "../strategy/ibex_Cell.h"
 
@@ -56,9 +57,9 @@ namespace ibex {
 	class CellSet : public CellBuffer {
 	public:
 
-		CellSet();
+	  CellSet();
 
-		void flush();
+	  void flush();
 
 	  /** Return the size of the buffer. */
 	  unsigned int size() const;
