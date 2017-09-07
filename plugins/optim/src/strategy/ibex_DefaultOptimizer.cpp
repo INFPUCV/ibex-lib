@@ -70,7 +70,7 @@ DefaultOptimizer::DefaultOptimizer(const System& sys, double eps_x, double rel_e
 			  rec(new SmearSumRelative(get_ext_sys(sys,eps_h),eps_x)),
 			  rec(rigor? (LoupFinder*) new LoupFinderCertify(sys,rec(new LoupFinderDefault(get_norm_sys(sys,eps_h),inHC4))) :
 						 (LoupFinder*) new LoupFinderDefault(get_norm_sys(sys,eps_h),inHC4)),
-						 (CellBufferOptim&) rec( (diving)? (CellBufferOptim*) new CellDoubleHeap(get_ext_sys(sys,eps_h)) :
+						 (CellBufferOptim&) rec( (!diving)? (CellBufferOptim*) new CellDoubleHeap(get_ext_sys(sys,eps_h)) :
 								 (CellBufferOptim*) new CellFeasibleDiving(get_ext_sys(sys,eps_h))),
 
 			  get_ext_sys(sys,eps_h).goal_var(),
