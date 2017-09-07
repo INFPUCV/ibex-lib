@@ -21,7 +21,7 @@ namespace ibex {
 
     // functions about CellFeasibleDiving
 CellFeasibleDiving::CellFeasibleDiving(const ExtendedSystem& sys) :
-  		bufferset(*new CellSet<minLB>), sys(sys) {
+  		bufferset(*new CellSet<minLB>), sys(sys), cl(NULL), cr(NULL) {
 }
 
 	CellFeasibleDiving::~CellFeasibleDiving() { }
@@ -42,19 +42,20 @@ CellFeasibleDiving::CellFeasibleDiving(const ExtendedSystem& sys) :
 	      // TODO: imprimir erro cuando ningun nodo sea nulo
 	      cell->get<CellBS>().lb=cell->box[cell->box.size()-1].lb();
 	      // std::cout << cell->get<CellBS>().lb << std::endl;
-	      if(cl == NULL) {
+	      if(cl == NULL)
 	         cl = cell;
-	      } else {
+	      else if(cr == NULL)
 	         cr = cell;
-	      }
+	      else
+	    	 ibex_error("CellFeasibleDiving: triple push error");
 	  }
 
 	  Cell* CellFeasibleDiving::top() const {
 	      if(cr == NULL && cl == NULL) {
 	        return bufferset.top();
-	      } else if(cr != NULL && cl == NULL) {
+	      } else if(cl == NULL) {
 	        return cr;
-	      } else if(cr == NULL && cl != NULL) {
+	      } else if(cr == NULL) {
 	        return cl;
 	      } else if(cr->box[cr->box.size()-1].lb() < cl->box[cl->box.size()-1].lb()) {
 	        return cr;
@@ -67,10 +68,10 @@ CellFeasibleDiving::CellFeasibleDiving(const ExtendedSystem& sys) :
 	      Cell *c;
 	      if(cr == NULL && cl == NULL) {
 	          c = bufferset.pop();
-	      } else if(cr != NULL && cl == NULL) {
+	      } else if(cl == NULL) {
 	          c = cr;
 	          cr = NULL;
-	      } else if(cr == NULL && cl != NULL) {
+	      } else if(cr == NULL) {
 	          c = cl;
 	          cl = NULL;
 	      } else if(cr->box[cr->box.size()-1].lb() < cl->box[cl->box.size()-1].lb()) {

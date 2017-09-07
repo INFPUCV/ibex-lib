@@ -48,7 +48,8 @@ namespace ibex {
       	 */
       	const ExtendedSystem& sys;
 
-        Cell *cl=NULL,*cr=NULL;
+        Cell *cl;
+		Cell *cr;
   };
 
 

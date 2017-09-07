@@ -18,6 +18,7 @@
 #include "ibex_CellDoubleHeap.h"
 #include "ibex_CellFeasibleDiving.h"
 #include "ibex_SmearFunction.h"
+#include "ibex_LSmear.h"
 #include "ibex_LoupFinderDefault.h"
 #include "ibex_LoupFinderCertify.h"
 #include "ibex_LinearizerCombo.h"
@@ -64,10 +65,10 @@ ExtendedSystem& get_ext_sys(const System& sys, double eps_h) {
 }
 
 DefaultOptimizer::DefaultOptimizer(const System& sys, double eps_x, double rel_eps_f, double abs_eps_f, double eps_h,
-		bool rigor, bool inHC4, bool diving, double random_seed) :
+		bool rigor, bool inHC4, bool diving, bool lsmear, double random_seed) :
 		Optimizer(sys.nb_var,
 			  ctc(get_ext_sys(sys,eps_h)), // warning: we don't know which argument is evaluated first
-			  rec(new SmearSumRelative(get_ext_sys(sys,eps_h),eps_x)),
+			  rec((lsmear)? new LSmear(get_ext_sys(sys,eps_h),eps_x) : new SmearSumRelative(get_ext_sys(sys,eps_h),eps_x)),
 			  rec(rigor? (LoupFinder*) new LoupFinderCertify(sys,rec(new LoupFinderDefault(get_norm_sys(sys,eps_h),inHC4))) :
 						 (LoupFinder*) new LoupFinderDefault(get_norm_sys(sys,eps_h),inHC4)),
 						 (CellBufferOptim&) rec( (!diving)? (CellBufferOptim*) new CellDoubleHeap(get_ext_sys(sys,eps_h)) :

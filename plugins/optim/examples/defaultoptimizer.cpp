@@ -17,6 +17,10 @@
 #error "You need the IbexOpt plugin to run this program."
 #endif
 
+#ifndef _IBEX_WITH_AMPL_
+#error "You need the plugin AMPL to run this example."
+#endif
+
 using namespace std;
 using namespace ibex;
 
@@ -39,6 +43,7 @@ int main(int argc, char** argv) {
 	args::ValueFlag<double> eps_x(parser, "float", _eps_x.str(), {"eps-x"});
 	args::ValueFlag<double> initial_loup(parser, "float", "Intial \"loup\" (a priori known upper bound).", {"initial-loup"});
 	args::Flag rigor(parser, "rigor", "Activate rigor mode (certify feasibility of equalities).", {"rigor"});
+	args::Flag lsmear(parser, "lsmear", "Use the LSmear bisector.", {"lsmear"});
 	args::Flag diving(parser, "diving", "Use the Feasible Diving strategy for selecting the next node.", {"diving"});
 	args::Flag trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag quiet(parser, "quiet", "Print no message and display minimal information "
@@ -82,8 +87,21 @@ int main(int argc, char** argv) {
 
 	try {
 
+		string name=filename.Get().c_str();
 		// Load a system of equations
 		System sys(filename.Get().c_str());
+
+/*
+		System *s;
+		std::size_t found = string(name).find(".nl");
+		if (found!=std::string::npos){
+		      AmplInterface interface (name);
+		      s= new System(interface);
+		}else
+		      s = new System(argv[1]);
+
+		System& sys =*s;
+*/
 
 		if (!sys.goal) {
 			ibex_error(" input file has not goal (it is not an optimization problem).");
@@ -122,7 +140,12 @@ int main(int argc, char** argv) {
 
 		if (diving) {
 			if (!quiet)
-				cout << "  diving mode:\tON\t(feasible diving strategy activated)" << endl;
+				cout << "  feasible diving strategy" << endl;
+		}
+
+		if (lsmear) {
+			if (!quiet)
+				cout << "  lsmear bisector" << endl;
 		}
 
 		if (initial_loup) {
@@ -148,7 +171,7 @@ int main(int argc, char** argv) {
 				rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
 				abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
 				eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
-				rigor, inHC4, diving,
+				rigor, inHC4, diving, lsmear,
 				random_seed? random_seed.Get() : DefaultOptimizer::default_random_seed
 				);
 
