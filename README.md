@@ -23,20 +23,5 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 2. cd plugins/optim/examples (solo la primera vez)
 3. cd -; sudo ./waf install; cd -; rm optimizer04; make optimizer04 (cada vez que quiero re-compilar todo)
 
-
-Optimizer:
-plugins/optim/src/strategy/ibex_Optimizer
-
-Ejemplos de uso:
-plugins/optim/examples
-
-Una vez hecho los cambios.
-
-1.- En la Raiz ./waf install
-
-2.- In plugins/optim/examples:
-rm optimizer04
-make optimizer04
-
-3.- Then, to run an example:
+Y luego resolver un problema de ejemplo:
 ./optimizer04 ../benchs/medium/ex6_2_6.bch acidhc4 compo smearsumrel diving 1e-7 1e-6 3600 1
