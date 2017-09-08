@@ -13,16 +13,15 @@ http://www.ibex-lib.org
 export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig   -> Esto se tiene que hacer cada vez que se conecta a la maquina
 
 In plugins/optim/examples:
-make defaultoptimizer
+make optimizer04
 
 Then, to run an example:
-./defaultoptimizer ../benchs/easy/ex14_1_2.bch
-
+./optimizer04 ../benchs/medium/ex6_2_6.bch acidhc4 compo smearsumrel diving 1e-7 1e-6 3600 1
 
 Para compilar todo en una sola linea yo hago lo siguiente:
 1. ingreso al directorio raiz de ibex (solo la primera vez)
 2. cd plugins/optim/examples (solo la primera vez)
-3. cd -; sudo ./waf install; cd -; rm defaultoptimizer; make defaultoptimizer (cada vez que quiero re-compilar todo)
+3. cd -; sudo ./waf install; cd -; rm optimizer04; make optimizer04 (cada vez que quiero re-compilar todo)
 
 
 Optimizer:
@@ -36,8 +35,8 @@ Una vez hecho los cambios.
 1.- En la Raiz ./waf install
 
 2.- In plugins/optim/examples:
-rm defaultoptimizer
-make defaultoptimizer
+rm optimizer04
+make optimizer04
 
 3.- Then, to run an example:
-./defaultoptimizer ../benchs/easy/ex14_1_2.bch
+./optimizer04 ../benchs/medium/ex6_2_6.bch acidhc4 compo smearsumrel diving 1e-7 1e-6 3600 1
