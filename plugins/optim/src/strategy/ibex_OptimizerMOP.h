@@ -18,6 +18,7 @@
 //#include "ibex_EntailedCtr.h"
 #include "ibex_CtcKhunTucker.h"
 
+#include <map>
 
 using namespace std;
 namespace ibex {
@@ -61,6 +62,8 @@ public:
 	 * \warning The optimizer relies on the contractor \a ctc to contract the domain of the goal variable
 	 *          and increase the uplo. If this contractor never contracts this goal variable,
 	 *          the optimizer will only rely on the evaluation of f and will be very slow.
+	 *
+	 * We are assuming that the objective variables are n and n+1
 	 *
 	 */
 	OptimizerMOP(int n, Ctc& ctc, Bsc& bsc, LoupFinder& finder, CellBufferOptim& buffer,
@@ -127,19 +130,19 @@ public:
 	Status get_status() const;
 
 	/**
-	 * \brief Get the "LB" set of the pareto front.
-	 *
-	 * \return the LB of the last call to optimize(...).
-	 */
-	set< pair <double, double> > get_LB() const;
-
-	/**
 	 * \brief Get the "UB" set of the pareto front.
 	 *
 	 * \return the UB of the last call to optimize(...).
 	 */
 	map< pair <double, double>, IntervalVector > get_UB() const;
 
+
+	/**
+	 * \brief Get the "LB" set of the pareto front.
+	 *
+	 * \return the UB of the last call to optimize(...).
+	 */
+	map< pair <double, double>, IntervalVector > get_LB() const;
 
 	/**
 	 * \brief Get the time spent.
@@ -161,15 +164,6 @@ public:
 	 * \brief Number of variables.
 	 */
 	const int n;
-
-	/**
-	 * \brief Index of the goal variables.
-	 *
-	 * See #ExtendedSystem.goal_var().
-	 */
-	const int goal_var;
-
-    const int goal_var2;
 
 	/**
 	 * \brief Contractor for the extended system.
@@ -262,11 +256,9 @@ protected:
 	bool update_UB(const IntervalVector& box);
 
 	/**
-	 * \brief Computes and returns  the value ymax (the loup decreased with the precision)
-	 * the heap and the current box are actually contracted with y <= ymax
-	 *
+	 * \brief The box is added to the LB map if it is not dominated
 	 */
-	double compute_ymax ();
+	void update_LB_with_epsboxes(const IntervalVector& box);
 
 	/**
 	 * \brief Check time is not out.
@@ -302,14 +294,13 @@ private:
 	/* Remember return status of the last optimization. */
 	Status status;
 
-	/** The current lower bound set of the pareto front. */
-	set< pair <double, double> > LB;
+	/** The lower bound map of the pareto front. */
+	map< pair <double, double>, IntervalVector > LB;
 
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x
 	 * If the loup-finder is rigorous, x may be a (non-degenerated) box. */
 	map< pair <double, double>, IntervalVector > UB;
-
 
 
 	/** True if loup has changed in the last call to handle_cell(..) */
@@ -324,7 +315,7 @@ private:
 
 inline OptimizerMOP::Status OptimizerMOP::get_status() const { return status; }
 
-inline set< pair <double, double> >  OptimizerMOP::get_LB() const { return LB; }
+inline map< pair <double, double>, IntervalVector > OptimizerMOP::get_LB() const { return LB; }
 
 inline map< pair <double, double>, IntervalVector > OptimizerMOP::get_UB() const { return UB; }
 

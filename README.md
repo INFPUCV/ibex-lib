@@ -25,3 +25,16 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 
 Y luego resolver un problema de ejemplo:
 ./optimizer04 ../benchs/medium/ex6_2_6.bch acidhc4 compo smearsumrel diving 1e-7 1e-6 3600 1
+
+
+TODO (29 de septiembre)
+
+//TODO: Implementar algoritmo sencillo para encontrar soluciones no dominadas y actualizar UB
+bool OptimizerMOP::update_UB(const IntervalVector& box)
+
+//TODO: Insertar box en mapa UB (si es no dominada) y actualizar LB eliminando soluciones dominadas por box
+void OptimizerMOP::update_LB_with_epsboxes(const IntervalVector& box)
+
+void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) 
+//TODO: descartar c.box si es dominada por UB set
+
