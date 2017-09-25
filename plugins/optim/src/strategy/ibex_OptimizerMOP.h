@@ -8,8 +8,8 @@
 // Last Update : Sep 24, 2017
 //============================================================================
 
-#ifndef __IBEX_OPTIMIZER_H__
-#define __IBEX_OPTIMIZER_H__
+#ifndef __IBEX_OPTIMIZERMOP_H__
+#define __IBEX_OPTIMIZERMOP_H__
 
 #include "ibex_Ctc.h"
 #include "ibex_Bsc.h"
@@ -66,8 +66,7 @@ public:
 	 * We are assuming that the objective variables are n and n+1
 	 *
 	 */
-	OptimizerMOP(int n, Ctc& ctc, Bsc& bsc, LoupFinder& finder, CellBufferOptim& buffer,
-			int goal_var, int goal_var2, double eps_x=default_eps_x);
+	OptimizerMOP(int n, Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer,double eps_x=default_eps_x);
 
 	/**
 	 * \brief Delete *this.
@@ -179,13 +178,6 @@ public:
 	 * Must work on extended boxes.
 	 */
 	Bsc& bsc;
-
-	/**
-	 * \brief Loup finder algorithm.
-	 *
-	 * Must work on the original system.
-	 */
-	LoupFinder& UB_finder;
 
 	/**
 	 * Cell buffer.

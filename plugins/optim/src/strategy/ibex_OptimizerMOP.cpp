@@ -40,9 +40,8 @@ void OptimizerMOP::read_ext_box(const IntervalVector& ext_box, IntervalVector& b
 	}
 }
 
-OptimizerMOP::OptimizerMOP(int n, Ctc& ctc, Bsc& bsc, LoupFinder& finder, CellBufferOptim& buffer,
-		int goal_var, int goal_var2, double eps_x) : n(n),
-                				ctc(ctc), bsc(bsc), UB_finder(finder), buffer(buffer),
+OptimizerMOP::OptimizerMOP(int n, Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x) : n(n),
+                				ctc(ctc), bsc(bsc), buffer(buffer),
                 				eps_x(eps_x), trace(false), timeout(-1), status(SUCCESS),
                 				time(0), nb_cells(0) {
 
