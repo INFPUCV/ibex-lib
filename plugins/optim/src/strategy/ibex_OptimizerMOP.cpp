@@ -40,8 +40,9 @@ void OptimizerMOP::read_ext_box(const IntervalVector& ext_box, IntervalVector& b
 	}
 }
 
-OptimizerMOP::OptimizerMOP(int n, Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x) : n(n),
-                				ctc(ctc), bsc(bsc), buffer(buffer),
+OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x) : n(n),
+                				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
                 				eps_x(eps_x), trace(false), timeout(-1), status(SUCCESS),
                 				time(0), nb_cells(0) {
 
@@ -58,20 +59,13 @@ bool OptimizerMOP::update_UB(const IntervalVector& box) {
 	/*
 	 1. Tomar punto medio de la caja mid(box)
 	 2. Verificar si es factible usando las restricciones (ctrs)
-	 3. Si es factible, evaluar el punto usando funciones objetivo (goal[0] y goal[1])
+	 3. Si es factible, evaluar el punto usando funciones objetivo (goal1 y goal2)
 	 4. Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
 	 5. Si el mapa UB fue modificado retornar true, si no false
 	 */
 
 }
 
-//TODO: Insertar box en mapa UB (si es no dominada) y actualizar LB eliminando soluciones dominadas por box
-void OptimizerMOP::update_LB_with_epsboxes(const IntervalVector& box) {
-	double f1 = box[n].lb();
-	double f2 = box[n+1].lb();
-
-
-}
 
 
 
@@ -91,8 +85,9 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	//TODO: descartar c.box si es dominada por UB set
+	//c.box[n] && c.box[n+1]
 
-	//TODO: contract (y1,y2) with UB??
+	//TODO: contract c.box[n] && c.box[n+1] with UB??
 
 
 
@@ -111,8 +106,9 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 	/*====================================================================*/
+	//TODO: Hacer lo otro que dijo Damir max(size(z1),size(z2))) <= eps
 	if ( c.box.max_diam()<=eps_x ) {
-		update_LB_with_epsboxes(c.box);
+		//TODO: guardar c.box en lista de soluciones (Sout)
 		c.box.set_empty();
 		return;
 	}
@@ -175,6 +171,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			catch (NoBisectableVariableException& ) {
 				//boxes con size<eps son guardadas en LB
 				cout << "Error: NoBisectableVariableException en OptimizerMOP" << endl;
+				exit(0);
 			}
 		}
 	}

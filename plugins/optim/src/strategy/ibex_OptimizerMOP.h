@@ -66,7 +66,8 @@ public:
 	 * We are assuming that the objective variables are n and n+1
 	 *
 	 */
-	OptimizerMOP(int n, Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer,double eps_x=default_eps_x);
+	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer,double eps_x=default_eps_x);
 
 	/**
 	 * \brief Delete *this.
@@ -165,6 +166,17 @@ public:
 	const int n;
 
 	/**
+	 * \brief Objective functions
+	 */
+	Function& goal1;
+	Function& goal2;
+
+	/**
+	 * \brief Constraints
+	 */
+	Array<NumConstraint>& ctrs;
+
+	/**
 	 * \brief Contractor for the extended system.
 	 *
 	 * The extended system:
@@ -248,11 +260,6 @@ protected:
 	bool update_UB(const IntervalVector& box);
 
 	/**
-	 * \brief The box is added to the LB map if it is not dominated
-	 */
-	void update_LB_with_epsboxes(const IntervalVector& box);
-
-	/**
 	 * \brief Check time is not out.
 	 */
 	void time_limit_check();
@@ -287,7 +294,7 @@ private:
 	Status status;
 
 	/** The lower bound map of the pareto front. */
-	map< pair <double, double>, IntervalVector > LB;
+	set< pair <double, double> > Sout;
 
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x

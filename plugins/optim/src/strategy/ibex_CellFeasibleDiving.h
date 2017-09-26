@@ -13,7 +13,7 @@ namespace ibex {
   // TODO: Agregar descripcion (comentarios) a las funciones
   class CellFeasibleDiving: public CellBufferOptim {
   public:
-    CellFeasibleDiving(const ExtendedSystem& sys);
+    CellFeasibleDiving(/*const ExtendedSystem& sys*/);
 
     ~CellFeasibleDiving();
 
@@ -46,7 +46,7 @@ namespace ibex {
       	/**
       	 * The system
       	 */
-      	const ExtendedSystem& sys;
+      	//const ExtendedSystem& sys;
 
         Cell *cl;
 		Cell *cr;

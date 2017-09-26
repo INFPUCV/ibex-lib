@@ -20,8 +20,8 @@ namespace ibex {
 
 
     // functions about CellFeasibleDiving
-CellFeasibleDiving::CellFeasibleDiving(const ExtendedSystem& sys) :
-  		bufferset(*new CellSet<minLB>), sys(sys), cl(NULL), cr(NULL) {
+CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
+  		bufferset(*new CellSet<minLB>)/*, sys(sys)*/, cl(NULL), cr(NULL) {
 }
 
 	CellFeasibleDiving::~CellFeasibleDiving() { }
