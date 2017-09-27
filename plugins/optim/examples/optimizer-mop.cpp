@@ -57,33 +57,28 @@ int main(int argc, char** argv){
 	//ExtendedSystem ext_sys(sys, eqeps);
 
 	SystemFactory fac;
-	for(int i=0; i<ext_sys.nb_var-2; i++ ){
+	for(int i=0; i<ext_sys.nb_var-2; i++ )
 		fac.add_var(ext_sys.args[i]);
-	}
 
-	for(int j=2; j<ext_sys.nb_ctr; j++ ){
+
+	for(int j=2; j<ext_sys.nb_ctr; j++ )
 		fac.add_ctr(ext_sys.ctrs[j]);
-	}
+
 
 	System sys(fac);
+	for(int i=0; i<sys.nb_var; i++ )
+		sys.box[i] = ext_sys.box[i];
+
+	cout << (Interval(0,1).is_subset(Interval(0,2))) << endl;
+
 	cout << sys << endl;
 
-	Array<const ExprSymbol> args = ext_sys.ctrs[0].f.args();
-	const ExprNode& goal_expr=ExprCopy().copy(ext_sys.ctrs[0].f.args(), args, (dynamic_cast<const ExprSub*> (&ext_sys.ctrs[0].f.expr())->right));
+	IntervalVector box = ext_sys.box.mid();
+	box[ext_sys.nb_var-1]=0;
+	box[ext_sys.nb_var-2]=0;
 
-
-	//ext_sys.ctrs[0].f.cf.
-
-	Function f1(args, goal_expr);
-	cout << 2 << endl;
-//	Function f1(sys.args, (dynamic_cast<const ExprSub*> (&ext_sys.ctrs[0].f.expr())->right));
-//	Function f2(sys.args, (dynamic_cast<const ExprSub*> (&ext_sys.ctrs[0].f.expr())->right));
-
-	cout << f1; cout << endl;
-	Function f2;
-//	cout << f2; cout << endl;
-
-
+	cout << ext_sys.ctrs[0].f.eval(box) << endl;
+	cout << ext_sys.ctrs[1].f.eval(box) << endl;
 
 	//NormalizedSystem norm_sys(sys,eqeps);
 	//LoupFinderDefault loupfinder (norm_sys,true);
@@ -176,7 +171,7 @@ int main(int argc, char** argv){
 	  ctcxn = ctc;
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,sys.ctrs,f1,f2, *ctcxn,*bs,*buffer,prec);
+	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,prec);
 
 	//	cout << " sys.box " << sys.box << endl;
 
@@ -187,7 +182,7 @@ int main(int argc, char** argv){
 	o.timeout=timelimit;
 
 	// the search itself 
-	o.optimize(sys.box);
+	o.optimize(ext_sys.box);
 
 	// printing the results     
 	//	o.report();

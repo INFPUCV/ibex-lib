@@ -19,6 +19,7 @@
 #include "ibex_CtcKhunTucker.h"
 
 #include <map>
+#include <list>
 
 using namespace std;
 namespace ibex {
@@ -134,15 +135,8 @@ public:
 	 *
 	 * \return the UB of the last call to optimize(...).
 	 */
-	map< pair <double, double>, IntervalVector > get_UB() const;
+	map< pair <double, double>, Vector > get_UB() const;
 
-
-	/**
-	 * \brief Get the "LB" set of the pareto front.
-	 *
-	 * \return the UB of the last call to optimize(...).
-	 */
-	map< pair <double, double>, IntervalVector > get_LB() const;
 
 	/**
 	 * \brief Get the time spent.
@@ -167,14 +161,16 @@ public:
 
 	/**
 	 * \brief Objective functions
+	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
+	 * evaluate them we have to set z1 and z2 to [0,0].
 	 */
-	Function& goal1;
-	Function& goal2;
+	const Function& goal1;
+	const Function& goal2;
 
 	/**
 	 * \brief Constraints
 	 */
-	Array<NumConstraint>& ctrs;
+	const Array<NumConstraint>& ctrs;
 
 	/**
 	 * \brief Contractor for the extended system.
@@ -264,25 +260,13 @@ protected:
 	 */
 	void time_limit_check();
 
-	/*=======================================================================================================*/
-	/*                                Functions to manage the extended CSP                                   */
-	/*=======================================================================================================*/
-
-	/**
-	 * \brief Load a (n-dimensional) box into an (n+1-dimensional) extended box
-	 *
-	 *  The goal variable is skipped.
-	 */
-	void write_ext_box(const IntervalVector& box, IntervalVector& ext_box);
-
-	/**
-	 * \brief Load an extended (n+1-dimensional) box into a (n-dimensional) box
-	 *
-	 *  The goal variable is skipped.
-	 */
-	void read_ext_box(const IntervalVector& ext_box, IntervalVector& box);
 
 private:
+
+	/**
+	 * \brief Evaluate the goal in the point x
+	 */
+	Interval eval_goal(const Function& goal, Vector& x);
 
 	/** Currently entailed constraints */
 	//EntailedCtr* entailed;
@@ -293,13 +277,13 @@ private:
 	/* Remember return status of the last optimization. */
 	Status status;
 
-	/** The lower bound map of the pareto front. */
-	set< pair <double, double> > Sout;
+	/** The set of final solutions */
+	std::list< IntervalVector > Sout;
 
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x
 	 * If the loup-finder is rigorous, x may be a (non-degenerated) box. */
-	map< pair <double, double>, IntervalVector > UB;
+	map< pair <double, double>, Vector > UB;
 
 
 	/** True if loup has changed in the last call to handle_cell(..) */
@@ -314,9 +298,7 @@ private:
 
 inline OptimizerMOP::Status OptimizerMOP::get_status() const { return status; }
 
-inline map< pair <double, double>, IntervalVector > OptimizerMOP::get_LB() const { return LB; }
-
-inline map< pair <double, double>, IntervalVector > OptimizerMOP::get_UB() const { return UB; }
+inline map< pair <double, double>, Vector > OptimizerMOP::get_UB() const { return UB; }
 
 inline double OptimizerMOP::get_time() const { return time; }
 

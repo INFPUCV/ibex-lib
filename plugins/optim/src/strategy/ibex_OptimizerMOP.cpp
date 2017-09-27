@@ -24,22 +24,6 @@ namespace ibex {
 
 const double OptimizerMOP::default_eps_x = 1e-5;
 
-void OptimizerMOP::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
-	int i2=0;
-	for (int i=0; i<n; i++,i2++) {
-		if (i2>=n) i2++; // skip goal variables
-		ext_box[i2]=box[i];
-	}
-}
-
-void OptimizerMOP::read_ext_box(const IntervalVector& ext_box, IntervalVector& box) {
-	int i2=0;
-	for (int i=0; i<n; i++,i2++) {
-		if (i2>=n) i2++; // skip goal variable
-		box[i]=ext_box[i2];
-	}
-}
-
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
@@ -53,16 +37,49 @@ OptimizerMOP::~OptimizerMOP() {
 
 }
 
-//TODO: Implementar algoritmo sencillo para encontrar soluciones no dominadas y actualizar UB
+Interval OptimizerMOP::eval_goal(const Function& goal, Vector& x){
+	//the objectives are set to 0.0
+	x[n]=0.0;
+	x[n+1]=0.0;
+	return goal.eval(x);
+}
+
+//TODO: Implementar algoritmo sencillo para encontrar soluciones no dominadas y actualizar UB (UBfinder)
 bool OptimizerMOP::update_UB(const IntervalVector& box) {
 
-	/*
-	 1. Tomar punto medio de la caja mid(box)
-	 2. Verificar si es factible usando las restricciones (ctrs)
-	 3. Si es factible, evaluar el punto usando funciones objetivo (goal1 y goal2)
-	 4. Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
-	 5. Si el mapa UB fue modificado retornar true, si no false
-	 */
+	//1. Tomar punto medio de la caja mid(box)
+	Vector bmid = box.mid();
+
+	//2. Verificar si es factible usando las restricciones (ctrs)
+	for(int i=0; i<ctrs.size(); i++){
+		Interval c=ctrs[i].f.eval(bmid);
+		switch(ctrs[i].op){
+		case LEQ:
+		case LT:
+			if(!c.is_subset(Interval::POS_REALS)) return false; //not feasible
+			break;
+		case GEQ:
+		case GT:
+			if(!c.is_subset(Interval::NEG_REALS)) return false; //not feasible
+			break;
+		case EQ:
+			cout << "error [UBfinder]: due to floating point errors, UBfinder cannot ";
+			cout << "find feasible solutions in equation constraints." << endl;
+			exit(0);
+		}
+	}
+
+
+	//3. Si es factible, evaluar el punto usando funciones objetivo (goal1 y goal2)
+	pair< double, double> eval = make_pair(eval_goal(goal1,bmid).ub(), eval_goal(goal2,bmid).ub());
+
+	//4. TODO: Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
+
+
+	//5. TODO: Si el mapa UB fue modificado retornar true, si no false
+
+
+
 
 }
 
@@ -99,8 +116,6 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	/*========================= update loup =============================*/
 
-	//IntervalVector tmp_box(n);
-	//read_ext_box(c.box,tmp_box);
 
 	bool loup_ch=update_UB(c.box);
 
@@ -108,13 +123,12 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	/*====================================================================*/
 	//TODO: Hacer lo otro que dijo Damir max(size(z1),size(z2))) <= eps
 	if ( c.box.max_diam()<=eps_x ) {
-		//TODO: guardar c.box en lista de soluciones (Sout)
+		//se guarda c.box en lista de soluciones (Sout)
+		Sout.push_back(c.box);
 		c.box.set_empty();
 		return;
 	}
 
-	// the current extended box in the cell is updated
-	//write_ext_box(tmp_box,c.box);
 }
 
 OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
@@ -122,13 +136,13 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	nb_cells=0;
 
 	buffer.flush();
-	LB.clear();
+	//LB.clear();
 	UB.clear();
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
 
-	write_ext_box(init_box,root->box);
+	root->box=init_box;
 
 	// add data required by the bisector
 	bsc.add_backtrackable(*root);
@@ -183,7 +197,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	Timer::stop();
 	time+= Timer::VIRTUAL_TIMELAPSE();
 
-	if (LB.empty())
+	if (Sout.empty())
 		status=INFEASIBLE;
 	else
 		status=SUCCESS;
@@ -196,13 +210,13 @@ void OptimizerMOP::report(bool verbose) {
 	if (!verbose) {
 		cout << get_status() << endl;
 		cout << "LB:" << endl;
-		map< pair <double, double>, IntervalVector > :: iterator lb=LB.begin();
+		list<  IntervalVector > :: iterator sol=Sout.begin();
 
-		for(;lb!=LB.end();lb++)
-			cout << "(" << lb->first.first << "," << lb->first.second << ")" << endl;
+		for(;sol!=Sout.end();sol++)
+			cout << *sol << endl;
 
 		cout << "UB:" << endl;
-		map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
+		map< pair <double, double>, Vector > :: iterator ub=UB.begin();
 
 		for(;ub!=UB.end();ub++)
 			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
