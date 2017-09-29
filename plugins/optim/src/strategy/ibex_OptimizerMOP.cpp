@@ -45,7 +45,7 @@ Interval OptimizerMOP::eval_goal(const Function& goal, Vector& x){
 	return goal.eval(x);
 }
 
-//TODO: Implementar algoritmo sencillo para encontrar soluciones no dominadas y actualizar UB (UBfinder)
+
 bool OptimizerMOP::update_UB(const IntervalVector& box) {
 
 	//1. Tomar punto medio de la caja mid(box)
@@ -76,12 +76,28 @@ bool OptimizerMOP::update_UB(const IntervalVector& box) {
 
 
 	//4. TODO: Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
+	for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ++it ){
+		if (eval.first > it->first.first && eval.second > it->first.second){
+			return false;
+		}
+	}
 
+	for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ){
+		if (eval.first <= it->first.first && eval.second <= it->first.second){
+			std::map<pair<double, double>, Vector>::iterator aux = it;
+			++aux;
+			UB.erase(it);
+			it = aux;
+		}
+		else {
+			++it;
+		}
+	}
 
+	UB.insert(make_pair(eval, bmid));
 	//5. TODO: Si el mapa UB fue modificado retornar true, si no false
 
-
-
+	return true;
 
 }
 
