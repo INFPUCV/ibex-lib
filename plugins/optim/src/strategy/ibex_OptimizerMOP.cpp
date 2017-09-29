@@ -73,7 +73,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box) {
 	//3. Si es factible, evaluar el punto usando funciones objetivo (goal1 y goal2)
 	pair< double, double> eval = make_pair(eval_goal(goal1,bmid).ub(), eval_goal(goal2,bmid).ub());
 
-	//4. TODO: Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
+	//4. Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
 	for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ++it ){
 		if (eval.first > it->first.first && eval.second > it->first.second){
 			return false;
@@ -93,7 +93,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box) {
 	}
 
 	UB.insert(make_pair(eval, bmid));
-	//5. TODO: Si el mapa UB fue modificado retornar true, si no false
+	//5. Si el mapa UB fue modificado retornar true, si no false
 
 	return true;
 
