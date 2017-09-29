@@ -25,9 +25,9 @@ namespace ibex {
 const double OptimizerMOP::default_eps_x = 1e-5;
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x, double eps_z) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
-                				eps_x(eps_x), trace(false), timeout(-1), status(SUCCESS),
+                				eps_x(eps_x), eps_z(eps_z), trace(false), timeout(-1), status(SUCCESS),
                 				time(0), nb_cells(0) {
 
 	if (trace) cout.precision(12);
@@ -116,9 +116,19 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 }
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
+	double z1, z2;
+	for(auto ent1 : UB) {
+		z1 = ent1.first.first; // pair 1
+		z2 = ent1.first.second; // pair 2
+		c.box[n].lb(); // valor minimo
+		c.box[n].ub(); // valor maximo
+		// se elimina c si un UB es dominante de c
+		if(z1 < c.box[n].lb() && z2 < c.box[n+1].lb()) {
+			c.box.set_empty();
+			return;
+		}
+	}
 
-	//TODO: descartar c.box si es dominada por UB set
-	//c.box[n] && c.box[n+1]
 
 	//TODO: contract c.box[n] && c.box[n+1] with UB??
 
@@ -137,8 +147,30 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 	/*====================================================================*/
-	//TODO: Hacer lo otro que dijo Damir max(size(z1),size(z2))) <= eps
-	if ( c.box.max_diam()<=eps_x ) {
+	double diamCtr = 0.0, valueBox;
+	int i;
+	for (i=0; i < n; i++) {
+		valueBox = c.box[i].ub() - c.box[i].lb();
+		if(diamCtr < valueBox) {
+			diamCtr = valueBox;
+		}
+	}
+	// Metodo de termino para las restricciones
+	if ( diamCtr<=eps_x ) {
+		//se guarda c.box en lista de soluciones (Sout)
+		Sout.push_back(c.box);
+		c.box.set_empty();
+		return;
+	}
+	double diamObj = 0;
+	for (i=n; i < n+2; i++) {
+		valueBox = c.box[i].ub() - c.box[i].lb();
+		if(diamObj < valueBox) {
+			diamObj = valueBox;
+		}
+	}
+	// Metodo de termino para las funciones objetivo
+	if ( diamObj<=eps_z ) {
 		//se guarda c.box en lista de soluciones (Sout)
 		Sout.push_back(c.box);
 		c.box.set_empty();

@@ -68,7 +68,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer,double eps_x=default_eps_x);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer,double eps_x=default_eps_x, double eps_x=default_eps_z);
 
 	/**
 	 * \brief Delete *this.
@@ -192,11 +192,17 @@ public:
 	 */
 	CellBufferOptim& buffer;
 
-	/** Precision (bisection control) */
+	/** Precision (bisection control constraints) */
 	const double eps_x;
 
 	/** Default bisection precision: 1e-5 */
 	static const double default_eps_x;
+
+	/** Precision (bisection control objective functions) */
+	const double eps_z;
+
+	/** Default bisection precision: 1e-5 */
+	static const double default_eps_z;
 
 	/**
 	 * \brief Trace activation flag.
