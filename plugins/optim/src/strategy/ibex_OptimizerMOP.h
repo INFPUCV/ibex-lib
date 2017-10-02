@@ -190,7 +190,7 @@ public:
 	/**
 	 * Cell buffer.
 	 */
-	CellBufferOptim& buffer;
+	CellBuffer& buffer;
 
 	/** Precision (bisection control constraints) */
 	const double eps_x;

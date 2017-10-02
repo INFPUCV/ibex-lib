@@ -69,7 +69,6 @@ int main(int argc, char** argv){
 	for(int i=0; i<sys.nb_var; i++ )
 		sys.box[i] = ext_sys.box[i];
 
-	cout << (Interval(0,1).is_subset(Interval(0,2))) << endl;
 
 	cout << sys << endl;
 

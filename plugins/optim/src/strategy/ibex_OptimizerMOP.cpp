@@ -24,6 +24,8 @@ namespace ibex {
 
 const double OptimizerMOP::default_eps_x = 1e-5;
 
+const double OptimizerMOP::default_eps_z = 1e-5;
+
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x, double eps_z) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
@@ -46,6 +48,11 @@ Interval OptimizerMOP::eval_goal(const Function& goal, Vector& x){
 
 
 bool OptimizerMOP::update_UB(const IntervalVector& box) {
+
+	/*TODO (IAZ): Extender LoupFinderXTaylor
+	 * Buscar dos soluciones factibles (x1 y x2) minimizando objetivos por separado
+	 * Encontrar tercera solucion factible en punto x3=(x1+x2)/2
+	 */
 
 	//1. Tomar punto medio de la caja mid(box)
 	Vector bmid = box.mid();
@@ -93,6 +100,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box) {
 	}
 
 	UB.insert(make_pair(eval, bmid));
+	cout << UB.size() << endl;
 	//5. Si el mapa UB fue modificado retornar true, si no false
 
 	return true;
@@ -117,9 +125,10 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	double z1, z2;
-	for(auto ent1 : UB) {
-		z1 = ent1.first.first; // pair 1
-		z2 = ent1.first.second; // pair 2
+	map< pair <double, double>, Vector >:: iterator ent1;
+	for(ent1 = UB.begin(); ent1!= UB.end() ; ent1++) {
+		z1 = ent1->first.first; // pair 1
+		z2 = ent1->first.second; // pair 2
 		c.box[n].lb(); // valor minimo
 		c.box[n].ub(); // valor maximo
 		// se elimina c si un UB es dominante de c
@@ -130,7 +139,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	}
 
 
-	//TODO: contract c.box[n] && c.box[n+1] with UB??
+	//TODO (DA, MC): contract c.box[n] && c.box[n+1] with UB points
 
 
 
@@ -147,30 +156,31 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 	/*====================================================================*/
-	double diamCtr = 0.0, valueBox;
+	double diamX = 0.0, valueBox;
 	int i;
 	for (i=0; i < n; i++) {
-		valueBox = c.box[i].ub() - c.box[i].lb();
-		if(diamCtr < valueBox) {
-			diamCtr = valueBox;
+		valueBox = c.box[i].diam();
+		if(diamX < valueBox) {
+			diamX = valueBox;
 		}
 	}
 	// Metodo de termino para las restricciones
-	if ( diamCtr<=eps_x ) {
+	if ( diamX<=eps_x ) {
 		//se guarda c.box en lista de soluciones (Sout)
 		Sout.push_back(c.box);
 		c.box.set_empty();
 		return;
 	}
-	double diamObj = 0;
+
+	double diamZ = 0;
 	for (i=n; i < n+2; i++) {
-		valueBox = c.box[i].ub() - c.box[i].lb();
-		if(diamObj < valueBox) {
-			diamObj = valueBox;
+		valueBox = c.box[i].diam();
+		if(diamZ < valueBox) {
+			diamZ = valueBox;
 		}
 	}
 	// Metodo de termino para las funciones objetivo
-	if ( diamObj<=eps_z ) {
+	if ( diamZ<=eps_z ) {
 		//se guarda c.box en lista de soluciones (Sout)
 		Sout.push_back(c.box);
 		c.box.set_empty();
@@ -209,10 +219,20 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	handle_cell(*root,init_box);
 
 	try {
-		//TODO: Stopping criteria considering a precision UB-LB
+		/*
+		 * TODO (IAZ): Stopping criteria considering a precision UB-LB
+		 * Agregar restriccion a*z1+b*z2 = w para mejorar precision LB
+		 */
 		while (!buffer.empty()) {
 
 		  if (trace >= 2) cout << buffer;
+
+			/**
+			 * TODO  (DA, MC): Extender CellBuffer (CellFeasibleDivingMOP) para que seleccione
+			 * cajas con (z1=box[n].lb() ; z2=box[n+1].lb()) no dominados. Puede ser la caja con mayor dimension
+			 * en alguno de los objetivos.
+			 * Implementar otros metodos para comparar.
+			 */
 
 			Cell *c = buffer.top();
 
