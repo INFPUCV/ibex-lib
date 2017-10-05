@@ -79,6 +79,8 @@ int main(int argc, char** argv){
 	cout << ext_sys.ctrs[0].f.eval(box) << endl;
 	cout << ext_sys.ctrs[1].f.eval(box) << endl;
 
+	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f,ext_sys.ctrs[1].f);
+
 	//NormalizedSystem norm_sys(sys,eqeps);
 	//LoupFinderDefault loupfinder (norm_sys,true);
 	//LoupFinderDefault loupfinder (norm_sys,false);
@@ -170,7 +172,7 @@ int main(int argc, char** argv){
 	  ctcxn = ctc;
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,prec);
+	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,prec);
 
 	//	cout << " sys.box " << sys.box << endl;
 
@@ -184,7 +186,7 @@ int main(int argc, char** argv){
 	o.optimize(ext_sys.box);
 
 	// printing the results     
-	//	o.report();
+		o.report(false);
         cout << o.get_time() << "  " << o.get_nb_cells() << endl;
 
 	//	if (filtering == "acidhc4"  )

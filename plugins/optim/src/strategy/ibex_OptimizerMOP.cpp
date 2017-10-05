@@ -27,8 +27,9 @@ const double OptimizerMOP::default_eps_x = 1e-5;
 const double OptimizerMOP::default_eps_z = 1e-5;
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, double eps_x, double eps_z) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps_x, double eps_z) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
+								finder(finder),
                 				eps_x(eps_x), eps_z(eps_z), trace(false), timeout(-1), status(SUCCESS),
                 				time(0), nb_cells(0) {
 
@@ -49,61 +50,53 @@ Interval OptimizerMOP::eval_goal(const Function& goal, Vector& x){
 
 bool OptimizerMOP::update_UB(const IntervalVector& box) {
 
-	/*TODO (IAZ): Extender LoupFinderXTaylor
-	 * Buscar dos soluciones factibles (x1 y x2) minimizando objetivos por separado
-	 * Encontrar tercera solucion factible en punto x3=(x1+x2)/2
-	 */
+	list<Vector> feasible_points;
 
-	//1. Tomar punto medio de la caja mid(box)
-	Vector bmid = box.mid();
+	//We attempt to find two feasible points which minimize both objectives
+	//and the middle point between them
+	IntervalVector box2(box); box2.resize(n);
+	finder.find(box2,feasible_points);
 
-	//2. Verificar si es factible usando las restricciones (ctrs)
-	for(int i=0; i<ctrs.size(); i++){
-		Interval c=ctrs[i].f.eval(bmid);
-		switch(ctrs[i].op){
-		case LEQ:
-		case LT:
-			if(!c.is_subset(Interval::POS_REALS)) return false; //not feasible
-			break;
-		case GEQ:
-		case GT:
-			if(!c.is_subset(Interval::NEG_REALS)) return false; //not feasible
-			break;
-		case EQ:
-			cout << "error [UBfinder]: due to floating point errors, UBfinder cannot ";
-			cout << "find feasible solutions in equation constraints." << endl;
-			exit(0);
+	bool new_ub=false;
+	list<Vector>::iterator it=feasible_points.begin();
+
+	for(;it!=feasible_points.end();it++){
+		Vector vec=*it;
+		vec.resize(n+2);
+
+		//3. Se evalua el punto usando funciones objetivo (goal1 y goal2)
+		pair< double, double> eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
+
+		//4. Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
+		bool insert_ub=true;
+		for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ++it ){
+			if (eval.first >= it->first.first && eval.second >= it->first.second){
+				insert_ub=false;
+				continue;
+			}
 		}
+
+		if(insert_ub){
+			for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ){
+				if (eval.first <= it->first.first && eval.second <= it->first.second){
+					std::map<pair<double, double>, Vector>::iterator aux = it;
+					++aux;
+					UB.erase(it);
+					it = aux;
+				}
+				else {
+					++it;
+				}
+			}
+
+			UB.insert(make_pair(eval, vec));
+			new_ub = true;
+		}
+		//cout << UB.size() << endl;
+		//5. Si el mapa UB fue modificado retornar true, si no false
+
 	}
-
-
-	//3. Si es factible, evaluar el punto usando funciones objetivo (goal1 y goal2)
-	pair< double, double> eval = make_pair(eval_goal(goal1,bmid).ub(), eval_goal(goal2,bmid).ub());
-
-	//4. Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
-	for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ++it ){
-		if (eval.first > it->first.first && eval.second > it->first.second){
-			return false;
-		}
-	}
-
-	for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ){
-		if (eval.first <= it->first.first && eval.second <= it->first.second){
-			std::map<pair<double, double>, Vector>::iterator aux = it;
-			++aux;
-			UB.erase(it);
-			it = aux;
-		}
-		else {
-			++it;
-		}
-	}
-
-	UB.insert(make_pair(eval, bmid));
-	cout << UB.size() << endl;
-	//5. Si el mapa UB fue modificado retornar true, si no false
-
-	return true;
+	return new_ub;
 
 }
 
@@ -150,6 +143,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	if (c.box.is_empty()) return;
 
 	/*========================= update loup =============================*/
+
 
 
 	bool loup_ch=update_UB(c.box);
@@ -244,8 +238,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				buffer.pop();
 				delete c; // deletes the cell.
 
+
 				handle_cell(*new_cells.first, init_box);
 				handle_cell(*new_cells.second, init_box);
+
 
 				time_limit_check(); // TODO: not reentrant
 

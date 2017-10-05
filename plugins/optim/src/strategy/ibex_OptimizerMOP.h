@@ -13,7 +13,7 @@
 
 #include "ibex_Ctc.h"
 #include "ibex_Bsc.h"
-#include "ibex_LoupFinder.h"
+#include "ibex_LoupFinderMOP.h"
 #include "ibex_CellBufferOptim.h"
 //#include "ibex_EntailedCtr.h"
 #include "ibex_CtcKhunTucker.h"
@@ -68,7 +68,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer,double eps_x=default_eps_x, double eps_z=default_eps_z);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps_x=default_eps_x, double eps_z=default_eps_z);
 
 	/**
 	 * \brief Delete *this.
@@ -191,6 +191,11 @@ public:
 	 * Cell buffer.
 	 */
 	CellBuffer& buffer;
+
+	/**
+	 * \brief LoupFinder
+	 */
+	LoupFinderMOP& finder;
 
 	/** Precision (bisection control constraints) */
 	const double eps_x;
