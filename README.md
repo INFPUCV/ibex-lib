@@ -31,9 +31,9 @@ TODO (6 de octubre)
 
 TODO (DA, MC): contract c.box[n] && c.box[n+1] with UB points
 
-TODO  (DA, MC): Extender CellBuffer (CellFeasibleDivingMOP) para que seleccione
-	cajas con (z1=box[n].lb() ; z2=box[n+1].lb()) no dominados. Puede ser la caja con mayor dimension
-	en alguno de los objetivos.
+TODO  (DA, MC): Generalizar CellFeasibleDiving con template (funcion de comparacion para nodos hermanos)
+        Crear CellNS_SetMOP (CellBuffer) consistente en un set de cajas no dominadas 
+        (ordenadas segun funcion de comparacion) y una liste de nodos dominados 
   
 Graficar resultados (ub points y lb boxes)
 

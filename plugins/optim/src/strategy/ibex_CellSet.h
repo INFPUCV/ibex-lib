@@ -25,7 +25,7 @@ namespace ibex {
 		/**
 		 * \brief Constructor for the root node (followed by a call to init_root).
 		 */
-		CellBS() : lb(0.0), depth(0), id(0) {}
+		CellBS() : depth(0), id(0) {}
 
 		/**
 		 * \brief Duplicate the structure into the left/right nodes
@@ -42,9 +42,6 @@ namespace ibex {
 		}
 
 		static int nb_cells;
-
-		/** lower bound for the box */
-		double lb;
 
 	    /**unique identifier for comparisons*/
 	    int id;
@@ -92,7 +89,9 @@ namespace ibex {
 	struct minLB {
 	  bool operator() (const Cell* c1, const Cell* c2) const
 	  {
-		  if(c1->get<CellBS>().lb != c2->get<CellBS>().lb) return (c1->get<CellBS>().lb < c2->get<CellBS>().lb);
+		  int n = c1->box.size();
+
+		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
 		  if(c1->get<CellBS>().depth != c2->get<CellBS>().depth) return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
 		  return (c1->get<CellBS>().id > c2->get<CellBS>().id);
 	  }

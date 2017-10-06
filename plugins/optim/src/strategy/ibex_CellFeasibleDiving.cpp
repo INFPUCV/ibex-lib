@@ -39,9 +39,7 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 
 	    // functions about CellSet
 	  void CellFeasibleDiving::push(Cell* cell) {
-	      // TODO: imprimir erro cuando ningun nodo sea nulo
-	      cell->get<CellBS>().lb=cell->box[cell->box.size()-1].lb();
-	      // std::cout << cell->get<CellBS>().lb << std::endl;
+
 	      if(cl == NULL)
 	         cl = cell;
 	      else if(cr == NULL)

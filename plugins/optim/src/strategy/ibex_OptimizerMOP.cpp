@@ -72,7 +72,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box) {
 		for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ++it ){
 			if (eval.first >= it->first.first && eval.second >= it->first.second){
 				insert_ub=false;
-				continue;
+				break;
 			}
 		}
 
@@ -277,7 +277,7 @@ void OptimizerMOP::report(bool verbose) {
 		list<  IntervalVector > :: iterator sol=Sout.begin();
 
 		for(;sol!=Sout.end();sol++)
-			cout << *sol << endl;
+			cout << "(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << ")" << endl;
 
 		cout << "UB:" << endl;
 		map< pair <double, double>, Vector > :: iterator ub=UB.begin();
