@@ -172,7 +172,7 @@ int main(int argc, char** argv){
 	  ctcxn = ctc;
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,prec);
+	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,prec,prec);
 
 	//	cout << " sys.box " << sys.box << endl;
 
