@@ -118,22 +118,38 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	double z1, z2;
+	Interval valueZ1, valueZ2;
+	valueZ1.set_empty();
+	valueZ2.set_empty();
+
 	map< pair <double, double>, Vector >:: iterator ent1;
 	for(ent1 = UB.begin(); ent1!= UB.end() ; ent1++) {
 		z1 = ent1->first.first; // pair 1
 		z2 = ent1->first.second; // pair 2
-		c.box[n].lb(); // valor minimo
-		c.box[n].ub(); // valor maximo
-		// se elimina c si un UB es dominante de c
 		if(z1 < c.box[n].lb() && z2 < c.box[n+1].lb()) {
 			c.box.set_empty();
 			return;
 		}
+		// contract c.box[n] && c.box[n+1] with PNS points
+		if(z1 < c.box[n].lb()) {
+			if(!valueZ1.is_empty() || valueZ1.lb() < z1) {
+				valueZ1 = Interval(z1, z2);
+			}
+		}
+		if(z2 < c.box[n+1].lb()) {
+			if(!valueZ2.is_empty() || valueZ1.ub() < z2) {
+				valueZ2 = Interval(z1, z2);
+			}
+		}
 	}
 
-
-	//TODO (DA, MC): contract c.box[n] && c.box[n+1] with UB points
-
+	// contract c.box[n] && c.box[n+1] with PNS points
+	if(!valueZ1.is_empty() && valueZ1.ub() < c.box[n+1].ub() && valueZ1.ub() > c.box[n+1].lb()) {
+		c.box[n+1] = Interval(c.box[n+1].lb(),valueZ1.ub());
+	}
+	if(!valueZ2.is_empty() && valueZ2.lb() < c.box[n].ub() && valueZ2.lb() > c.box[n].lb()) {
+		c.box[n] = Interval(c.box[n].lb(), valueZ2.lb());
+	}
 
 
 	/*================ contract x with f(x)=y1, f(x)=y2 and g(x)<=0 ================*/
