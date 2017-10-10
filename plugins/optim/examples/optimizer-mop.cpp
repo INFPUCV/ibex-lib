@@ -36,8 +36,22 @@ int main(int argc, char** argv){
 
 	//restricciones del sistema original + goal=NULL
 	System ext_sys(argv[1]);
-	cout << ext_sys << endl;
 
+	SystemFactory fac2;
+
+	Variable w;
+	Variable a;
+
+	fac2.add_var(w);
+	fac2.add_var(a);
+
+	fac2.add_var(ext_sys.args[ext_sys.nb_var-2]);
+	fac2.add_var(ext_sys.args[ext_sys.nb_var-1]);
+	fac2.add_ctr(ext_sys.args[ext_sys.nb_var-2] + a * ext_sys.args[ext_sys.nb_var-1] - w = 0);
+
+	System _ext_sys(ext_sys, System(fac2));
+
+	cout << _ext_sys << endl;
 
 	string filtering = argv[2];
 	string linearrelaxation= argv[3];
@@ -73,13 +87,13 @@ int main(int argc, char** argv){
 	cout << sys << endl;
 
 	IntervalVector box = ext_sys.box.mid();
-	box[ext_sys.nb_var-1]=0;
-	box[ext_sys.nb_var-2]=0;
+	box[sys.nb_var]=0;
+	box[sys.nb_var+1]=0;
 
 	cout << ext_sys.ctrs[0].f.eval(box) << endl;
 	cout << ext_sys.ctrs[1].f.eval(box) << endl;
 
-	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f,ext_sys.ctrs[1].f);
+	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f);
 
 	//NormalizedSystem norm_sys(sys,eqeps);
 	//LoupFinderDefault loupfinder (norm_sys,true);
@@ -117,11 +131,11 @@ int main(int argc, char** argv){
 	// The contractors
 
 	// the first contractor called
-	CtcHC4 hc4(ext_sys.ctrs,0.01,true);
+	CtcHC4 hc4(_ext_sys.ctrs,0.01,true);
 	// hc4 inside acid and 3bcid : incremental propagation beginning with the shaved variable
-	CtcHC4 hc44cid(ext_sys.ctrs,0.1,true);
+	CtcHC4 hc44cid(_ext_sys.ctrs,0.1,true);
 	// hc4 inside xnewton loop 
-	CtcHC4 hc44xn (ext_sys.ctrs,0.01,false);
+	CtcHC4 hc44xn (_ext_sys.ctrs,0.01,false);
 
 	// The 3BCID contractor on all variables (component of the contractor when filtering == "3bcidhc4") 
 	Ctc3BCid c3bcidhc4(hc44cid);
@@ -129,7 +143,7 @@ int main(int argc, char** argv){
 	CtcCompo hc43bcidhc4 (hc4, c3bcidhc4);
 
 	// The ACID contractor (component of the contractor  when filtering == "acidhc4")
-	CtcAcid acidhc4(ext_sys,hc44cid,true);
+	CtcAcid acidhc4(_ext_sys,hc44cid,true);
 	// hc4 followed by acidhc4 : the actual contractor used when filtering == "acidhc4" 
 	CtcCompo hc4acidhc4 (hc4, acidhc4);
 
@@ -148,11 +162,11 @@ int main(int argc, char** argv){
 
 	Linearizer* lr;
 	if (linearrelaxation=="art")
-	  lr= new LinearizerCombo(ext_sys,LinearizerCombo::ART);
+	  lr= new LinearizerCombo(_ext_sys,LinearizerCombo::ART);
 	else if  (linearrelaxation=="compo")
-	  lr= new LinearizerCombo(ext_sys,LinearizerCombo::COMPO);
+	  lr= new LinearizerCombo(_ext_sys,LinearizerCombo::COMPO);
 	else if (linearrelaxation=="xn")
-	  lr= new LinearizerXTaylor (ext_sys, LinearizerXTaylor::RELAX, LinearizerXTaylor::RANDOM_OPP);
+	  lr= new LinearizerXTaylor (_ext_sys, LinearizerXTaylor::RELAX, LinearizerXTaylor::RANDOM_OPP);
 	//	else {cout << linearrelaxation  <<  " is not an implemented  linear relaxation mode "  << endl; return -1;}
 	// fixpoint linear relaxation , hc4  with default fix point ratio 0.2
 	CtcFixPoint* cxn;

@@ -92,10 +92,10 @@ bool OptimizerMOP::update_UB(const IntervalVector& box) {
 			UB.insert(make_pair(eval, vec));
 			new_ub = true;
 		}
-		//cout << UB.size() << endl;
-		//5. Si el mapa UB fue modificado retornar true, si no false
+
 
 	}
+	//5. Si el mapa UB fue modificado retornar true, si no false
 	return new_ub;
 
 }
@@ -162,12 +162,39 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	/*================ contract x with f(x)=y1, f(x)=y2 and g(x)<=0 ================*/
 
-	// TODO: (IAZ) Agregar restriccion a*z1+b*z2 = w para mejorar precision LB
+	// Se agrega la restriccion z1+a*z2 = w para mejorar precision LB
 	// a=z1.diam()/z2.diam()
-	// b=
-	ctc.contract(c.box);
+	// max w; min w
 
+	//cout << 1 << endl;
+
+	IntervalVector box3(c.box);
+	box3.resize(n+4);
+	//cout << box3 << " " << n+4 << endl;
+
+	//cout << 2 << endl;
+
+	box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); /* w */
+	if(c.box[n+1].diam() < POS_INFINITY)
+		box3[n+3] = c.box[n].diam()/c.box[n+1].diam(); /* a */
+	else
+		box3[n+3] = 1.0;
+
+	//cout << box3 << endl;
+	ctc.contract(box3);
+	//cout << box3 << endl;
+
+	//cout << "x + " << box3[n+3].mid() << "* y =" <<  box3[n+2].lb();
+
+	//cout << 4 << endl;
+	//cout << box3[n+2] << " " <<  box3[n+3] << endl;
+
+	box3.resize(n+2);
+	c.box=box3;
 	if (c.box.is_empty()) return;
+
+
+
 
 	/*========================= update loup =============================*/
 
