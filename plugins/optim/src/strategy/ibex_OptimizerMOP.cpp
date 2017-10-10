@@ -118,12 +118,17 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	double z1, z2;
-	Interval valueZ1, valueZ2;
-	valueZ1.set_empty();
-	valueZ2.set_empty();
+	pair <double, double> valueZ1;
+	pair <double, double> valueZ2;
+
+	valueZ1.first = NEG_INFINITY;
+	valueZ2.second = NEG_INFINITY;
+
+	IntervalVector box2=c.box;
+	//cout << c.box[n] << "," << c.box[n+1] << endl;
 
 	map< pair <double, double>, Vector >:: iterator ent1;
-	for(ent1 = UB.begin(); ent1!= UB.end() ; ent1++) {
+	for(ent1 = UB.begin(); ent1 != UB.end() ; ent1++) {
 		z1 = ent1->first.first; // pair 1
 		z2 = ent1->first.second; // pair 2
 		if(z1 < c.box[n].lb() && z2 < c.box[n+1].lb()) {
@@ -132,28 +137,34 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		}
 		// contract c.box[n] && c.box[n+1] with PNS points
 		if(z1 < c.box[n].lb()) {
-			if(!valueZ1.is_empty() || valueZ1.lb() < z1) {
-				valueZ1 = Interval(z1, z2);
+			if(valueZ1.first == NEG_INFINITY || valueZ1.first < z1) {
+
+				valueZ1 = ent1->first;
 			}
 		}
 		if(z2 < c.box[n+1].lb()) {
-			if(!valueZ2.is_empty() || valueZ1.ub() < z2) {
-				valueZ2 = Interval(z1, z2);
+			if(valueZ2.second == NEG_INFINITY || valueZ2.second < z2) {
+				valueZ2 = ent1->first;
 			}
 		}
 	}
 
 	// contract c.box[n] && c.box[n+1] with PNS points
-	if(!valueZ1.is_empty() && valueZ1.ub() < c.box[n+1].ub() && valueZ1.ub() > c.box[n+1].lb()) {
-		c.box[n+1] = Interval(c.box[n+1].lb(),valueZ1.ub());
+	if(valueZ1.first != NEG_INFINITY && valueZ1.second < c.box[n+1].ub() && valueZ1.second > c.box[n+1].lb()) {
+		c.box[n+1] = Interval(c.box[n+1].lb(),valueZ1.second);
 	}
-	if(!valueZ2.is_empty() && valueZ2.lb() < c.box[n].ub() && valueZ2.lb() > c.box[n].lb()) {
-		c.box[n] = Interval(c.box[n].lb(), valueZ2.lb());
+
+	if(valueZ2.second != NEG_INFINITY && valueZ2.first < c.box[n].ub() && valueZ2.first > c.box[n].lb()) {
+		c.box[n] = Interval(c.box[n].lb(), valueZ2.first);
 	}
+
 
 
 	/*================ contract x with f(x)=y1, f(x)=y2 and g(x)<=0 ================*/
 
+	// TODO: (IAZ) Agregar restriccion a*z1+b*z2 = w para mejorar precision LB
+	// a=z1.diam()/z2.diam()
+	// b=
 	ctc.contract(c.box);
 
 	if (c.box.is_empty()) return;

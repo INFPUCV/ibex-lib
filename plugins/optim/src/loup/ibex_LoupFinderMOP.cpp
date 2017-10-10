@@ -29,9 +29,6 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_point
 
 
 
-
-
-
     for(int i=0; i<2; i++){
 
     	IntervalVector box2(box);
@@ -80,6 +77,7 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_point
     }
 
     //we add the feasible middle point
+
     if(feasible_points.size()==2){
     	list<Vector>::iterator it = feasible_points.begin();
     	Vector vec1 = *it; it++;
