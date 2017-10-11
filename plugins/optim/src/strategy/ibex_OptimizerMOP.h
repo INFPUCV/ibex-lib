@@ -257,9 +257,22 @@ protected:
 	void contract_and_bound(Cell& c, const IntervalVector& init_box);
 
 	/**
-	 * \brief Update the uplo
+	 * TODO: (DA, MC) Funcion que agrega segmentos al set LB
+	 * \brief Update the set LB by adding a segment
 	 */
-	void update_LB();
+	void update_LB(const pair<double, double> p1, const pair<double, double> p2){
+
+	}
+
+	/**
+	 * TODO: (DA, MC) Funcion que agrega segmentos al set LB
+	 * \brief Update the set LB by adding two segments (p.first, +inf); (p.first, p.second)
+	 * and (p.first, p.second); (+inf, p.second)
+	 */
+	void update_LB(const pair<double, double> p){
+		update_LB(make_pair(p.first, POS_INFINITY), p);
+		update_LB(p, make_pair(POS_INFINITY, p.second));
+	}
 
 	/**
 	 * \brief Main procedure for updating the loup.
@@ -295,6 +308,12 @@ private:
 	 * to its corresponding  point x
 	 * If the loup-finder is rigorous, x may be a (non-degenerated) box. */
 	map< pair <double, double>, Vector > UB;
+
+	/**
+	 * A set of points denoting the segments related to the lowerbound of the
+	 * pareto front.
+	 */
+	set< pair <double, double> > LB;
 
 
 	/** True if loup has changed in the last call to handle_cell(..) */
