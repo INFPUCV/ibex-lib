@@ -47,7 +47,7 @@ public:
 	 */
 	LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2);
 
-	void find(const IntervalVector& box, list<Vector>& feasible_points);
+	void find(const IntervalVector& box, list<Vector>& feasible_points, int n=2);
 
 	/**
 	 * \brief The NLP problem.

@@ -200,8 +200,8 @@ int main(int argc, char** argv){
 	o.optimize(ext_sys.box);
 
 	// printing the results     
-		o.report(false);
-        cout << o.get_time() << "  " << o.get_nb_cells() << endl;
+	o.report(false);
+       cout << o.get_time() << "  " << o.get_nb_cells() << " "<< o.get_nb_sol() << endl;
 
 	//	if (filtering == "acidhc4"  )
 	//cout    << " nbcidvar " <<  acidhc4.nbvar_stat() << endl;

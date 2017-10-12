@@ -48,14 +48,14 @@ Interval OptimizerMOP::eval_goal(const Function& goal, Vector& x){
 }
 
 
-bool OptimizerMOP::update_UB(const IntervalVector& box) {
+bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 
 	list<Vector> feasible_points;
 
 	//We attempt to find two feasible points which minimize both objectives
 	//and the middle point between them
 	IntervalVector box2(box); box2.resize(n);
-	finder.find(box2,feasible_points);
+	finder.find(box2,feasible_points,np);
 
 	bool new_ub=false;
 	list<Vector>::iterator it=feasible_points.begin();
@@ -182,15 +182,9 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	//cout << box3 << endl;
 	ctc.contract(box3);
-	//cout << box3 << endl;
 
-	//cout << "x + " << box3[n+3].mid() << "* y =" <<  box3[n+2].lb();
-
-	//cout << 4 << endl;
-	//cout << box3[n+2] << " " <<  box3[n+3] << endl;
-
-	box3.resize(n+2);
 	c.box=box3;
+	c.box.resize(n+2);
 	if (c.box.is_empty()) return;
 
 
@@ -200,8 +194,15 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 
-	bool loup_ch=update_UB(c.box);
+	bool loup_ch=update_UB(c.box, 100);
 
+	//TODO: Hacer calculo conservativo (especialmente para borrar cajas)
+	double dist_w=POS_INFINITY;
+	dist_w=max_distance(box3[n+2].lb(), box3[n+3].mid(), c.box[n], c.box[n+1]);
+	//cout << "dist:" << dist_w << endl;
+
+	//the box is dominated
+	if (dist_w<0.0){ c.box.set_empty(); return;}
 
 	/*====================================================================*/
 	double diamX = 0.0, valueBox;
@@ -213,17 +214,18 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		}
 	}
 	// Metodo de termino para las restricciones
-	if ( diamX<=eps_x ) {
+	/*if ( diamX<=eps_x ) {
 		//se guarda c.box en lista de soluciones (Sout)
 		Sout.push_back(c.box);
 		c.box.set_empty();
 		return;
-	}
+	}*/
 
-	double diamZ = 0;
+	//we compute the min diameter between z1, z2 and w
+	double diamZ = dist_w;
 	for (i=n; i < n+2; i++) {
 		valueBox = c.box[i].diam();
-		if(diamZ < valueBox) {
+		if(diamZ > valueBox) {
 			diamZ = valueBox;
 		}
 	}
@@ -244,6 +246,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	buffer.flush();
 	//LB.clear();
 	UB.clear();
+	//the first point
+	UB.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
+	//the last point
+	UB.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));

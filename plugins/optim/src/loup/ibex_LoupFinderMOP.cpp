@@ -16,7 +16,7 @@ LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Fun
 //	diam_simplex=0;
 }
 
-void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_points) {
+void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_points, int nn) {
 
 	if (!(lp_solver.default_limit_diam_box.contains(box.max_diam())))
 		return;
@@ -78,14 +78,19 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_point
 
     //we add the feasible middle point
 
-    if(feasible_points.size()==2){
+    double step = 1.0/((double)nn-1);
+
+    double r=0.0;
+    for(int i=0; i<nn; i++, r+=step){
+    	if(i==nn) r=1.0;
+
     	list<Vector>::iterator it = feasible_points.begin();
     	Vector vec1 = *it; it++;
     	Vector vec2 = *it;
-    	Vector vec3 = (vec1+vec2);
-    	vec3 *= 0.5;
+    	Vector vec3 = (1.0-r)*vec1 + r*vec2;
     	if (box.contains(vec3)) feasible_points.push_back(vec3);
     }
+
 
     return;
 }

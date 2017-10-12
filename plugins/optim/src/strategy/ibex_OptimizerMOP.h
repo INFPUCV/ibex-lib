@@ -18,6 +18,7 @@
 //#include "ibex_EntailedCtr.h"
 #include "ibex_CtcKhunTucker.h"
 
+#include <set>
 #include <map>
 #include <list>
 
@@ -152,6 +153,13 @@ public:
 	 */
 	double get_nb_cells() const;
 
+	/**
+	 * \brief Get the number of solutions.
+	 */
+	int get_nb_sol(){
+		return Sout.size();
+	}
+
 	/* =========================== Settings ============================= */
 
 	/**
@@ -256,18 +264,63 @@ protected:
 	 */
 	void contract_and_bound(Cell& c, const IntervalVector& init_box);
 
+
+	/**
+	 * \brief compute the max distance between the line z1 + a*z2 = w_lb and the UB step function
+	 */
+	double max_distance(double w_lb, double a, Interval z1, Interval z2){
+		double max_dist=-1.0;
+
+		//cout << z1 << ";" << z2 << endl;
+		map< pair <double, double>, Vector >::iterator it = UB.begin();
+		for(;it!=UB.end(); ){
+			pair <double, double> p = it->first; it++;
+			if(it==UB.end()) break;
+			pair <double, double> p2 = it->first;
+
+			//la solucion esta dentro de la caja
+			if( (z1.contains(p.first) && z2.contains(p.second)) || (z1.contains(p2.first) && z2.contains(p2.second)) ){
+				//cout << "(" << p.first << "," << p.second << ") ; (" << p2.first << "," << p2.second << ")" << endl;
+
+				pair <double, double> pmax= make_pair( std::min(p2.first,z1.ub()), std::min(p.second,z2.ub()));
+
+				double dist= std::min( (pmax.first + a*pmax.second) - w_lb, std::min(pmax.first-z1.lb(),  pmax.second-z2.lb()));
+				//cout << dist << endl;
+				if(dist > max_dist) max_dist=dist;
+			}
+		}
+
+		if(max_dist == -1.0) return std::min( z1.ub() + a*z2.ub() - w_lb, std::min(z1.diam(), z2.diam()));
+		else return max_dist;
+	}
+
+	/**
+	 * TODO: Funcion que genera segmentos LB una vez terminada la busqueda
+	 */
+	void generate_LB(){
+		std::list< IntervalVector >::iterator it = Sout.begin();
+
+		for(;it!=Sout.end(); it++){
+		//	update_LB()
+		}
+	}
+
+
+
 	/**
 	 * TODO: (DA, MC) Funcion que agrega segmentos al set LB
 	 * \brief Update the set LB by adding a segment
 	 */
 	void update_LB(const pair<double, double> p1, const pair<double, double> p2){
-
+        /** Idea:
+		* 1. Encontrar segmentos de LB que corten el segmento p1-p2
+		* 2. Encontrar puntos de interseccion
+		* 3. Actualizar LB
+		*/
 	}
 
 	/**
-	 * TODO: (DA, MC) Funcion que agrega segmentos al set LB
-	 * \brief Update the set LB by adding two segments (p.first, +inf); (p.first, p.second)
-	 * and (p.first, p.second); (+inf, p.second)
+	 * \brief Update the set LB by adding two segments (p.first, +inf)--(p.first, p.second) and (p.first, p.second)--(+inf, p.second)
 	 */
 	void update_LB(const pair<double, double> p){
 		update_LB(make_pair(p.first, POS_INFINITY), p);
@@ -277,7 +330,7 @@ protected:
 	/**
 	 * \brief Main procedure for updating the loup.
 	 */
-	bool update_UB(const IntervalVector& box);
+	bool update_UB(const IntervalVector& box, int n);
 
 	/**
 	 * \brief Check time is not out.
@@ -313,7 +366,7 @@ private:
 	 * A set of points denoting the segments related to the lowerbound of the
 	 * pareto front.
 	 */
-	set< pair <double, double> > LB;
+	std::set< pair <double, double> > LB;
 
 
 	/** True if loup has changed in the last call to handle_cell(..) */
