@@ -120,6 +120,7 @@ namespace ibex {
 
 	double CellNSSet::minimum() const{
 		// TODO: que realizar
+		return POS_INFINITY;
 	}
 
 	void CellNSSet::contract(double loup){
