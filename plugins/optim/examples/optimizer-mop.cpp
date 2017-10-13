@@ -12,6 +12,7 @@
 #include "ibex.h"
 
 
+
 #ifndef _IBEX_WITH_OPTIM_
 #error "You need the plugin Optim to run this example."
 #endif
@@ -101,7 +102,7 @@ int main(int argc, char** argv){
 
 	CellBufferOptim* buffer;
 	//if(strategy=="diving")
-	buffer = new CellFeasibleDiving<maxsize>(*new CellNSSet());
+	buffer = new CellFeasibleDiving<minLB>(*new CellSet<minLB>);
 	/*else
 		buffer = new CellDoubleHeap  (ext_sys);*/
 

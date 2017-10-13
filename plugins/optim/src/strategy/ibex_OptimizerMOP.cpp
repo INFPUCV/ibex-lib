@@ -329,6 +329,28 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	return status;
 }
 
+void OptimizerMOP::plot(){
+	ofstream output;
+	output.open("output.txt");
+	list<  IntervalVector > :: iterator sol=Sout.begin();
+
+	output << "(";
+	for(;sol!=Sout.end();sol++){
+		output << "{'pts':(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << "),";
+		output << "'diam_x': " << (*sol)[n].diam() << ",'diam_y': " << (*sol)[n+1].diam();
+		output << "},";
+	}
+	output << ")" << endl;
+	output << "[";
+	map< pair <double, double>, Vector > :: iterator ub=UB.begin();
+	for(;ub!=UB.end();ub++){
+		output << "(" << ub->first.first << "," << ub->first.second << "),";
+	}
+	output << "]" << endl;
+	output.close();
+	system("python3 plot.py");
+}
+
 void OptimizerMOP::report(bool verbose) {
 
 	if (!verbose) {
@@ -336,16 +358,20 @@ void OptimizerMOP::report(bool verbose) {
 		cout << "LB:" << endl;
 		list<  IntervalVector > :: iterator sol=Sout.begin();
 
-		for(;sol!=Sout.end();sol++)
+
+		for(;sol!=Sout.end();sol++){
 			cout << "(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << ")" << endl;
+		}
 
 		cout << "UB:" << endl;
 		map< pair <double, double>, Vector > :: iterator ub=UB.begin();
 
-		for(;ub!=UB.end();ub++)
+		for(;ub!=UB.end();ub++){
 			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
+		}
 
 		cout << endl << get_time() << " " << get_nb_cells() << endl;
+		plot();
 		return;
 	}
 
