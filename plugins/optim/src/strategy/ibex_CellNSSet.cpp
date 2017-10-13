@@ -43,7 +43,7 @@ namespace ibex {
 	}
 
 	void CellNSSet::push(Cell* cell) {
-		if (capacity>0 && size() == capacity) throw CellBufferOverflow();
+		// if (capacity>0 && size() == capacity) throw CellBufferOverflow();
 		// TODO Verficar que n-1 y n-2 sean las cajas de las funciones objetivo
 		bool dominated = false;
 		int n;

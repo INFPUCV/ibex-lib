@@ -11,7 +11,7 @@
 #ifndef __IBEX_CELL_NS_SET_H__
 #define __IBEX_CELL_NS_SET_H__
 
-#include "ibex_CellBuffer.h"
+#include "ibex_CellBufferOptim.h"
 #include <set>
 #include <list>
 
@@ -24,9 +24,7 @@ namespace ibex {
 
 		  float areaC1 = c1->box[n-1].diam()*c1->box[n-2].diam();
 		  float areaC2 = c2->box[n-1].diam()*c2->box[n-2].diam();
-		  if(areaC1 != areaC2) return (areaC1 > areaC2);
-		  if(c1->get<CellBS>().depth != c2->get<CellBS>().depth) return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
-		  return (c1->get<CellBS>().id > c2->get<CellBS>().id);
+		  return (areaC1 > areaC2);
 	  }
 	};
 
