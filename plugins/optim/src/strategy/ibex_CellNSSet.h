@@ -58,7 +58,7 @@ namespace ibex {
 
 		private:
 			/* Set of Cells */
-			  typename std::set<Cell*, maxsize> nondset;
+			  typename std::multiset<Cell*, maxsize> nondset;
 			/* Stack of cells */
 			  typename std::list<Cell*> dset;
 	};

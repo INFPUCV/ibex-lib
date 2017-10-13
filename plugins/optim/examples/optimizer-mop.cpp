@@ -101,7 +101,7 @@ int main(int argc, char** argv){
 
 	CellBufferOptim* buffer;
 	//if(strategy=="diving")
-	buffer = new CellFeasibleDiving();
+	buffer = new CellFeasibleDiving<maxsize>(*new CellNSSet());
 	/*else
 		buffer = new CellDoubleHeap  (ext_sys);*/
 

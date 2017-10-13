@@ -5,19 +5,19 @@
 #include "ibex_CellSet.h"
 #include "ibex_ExtendedSystem.h"
 #include "ibex_CellCostFunc.h"
+#include "ibex_CellNSSet.h"
 
 namespace ibex {
 
 
   //  TODO: verificar que sea CellSet en vez de CellBuffer
   // TODO: Agregar descripcion (comentarios) a las funciones
+  template<class T>
   class CellFeasibleDiving: public CellBufferOptim {
   public:
-    CellFeasibleDiving(/*const ExtendedSystem& sys*/);
+    CellFeasibleDiving(CellBufferOptim& cset /*const ExtendedSystem& sys*/);
 
     ~CellFeasibleDiving();
-
-
 
     virtual void add_backtrackable(Cell& root);
 
@@ -51,7 +51,6 @@ namespace ibex {
         Cell *cl;
 		Cell *cr;
   };
-
 
 } // namespace ibex
 

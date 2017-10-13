@@ -47,7 +47,7 @@ namespace ibex {
 		// TODO Verficar que n-1 y n-2 sean las cajas de las funciones objetivo
 		bool dominated = false;
 		int n;
-		std::set<Cell*, maxsize>::iterator it;
+		std::multiset<Cell*, maxsize>::iterator it;
 		for (it = nondset.begin(); it != nondset.end(); ++it) {
 			n = (*it)->box.size();
 			// si cell es dominado por un no dominado
@@ -71,7 +71,7 @@ namespace ibex {
 		typename std::list<Cell*> domcells;
 		std::list<Cell*>::iterator it;
 		std::list<Cell*>::iterator it1;
-		std::set<Cell*, maxsize>::iterator it2;
+		std::multiset<Cell*, maxsize>::iterator it2;
 		Cell* c = *nondset.begin();
 		nondset.erase(nondset.begin());
 		// se agregan todos los cell dominados por c en dset a la lista domcells

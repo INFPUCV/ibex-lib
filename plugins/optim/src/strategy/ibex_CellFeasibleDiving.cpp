@@ -20,49 +20,56 @@ namespace ibex {
 
 
     // functions about CellFeasibleDiving
-CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
-  		bufferset(*new CellSet<minLB>)/*, sys(sys)*/, cl(NULL), cr(NULL) {
-}
+	template<class T>
+	CellFeasibleDiving<T>::CellFeasibleDiving(CellBufferOptim& cset) :
+			bufferset(cset)/*, sys(sys)*/, cl(NULL), cr(NULL) {
+	}
 
-	CellFeasibleDiving::~CellFeasibleDiving() { }
+	template<class T>
+	CellFeasibleDiving<T>::~CellFeasibleDiving() { }
 
 	// TODO: verificar si cellset tiene add_backtrackable
-	void CellFeasibleDiving::add_backtrackable(Cell& root) {
+	template<class T>
+	void CellFeasibleDiving<T>::add_backtrackable(Cell& root) {
 	      root.add<CellBS>();
 	}
 
-	std::ostream& CellFeasibleDiving::print(std::ostream& os) const
-	   {	os << "==============================================================================\n";
-	     os << " first cell " << " size " << size() << " top " << minimum() << std::endl;
-	       return  os << std::endl;
-	   }
+	template<class T>
+	std::ostream& CellFeasibleDiving<T>::print(std::ostream& os) const
+	{	os << "==============================================================================\n";
+		 os << " first cell " << " size " << size() << " top " << minimum() << std::endl;
+		   return  os << std::endl;
+	}
 
-	    // functions about CellSet
-	  void CellFeasibleDiving::push(Cell* cell) {
+		// functions about CellSet
+	template<class T>
+	void CellFeasibleDiving<T>::push(Cell* cell) {
 
-	      if(cl == NULL)
-	         cl = cell;
-	      else if(cr == NULL)
-	         cr = cell;
-	      else
-	    	 ibex_error("CellFeasibleDiving: triple push error");
-	  }
+		if(cl == NULL)
+		 cl = cell;
+		else if(cr == NULL)
+		 cr = cell;
+		else
+		 ibex_error("CellFeasibleDiving: triple push error");
+	}
+	  template<class T>
+	  Cell* CellFeasibleDiving<T>::top() const {
 
-	  Cell* CellFeasibleDiving::top() const {
 	      if(cr == NULL && cl == NULL) {
 	        return bufferset.top();
 	      } else if(cl == NULL) {
 	        return cr;
 	      } else if(cr == NULL) {
 	        return cl;
-	      } else if(cr->box[cr->box.size()-1].lb() < cl->box[cl->box.size()-1].lb()) {
+	      } else if(T()(cr, cl)) {
 	        return cr;
 	      } else {
 	        return cl;
 	      }
 	  }
 
-	  Cell* CellFeasibleDiving::pop() {
+	  template<class T>
+	  Cell* CellFeasibleDiving<T>::pop() {
 	      Cell *c;
 	      if(cr == NULL && cl == NULL) {
 	          c = bufferset.pop();
@@ -72,7 +79,7 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 	      } else if(cr == NULL) {
 	          c = cl;
 	          cl = NULL;
-	      } else if(cr->box[cr->box.size()-1].lb() < cl->box[cl->box.size()-1].lb()) {
+	      } else if(T()(cr, cl)) {
 	          c = cr;
 	          cr = NULL;
 	          bufferset.push(cl);
@@ -87,7 +94,8 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 	      return c;
 	  }
 
-	  bool CellFeasibleDiving::empty() const {
+	  template<class T>
+	  bool CellFeasibleDiving<T>::empty() const {
 	      if(cr == NULL && cl == NULL) {
 	          return bufferset.empty();
 	      } else {
@@ -95,7 +103,8 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 	      }
 	  }
 
-	  unsigned int CellFeasibleDiving::size() const {
+	  template<class T>
+	  unsigned int CellFeasibleDiving<T>::size() const {
 	    unsigned int size = bufferset.size();
 	    if(cr != NULL) {
 	      size++;
@@ -106,7 +115,8 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 	    return size;
 	  }
 
-	  void CellFeasibleDiving::flush() {
+	  template<class T>
+	  void CellFeasibleDiving<T>::flush() {
 	      if(cr != NULL)
 	          delete cr;
 	      if(cl != NULL)
@@ -118,7 +128,8 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 
 
 	  // functions about CellBufferOptim
-	  void CellFeasibleDiving::contract(double new_loup) {
+	  template<class T>
+	  void CellFeasibleDiving<T>::contract(double new_loup) {
 		  bufferset.contract(new_loup);
 		  if(cr && cr->box[cr->box.size()-1].lb() > new_loup){
 			  delete cr; cr=NULL;
@@ -129,7 +140,8 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 		  }
 	  }
 
-	  double CellFeasibleDiving::minimum() const  {
+	  template<class T>
+	  double CellFeasibleDiving<T>::minimum() const  {
 		  double min = bufferset.minimum();
 		  if(cr && cr->box[cr->box.size()-1].lb() < min)
 			  min=cr->box[cr->box.size()-1].lb();
@@ -140,6 +152,7 @@ CellFeasibleDiving::CellFeasibleDiving(/*const ExtendedSystem& sys*/) :
 		  return min;
 	  }
 
-
+	  template class CellFeasibleDiving<minLB>;
+	  template class CellFeasibleDiving<maxsize>;
 
 } // end namespace ibex
