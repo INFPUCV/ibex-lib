@@ -79,7 +79,6 @@ namespace ibex {
 		std::multiset<Cell*, maxsize>::iterator it2;
 		std::multiset<Cell*, maxsize>::iterator aux2;
 		Cell* c = *nondset.begin();
-		std::cout << "NS pop " << c  << std::endl;
 		nondset.erase(nondset.begin());
 		// se agregan todos los cell dominados por c en dset a la lista domcells
 		for (it = dset.begin(); it != dset.end();) {
