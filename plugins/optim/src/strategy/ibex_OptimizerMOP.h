@@ -124,6 +124,8 @@ public:
 	 */
 	void report(bool verbose=true);
 
+	void plot();
+
 	/**
 	 * \brief Get the status.
 	 *
