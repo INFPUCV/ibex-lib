@@ -27,12 +27,39 @@ Y luego resolver un problema de ejemplo:
 ./optimizer-mop test2.txt acidhc4 compo smearsumrel diving 1e-1 100 1
 
 
-TODO (13 de octubre)
+TODO
 
-
-TODO  (DA, MC): Generalizar CellFeasibleDiving con template (funcion de comparacion para nodos hermanos)
-        Crear CellNS_SetMOP (CellBuffer) consistente en un set de cajas no dominadas 
-        (ordenadas segun funcion de comparacion) y una liste de nodos dominados 
+Graficar resultados paso a paso:
+  - Bisección (remplazar caja por dos subcajas)
+  - Reducción o eliminación de caja (filtrado)
+  - Actualización UB (graficar como función escalera)
+  - Graficar recta lb en caja
   
-Graficar resultados (ub points y lb boxes)
+Estudiar y agregar técnicas de selección de nodo (para comparar con DivingMOP)
+- Estrategia del paper Constraint propagation using dominance in interval (2016)
+http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf)
+Escoger nodo que minimiza: (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init)
+Puede que baste con agregar función de comparación a CellSetBuffer
+- Estrategias de acá https://drive.google.com/open?id=0B9JSHx01XN1rSXNOWXZXbEswWVE&authuser=0
+No encontré más estrategias...
+Para que quede una comparación pulenta yo agregaría:
+- Escoger caja no dominada random
+- Escoger caja no dominada con area máxima
+- Caja que maximiza distancia a UB
+
+Criterio de parada: distancia de caja a UB < epsilon 
+(criterios que solo ven el tamaño de las cajas no permiten 
+realizar una comparación justa)
+
+Crear métodos que permitan mantener y actualizar set 
+de segmentos no dominados (en principio para el UB). 
+Segmentos se representan con conjunto de puntos.
+- Agregar segmento (recibe dos puntos), debe actualizar los segmentos del set
+Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming: 
+Corrections and improvements for the biobjective case
+
+
+
+
+
 
