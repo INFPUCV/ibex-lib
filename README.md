@@ -53,6 +53,55 @@ Crear métodos que permitan mantener y actualizar set
 de segmentos no dominados (en principio para el UB). 
 Segmentos se representan con conjunto de puntos.
 - Agregar segmento (recibe dos puntos), debe actualizar los segmentos del set
+
+Notar que x aumenta e y disminuye en el ub_set.
+insert_segment(p1, p2)
+  p1+ <- (p1.x,inf)
+  p2+ <- (p2.y,inf)
+
+  v1 <- lb_x de p1 en ub_set
+  v2 <- next(ub_set)
+  
+  in <- false
+  if s <- intersect(v1-v2, p1-p1+) 
+    in <- true
+    add_point(s), add_point(p1)
+    delete_poitn(v2)  
+  
+  while(v1.y>p2.y)
+              
+    if s <- intersect(v1-v2, p1-p2) 
+      in=!in
+      add_point(s)
+   
+    if(in) delete point(v2)
+  
+    if v2.y > p2.y && s <- intersect(v1-v2, p2-p2+) 
+      in<-false;
+      add_point(s); add_point(p2)
+       
+    v1 <- v2
+    v2 <- next(ub_set)  
+    
+    
+point intersect(p, p2, q, q2)
+   r=p2-p
+   s=q2-q
+   //now we find a solution for the equation p+tr = q+us,
+   t=(q-p) x s/(r x s)
+   
+   if r x s!=0 and t in [0,1]
+      return p+tr
+   else
+      return NULL 
+  
+
+  
+  
+  
+  
+  
+
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming: 
 Corrections and improvements for the biobjective case
 
