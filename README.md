@@ -29,12 +29,13 @@ Y luego resolver un problema de ejemplo:
 
 TODO
 
-Graficar resultados paso a paso:
+Graficar resultados paso a paso (Matias):
   - Bisección (remplazar caja por dos subcajas)
   - Reducción o eliminación de caja (filtrado)
   - Actualización UB (graficar como función escalera)
   - Graficar recta lb en caja
   
+(Damir-Matias)
 Estudiar y agregar técnicas de selección de nodo (para comparar con DivingMOP)
 - Estrategia del paper Constraint propagation using dominance in interval (2016)
 http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf)
@@ -47,10 +48,7 @@ Para que quede una comparación pulenta yo agregaría:
 - Escoger caja no dominada con area máxima
 - Caja que maximiza distancia a UB
 
-Criterio de parada: distancia de caja a UB < epsilon 
-(criterios que solo ven el tamaño de las cajas no permiten 
-realizar una comparación justa)
-
+(Ignacio)
 Crear métodos que permitan mantener y actualizar set 
 de segmentos no dominados (en principio para el UB). 
 Segmentos se representan con conjunto de puntos.
@@ -58,8 +56,19 @@ Segmentos se representan con conjunto de puntos.
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming: 
 Corrections and improvements for the biobjective case
 
+(Ignacio)
+Definir estructura de papers.
+Paper 1 (contribuciones):
+  - Propiedad de las soluciones (ub): 
+  any feasible solution x is eps-dominated by at least one solution x' in the ub set, i.e., 
+  for all x feasible, there exists at least one x' in ub_set, such that: f1(x') <= f1(x) + eps  and f2(x') <= f2(x) + eps
+  - Crierios de seleccion del siguiente nodo (non-dominated + ub_distance + diving)
+  - Upperbounding usando simplex (min f1 + min f2 + midpoint)
+  - Discarding boxes by using an auxiliary constraint: z1+a*z2=w
 
-
+Paper 2 (contribuciones):
+  - Definicion del ub_set usando segmentos factibles
+  - Proponer algoritmo eficiente (busqueda binaria) para encontrar soluciones factibles asociadas a puntos en los segmentos
 
 
 

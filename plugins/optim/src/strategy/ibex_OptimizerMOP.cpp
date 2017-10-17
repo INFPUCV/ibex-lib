@@ -13,6 +13,7 @@
 #include "ibex_NoBisectableVariableException.h"
 #include "ibex_Backtrackable.h"
 #include "ibex_OptimData.h"
+#include "ibex_CellSet.h"
 
 #include <float.h>
 #include <stdlib.h>
@@ -22,15 +23,13 @@ using namespace std;
 
 namespace ibex {
 
-const double OptimizerMOP::default_eps_x = 1e-5;
+const double OptimizerMOP::default_eps = 1e-5;
 
-const double OptimizerMOP::default_eps_z = 1e-5;
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps_x, double eps_z) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
-								finder(finder),
-                				eps_x(eps_x), eps_z(eps_z), trace(false), timeout(-1), status(SUCCESS),
+								finder(finder), eps(eps), trace(false), timeout(-1), status(SUCCESS),
                 				time(0), nb_cells(0) {
 
 	if (trace) cout.precision(12);
@@ -117,6 +116,17 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 }
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
+
+	/*====== filtering using the line z1+a*z2>w_lb and the ub_set ======*/
+
+	//Conservativo: ok!
+	if (c.get<CellBS>().depth>0 && discard_test(c.get<CellBS>().w_lb, c.get<CellBS>().a, c.box[n], c.box[n+1])){
+		c.box.set_empty(); return;
+	}
+
+	/*====================================================================*/
+
+
 	double z1, z2;
 	pair <double, double> valueZ1;
 	pair <double, double> valueZ2;
@@ -127,10 +137,11 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	IntervalVector box2=c.box;
 	//cout << c.box[n] << "," << c.box[n+1] << endl;
 
+
 	map< pair <double, double>, Vector >:: iterator ent1;
 	for(ent1 = UB.begin(); ent1 != UB.end() ; ent1++) {
-		z1 = ent1->first.first; // pair 1
-		z2 = ent1->first.second; // pair 2
+		z1 = (Interval(ent1->first.first)-Interval(eps)).ub(); // pair 1
+		z2 = (Interval(ent1->first.second)-Interval(eps)).ub(); // pair 2
 		if(z1 < c.box[n].lb() && z2 < c.box[n+1].lb()) {
 			c.box.set_empty();
 			return;
@@ -162,17 +173,9 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	/*================ contract x with f(x)=y1, f(x)=y2 and g(x)<=0 ================*/
 
-	// Se agrega la restriccion z1+a*z2 = w para mejorar precision LB
-	// a=z1.diam()/z2.diam()
-	// max w; min w
-
-	//cout << 1 << endl;
-
+	//adding the constraint z1+a*z2=w for filtering w
 	IntervalVector box3(c.box);
 	box3.resize(n+4);
-	//cout << box3 << " " << n+4 << endl;
-
-	//cout << 2 << endl;
 
 	box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); /* w */
 	if(c.box[n+1].diam() < POS_INFINITY)
@@ -180,13 +183,15 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	else
 		box3[n+3] = 1.0;
 
-	//cout << box3 << endl;
+	//the contraction is performed
 	ctc.contract(box3);
 
 	c.box=box3;
 	c.box.resize(n+2);
 	if (c.box.is_empty()) return;
 
+	c.get<CellBS>().a = box3[n+3].mid();
+	c.get<CellBS>().w_lb = box3[n+2].lb();
 
 
 
@@ -194,25 +199,20 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 
-	bool loup_ch=update_UB(c.box, 100);
+	bool loup_ch=update_UB(c.box, 3);
 
-	//TODO: Hacer calculo conservativo (especialmente para borrar cajas)
-	double dist_w=POS_INFINITY;
-	dist_w=max_distance(box3[n+2].lb(), box3[n+3].mid(), c.box[n], c.box[n+1]);
-	//cout << "dist:" << dist_w << endl;
 
-	//the box is dominated
-	if (dist_w<0.0){ c.box.set_empty(); return;}
+
 
 	/*====================================================================*/
-	double diamX = 0.0, valueBox;
+	/*double diamX = 0.0, valueBox;
 	int i;
 	for (i=0; i < n; i++) {
 		valueBox = c.box[i].diam();
 		if(diamX < valueBox) {
 			diamX = valueBox;
 		}
-	}
+	}*/
 	// Metodo de termino para las restricciones
 	/*if ( diamX<=eps_x ) {
 		//se guarda c.box en lista de soluciones (Sout)
@@ -222,7 +222,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	}*/
 
 	//we compute the min diameter between z1, z2 and w
-	double diamZ = dist_w;
+	/*double diamZ = dist_w;
 	for (i=n; i < n+2; i++) {
 		valueBox = c.box[i].diam();
 		if(diamZ > valueBox) {
@@ -235,7 +235,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		Sout.push_back(c.box);
 		c.box.set_empty();
 		return;
-	}
+	}*/
 
 }
 
@@ -273,10 +273,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	handle_cell(*root,init_box);
 
 	try {
-		/*
-		 * TODO (IAZ): Stopping criteria considering a precision UB-LB
-		 * Agregar restriccion a*z1+b*z2 = w para mejorar precision LB
-		 */
+
+		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
 
 		  if (trace >= 2) cout << buffer;

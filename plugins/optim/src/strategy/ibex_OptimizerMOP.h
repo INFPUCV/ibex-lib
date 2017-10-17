@@ -51,15 +51,15 @@ public:
 	 *
 	 * Inputs:
 	 *   \param n        - number of variables or the <b>original system</b>
+	 *   \param f1	     - the objective function f1
+     *	 \param f2       - the objective function f2
 	 *   \param ctc      - contractor for <b>extended<b> boxes (of size n+2)
 	 *   \param bsc      - bisector for <b>extended<b> boxes (of size n+2)
-	 *   \param finder   - upper-bounding procedure for the original system (n-sized boxes)
 	 *   \param buffer   - buffer for <b>extended<b> boxes (of size n+2)
-	 *   \param goal_var - index of the first goal variable in an extended box.
-   *   	 \param goal_var2- index of the second goal variable in an extended box.
+	 *   \param finder   - the finder of ub solutions
+	 *   \param eps	     - the required precision
 	 *
-	 * And optionally:
-	 *   \param eps_x         - absolute precision for the boxes (bisection control)
+
 	 *
 	 * \warning The optimizer relies on the contractor \a ctc to contract the domain of the goal variable
 	 *          and increase the uplo. If this contractor never contracts this goal variable,
@@ -69,7 +69,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps_x=default_eps_x, double eps_z=default_eps_z);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps=default_eps);
 
 	/**
 	 * \brief Delete *this.
@@ -207,17 +207,11 @@ public:
 	 */
 	LoupFinderMOP& finder;
 
-	/** Precision (bisection control constraints) */
-	const double eps_x;
-
-	/** Default bisection precision: 1e-5 */
-	static const double default_eps_x;
-
 	/** Precision (bisection control objective functions) */
-	const double eps_z;
+	const double eps;
 
 	/** Default bisection precision: 1e-5 */
-	static const double default_eps_z;
+	static const double default_eps;
 
 	/**
 	 * \brief Trace activation flag.
@@ -268,32 +262,27 @@ protected:
 
 
 	/**
-	 * \brief compute the max distance between the line z1 + a*z2 = w_lb and the UB step function
+	 * \brief returns true if the box+z1 + a*z2 > w_lb is dominated by the ub_set
 	 */
-	double max_distance(double w_lb, double a, Interval z1, Interval z2){
-		double max_dist=-1.0;
-
-		//cout << z1 << ";" << z2 << endl;
+	bool discard_test(double w_lb, double a, Interval z1, Interval z2){
+		if(UB.size()==2) return false;
 		map< pair <double, double>, Vector >::iterator it = UB.begin();
 		for(;it!=UB.end(); ){
 			pair <double, double> p = it->first; it++;
+
 			if(it==UB.end()) break;
 			pair <double, double> p2 = it->first;
 
-			//la solucion esta dentro de la caja
-			if( (z1.contains(p.first) && z2.contains(p.second)) || (z1.contains(p2.first) && z2.contains(p2.second)) ){
-				//cout << "(" << p.first << "," << p.second << ") ; (" << p2.first << "," << p2.second << ")" << endl;
+			pair <double, double> pmax= make_pair((Interval(p2.first)-Interval(eps)).ub(), (Interval(p.second)-Interval(eps)).ub());
 
-				pair <double, double> pmax= make_pair( std::min(p2.first,z1.ub()), std::min(p.second,z2.ub()));
-
-				double dist= std::min( (pmax.first + a*pmax.second) - w_lb, std::min(pmax.first-z1.lb(),  pmax.second-z2.lb()));
-				//cout << dist << endl;
-				if(dist > max_dist) max_dist=dist;
+			//el punto esta dentro de la zona de interes
+			if(pmax.first > z1.lb() && pmax.second > z2.lb()){
+				if((Interval(pmax.first) + Interval(a)*Interval(pmax.second)).lb() > w_lb)
+					return false;
 			}
 		}
 
-		if(max_dist == -1.0) return std::min( z1.ub() + a*z2.ub() - w_lb, std::min(z1.diam(), z2.diam()));
-		else return max_dist;
+		return true;
 	}
 
 	/**

@@ -25,19 +25,29 @@ namespace ibex {
 		/**
 		 * \brief Constructor for the root node (followed by a call to init_root).
 		 */
-		CellBS() : depth(0), id(0) {}
+		CellBS() : depth(0), id(0), a(0.0), w_lb(0.0) {}
+
+		/**
+		 * \brief Copy constructor
+		 */
+
+		CellBS(const CellBS& c) : depth(c.depth+1), id(nb_cells++),
+				a(c.a), w_lb(c.w_lb) { }
 
 		/**
 		 * \brief Duplicate the structure into the left/right nodes
 		 */
 		std::pair<Backtrackable*,Backtrackable*> down(){
-			CellBS* c1=new CellBS();
-			CellBS* c2=new CellBS();
-			c1->depth=depth+1;
-			c2->depth=depth+1;
+			CellBS* c1=new CellBS(*this);
+			CellBS* c2=new CellBS(*this);
 
-			c1->id=nb_cells++;
-			c2->id=nb_cells++;
+			//c1->depth=depth+1;
+			//c2->depth=depth+1;
+
+			//c1->id=nb_cells++;
+			//c2->id=nb_cells++;
+
+
 			return std::pair<Backtrackable*,Backtrackable*>(c1,c2);
 		}
 
@@ -49,6 +59,10 @@ namespace ibex {
 		/** depth of the node **/
 		int depth;
 
+		/** MOP: after filtering we know that z1+a*z2 > w_lb and we can
+		 * use this information for filtering**/
+		double a;
+		double w_lb;
 
 	};
 
