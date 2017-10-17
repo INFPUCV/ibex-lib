@@ -271,6 +271,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	time=0;
 	Timer::start();
 	handle_cell(*root,init_box);
+	CellBS::z1_init=root->box[n];
+	CellBS::z2_init=root->box[n+1];
 
 	try {
 

@@ -52,6 +52,8 @@ namespace ibex {
 		}
 
 		static int nb_cells;
+		static Interval z1_init;
+		static Interval z2_init;
 
 	    /**unique identifier for comparisons*/
 	    int id;
@@ -96,20 +98,43 @@ namespace ibex {
 
 	private:
 		/* Set of Cells */
-		typename std::set<Cell*, T> cset;
+		typename std::multiset<Cell*, T> cset;
 
 	};
 
+	/**
+	 * This criterion corresponds to the SR1 criterion of the paper of Fernandez&Toth (2007) for bi-objective problems
+	 * Authors says that in this way the curve is generated from left-top to right-bottom
+	 */
 	struct minLB {
 	  bool operator() (const Cell* c1, const Cell* c2) const
 	  {
 		  int n = c1->box.size();
 
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
-		  if(c1->get<CellBS>().depth != c2->get<CellBS>().depth) return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
-		  return (c1->get<CellBS>().id > c2->get<CellBS>().id);
+		  /*if(c1->get<CellBS>().depth != c2->get<CellBS>().depth)*/ return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+		  //return (c1->get<CellBS>().id > c2->get<CellBS>().id);
 	  }
 	};
+
+	/**
+	 * Criteria for bi-objective problems used in the paper by Martin et al. (2016)
+	 */
+	struct weighted_sum {
+	  bool operator() (const Cell* c1, const Cell* c2) const
+	  {
+		  int n = c1->box.size();
+		  double c1_ev= (c1->box[n-2].lb()-CellBS::z1_init.lb())/CellBS::z1_init.diam() +
+				  (c1->box[n-1].lb()-CellBS::z2_init.lb())/CellBS::z2_init.diam();
+
+		  double c2_ev= (c2->box[n-2].lb()-CellBS::z1_init.lb())/CellBS::z1_init.diam() +
+				  (c2->box[n-1].lb()-CellBS::z2_init.lb())/CellBS::z2_init.diam();
+
+		  return c1_ev < c2_ev;
+	  }
+	};
+
+
 
 
 	template<class T>

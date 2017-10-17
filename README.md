@@ -37,19 +37,39 @@ Graficar resultados paso a paso (Matias):
   
 (Damir-Matias)
 Estudiar y agregar técnicas de selección de nodo (para comparar con DivingMOP)
+
 - Estrategia del paper Constraint propagation using dominance in interval (2016)
 http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf)
 Escoger nodo que minimiza: (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init)
-Puede que baste con agregar función de comparación a CellSetBuffer
-- Estrategias de acá https://drive.google.com/open?id=0B9JSHx01XN1rSXNOWXZXbEswWVE&authuser=0
-No encontré más estrategias...
-Para que quede una comparación pulenta yo agregaría:
+AGREGADA
+
+- SR1: Min f1
+AGREGADA
+
 - Escoger caja no dominada random
-- Escoger caja no dominada con area máxima
-- Caja que maximiza distancia a UB
+- Escoger caja no dominada con area máxima (Damir's criteria)
+- Caja que maximiza distancia a UB --> como calcular la distancia?
+
+
 
 (Ignacio)
-Crear métodos que permitan mantener y actualizar set 
+Definir estructura de papers.
+Paper 1. Nonlinear biobjective optimization. Improvements to interval Branch&Bounds algorithms  (contribuciones):
+  - Propiedad de las soluciones (ub): 
+  any feasible solution x is eps-dominated by at least one solution x' in the ub set, i.e., 
+  for all x feasible, there exists at least one x' in ub_set, such that: f1(x') <= f1(x) + eps  and f2(x') <= f2(x) + eps
+  - Crierios de seleccion del siguiente nodo (non-dominated + ub_distance + diving)
+  - Upperbounding usando simplex (min f1 + min f2 + midpoint)
+  - Discarding boxes by using an auxiliary constraint: z1+a*z2=w
+
+Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges. (contribuciones):
+  - Definicion del ub_set usando segmentos factibles
+  - Proponer algoritmo eficiente (busqueda binaria) para encontrar soluciones factibles asociadas a puntos en los segmentos
+
+
+
+(Ignacio)
+Crear métodos que permitan mantener y actualizar set (para paper 2) 
 de segmentos no dominados (en principio para el UB). 
 Segmentos se representan con conjunto de puntos.
 - Agregar segmento (recibe dos puntos), debe actualizar los segmentos del set
@@ -63,10 +83,10 @@ insert_segment(p1, p2)
   v2 <- next(ub_set)
   
   in <- false
-  if s <- intersect(v1-v2, p1-p1+) 
+  if s <- intersect(v1-v2, p1+-p1) 
     in <- true
     add_point(s), add_point(p1)
-    delete_poitn(v2)  
+    delete_point(v2)  
   
   while(v1.y>p2.y)
               
@@ -85,6 +105,13 @@ insert_segment(p1, p2)
     
     
 point intersect(p, p2, q, q2)
+   if p.x=-inf
+     if q.x=-inf return q
+     else return NULL
+   if p2.y=-inf
+     if q2.y=-inf return q2
+     else return NULL
+   
    r=p2-p
    s=q2-q
    //now we find a solution for the equation p+tr = q+us,
@@ -96,28 +123,6 @@ point intersect(p, p2, q, q2)
       return NULL 
   
 
-  
-  
-  
-  
-  
 
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming: 
 Corrections and improvements for the biobjective case
-
-(Ignacio)
-Definir estructura de papers.
-Paper 1 (contribuciones):
-  - Propiedad de las soluciones (ub): 
-  any feasible solution x is eps-dominated by at least one solution x' in the ub set, i.e., 
-  for all x feasible, there exists at least one x' in ub_set, such that: f1(x') <= f1(x) + eps  and f2(x') <= f2(x) + eps
-  - Crierios de seleccion del siguiente nodo (non-dominated + ub_distance + diving)
-  - Upperbounding usando simplex (min f1 + min f2 + midpoint)
-  - Discarding boxes by using an auxiliary constraint: z1+a*z2=w
-
-Paper 2 (contribuciones):
-  - Definicion del ub_set usando segmentos factibles
-  - Proponer algoritmo eficiente (busqueda binaria) para encontrar soluciones factibles asociadas a puntos en los segmentos
-
-
-

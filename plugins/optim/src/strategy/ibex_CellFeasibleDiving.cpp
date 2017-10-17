@@ -15,7 +15,8 @@ using namespace std;
 namespace ibex {
 
 	int CellBS::nb_cells=0;
-
+	Interval CellBS::z1_init(0.0);
+	Interval CellBS::z2_init(0.0);
 	/*================================== inline implementations ========================================*/
 
 
