@@ -109,8 +109,72 @@ namespace ibex {
 		  int n = c1->box.size();
 
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
-		  /*if(c1->get<CellBS>().depth != c2->get<CellBS>().depth)*/ return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+
+	  }
+	};
+
+	/**
+	 * OC1 in https://tel.archives-ouvertes.fr/tel-01146856/document
+	 * min y1.lb
+	 */
+	struct OC1 {
+	  bool operator() (const Cell* c1, const Cell* c2) const
+	  {
+		  int n = c1->box.size();
+
+		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
+		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
+		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
 		  //return (c1->get<CellBS>().id > c2->get<CellBS>().id);
+	  }
+	};
+
+	/**
+	 * OC2 in https://tel.archives-ouvertes.fr/tel-01146856/document
+	 * min y2.lb
+	 */
+	struct OC2 {
+	  bool operator() (const Cell* c1, const Cell* c2) const
+	  {
+		  int n = c1->box.size();
+
+		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
+		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
+		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+		  //return (c1->get<CellBS>().id > c2->get<CellBS>().id);
+	  }
+	};
+
+	/**
+	 * OC3 in https://tel.archives-ouvertes.fr/tel-01146856/document
+	 * increasing value of y1.lb + y2.lb
+	 */
+	struct OC3 {
+	  bool operator() (const Cell* c1, const Cell* c2) const
+	  {
+		  int n = c1->box.size();
+
+		  if(c1->box[n-1].lb() + c1->box[n-2].lb() != c2->box[n-1].lb() + c2->box[n-2].lb())
+			  return (c1->box[n-1].lb() + c1->box[n-2].lb() < c2->box[n-1].lb() + c2->box[n-2].lb());
+		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+	  }
+	};
+
+	/**
+	 * OC4 in https://tel.archives-ouvertes.fr/tel-01146856/document
+	 * decreasing value of hypervolume of the point y
+	 */
+	struct OC4 {
+	  bool operator() (const Cell* c1, const Cell* c2) const
+	  {
+		  int n = c1->box.size();
+
+		  double hyper1=(CellBS::z1_init.ub()-c1->box[n-1].lb())*(CellBS::z2_init.ub()-c1->box[n-2].lb());
+		  double hyper2=(CellBS::z1_init.ub()-c1->box[n-1].lb())*(CellBS::z2_init.ub()-c1->box[n-2].lb());
+
+		  if(hyper1 != hyper2) return (hyper1 < hyper2);
+		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
 	  }
 	};
 
@@ -195,6 +259,10 @@ namespace ibex {
 	}
 
 
+	template class CellSet<OC1>;
+	template class CellSet<OC2>;
+	template class CellSet<OC3>;
+	template class CellSet<OC4>;
 	template class CellSet<minLB>;
 	template class CellSet<weighted_sum>;
 }
