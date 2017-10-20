@@ -18,6 +18,7 @@
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
+#include <iostream>
 
 using namespace std;
 
@@ -275,10 +276,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	CellBS::z2_init=root->box[n+1];
 
 	try {
-
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-
+		  plot();
+		  getchar();
 		  if (trace >= 2) cout << buffer;
 
 			/**
@@ -348,7 +349,7 @@ void OptimizerMOP::plot(){
 	}
 	output << "]" << endl;
 	output.close();
-	system("python3 plot.py");
+	// system("python3 plot.py");
 }
 
 void OptimizerMOP::report(bool verbose) {
@@ -371,7 +372,6 @@ void OptimizerMOP::report(bool verbose) {
 		}
 
 		cout << endl << get_time() << " " << get_nb_cells() << endl;
-		plot();
 		return;
 	}
 
