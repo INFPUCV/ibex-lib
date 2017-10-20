@@ -58,7 +58,7 @@ Paper 1. Nonlinear biobjective optimization. Improvements to interval Branch&Bou
   - Propiedad de las soluciones (ub): 
   any feasible solution x is eps-dominated by at least one solution x' in the ub set, i.e., 
   for all x feasible, there exists at least one x' in ub_set, such that: f1(x') <= f1(x) + eps  and f2(x') <= f2(x) + eps
-  - Crierios de seleccion del siguiente nodo (non-dominated + ub_distance + diving)
+  - Crierios de seleccion del siguiente nodo (ub_distance + diving)
   - Upperbounding usando simplex (min f1 + min f2 + midpoint)
   - Discarding boxes by using an auxiliary constraint: z1+a*z2=w
 
@@ -103,7 +103,7 @@ insert_segment(p1, p2)
     v1 <- v2
     v2 <- next(ub_set)  
     
-    
+// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
 point intersect(p, p2, q, q2)
    if p.x=-inf
      if q.x=-inf return q
