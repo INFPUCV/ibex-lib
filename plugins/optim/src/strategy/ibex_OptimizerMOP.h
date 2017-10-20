@@ -15,6 +15,7 @@
 #include "ibex_Bsc.h"
 #include "ibex_LoupFinderMOP.h"
 #include "ibex_CellBufferOptim.h"
+#include "ibex_CellSet.h"
 //#include "ibex_EntailedCtr.h"
 #include "ibex_CtcKhunTucker.h"
 
@@ -138,7 +139,7 @@ public:
 	 *
 	 * \return the UB of the last call to optimize(...).
 	 */
-	map< pair <double, double>, Vector > get_UB() const;
+	map< pair <double, double>, Vector >& get_UB()  { return UB; }
 
 
 	/**
@@ -336,6 +337,7 @@ private:
 	 */
 	Interval eval_goal(const Function& goal, Vector& x);
 
+
 	/** Currently entailed constraints */
 	//EntailedCtr* entailed;
 
@@ -350,7 +352,7 @@ private:
 
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x
-	 * If the loup-finder is rigorous, x may be a (non-degenerated) box. */
+	 */
 	map< pair <double, double>, Vector > UB;
 
 	/**
@@ -372,11 +374,11 @@ private:
 
 inline OptimizerMOP::Status OptimizerMOP::get_status() const { return status; }
 
-inline map< pair <double, double>, Vector > OptimizerMOP::get_UB() const { return UB; }
-
 inline double OptimizerMOP::get_time() const { return time; }
 
 inline double OptimizerMOP::get_nb_cells() const { return nb_cells; }
+
+
 
 
 } // end namespace ibex

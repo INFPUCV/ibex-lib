@@ -41,13 +41,6 @@ namespace ibex {
 			CellBS* c1=new CellBS(*this);
 			CellBS* c2=new CellBS(*this);
 
-			//c1->depth=depth+1;
-			//c2->depth=depth+1;
-
-			//c1->id=nb_cells++;
-			//c2->id=nb_cells++;
-
-
 			return std::pair<Backtrackable*,Backtrackable*>(c1,c2);
 		}
 
@@ -136,7 +129,6 @@ namespace ibex {
 
 
 
-
 	template<class T>
 	CellSet<T>::CellSet() {
 
@@ -201,5 +193,6 @@ namespace ibex {
 
 
 	template class CellSet<minLB>;
+	template class CellSet<weighted_sum>;
 }
 #endif // __IBEX_CELL_SET_H__

@@ -101,8 +101,19 @@ int main(int argc, char** argv){
 	//LoupFinderDefault loupfinder (norm_sys,false);
 
 	CellBufferOptim* buffer;
-	//if(strategy=="diving")
-	buffer = new CellFeasibleDiving<minLB>(*new CellSet<minLB>);
+	if(strategy=="minlb")
+	  buffer = new CellSet<minLB>;
+	else if(strategy=="weighted_sum")
+	  buffer = new CellSet<weighted_sum>;
+	else if(strategy=="NDSdist")
+	  buffer = new DistanceSortedCellBufferMOP;
+	else if(strategy=="diving-minlb")
+      buffer = new CellFeasibleDiving<minLB>(*new CellSet<minLB>);
+	else if(strategy=="diving-weighted_sum")
+	  buffer = new CellFeasibleDiving<weighted_sum>(*new CellSet<weighted_sum>);
+	else if(strategy=="diving-NDSdist")
+	  buffer = new CellFeasibleDiving<max_distance>(*new DistanceSortedCellBufferMOP);
+
 	/*else
 		buffer = new CellDoubleHeap  (ext_sys);*/
 
@@ -188,6 +199,8 @@ int main(int argc, char** argv){
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,prec);
+	max_distance::UB= &o.get_UB();
+
 
 	//	cout << " sys.box " << sys.box << endl;
 

@@ -155,5 +155,8 @@ namespace ibex {
 
 	  template class CellFeasibleDiving<minLB>;
 	  template class CellFeasibleDiving<maxsize>;
+	  template class CellFeasibleDiving<weighted_sum>;
+	  map< pair <double, double>, Vector >* max_distance::UB=NULL;
+	  template class CellFeasibleDiving<max_distance>;
 
 } // end namespace ibex

@@ -48,7 +48,17 @@ AGREGADA
 
 - Escoger caja no dominada random
 - Escoger caja no dominada con area máxima (Damir's criteria)
-- Caja que maximiza distancia a UB --> como calcular la distancia?
+- Caja que maximiza distancia a UB
+
+dist(b, ubset)
+
+  min_dist = inf
+  for each z in ubset
+    dist = max(z1 - b.lb1, z2-b.lb2 )
+    if dist<min_dist
+    mind_dist=dist
+  end for
+  return min_dist
 
 
 
