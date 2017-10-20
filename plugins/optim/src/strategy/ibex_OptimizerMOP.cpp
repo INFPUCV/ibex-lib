@@ -205,37 +205,38 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 	/*====================================================================*/
-	/*double diamX = 0.0, valueBox;
+	double diamX = 0.0, valueBox;
 	int i;
 	for (i=0; i < n; i++) {
 		valueBox = c.box[i].diam();
 		if(diamX < valueBox) {
 			diamX = valueBox;
 		}
-	}*/
+	}
 	// Metodo de termino para las restricciones
-	/*if ( diamX<=eps_x ) {
+	if ( diamX<=1e-8 ) {
 		//se guarda c.box en lista de soluciones (Sout)
 		Sout.push_back(c.box);
 		c.box.set_empty();
 		return;
-	}*/
+	}
 
 	//we compute the min diameter between z1, z2 and w
-	/*double diamZ = dist_w;
+	double diamZ = POS_INFINITY; //dist_w;
 	for (i=n; i < n+2; i++) {
 		valueBox = c.box[i].diam();
 		if(diamZ > valueBox) {
 			diamZ = valueBox;
 		}
 	}
+
 	// Metodo de termino para las funciones objetivo
-	if ( diamZ<=eps_z ) {
+	if ( diamZ<=1e-8 ) {
 		//se guarda c.box en lista de soluciones (Sout)
 		Sout.push_back(c.box);
 		c.box.set_empty();
 		return;
-	}*/
+	}
 
 }
 
