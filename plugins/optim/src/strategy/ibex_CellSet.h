@@ -69,6 +69,10 @@ namespace ibex {
 
 	  void flush();
 
+	    virtual void add_backtrackable(Cell& root){
+	    	root.add<CellBS>();
+	    }
+
 	  /** Return the size of the buffer. */
 	  unsigned int size() const;
 
@@ -131,7 +135,6 @@ namespace ibex {
 
 	template<class T>
 	CellSet<T>::CellSet() {
-
 	}
 
 	template<class T>
