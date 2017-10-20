@@ -107,6 +107,8 @@ int main(int argc, char** argv){
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
+	else if(strategy=="NDSsize")
+	  buffer = new CellFeasibleDiving<maxsize>(*new CellNSSet);
 	else if(strategy=="diving-minlb")
       buffer = new CellFeasibleDiving<minLB>(*new CellSet<minLB>);
 	else if(strategy=="diving-weighted_sum")
