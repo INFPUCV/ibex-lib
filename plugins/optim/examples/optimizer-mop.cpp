@@ -102,7 +102,7 @@ int main(int argc, char** argv){
 
 	CellBufferOptim* buffer;
 	if(strategy=="minlb")
-	  buffer = new CellSet<minLB>;
+	  buffer = new CellSet<OC1>;
 	else if(strategy=="weighted_sum")
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")

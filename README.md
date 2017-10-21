@@ -11,12 +11,13 @@ http://www.ibex-lib.org
 ./waf install
 
 export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig   -> Esto se tiene que hacer cada vez que se conecta a la maquina
+export PKG_CONFIG_PATH=/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/share/pkgconfig
 
 In plugins/optim/examples:
 make optimizer-mop
 
 Then, to run an example:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel diving 1e-1 100 1
+./optimizer-mop test2.txt acidhc4 compo smearsumrel diving-minlb 1e-1 100 1
 
 Para compilar todo en una sola linea yo hago lo siguiente:
 1. ingreso al directorio raiz de ibex (solo la primera vez)
