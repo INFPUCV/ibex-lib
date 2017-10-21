@@ -30,8 +30,8 @@ def animate(i):
             UBy.append(ub[1])
         ax1.plot()
         plt.legend(['UB', 'LB'], loc='upper right')
-        ax1.plot(UBx, UBy, 'b.')
-        # plt.plot(LBx, LBy, 'r.')
+        # ax1.plot(UBx, UBy, 'b.')
+        plt.plot(LBx, LBy, 'r.')
         # plt.show()
     except SyntaxError:
         print('holi')
