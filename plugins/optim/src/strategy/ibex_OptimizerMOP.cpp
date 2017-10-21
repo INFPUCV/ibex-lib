@@ -1,4 +1,4 @@
-//                                  I B E X                                   
+//                                  I B E X
 // File        : ibex_Optimizer.cpp
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
@@ -111,6 +111,7 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 		delete &c;
 	} else {
 		buffer.push(&c);
+		buffer_cells.insert(&c);
 
 		nb_cells++;
 	}
@@ -246,6 +247,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	nb_cells=0;
 
 	buffer.flush();
+	buffer_cells.clear();
 	//LB.clear();
 	UB.clear();
 	//the first point
@@ -279,8 +281,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-		  plot();
-		  getchar();
+
 		  if (trace >= 2) cout << buffer;
 
 			/**
@@ -291,18 +292,31 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			 */
 
 			Cell *c = buffer.top();
+		 	plot(c);
+		  getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
 
 				pair<Cell*,Cell*> new_cells=c->bisect(boxes.first,boxes.second);
 
+
+
 				buffer.pop();
+				buffer_cells.erase(c);
 				delete c; // deletes the cell.
 
-
+        //plot(new_cells.first); getchar();
 				handle_cell(*new_cells.first, init_box);
+				if(!new_cells.first->box.is_empty()){
+				   //plot(new_cells.first); getchar();
+				}
+
+				//plot(new_cells.second); getchar();
 				handle_cell(*new_cells.second, init_box);
+				if(!new_cells.second->box.is_empty()){
+				   //plot(new_cells.second); getchar();
+				}
 
 
 				time_limit_check(); // TODO: not reentrant
@@ -331,15 +345,19 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	return status;
 }
 
-void OptimizerMOP::plot(){
+void OptimizerMOP::plot(Cell* c){
 	ofstream output;
 	output.open("output.txt");
-	list<  IntervalVector > :: iterator sol=Sout.begin();
+	set<  Cell* > :: iterator cell=buffer_cells.begin();
 
 	output << "(";
-	for(;sol!=Sout.end();sol++){
-		output << "{'pts':(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << "),";
-		output << "'diam_x': " << (*sol)[n].diam() << ",'diam_y': " << (*sol)[n+1].diam();
+	output << "{'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
+	output << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam();
+	output << "},";
+
+	for(;cell!=buffer_cells.end();cell++){
+		output << "{'pts':(" << (*cell)->box[n].lb() << "," <<  (*cell)->box[n+1].lb() << "),";
+		output << "'diam_x': " <<  (*cell)->box[n].diam() << ",'diam_y': " <<  (*cell)->box[n+1].diam();
 		output << "},";
 	}
 	output << ")" << endl;

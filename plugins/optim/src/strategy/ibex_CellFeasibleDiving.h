@@ -21,16 +21,19 @@ struct max_distance {
 	 */
 	double distance(const IntervalVector& b){
 	   int n=b.size();
-     double min_dist = NEG_INFINITY;
-     map< pair <double, double>, Vector >::const_iterator it_lb=UB->lower_bound(make_pair(b[n-2].lb(),POS_INFINITY));
+     double min_dist = POS_INFINITY;
+     map< pair <double, double>, Vector >::const_iterator it_lb=UB->upper_bound(make_pair(b[n-2].lb(),POS_INFINITY));
 
      for (;it_lb!=UB->end(); it_lb++){
   	   pair <double, double> z = it_lb->first;
+			 if(z.second <= b[n-1].lb()) break;
+			 //cout << z.first << "," << z.second << endl;
   	   double dist = std::max(z.first -  b[n-2].lb(), z.second - b[n-1].lb());
   	   if(dist < min_dist) min_dist=dist;
-  	   if(z.second <= b[n-1].lb()) break;
+
      }
 
+    // cout << min_dist << endl;
      return min_dist;
 	}
 

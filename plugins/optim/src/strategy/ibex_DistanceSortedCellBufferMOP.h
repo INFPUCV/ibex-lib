@@ -26,7 +26,10 @@ namespace ibex {
 class DistanceSortedCellBufferMOP : public CellBufferOptim {
  public:
 
-
+   virtual void add_backtrackable(Cell& root){
+     root.add<CellBS>();
+   }
+   
   /** Flush the buffer.
    * All the remaining cells will be *deleted* */
   void flush();

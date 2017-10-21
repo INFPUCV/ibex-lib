@@ -125,7 +125,7 @@ public:
 	 */
 	void report(bool verbose=true);
 
-	void plot();
+	void plot(Cell* current);
 
 	/**
 	 * \brief Get the status.
@@ -349,6 +349,12 @@ private:
 
 	/** The set of final solutions */
 	std::list< IntervalVector > Sout;
+
+  /** The cells in the buffer for plotting
+	 * the set should be updated each time the real buffer is popped
+	 * and pushed.
+	 */
+	set< Cell* > buffer_cells;
 
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x

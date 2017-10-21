@@ -123,8 +123,8 @@ namespace ibex {
 	  {
 		  int n = c1->box.size();
 
-		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
+		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
 		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
 		  //return (c1->get<CellBS>().id > c2->get<CellBS>().id);
 	  }
