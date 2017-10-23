@@ -6,11 +6,15 @@ ibex-lib
 
 http://www.ibex-lib.org
 
+Instalation
+-----------
+
 ./waf configure --with-optim  --with-ampl --with-affine --prefix=. --gaol-dir= --optim-lib=soplex
 
 ./waf install
 
 export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig   -> Esto se tiene que hacer cada vez que se conecta a la maquina
+
 export PKG_CONFIG_PATH=/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/share/pkgconfig
 
 In plugins/optim/examples:
@@ -29,12 +33,15 @@ Y luego resolver un problema de ejemplo:
 
 
 TODO
+----
 
-Graficar resultados paso a paso (Matias):
-  - Bisección (remplazar caja por dos subcajas)
-  - Reducción o eliminación de caja (filtrado)
-  - Actualización UB (graficar como función escalera)
-  - Graficar recta lb en caja
+**(Matias)** Graficar resultados on-the-fly apretando tecla para avanzar:
+  - Destacar caja seleccionada en cada iteracion (top)... DONE
+  - Mostrar UB como funcion escalonada o puntos
+  - Mostrar conjunto de cajas UB... DONE
+  - Mostrar conjunto de cajas Sout
+  - Graficar recta lb dentro de cajas: z1 + a*z2=w_lb (para obtener esta informacion:
+  cell->get<CellBS>().a; cell->get<CellBS>().w_lb
   
 
 Estudiar y agregar técnicas de selección de nodo (para comparar con DivingMOP)
