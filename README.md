@@ -35,31 +35,30 @@ Y luego resolver un problema de ejemplo:
 TODO
 ----
 
-**(Matias)** Graficar resultados on-the-fly apretando tecla para avanzar:
+Graficar resultados on-the-fly apretando tecla para avanzar **(Matias)**:
   - [x] Destacar caja seleccionada en cada iteracion (top)
-  - [ ] Mostrar UB como funcion escalonada o puntos
+  - [ ] Tener la opcion de mostrar UB como funcion escalonada/puntos
   - [x] Mostrar conjunto de cajas UB
   - [ ] Mostrar conjunto de cajas Sout
   - [ ] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb (para obtener esta informacion:
   cell->get<CellBS>().a; cell->get<CellBS>().w_lb
   
+Implementar técnicas de selección de nodo:
 
-Estudiar y agregar técnicas de selección de nodo (para comparar con DivingMOP)
-
-- Estrategia del paper Constraint propagation using dominance in interval (2016)
-http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf)
-Escoger nodo que minimiza: (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init)
-AGREGADA
-
-- SR1: Min f1
-AGREGADA
-
-- Escoger caja no dominada random
-- Escoger caja no dominada con area máxima (Damir's criteria)
-
-- Caja que maximiza distancia a UB 
-AGREGADA
-
+  - [x] OC(http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init) 
+  - [x] SR1, [OC1](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1
+  - [x] [OC2](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb2
+  - [x] [OC3](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1 + lb2
+  - [x] [OC4](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing value of 
+  hypervolume of the point y (considering the initial values for z1_ub and z2_ub)
+  - [ ] [OC5](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing box size
+  of boxes such that lb is not dominated **(Damir's CellNSSet)**
+  - [ ] Escoger caja random del Nondominated Set **(Damir)**
+  - [x] Escoger caja que maximiza la distancia a UB
+   - [ ] Optimizar usando Pqueue  
+  - [x] Diving compatible con los metodos anteriores
+   - [ ] Revisar
+  - [ ] Beam search diving 
 
 
 (Ignacio)
@@ -85,54 +84,53 @@ Segmentos se representan con conjunto de puntos.
 - Agregar segmento (recibe dos puntos), debe actualizar los segmentos del set
 
 Notar que x aumenta e y disminuye en el ub_set.
-insert_segment(p1, p2)
-  p1+ <- (p1.x,inf)
-  p2+ <- (p2.y,inf)
 
-  v1 <- lb_x de p1 en ub_set
-  v2 <- next(ub_set)
+
+    insert_segment(p1, p2)
+      p1+ <- (p1.x,inf)
+      p2+ <- (p2.y,inf)
+      v1 <- lb_x de p1 en ub_set
+      v2 <- next(ub_set)
+      in <- false
+      if s <- intersect(v1-v2, p1+-p1)
+      in <- true
+      add_point(s), add_point(p1)
+      delete_point(v2)  
   
-  in <- false
-  if s <- intersect(v1-v2, p1+-p1) 
-    in <- true
-    add_point(s), add_point(p1)
-    delete_point(v2)  
-  
-  while(v1.y>p2.y)
+      while(v1.y>p2.y)
               
-    if s <- intersect(v1-v2, p1-p2) 
-      in=!in
-      add_point(s)
+        if s <- intersect(v1-v2, p1-p2) 
+          in=!in
+          add_point(s)
    
-    if(in) delete point(v2)
+        if(in) delete point(v2)
   
-    if v2.y > p2.y && s <- intersect(v1-v2, p2-p2+) 
-      in<-false;
-      add_point(s); add_point(p2)
+        if v2.y > p2.y && s <- intersect(v1-v2, p2-p2+) 
+          in<-false;
+          add_point(s); add_point(p2)
        
-    v1 <- v2
-    v2 <- next(ub_set)  
+        v1 <- v2
+        v2 <- next(ub_set)  
     
-// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-point intersect(p, p2, q, q2)
-   if p.x=-inf
-     if q.x=-inf return q
-     else return NULL
-   if p2.y=-inf
-     if q2.y=-inf return q2
-     else return NULL
+[Algoritmo para encontrar interseccion](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect))
+
+    point intersect(p, p2, q, q2)
+      if p.x=-inf
+      if q.x=-inf return q
+        else return NULL
+      if p2.y=-inf
+      if q2.y=-inf return q2
+        else return NULL
    
-   r=p2-p
-   s=q2-q
-   //now we find a solution for the equation p+tr = q+us,
-   t=(q-p) x s/(r x s)
+      r=p2-p
+      s=q2-q
+      //now we find a solution for the equation p+tr = q+us,
+      t=(q-p) x s/(r x s)
    
-   if r x s!=0 and t in [0,1]
-      return p+tr
-   else
-      return NULL 
+      if r x s!=0 and t in [0,1]
+        return p+tr
+      else
+        return NULL 
   
-
-
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming: 
 Corrections and improvements for the biobjective case
