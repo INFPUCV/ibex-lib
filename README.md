@@ -36,11 +36,11 @@ TODO
 ----
 
 **(Matias)** Graficar resultados on-the-fly apretando tecla para avanzar:
-  - Destacar caja seleccionada en cada iteracion (top)... DONE
-  - Mostrar UB como funcion escalonada o puntos
-  - Mostrar conjunto de cajas UB... DONE
-  - Mostrar conjunto de cajas Sout
-  - Graficar recta lb dentro de cajas: z1 + a*z2=w_lb (para obtener esta informacion:
+  - [x] Destacar caja seleccionada en cada iteracion (top)
+  - [ ] Mostrar UB como funcion escalonada o puntos
+  - [x] Mostrar conjunto de cajas UB
+  - [ ] Mostrar conjunto de cajas Sout
+  - [ ] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb (para obtener esta informacion:
   cell->get<CellBS>().a; cell->get<CellBS>().w_lb
   
 
