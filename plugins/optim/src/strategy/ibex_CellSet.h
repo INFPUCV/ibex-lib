@@ -13,6 +13,8 @@
 #include "ibex_Random.h"
 #include "ibex_CellBuffer.h"
 #include <set>
+#include <map>
+#include <queue>
 // #include "ibex_Set.h"
 // #include "../strategy/ibex_Cell.h"
 
@@ -25,14 +27,14 @@ namespace ibex {
 		/**
 		 * \brief Constructor for the root node (followed by a call to init_root).
 		 */
-		CellBS() : depth(0), id(0), a(0.0), w_lb(0.0) {}
+		CellBS() : depth(0), id(0), a(0.0), w_lb(0.0), ub_distance(POS_INFINITY) {}
 
 		/**
 		 * \brief Copy constructor
 		 */
 
 		CellBS(const CellBS& c) : depth(c.depth+1), id(nb_cells++),
-				a(c.a), w_lb(c.w_lb) { }
+				a(c.a), w_lb(c.w_lb), ub_distance(POS_INFINITY) { }
 
 		/**
 		 * \brief Duplicate the structure into the left/right nodes
@@ -59,6 +61,49 @@ namespace ibex {
 		double a;
 		double w_lb;
 
+
+		/** MOP: distance of the box to the current non dominated set (UB) */
+		double ub_distance;
+
+	};
+
+
+	/**
+	 * Criteria for bi-objective problems
+	 */
+	struct max_distance {
+
+		/**
+		 * \brief distance from the box to the non dominated set
+		 */
+		static double distance(const IntervalVector& b){
+		   int n=b.size();
+	     map< pair <double, double>, Vector >::const_iterator it_lb=UB->lower_bound(make_pair(b[n-2].lb(),POS_INFINITY));
+	     it_lb--;
+
+	     double min_dist = it_lb->first.second - b[n-1].lb();
+
+	     for (;it_lb!=UB->end(); it_lb++){
+	  	   pair <double, double> z = it_lb->first;
+		   if(z.second <= b[n-1].lb()){
+			   double dist = z.first -  b[n-2].lb();
+			   if(dist < min_dist) min_dist=dist;
+			   break;
+		   }
+
+	  	   double dist = std::max(z.first -  b[n-2].lb(), z.second - b[n-1].lb());
+	  	   if(dist < min_dist) min_dist=dist;
+
+	     }
+
+	     return min_dist;
+		}
+
+		bool operator() (const Cell* c1, const Cell* c2){
+	       return (c1->get<CellBS>().ub_distance < c2->get<CellBS>().ub_distance);
+	    }
+
+		static map< pair <double, double>, Vector >* UB;
 	};
 
 	template<class T>

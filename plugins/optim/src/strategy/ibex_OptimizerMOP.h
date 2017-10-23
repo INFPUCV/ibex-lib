@@ -70,7 +70,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps=default_eps);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double rel_eps=default_rel_eps, double abs_eps=default_abs_eps);
 
 	/**
 	 * \brief Delete *this.
@@ -209,10 +209,15 @@ public:
 	LoupFinderMOP& finder;
 
 	/** Precision (bisection control objective functions) */
-	const double eps;
+	double abs_eps;
 
-	/** Default bisection precision: 1e-5 */
-	static const double default_eps;
+	const double rel_eps;
+
+	/** Default absolute precision: 1e-7 */
+	static const double default_abs_eps;
+
+	/** Default relative precision: 0.1 */
+	static const double default_rel_eps;
 
 	/**
 	 * \brief Trace activation flag.
@@ -274,15 +279,18 @@ protected:
 			if(it==UB.end()) break;
 			pair <double, double> p2 = it->first;
 
-			pair <double, double> pmax= make_pair((Interval(p2.first)-Interval(eps)).ub(), (Interval(p.second)-Interval(eps)).ub());
+			pair <double, double> pmax= make_pair(p2.first, p.second);
+			//cout << "pmax: (" << pmax.first <<"," << pmax.second << ")" << endl;
 
 			//el punto esta dentro de la zona de interes
 			if(pmax.first > z1.lb() && pmax.second > z2.lb()){
+				if(pmax.first==POS_INFINITY || pmax.second == POS_INFINITY) return false;
 				if((Interval(pmax.first) + Interval(a)*Interval(pmax.second)).lb() > w_lb)
 					return false;
 			}
 		}
 
+		//cout << "discarded" << endl;
 		return true;
 	}
 

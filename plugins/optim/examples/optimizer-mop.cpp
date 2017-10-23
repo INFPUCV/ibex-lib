@@ -129,19 +129,19 @@ int main(int argc, char** argv){
 	Bsc * bs;
 
 	if (bisection=="roundrobin")
-	  bs = new RoundRobin (prec);
+	  bs = new RoundRobin (0);
 	else if (bisection== "largestfirst")
-          bs= new LargestFirst(prec);
+          bs= new LargestFirst(0);
 	else if (bisection=="smearsum")
-	  bs = new SmearSum(ext_sys,prec);
+	  bs = new SmearSum(ext_sys,0);
 	else if (bisection=="smearmax")
-	  bs = new SmearMax(ext_sys,prec);
+	  bs = new SmearMax(ext_sys,0);
 	else if (bisection=="smearsumrel")
 	  bs = new SmearSumRelative(ext_sys,0);
 	else if (bisection=="smearmaxrel")
 	  bs = new SmearMaxRelative(ext_sys,0);
-	//else if (bisection=="lsmear")
-	 // bs = new LSmear(ext_sys,prec);
+	else if (bisection=="lsmear")
+	  bs = new LSmear(ext_sys,0);
 	else {cout << bisection << " is not an implemented  bisection mode "  << endl; return -1;}
 
 	// The contractors
@@ -202,7 +202,7 @@ int main(int argc, char** argv){
 	  ctcxn = ctc;
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,prec);
+	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,prec, prec);
 	max_distance::UB= &o.get_UB();
 
 

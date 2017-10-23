@@ -29,7 +29,7 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel diving 1e-1 100 1
+./optimizer-mop test2.txt acidhc4 compo smearsumrel diving-NDSdist 1e-1 100 1
 
 
 TODO
@@ -40,8 +40,7 @@ Graficar resultados on-the-fly apretando tecla para avanzar **(Matias)**:
   - [ ] Tener la opcion de mostrar UB como funcion escalonada/puntos
   - [x] Mostrar conjunto de cajas UB
   - [ ] Mostrar conjunto de cajas Sout
-  - [ ] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb (para obtener esta informacion:
-  cell->get<CellBS>().a; cell->get<CellBS>().w_lb
+  - [x] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb
   
 Técnicas de selección de nodo:
   - [x] [OC](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init) 
@@ -53,18 +52,20 @@ Técnicas de selección de nodo:
   - [ ] [OC5](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing box size
   of boxes such that lb is not dominated **(Damir's CellNSSet)**
   - [ ] Escoger caja random del Nondominated Set **(Damir)**
-  - [x] Escoger caja que maximiza la distancia a UB **(Optimizar usando Pqueue)**
-  - [x] Diving compatible con los metodos anteriores **(Revisar issues)**
+  - [x] Escoger caja que maximiza la distancia a UB (Optimizada usando Pqueue)
+  - [x] Diving compatible con los metodos anteriores
   - [ ] Beam search diving 
 
 Criterio de termino:
-  - [ ] Definir criterio relativo: porcentaje (wid(z1), wid(z2))
+  - [ ] Definir criterio relativo: porcentaje (wid(z1), wid(z2)) --> problema: como obtener limites de manera eficiente usando cajas LB
 
 Biseccion:
   - [ ] Adaptar LSmear (tecnica de biseccion)
+  - Algunos metodos de biseccion no bisectan algunas variables
 
 Discarding boxes:
-  - [x] Lowerbound usando restriccion z1+a*z2=w  
+  - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w  
+  - [ ] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
 
 **(Ignacio, Damir)** Upperbounding:
   - [ ] Encontrar recta factible en x usando simplex,

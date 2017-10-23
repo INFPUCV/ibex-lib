@@ -24,14 +24,15 @@ using namespace std;
 
 namespace ibex {
 
-const double OptimizerMOP::default_eps = 1e-5;
+const double OptimizerMOP::default_abs_eps = 1e-7;
+const double OptimizerMOP::default_rel_eps = 0.1;
 
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double eps) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double rel_eps, double abs_eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
-								finder(finder), eps(eps), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0) {
+								finder(finder), trace(false), timeout(-1), status(SUCCESS),
+                				time(0), nb_cells(0), rel_eps(rel_eps), abs_eps(abs_eps) {
 
 	if (trace) cout.precision(12);
 }
@@ -142,8 +143,8 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	map< pair <double, double>, Vector >:: iterator ent1;
 	for(ent1 = UB.begin(); ent1 != UB.end() ; ent1++) {
-		z1 = (Interval(ent1->first.first)-Interval(eps)).ub(); // pair 1
-		z2 = (Interval(ent1->first.second)-Interval(eps)).ub(); // pair 2
+		z1 = ent1->first.first; // pair 1
+		z2 = ent1->first.second; // pair 2
 		if(z1 < c.box[n].lb() && z2 < c.box[n+1].lb()) {
 			c.box.set_empty();
 			return;
@@ -201,12 +202,13 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 
-	bool loup_ch=update_UB(c.box, 3);
+	bool loup_ch=update_UB(c.box, 15);
 
 
 
 
 	/*====================================================================*/
+	/*
 	double diamX = 0.0, valueBox;
 	int i;
 	for (i=0; i < n; i++) {
@@ -238,7 +240,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		Sout.push_back(c.box);
 		c.box.set_empty();
 		return;
-	}
+	}*/
 
 }
 
@@ -291,33 +293,25 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			 * Implementar otros metodos para comparar.
 			 */
 
-			Cell *c = buffer.top();
+			Cell *c = buffer.pop();
+			buffer_cells.erase(c);
+
+
+
+			if(max_distance::distance(c->box) < abs_eps) continue;
+
 		 	plot(c);
-		  getchar();
+		    //getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
 
 				pair<Cell*,Cell*> new_cells=c->bisect(boxes.first,boxes.second);
 
-
-
-				buffer.pop();
-				buffer_cells.erase(c);
 				delete c; // deletes the cell.
 
-        //plot(new_cells.first); getchar();
 				handle_cell(*new_cells.first, init_box);
-				if(!new_cells.first->box.is_empty()){
-				   //plot(new_cells.first); getchar();
-				}
-
-				//plot(new_cells.second); getchar();
 				handle_cell(*new_cells.second, init_box);
-				if(!new_cells.second->box.is_empty()){
-				   //plot(new_cells.second); getchar();
-				}
-
 
 				time_limit_check(); // TODO: not reentrant
 
@@ -334,8 +328,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		return status;
 	}
 
+
 	Timer::stop();
 	time+= Timer::VIRTUAL_TIMELAPSE();
+
+
 
 	if (Sout.empty())
 		status=INFEASIBLE;
@@ -350,17 +347,26 @@ void OptimizerMOP::plot(Cell* c){
 	output.open("output.txt");
 	set<  Cell* > :: iterator cell=buffer_cells.begin();
 
+	//if(c){
 	output << "(";
-	output << "{'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
-	output << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam();
-	output << "},";
+
+		output << "{'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
+		output << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam()<< ",";
+		output << "'pA':(" << c->box[n].lb() <<"," <<  (((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a)   << "),";
+		output << "'pB':(" << (c->get<CellBS>().w_lb-c->get<CellBS>().a*c->box[n+1].lb()) <<"," <<  c->box[n+1].lb()  << ")";
+		output << "},";
+
 
 	for(;cell!=buffer_cells.end();cell++){
 		output << "{'pts':(" << (*cell)->box[n].lb() << "," <<  (*cell)->box[n+1].lb() << "),";
-		output << "'diam_x': " <<  (*cell)->box[n].diam() << ",'diam_y': " <<  (*cell)->box[n+1].diam();
+		output << "'diam_x': " <<  (*cell)->box[n].diam() << ",'diam_y': " <<  (*cell)->box[n+1].diam() << ",";
+		output << "'pA':(" << (*cell)->box[n].lb() <<"," <<  (((*cell)->get<CellBS>().w_lb-(*cell)->box[n].lb())/(*cell)->get<CellBS>().a)   << "),";
+		output << "'pB':(" << ((*cell)->get<CellBS>().w_lb-(*cell)->get<CellBS>().a*(*cell)->box[n+1].lb()) <<"," <<  (*cell)->box[n+1].lb()  << ")";
 		output << "},";
 	}
 	output << ")" << endl;
+	//}
+
 	output << "[";
 	map< pair <double, double>, Vector > :: iterator ub=UB.begin();
 	for(;ub!=UB.end();ub++){

@@ -11,7 +11,7 @@
 #include "ibex_CellBuffer.h"
 #include "ibex_CellBufferOptim.h"
 #include "ibex_CellFeasibleDiving.h"
-#include <list>
+#include <queue>
 #include <map>
 
 using namespace std;
@@ -67,8 +67,8 @@ class DistanceSortedCellBufferMOP : public CellBufferOptim {
 		  exit(0);
 	}
 
-	/* Stack of cells */
-	std::list<Cell*> cells;
+
+	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distance > cells;
 
 
 };

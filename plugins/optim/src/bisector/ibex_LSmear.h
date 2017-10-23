@@ -37,7 +37,7 @@ public :
 	virtual int var_to_bisect(IntervalMatrix & J,const IntervalVector& box) const;
 
 
-	LinearSolver::Status_Sol getdual(IntervalMatrix & J,const IntervalVector& box, Vector& dual) const;
+	LinearSolver::Status_Sol getdual(IntervalMatrix & J,const IntervalVector& box, Vector& dual, int goal_var) const;
 
 
 

@@ -23,7 +23,7 @@ def animate(i):
             (LB[0]['pts'][0], LB[0]['pts'][1]),
             LB[0]['diam_x'], LB[0]['diam_y'],
             fill=False,
-            edgecolor='blue',
+            edgecolor='red',
             linestyle='solid',
             lw=0.1
             ))
@@ -32,7 +32,7 @@ def animate(i):
                     (lb['pts'][0], lb['pts'][1]),
                     lb['diam_x'], lb['diam_y'],
                     fill=False,
-                    edgecolor='red',
+                    edgecolor='black',
                     linestyle='solid',
                     lw=0.1
                     ) for lb in islice(LB, 1, len(LB))]:
@@ -40,11 +40,16 @@ def animate(i):
         for ub in UB:
             UBx.append(ub[0])
             UBy.append(ub[1])
+        for lb in LB:
+        	if (lb['pA'][0] < lb['pB'][0]) and (lb['pA'][1] > lb['pB'][1]):
+        		line = plt.Line2D((lb['pA'][0], lb['pB'][0]),(lb['pA'][1], lb['pB'][1]),lw=0.5,markeredgecolor='black')
+        		ax1.add_line(line)
         ax1.plot()
         plt.legend(['UB', 'LB'], loc='upper right')
         # ax1.plot(UBx, UBy, 'b.')
-        plt.plot(UBx, UBy, 'r.')
-        # plt.show()
+        plt.plot(UBx, UBy, 'r.', markersize=1)
+
+        #plt.show()
     except SyntaxError:
         print('holi')
 
