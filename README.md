@@ -43,9 +43,8 @@ Graficar resultados on-the-fly apretando tecla para avanzar **(Matias)**:
   - [ ] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb (para obtener esta informacion:
   cell->get<CellBS>().a; cell->get<CellBS>().w_lb
   
-Implementar técnicas de selección de nodo:
-
-  - [x] OC(http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init) 
+Técnicas de selección de nodo:
+  - [x] [OC](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init) 
   - [x] SR1, [OC1](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1
   - [x] [OC2](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb2
   - [x] [OC3](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1 + lb2
@@ -54,11 +53,24 @@ Implementar técnicas de selección de nodo:
   - [ ] [OC5](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing box size
   of boxes such that lb is not dominated **(Damir's CellNSSet)**
   - [ ] Escoger caja random del Nondominated Set **(Damir)**
-  - [x] Escoger caja que maximiza la distancia a UB
-   - [ ] Optimizar usando Pqueue  
-  - [x] Diving compatible con los metodos anteriores
-   - [ ] Revisar
+  - [x] Escoger caja que maximiza la distancia a UB **(Optimizar usando Pqueue)**
+  - [x] Diving compatible con los metodos anteriores **(Revisar issues)**
   - [ ] Beam search diving 
+
+Criterio de termino:
+  - [ ] Definir criterio relativo: porcentaje (wid(z1), wid(z2))
+
+Biseccion:
+  - [ ] Adaptar LSmear (tecnica de biseccion)
+
+Discarding boxes:
+  - [x] Lowerbound usando restriccion z1+a*z2=w  
+
+**(Ignacio, Damir)** Upperbounding:
+  - [ ] Encontrar recta factible en x usando simplex,
+  para luego obtener segmentos upperbound de la curva asociada en y
+  - [ ] Implementar metodos para manejar el set de segmentos no dominados (nuevo UB)
+
 
 
 (Ignacio)
@@ -112,7 +124,7 @@ Notar que x aumenta e y disminuye en el ub_set.
         v1 <- v2
         v2 <- next(ub_set)  
     
-[Algoritmo para encontrar interseccion](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect))
+[Algoritmo para encontrar interseccion entre 2 segmentos](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
 
     point intersect(p, p2, q, q2)
       if p.x=-inf
