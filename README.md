@@ -57,7 +57,7 @@ Técnicas de selección de nodo:
   - [ ] Beam search diving 
 
 Criterio de termino:
-  - [ ] Definir criterio relativo: porcentaje (wid(z1), wid(z2)) 
+  - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2)) 
 
 Biseccion:
   - [ ] Adaptar LSmear (tecnica de biseccion)

@@ -296,8 +296,18 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			Cell *c = buffer.pop();
 			buffer_cells.erase(c);
+			if(UB.size()>=4){
+				pair <double, double> first=(*++UB.begin()).first;
+				pair <double, double> last=(*++UB.rbegin()).first;
+
+				double size = std::min(last.first - first.first,
+					first.second - last.second);
+
+				abs_eps=rel_eps*size;
+			}
 
 
+			cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){delete c; continue;}
 
 		 	plot(c);
