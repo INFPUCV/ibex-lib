@@ -6,6 +6,7 @@
  */
 
 #include "ibex_DistanceSortedCellBufferMOP.h"
+#include "ibex_OptimizerMOP.h"
 #include <algorithm>    // std::min_element, std::max_element
 
 namespace ibex {
@@ -45,7 +46,7 @@ namespace ibex {
 		if(!c) return NULL;
 
 
-		double dist=max_distance::distance(c->box);
+		double dist=OptimizerMOP::distance2(c);
 
 		//we update the distance and reinsert the element
 		while(dist!=c->get<CellBS>().ub_distance){
@@ -53,12 +54,12 @@ namespace ibex {
 			c->get<CellBS>().ub_distance=dist;
 			cells.push(c);
 			c = cells.top();
-			dist=max_distance::distance(c->box);
+			dist=OptimizerMOP::distance2(c);
 		}
 
 		cout << "dist:" << dist << endl;
 		return c;
 	}
 
-	} // end namespace ibex
+} // end namespace ibex
 

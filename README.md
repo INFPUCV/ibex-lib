@@ -57,7 +57,7 @@ Técnicas de selección de nodo:
   - [ ] Beam search diving 
 
 Criterio de termino:
-  - [ ] Definir criterio relativo: porcentaje (wid(z1), wid(z2)) --> problema: como obtener limites de manera eficiente usando cajas LB
+  - [ ] Definir criterio relativo: porcentaje (wid(z1), wid(z2)) 
 
 Biseccion:
   - [ ] Adaptar LSmear (tecnica de biseccion)
@@ -65,7 +65,7 @@ Biseccion:
 
 Discarding boxes:
   - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w  
-  - [ ] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
+  - [x] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
 
 **(Ignacio, Damir)** Upperbounding:
   - [ ] Encontrar recta factible en x usando simplex,

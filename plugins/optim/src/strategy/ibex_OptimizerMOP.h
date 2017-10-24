@@ -240,6 +240,49 @@ public:
 	double timeout;
 
 
+	/**
+	 * \brief returns true if the box+z1 + a*z2 > w_lb is dominated by the ub_set
+	 */
+	static double distance2(const Cell* c){
+		if(c->get<CellBS>().ub_distance != POS_INFINITY) return c->get<CellBS>().ub_distance;
+
+		int n=c->box.size();
+
+		Interval z1 = c->box[n-2];
+		Interval z2 = c->box[n-1];
+		double a = c->get<CellBS>().a;
+		double w_lb = c->get<CellBS>().w_lb;
+
+		double min_dist=POS_INFINITY;
+		if(UB.size()==2) return min_dist;
+
+		//TODO: optimize this
+		map< pair <double, double>, Vector >::iterator it = UB.begin();
+
+
+		for(;it!=UB.end(); ){
+			pair <double, double> p = it->first; it++;
+			if(it==UB.end()) break;
+			pair <double, double> p2 = it->first;
+
+			pair <double, double> pmax= make_pair(p2.first, p.second);
+			//cout << "pmax: (" << pmax.first <<"," << pmax.second << ")" << endl;
+
+
+
+			//el punto esta dentro de la zona de interes
+			if(pmax.first > z1.lb() && pmax.second > z2.lb()){
+				double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
+				dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
+
+				if(dist < min_dist) min_dist=dist;
+				if(min_dist <=0.0) return min_dist;
+			}else break;
+		}
+
+		return min_dist;
+	}
+
 protected:
 
 	/**
@@ -265,6 +308,8 @@ protected:
 	 *
 	 */
 	void contract_and_bound(Cell& c, const IntervalVector& init_box);
+
+
 
 
 	/**
@@ -367,7 +412,7 @@ private:
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x
 	 */
-	map< pair <double, double>, Vector > UB;
+	static map< pair <double, double>, Vector > UB;
 
 	/**
 	 * A set of points denoting the segments related to the lowerbound of the

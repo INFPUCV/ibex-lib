@@ -26,6 +26,7 @@ namespace ibex {
 
 const double OptimizerMOP::default_abs_eps = 1e-7;
 const double OptimizerMOP::default_rel_eps = 0.1;
+map< pair <double, double>, Vector > OptimizerMOP::UB;
 
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
@@ -123,9 +124,9 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	/*====== filtering using the line z1+a*z2>w_lb and the ub_set ======*/
 
 	//Conservativo: ok!
-	if (c.get<CellBS>().depth>0 && discard_test(c.get<CellBS>().w_lb, c.get<CellBS>().a, c.box[n], c.box[n+1])){
-		c.box.set_empty(); return;
-	}
+	//if (c.get<CellBS>().depth>0 && discard_test(c.get<CellBS>().w_lb, c.get<CellBS>().a, c.box[n], c.box[n+1])){
+	//	c.box.set_empty(); return;
+	//}
 
 	/*====================================================================*/
 
@@ -297,11 +298,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			buffer_cells.erase(c);
 
 
-
-			if(max_distance::distance(c->box) < abs_eps) continue;
+			if(distance2(c) < abs_eps){delete c; continue;}
 
 		 	plot(c);
-		    //getchar();
+		    getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
