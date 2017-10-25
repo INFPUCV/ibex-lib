@@ -41,26 +41,25 @@ Graficar resultados on-the-fly apretando tecla para avanzar **(Matias)**:
   - [x] Mostrar conjunto de cajas UB
   - [ ] Mostrar conjunto de cajas Sout
   - [x] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb
-  
+
 Técnicas de selección de nodo:
-  - [x] [OC](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init) 
+  - [x] [OC](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init)
   - [x] SR1, [OC1](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1
   - [x] [OC2](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb2
   - [x] [OC3](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1 + lb2
-  - [x] [OC4](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing value of 
+  - [x] [OC4](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing value of
   hypervolume of the point y (considering the initial values for z1_ub and z2_ub)
   - [ ] [OC5](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing box size
   of boxes such that lb is not dominated **(Damir's CellNSSet)**
   - [ ] Escoger caja random del Nondominated Set **(Damir)**
   - [x] Escoger caja que maximiza la distancia a UB (Optimizada usando Pqueue)
   - [x] Diving compatible con los metodos anteriores
-  - [ ] Beam search diving 
 
 Criterio de termino:
-  - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2)) 
+  - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2))
 
 Biseccion:
-  - [ ] Adaptar LSmear (tecnica de biseccion)
+  - [x] Adaptar LSmear (tecnica de biseccion)
   - Algunos metodos de biseccion no bisectan algunas variables
 
 Discarding boxes:
@@ -68,6 +67,7 @@ Discarding boxes:
   - [x] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
 
 **(Ignacio, Damir)** Upperbounding:
+  - [ ] Criterio dinamico para establecer cantidad de puntos que se generan
   - [ ] Encontrar recta factible en x usando simplex,
   para luego obtener segmentos upperbound de la curva asociada en y
   - [ ] Implementar metodos para manejar el set de segmentos no dominados (nuevo UB)
@@ -77,8 +77,8 @@ Discarding boxes:
 (Ignacio)
 Definir estructura de papers.
 Paper 1. Nonlinear biobjective optimization. Improvements to interval Branch&Bounds algorithms  (contribuciones):
-  - Propiedad de las soluciones (ub): 
-  any feasible solution x is eps-dominated by at least one solution x' in the ub set, i.e., 
+  - Propiedad de las soluciones (ub):
+  any feasible solution x is eps-dominated by at least one solution x' in the ub set, i.e.,
   for all x feasible, there exists at least one x' in ub_set, such that: f1(x') <= f1(x) + eps  and f2(x') <= f2(x) + eps
   - Crierios de seleccion del siguiente nodo (ub_distance + diving)
   - Upperbounding usando simplex (min f1 + min f2 + midpoint)
@@ -91,8 +91,8 @@ Paper 2. Nonlinear biobjective optimization. Improving the precision of the nond
 
 
 (Ignacio)
-Crear métodos que permitan mantener y actualizar set (para paper 2) 
-de segmentos no dominados (en principio para el UB). 
+Crear métodos que permitan mantener y actualizar set (para paper 2)
+de segmentos no dominados (en principio para el UB).
 Segmentos se representan con conjunto de puntos.
 - Agregar segmento (recibe dos puntos), debe actualizar los segmentos del set
 
@@ -109,22 +109,22 @@ Notar que x aumenta e y disminuye en el ub_set.
       in <- true
       add_point(s), add_point(p1)
       delete_point(v2)  
-  
+
       while(v1.y>p2.y)
-              
-        if s <- intersect(v1-v2, p1-p2) 
+
+        if s <- intersect(v1-v2, p1-p2)
           in=!in
           add_point(s)
-   
+
         if(in) delete point(v2)
-  
-        if v2.y > p2.y && s <- intersect(v1-v2, p2-p2+) 
+
+        if v2.y > p2.y && s <- intersect(v1-v2, p2-p2+)
           in<-false;
           add_point(s); add_point(p2)
-       
+
         v1 <- v2
         v2 <- next(ub_set)  
-    
+
 [Algoritmo para encontrar interseccion entre 2 segmentos](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
 
     point intersect(p, p2, q, q2)
@@ -134,16 +134,16 @@ Notar que x aumenta e y disminuye en el ub_set.
       if p2.y=-inf
       if q2.y=-inf return q2
         else return NULL
-   
+
       r=p2-p
       s=q2-q
       //now we find a solution for the equation p+tr = q+us,
       t=(q-p) x s/(r x s)
-   
+
       if r x s!=0 and t in [0,1]
         return p+tr
       else
-        return NULL 
-  
-Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming: 
+        return NULL
+
+Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming:
 Corrections and improvements for the biobjective case

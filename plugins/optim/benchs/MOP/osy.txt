@@ -8,6 +8,7 @@ x4 in [ 0,6];
 x5 in [ 1,5];
 x6 in [ 0,10];
 z1 in [-1e8, 1e8];
+//z1 in [-260, -255];
 z2 in [-1e8, 1e8];
 
 constraints

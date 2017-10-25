@@ -49,7 +49,6 @@ Interval OptimizerMOP::eval_goal(const Function& goal, Vector& x){
 	return goal.eval(x);
 }
 
-
 bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 
 	list<Vector> feasible_points;
@@ -71,14 +70,18 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 
 		//4. Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
 		bool insert_ub=true;
-		for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ++it ){
+		std::map<pair<double, double>, Vector>::iterator it = UB.lower_bound(eval);
+		it--;
+		for(; it!=UB.end(); ++it ){
 			if (eval.first >= it->first.first && eval.second >= it->first.second){
 				insert_ub=false;
 				break;
 			}
+			if(eval.second > it->first.second) break;
 		}
 
 		if(insert_ub){
+			std::map<pair<double, double>, Vector>::iterator it = UB.lower_bound(eval);
 			for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ){
 				if (eval.first <= it->first.first && eval.second <= it->first.second){
 					std::map<pair<double, double>, Vector>::iterator aux = it;
@@ -89,6 +92,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 				else {
 					++it;
 				}
+				if(it==UB.end() || eval.second > it->first.second) break;
 			}
 
 			UB.insert(make_pair(eval, vec));
@@ -101,8 +105,6 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 	return new_ub;
 
 }
-
-
 
 
 void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
@@ -121,14 +123,9 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
-	/*====== filtering using the line z1+a*z2>w_lb and the ub_set ======*/
-
-	//Conservativo: ok!
-	//if (c.get<CellBS>().depth>0 && discard_test(c.get<CellBS>().w_lb, c.get<CellBS>().a, c.box[n], c.box[n+1])){
-	//	c.box.set_empty(); return;
-	//}
 
 	/*====================================================================*/
+
 
 
 	double z1, z2;
@@ -142,8 +139,9 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	//cout << c.box[n] << "," << c.box[n+1] << endl;
 
 
-	map< pair <double, double>, Vector >:: iterator ent1;
-	for(ent1 = UB.begin(); ent1 != UB.end() ; ent1++) {
+	map< pair <double, double>, Vector >:: iterator ent1=UB.lower_bound(make_pair(c.box[n].lb(),c.box[n+1].lb()));
+  ent1--;
+	for(; ent1 != UB.end() ; ent1++) {
 		z1 = ent1->first.first; // pair 1
 		z2 = ent1->first.second; // pair 2
 		if(z1 < c.box[n].lb() && z2 < c.box[n+1].lb()) {
@@ -162,6 +160,8 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 				valueZ2 = ent1->first;
 			}
 		}
+
+		if(c.box[n].lb() > z2) break;
 	}
 
 	// contract c.box[n] && c.box[n+1] with PNS points
@@ -203,9 +203,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 
-	bool loup_ch=update_UB(c.box, 15);
-
-
+	bool loup_ch=update_UB(c.box, 3);
 
 
 	/*====================================================================*/
@@ -269,12 +267,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	// add data required by the buffer
 	buffer.add_backtrackable(*root);
 
-	// add data required by optimizer + KKT contractor
-//	root->add<EntailedCtr>();
-//	//root->add<Multipliers>();
-//	entailed=&root->get<EntailedCtr>();
-//	entailed->init_root(user_sys,sys);
-
 	time=0;
 	Timer::start();
 	handle_cell(*root,init_box);
@@ -307,11 +299,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
 
-			cout << "abs_eps:" << abs_eps << endl;
+			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){delete c; continue;}
 
-		 	plot(c);
-		    getchar();
+		 	plot(c); getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
@@ -402,9 +393,9 @@ void OptimizerMOP::report(bool verbose) {
 		cout << "UB:" << endl;
 		map< pair <double, double>, Vector > :: iterator ub=UB.begin();
 
-		for(;ub!=UB.end();ub++){
-			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
-		}
+		//for(;ub!=UB.end();ub++){
+		//	cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
+		//}
 
 		cout << endl << get_time() << " " << get_nb_cells() << endl;
 		return;

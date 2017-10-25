@@ -34,7 +34,7 @@ namespace ibex {
 		 */
 
 		CellBS(const CellBS& c) : depth(c.depth+1), id(nb_cells++),
-				a(c.a), w_lb(c.w_lb), ub_distance(POS_INFINITY) { }
+				a(c.a), w_lb(c.w_lb), ub_distance(c.ub_distance) { }
 
 		/**
 		 * \brief Duplicate the structure into the left/right nodes
@@ -76,7 +76,7 @@ namespace ibex {
 		/**
 		 * \brief distance from the box to the non dominated set
 		 */
-		static double distance(const IntervalVector& b){
+		/*static double distance(const IntervalVector& b){
 		   int n=b.size();
 	     map< pair <double, double>, Vector >::const_iterator it_lb=UB->lower_bound(make_pair(b[n-2].lb(),POS_INFINITY));
 	     it_lb--;
@@ -97,7 +97,7 @@ namespace ibex {
 	     }
 
 	     return min_dist;
-		}
+		}*/
 
 		bool operator() (const Cell* c1, const Cell* c2){
 	       return (c1->get<CellBS>().ub_distance < c2->get<CellBS>().ub_distance);

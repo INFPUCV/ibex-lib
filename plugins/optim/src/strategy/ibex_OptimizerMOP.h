@@ -244,7 +244,9 @@ public:
 	 * \brief returns true if the box+z1 + a*z2 > w_lb is dominated by the ub_set
 	 */
 	static double distance2(const Cell* c){
-		if(c->get<CellBS>().ub_distance != POS_INFINITY) return c->get<CellBS>().ub_distance;
+		//if(c->get<CellBS>().ub_distance != POS_INFINITY) return c->get<CellBS>().ub_distance;
+		double max_dist=NEG_INFINITY;
+		if(UB.size()==2) return POS_INFINITY;
 
 		int n=c->box.size();
 
@@ -252,9 +254,6 @@ public:
 		Interval z2 = c->box[n-1];
 		double a = c->get<CellBS>().a;
 		double w_lb = c->get<CellBS>().w_lb;
-
-		double min_dist=POS_INFINITY;
-		if(UB.size()==2) return min_dist;
 
 		//TODO: optimize this
 		map< pair <double, double>, Vector >::iterator it = UB.begin();
@@ -273,14 +272,15 @@ public:
 			//el punto esta dentro de la zona de interes
 			if(pmax.first > z1.lb() && pmax.second > z2.lb()){
 				double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
-				dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
+				//here we add the distance to the line
+			  dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
 
-				if(dist < min_dist) min_dist=dist;
-				if(min_dist <=0.0) return min_dist;
-			}else break;
+				if(dist > max_dist) max_dist=dist;
+
+			}
 		}
 
-		return min_dist;
+		return max_dist;
 	}
 
 protected:
