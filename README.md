@@ -54,6 +54,7 @@ Técnicas de selección de nodo:
   - [ ] Escoger caja random del Nondominated Set **(Damir)**
   - [x] Escoger caja que maximiza la distancia a UB (Optimizada usando Pqueue)
   - [x] Diving compatible con los metodos anteriores
+  - [ ] Que hacer cuando aun no hay upperbounds?
 
 Criterio de termino:
   - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2))
@@ -65,6 +66,7 @@ Biseccion:
 
 Discarding boxes:
   - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w  
+  - [x] Usar pendiente igual a pendiente entre puntos extremos
   - [x] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
 
 **(Ignacio, Damir)** Upperbounding:

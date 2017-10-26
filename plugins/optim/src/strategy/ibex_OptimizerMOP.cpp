@@ -206,7 +206,13 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	box3.resize(n+4);
 
 	box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); /* w */
-	if(c.box[n+1].diam() < POS_INFINITY)
+	map< pair <double, double>, IntervalVector >::iterator it = UB.upper_bound(make_pair(c.box[n].lb(), NEG_INFINITY));
+	it--;
+	map< pair <double, double>, IntervalVector >::iterator it2 = UB.lower_bound(make_pair(c.box[n].ub(), NEG_INFINITY));
+
+    if(it->first.first != NEG_INFINITY && it2->first.second != NEG_INFINITY && it->first!=it2->first){
+    	box3[n+3] = (it2->first.first-it->first.first)/(it->first.second-it2->first.second);
+    }else if(c.box[n+1].diam() < POS_INFINITY)
 		box3[n+3] = c.box[n].diam()/c.box[n+1].diam(); /* a */
 	else
 		box3[n+3] = 1.0;
@@ -226,7 +232,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	/*========================= update loup =============================*/
 
 
-	bool loup_ch=update_UB(c.box, 100);
+	bool loup_ch=update_UB(c.box, 50);
 
 	/*====================================================================*/
 	/*
@@ -318,7 +324,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){delete c; continue;}
 
-		 	plot(c);// getchar();
+		 	plot(c); //getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
