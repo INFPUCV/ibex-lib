@@ -68,6 +68,7 @@ Discarding boxes:
   - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w  
   - [x] Usar pendiente igual a pendiente entre puntos extremos
   - [x] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
+  - [ ] Filtrar cajas del buffer
 
 **(Ignacio, Damir)** Upperbounding:
   - [x] Criterio dinamico para establecer cantidad de puntos que se generan

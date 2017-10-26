@@ -381,6 +381,8 @@ void OptimizerMOP::plot(Cell* c){
 
 
 	for(;cell!=buffer_cells.end();cell++){
+		if(distance2(*cell) < 0){continue;}
+
 		output << "{'pts':(" << (*cell)->box[n].lb() << "," <<  (*cell)->box[n+1].lb() << "),";
 		output << "'diam_x': " <<  (*cell)->box[n].diam() << ",'diam_y': " <<  (*cell)->box[n+1].diam() << ",";
 		output << "'pA':(" << (*cell)->box[n].lb() <<"," <<  (((*cell)->get<CellBS>().w_lb-(*cell)->box[n].lb())/(*cell)->get<CellBS>().a)   << "),";
