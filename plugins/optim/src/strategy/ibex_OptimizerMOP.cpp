@@ -26,7 +26,7 @@ namespace ibex {
 
 const double OptimizerMOP::default_abs_eps = 1e-7;
 const double OptimizerMOP::default_rel_eps = 0.1;
-map< pair <double, double>, Vector > OptimizerMOP::UB;
+map< pair <double, double>, IntervalVector > OptimizerMOP::UB;
 
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
@@ -42,11 +42,15 @@ OptimizerMOP::~OptimizerMOP() {
 
 }
 
-Interval OptimizerMOP::eval_goal(const Function& goal, Vector& x){
+
+Interval OptimizerMOP::eval_goal(const Function& goal, IntervalVector& x){
 	//the objectives are set to 0.0
-	x[n]=0.0;
-	x[n+1]=0.0;
-	return goal.eval(x);
+	IntervalVector xz(x);
+	xz.resize(n+2);
+
+	xz[n]=0.0;
+	xz[n+1]=0.0;
+	return goal.eval(xz);
 }
 
 bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
@@ -57,47 +61,70 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 	//and the middle point between them
 	IntervalVector box2(box); box2.resize(n);
 	finder.find(box2,feasible_points,np);
-
 	bool new_ub=false;
 	list<Vector>::iterator it=feasible_points.begin();
-
 	for(;it!=feasible_points.end();it++){
-		Vector vec=*it;
-		vec.resize(n+2);
+
+		IntervalVector vec=*it;
 
 		//3. Se evalua el punto usando funciones objetivo (goal1 y goal2)
 		pair< double, double> eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
 
 		//4. Insertar en mapa UB (si es no dominada) y actualizar eliminar soluciones dominadas de UB
-		bool insert_ub=true;
-		std::map<pair<double, double>, Vector>::iterator it = UB.lower_bound(eval);
-		it--;
-		for(; it!=UB.end(); ++it ){
-			if (eval.first >= it->first.first && eval.second >= it->first.second){
-				insert_ub=false;
-				break;
-			}
-			if(eval.second > it->first.second) break;
+		std::map<pair<double, double>, IntervalVector>::iterator it2 = UB.lower_bound(eval);
+
+		//there is an equivalent point
+		if(it2->first == eval) continue;
+		it2--;
+		//it is dominated by the previous ub point
+		if(eval.second >= it2->first.second)	continue;
+
+
+		/**** UB correction ****/
+
+		if(finder.ub_correction(vec.mid(), vec)){
+			//cout << "pre:" << eval.first << "," << eval.second << endl;
+			eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
+			//cout << "corrected:" << eval.first << "," << eval.second << endl;
+		}
+		else continue;
+
+
+		it2= UB.lower_bound(eval);
+
+		//there is an equivalent point
+		if(it2->first == eval) continue;
+		it2--;
+		//it is dominated by the previous ub point
+		if(eval.second >= it2->first.second)	continue;
+
+		/**** end UB correction ****/
+
+
+		//it is not dominated and we remove the new dominated points
+		for(it2++; it2!=UB.end(); ){
+			if(eval.second > it2->first.second) break;
+			std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
+			++aux;
+			UB.erase(it2);
+			it2 = aux;
 		}
 
-		if(insert_ub){
-			std::map<pair<double, double>, Vector>::iterator it = UB.lower_bound(eval);
-			for(std::map<pair<double, double>, Vector>::iterator it=UB.begin(); it!=UB.end(); ){
-				if (eval.first <= it->first.first && eval.second <= it->first.second){
-					std::map<pair<double, double>, Vector>::iterator aux = it;
-					++aux;
-					UB.erase(it);
-					it = aux;
-				}
-				else {
-					++it;
-				}
-				if(it==UB.end() || eval.second > it->first.second) break;
-			}
-
+		//the point is inserted in UB only if its distance to the neighbor points is greater than (abs_eps/2.0)
+		if( std::min(it2->first.first - eval.first,  eval.second - it2->first.second) > (abs_eps/4.0)){
 			UB.insert(make_pair(eval, vec));
 			new_ub = true;
+		}else{
+			it2--;
+			if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) > (abs_eps/4.0) ){
+				UB.insert(make_pair(eval, vec));
+				new_ub = true;
+			}
+
 		}
+
+		//UB.insert(make_pair(eval, vec));
+		//new_ub = true;
 
 
 	}
@@ -123,10 +150,7 @@ void OptimizerMOP::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
-
 	/*====================================================================*/
-
-
 
 	double z1, z2;
 	pair <double, double> valueZ1;
@@ -139,8 +163,8 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	//cout << c.box[n] << "," << c.box[n+1] << endl;
 
 
-	map< pair <double, double>, Vector >:: iterator ent1=UB.lower_bound(make_pair(c.box[n].lb(),c.box[n+1].lb()));
-  ent1--;
+	map< pair <double, double>, IntervalVector >:: iterator ent1=UB.lower_bound(make_pair(c.box[n].lb(),c.box[n+1].lb()));
+    ent1--;
 	for(; ent1 != UB.end() ; ent1++) {
 		z1 = ent1->first.first; // pair 1
 		z2 = ent1->first.second; // pair 2
@@ -202,9 +226,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	/*========================= update loup =============================*/
 
 
-
-	bool loup_ch=update_UB(c.box, 3);
-
+	bool loup_ch=update_UB(c.box, 100);
 
 	/*====================================================================*/
 	/*
@@ -279,12 +301,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 		  if (trace >= 2) cout << buffer;
 
-			/**
-			 * TODO  (DA, MC): Extender CellBuffer (CellFeasibleDivingMOP) para que seleccione
-			 * cajas con (z1=box[n].lb() ; z2=box[n+1].lb()) no dominados. Puede ser la caja con mayor dimension
-			 * en alguno de los objetivos.
-			 * Implementar otros metodos para comparar.
-			 */
 
 			Cell *c = buffer.pop();
 			buffer_cells.erase(c);
@@ -302,7 +318,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){delete c; continue;}
 
-		 	plot(c); getchar();
+		 	plot(c);// getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
@@ -369,7 +385,7 @@ void OptimizerMOP::plot(Cell* c){
 	//}
 
 	output << "[";
-	map< pair <double, double>, Vector > :: iterator ub=UB.begin();
+	map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
 	for(;ub!=UB.end();ub++){
 		output << "(" << ub->first.first << "," << ub->first.second << "),";
 	}
@@ -390,8 +406,8 @@ void OptimizerMOP::report(bool verbose) {
 			cout << "(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << ")" << endl;
 		}
 
-		cout << "UB:" << endl;
-		map< pair <double, double>, Vector > :: iterator ub=UB.begin();
+		cout << "UB:" << UB.size() << endl;
+		map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
 
 		//for(;ub!=UB.end();ub++){
 		//	cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;

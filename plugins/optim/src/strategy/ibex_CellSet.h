@@ -103,7 +103,7 @@ namespace ibex {
 	       return (c1->get<CellBS>().ub_distance < c2->get<CellBS>().ub_distance);
 	    }
 
-		static map< pair <double, double>, Vector >* UB;
+		static map< pair <double, double>, IntervalVector >* UB;
 	};
 
 	template<class T>

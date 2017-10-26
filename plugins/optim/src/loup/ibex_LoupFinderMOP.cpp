@@ -6,14 +6,83 @@
  */
 
 #include "ibex_LoupFinderMOP.h"
+#include "ibex_PdcHansenFeasibility.h"
+#include "ibex_FncActivation.h"
+
 
 namespace ibex {
 
 //TODO: remove this recipe for the argument of the max number of iterations of the LP solver
-LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2) : sys(sys), lr(sys,LinearizerXTaylor::RESTRICT),
-		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LinearSolver::default_max_iter)), goal1(goal1), goal2(goal2) {
+LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps) :
+		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT),
+		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LinearSolver::default_max_iter)), goal1(goal1), goal2(goal2), has_equality(false) {
+
+	if (sys.nb_ctr>0)
+		// ==== check if the system contains equalities ====
+		for (int i=0; i<sys.f_ctrs.image_dim(); i++) {
+			if (sys.ops[i]==EQ) {
+				(bool&) has_equality = true;
+				break;
+			}
+		}
+
 //	nb_simplex=0;
 //	diam_simplex=0;
+}
+
+bool LoupFinderMOP::ub_correction(Vector p, IntervalVector& res){
+
+	if (!has_equality){
+		res=IntervalVector(p);
+		return true;
+	}
+
+	//sys is the original system (with equations)
+	FncActivation af(sys,p,NormalizedSystem::default_eps_h);
+
+
+	if (af.image_dim()==0) {
+		res=IntervalVector(p);
+		return true;
+	}
+
+	IntervalVector epsbox(p);
+
+	//epsbox.inflate(NormalizedSystem::default_eps_h);
+	//PdcHansenFeasibility pdc(af, false);
+	// ====================================================
+	// solution #2: we call Hansen test in inflating mode.
+	PdcHansenFeasibility pdc(af, true);
+	// ====================================================
+	//cout << epsbox << endl;
+	//cout << af.eval(0,epsbox) << endl;
+	if (pdc.test(epsbox)==YES) {
+		//note: don't call is_inner because it would check again all equalities (which is useless
+		// and perhaps wrong as the solution box may violate the relaxed inequality (still, very unlikely))
+		bool satisfy_inequalities=true;
+		for (int j=0; j<sys.f_ctrs.image_dim(); j++) {
+			if (!af.activated()[j]){
+
+				if (((sys.ops[j]==LEQ || sys.ops[j]==LT)
+					  && sys.f_ctrs.eval(j,pdc.solution()).ub()>0)
+						||
+					((sys.ops[j]==GEQ || sys.ops[j]==GT)
+					  && sys.f_ctrs.eval(j,pdc.solution()).lb()<0)) {
+
+					/* TODO: && !entailed->original(j)*/
+						satisfy_inequalities=false;
+						break;
+					}
+			}
+		}
+		if (satisfy_inequalities) {
+			res = pdc.solution();
+			//cout << "corrected" << endl;
+			return true;
+		}
+	}
+	//===========================================================
+	return false;
 }
 
 void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_points, int nn) {
@@ -21,12 +90,11 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_point
 	if (!(lp_solver.default_limit_diam_box.contains(box.max_diam())))
 		return;
 
-	int n=sys.nb_var;
+	int n=norm_sys.nb_var;
 
 	lp_solver.clean_ctrs();
 
 	lp_solver.set_bounds(box);
-
 
 
     for(int i=0; i<2; i++){
@@ -75,22 +143,21 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_point
 			feasible_points.push_back(loup_point);
 		}
     }
-
     //we add the feasible middle point
+    if(feasible_points.size()>=2){
+    	double step = 1.0/((double)nn-1);
 
-    double step = 1.0/((double)nn-1);
+    	double r=0.0;
+    	for(int i=0; i<nn; i++, r+=step){
+    		if(i==nn) r=1.0;
 
-    double r=0.0;
-    for(int i=0; i<nn; i++, r+=step){
-    	if(i==nn) r=1.0;
-
-    	list<Vector>::iterator it = feasible_points.begin();
-    	Vector vec1 = *it; it++;
-    	Vector vec2 = *it;
-    	Vector vec3 = (1.0-r)*vec1 + r*vec2;
-    	if (box.contains(vec3)) feasible_points.push_back(vec3);
+    		list<Vector>::iterator it = feasible_points.begin();
+    		Vector vec1 = *it; it++;
+    		Vector vec2 = *it;
+    		Vector vec3 = (1.0-r)*vec1 + r*vec2;
+    		if (box.contains(vec3)) feasible_points.push_back(vec3);
+    	}
     }
-
 
     return;
 }

@@ -39,7 +39,7 @@ Graficar resultados on-the-fly apretando tecla para avanzar **(Matias)**:
   - [x] Destacar caja seleccionada en cada iteracion (top)
   - [ ] Tener la opcion de mostrar UB como funcion escalonada/puntos
   - [x] Mostrar conjunto de cajas UB
-  - [ ] Mostrar conjunto de cajas Sout
+  - [ ] Mostrar conjunto de cajas Sout (si es que hubiera)
   - [x] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb
 
 Técnicas de selección de nodo:
@@ -57,6 +57,7 @@ Técnicas de selección de nodo:
 
 Criterio de termino:
   - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2))
+  - [ ] Calcular hipervolumen relativo de la solucion
 
 Biseccion:
   - [x] Adaptar LSmear (tecnica de biseccion)
@@ -67,7 +68,8 @@ Discarding boxes:
   - [x] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
 
 **(Ignacio, Damir)** Upperbounding:
-  - [ ] Criterio dinamico para establecer cantidad de puntos que se generan
+  - [x] Criterio dinamico para establecer cantidad de puntos que se generan
+  - [x] Adaptar para trabajar con ecuaciones (Hansen-Sengupta)
   - [ ] Encontrar recta factible en x usando simplex,
   para luego obtener segmentos upperbound de la curva asociada en y
   - [ ] Implementar metodos para manejar el set de segmentos no dominados (nuevo UB)
@@ -83,6 +85,14 @@ Paper 1. Nonlinear biobjective optimization. Improvements to interval Branch&Bou
   - Crierios de seleccion del siguiente nodo (ub_distance + diving)
   - Upperbounding usando simplex (min f1 + min f2 + midpoint)
   - Discarding boxes by using an auxiliary constraint: z1+a*z2=w
+  
+  
+Experiments
+
+  - Compare hypervolumes and times between using the line z1+a*z2=w for improving the lower bound and the traditional 
+  method (using just the boxes lb)
+  - Compare the new heuristic (max_distance) with other approaches. Compare also the anytime behaviour.
+  - Compare the upperbounding using the midpoint, simplex with n points and the dynamic version of simplex
 
 Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges. (contribuciones):
   - Definicion del ub_set usando segmentos factibles

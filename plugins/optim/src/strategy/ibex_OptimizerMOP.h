@@ -139,7 +139,7 @@ public:
 	 *
 	 * \return the UB of the last call to optimize(...).
 	 */
-	map< pair <double, double>, Vector >& get_UB()  { return UB; }
+	map< pair <double, double>, IntervalVector >& get_UB()  { return UB; }
 
 
 	/**
@@ -256,7 +256,7 @@ public:
 		double w_lb = c->get<CellBS>().w_lb;
 
 		//TODO: optimize this
-		map< pair <double, double>, Vector >::iterator it = UB.begin();
+		map< pair <double, double>, IntervalVector >::iterator it = UB.begin();
 
 
 		for(;it!=UB.end(); ){
@@ -311,34 +311,6 @@ protected:
 
 
 
-
-	/**
-	 * \brief returns true if the box+z1 + a*z2 > w_lb is dominated by the ub_set
-	 */
-	bool discard_test(double w_lb, double a, Interval z1, Interval z2){
-		if(UB.size()==2) return false;
-		map< pair <double, double>, Vector >::iterator it = UB.begin();
-		for(;it!=UB.end(); ){
-			pair <double, double> p = it->first; it++;
-
-			if(it==UB.end()) break;
-			pair <double, double> p2 = it->first;
-
-			pair <double, double> pmax= make_pair(p2.first, p.second);
-			//cout << "pmax: (" << pmax.first <<"," << pmax.second << ")" << endl;
-
-			//el punto esta dentro de la zona de interes
-			if(pmax.first > z1.lb() && pmax.second > z2.lb()){
-				if(pmax.first==POS_INFINITY || pmax.second == POS_INFINITY) return false;
-				if((Interval(pmax.first) + Interval(a)*Interval(pmax.second)).lb() > w_lb)
-					return false;
-			}
-		}
-
-		//cout << "discarded" << endl;
-		return true;
-	}
-
 	/**
 	 * TODO: Funcion que genera segmentos LB una vez terminada la busqueda
 	 */
@@ -388,7 +360,7 @@ private:
 	/**
 	 * \brief Evaluate the goal in the point x
 	 */
-	Interval eval_goal(const Function& goal, Vector& x);
+	Interval eval_goal(const Function& goal, IntervalVector& x);
 
 
 	/** Currently entailed constraints */
@@ -412,7 +384,7 @@ private:
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x
 	 */
-	static map< pair <double, double>, Vector > UB;
+	static map< pair <double, double>, IntervalVector > UB;
 
 	/**
 	 * A set of points denoting the segments related to the lowerbound of the

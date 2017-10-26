@@ -11,6 +11,7 @@
 #include "ibex_Vector.h"
 #include "ibex_System.h"
 #include "ibex_LinearizerXTaylor.h"
+#include "ibex_NormalizedSystem.h"
 
 #include <list>
 
@@ -45,14 +46,22 @@ public:
 	 * \param goal1
 	 * \param goal2
 	 */
-	LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2);
+	LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps=NormalizedSystem::default_eps_h);
+
+
+	bool ub_correction(Vector p, IntervalVector& res);
 
 	void find(const IntervalVector& box, list<Vector>& feasible_points, int n=2);
 
 	/**
-	 * \brief The NLP problem.
+	 * \brief The real NLP problem.
 	 */
 	const System& sys;
+
+	/**
+	 * \brief The relaxed NLP problem for finding feasible points
+	 */
+	const NormalizedSystem norm_sys;
 
 	/**
 	 * \brief Objective functions
@@ -63,6 +72,11 @@ public:
 	const Function& goal2;
 
 protected:
+
+	/**
+	 * \brief True iff there is an equality.
+	 */
+	const bool has_equality;
 
 	/** Linearization technique. */
 	LinearizerXTaylor lr;

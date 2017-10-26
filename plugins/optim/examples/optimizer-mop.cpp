@@ -72,6 +72,7 @@ int main(int argc, char** argv){
 	//ExtendedSystem ext_sys(sys, eqeps);
 
 	SystemFactory fac;
+
 	for(int i=0; i<ext_sys.nb_var-2; i++ )
 		fac.add_var(ext_sys.args[i]);
 
@@ -133,15 +134,15 @@ int main(int argc, char** argv){
 	else if (bisection== "largestfirst")
           bs= new LargestFirst(0);
 	else if (bisection=="smearsum")
-	  bs = new SmearSum(ext_sys,0);
+	  bs = new SmearSum(ext_sys,1e-8);
 	else if (bisection=="smearmax")
-	  bs = new SmearMax(ext_sys,0);
+	  bs = new SmearMax(ext_sys,1e-8);
 	else if (bisection=="smearsumrel")
-	  bs = new SmearSumRelative(ext_sys,0);
+	  bs = new SmearSumRelative(ext_sys,1e-8);
 	else if (bisection=="smearmaxrel")
-	  bs = new SmearMaxRelative(ext_sys,0);
+	  bs = new SmearMaxRelative(ext_sys,1e-8);
 	else if (bisection=="lsmear")
-	  bs = new LSmear(ext_sys,0);
+	  bs = new LSmear(ext_sys,1e-8);
 	else {cout << bisection << " is not an implemented  bisection mode "  << endl; return -1;}
 
 	// The contractors
