@@ -82,6 +82,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 
 		/**** UB correction ****/
 
+
 		if(finder.ub_correction(vec.mid(), vec)){
 			//cout << "pre:" << eval.first << "," << eval.second << endl;
 			eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
@@ -89,6 +90,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		}
 		else continue;
 
+    //cout << 2 << endl;
 
 		it2= UB.lower_bound(eval);
 
@@ -205,7 +207,6 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	IntervalVector box3(c.box);
 	box3.resize(n+4);
 
-	box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); /* w */
 	map< pair <double, double>, IntervalVector >::iterator it = UB.upper_bound(make_pair(c.box[n].lb(), NEG_INFINITY));
 	it--;
 	map< pair <double, double>, IntervalVector >::iterator it2 = UB.lower_bound(make_pair(c.box[n].ub(), NEG_INFINITY));
@@ -217,8 +218,36 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	else
 		box3[n+3] = 1.0;
 
+  //setting w_ub with the UB points
+	  double w_ub=NEG_INFINITY;
+
+    if(UB.size()==2)  w_ub = POS_INFINITY;
+		else{
+			it = UB.lower_bound(make_pair(c.box[n].lb(), NEG_INFINITY));
+			it--;
+			while(it!=UB.end()){
+				pair <double, double> p = it->first; it++;
+				if(it==UB.end() || p.second < c.box[n+1].lb()) break;
+				pair <double, double> p2 = it->first;
+				pair <double, double> pmax= make_pair(p2.first, p.second);
+        //cout << "pmax:" << pmax.first << "," << pmax.second << endl;
+				if(pmax.first==POS_INFINITY || pmax.second==POS_INFINITY)
+				   w_ub = POS_INFINITY;
+				else{
+		  		double ww = ( Interval(pmax.first) + box3[n+3]*Interval(pmax.second) ).ub();
+		  		if(w_ub < ww )  w_ub = ww;
+				}
+			}
+		}
+
+		//cout << w_ub << endl;
+		//box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); /* w */
+		box3[n+2] = Interval(NEG_INFINITY, w_ub); /* w */
+
+
 	//the contraction is performed
 	ctc.contract(box3);
+
 
 	c.box=box3;
 	c.box.resize(n+2);
@@ -233,41 +262,6 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 	bool loup_ch=update_UB(c.box, 50);
-
-	/*====================================================================*/
-	/*
-	double diamX = 0.0, valueBox;
-	int i;
-	for (i=0; i < n; i++) {
-		valueBox = c.box[i].diam();
-		if(diamX < valueBox) {
-			diamX = valueBox;
-		}
-	}
-	// Metodo de termino para las restricciones
-	if ( diamX<=1e-8 ) {
-		//se guarda c.box en lista de soluciones (Sout)
-		Sout.push_back(c.box);
-		c.box.set_empty();
-		return;
-	}
-
-	//we compute the min diameter between z1, z2 and w
-	double diamZ = POS_INFINITY; //dist_w;
-	for (i=n; i < n+2; i++) {
-		valueBox = c.box[i].diam();
-		if(diamZ > valueBox) {
-			diamZ = valueBox;
-		}
-	}
-
-	// Metodo de termino para las funciones objetivo
-	if ( diamZ<=1e-8 ) {
-		//se guarda c.box en lista de soluciones (Sout)
-		Sout.push_back(c.box);
-		c.box.set_empty();
-		return;
-	}*/
 
 }
 

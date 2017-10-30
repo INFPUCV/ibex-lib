@@ -36,11 +36,11 @@ TODO
 ----
 
 Graficar resultados on-the-fly apretando tecla para avanzar **(Matias)**:
-  - [x] Destacar caja seleccionada en cada iteracion (top)
   - [ ] Tener la opcion de mostrar UB como funcion escalonada/puntos
-  - [x] Mostrar conjunto de cajas UB
   - [ ] Mostrar conjunto de cajas Sout (si es que hubiera)
+  - [ ] Poder hacer zoom
   - [x] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb
+  - [ ] Agregar parametros al ejecutable: mostrar plot (paso a paso)
 
 Técnicas de selección de nodo:
   - [x] [OC](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init)
@@ -65,14 +65,16 @@ Biseccion:
   - Algunos metodos de biseccion no bisectan algunas variables
 
 Discarding boxes:
-  - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w  
-  - [x] Usar pendiente igual a pendiente entre puntos extremos
+  - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w ()
+  - [x] w_lb delimitado por puntos UB
+  - [x] pendiente igual a pendiente entre puntos extremos
   - [x] Usar esta distancia para heuristica de seleccion de caja y criterio de termino
   - [ ] Filtrar cajas del buffer
 
 **(Ignacio, Damir)** Upperbounding:
   - [x] Criterio dinamico para establecer cantidad de puntos que se generan
   - [x] Adaptar para trabajar con ecuaciones (Hansen-Sengupta)
+  - [ ] Problema con PdcHansenFeasibility (LoupFinderMOP) para problema test.bch
   - [ ] Encontrar recta factible en x usando simplex,
   para luego obtener segmentos upperbound de la curva asociada en y
   - [ ] Implementar metodos para manejar el set de segmentos no dominados (nuevo UB)
@@ -88,11 +90,11 @@ Paper 1. Nonlinear biobjective optimization. Improvements to interval Branch&Bou
   - Crierios de seleccion del siguiente nodo (ub_distance + diving)
   - Upperbounding usando simplex (min f1 + min f2 + midpoint)
   - Discarding boxes by using an auxiliary constraint: z1+a*z2=w
-  
-  
+
+
 Experiments
 
-  - Compare hypervolumes and times between using the line z1+a*z2=w for improving the lower bound and the traditional 
+  - Compare hypervolumes and times between using the line z1+a*z2=w for improving the lower bound and the traditional
   method (using just the boxes lb)
   - Compare the new heuristic (max_distance) with other approaches. Compare also the anytime behaviour.
   - Compare the upperbounding using the midpoint, simplex with n points and the dynamic version of simplex
