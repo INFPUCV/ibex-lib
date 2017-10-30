@@ -15,7 +15,7 @@ namespace ibex {
 //TODO: remove this recipe for the argument of the max number of iterations of the LP solver
 LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps) :
 		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT),
-		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LinearSolver::default_max_iter)), goal1(goal1), goal2(goal2), has_equality(false) {
+		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LPSolver::default_max_iter)), goal1(goal1), goal2(goal2), has_equality(false) {
 
 	if (sys.nb_ctr>0)
 		// ==== check if the system contains equalities ====
@@ -126,9 +126,9 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_point
 		//lp_solver.write_file("holo.txt");
 
 
-		LinearSolver::Status_Sol stat = lp_solver.solve();
+		LPSolver::Status_Sol stat = lp_solver.solve();
 
-		if (stat == LinearSolver::OPTIMAL) {
+		if (stat == LPSolver::OPTIMAL) {
 			//the linear solution is mapped to intervals and evaluated
 			Vector loup_point(n);
 			lp_solver.get_primal_sol(loup_point);

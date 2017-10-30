@@ -82,7 +82,7 @@ protected:
 	LinearizerXTaylor lr;
 
 	/** linear solver */
-	LinearSolver lp_solver;
+	LPSolver lp_solver;
 
 
 };

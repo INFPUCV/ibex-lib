@@ -296,7 +296,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	buffer.add_backtrackable(*root);
 
 	time=0;
-	Timer::start();
+	Timer timer;
+	timer.start();
+
 	handle_cell(*root,init_box);
 	CellBS::z1_init=root->box[n];
 	CellBS::z2_init=root->box[n+1];
@@ -336,7 +338,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				handle_cell(*new_cells.first, init_box);
 				handle_cell(*new_cells.second, init_box);
 
-				time_limit_check(); // TODO: not reentrant
+				if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
+				time = timer.get_time();
 
 			}
 			catch (NoBisectableVariableException& ) {
@@ -352,8 +355,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	}
 
 
-	Timer::stop();
-	time+= Timer::VIRTUAL_TIMELAPSE();
+	timer.stop();
+	time = timer.get_time();
 
 
 
@@ -445,12 +448,5 @@ void OptimizerMOP::report(bool verbose) {
 	cout << " number of cells: " << nb_cells << endl;
 }
 
-void OptimizerMOP::time_limit_check () {
-	if (timeout<=0) return;
-	Timer::stop();
-	time += Timer::VIRTUAL_TIMELAPSE();
-	if (time >=timeout ) throw TimeOutException();
-	Timer::start();
-}
 
 } // end namespace ibex

@@ -349,10 +349,6 @@ protected:
 	 */
 	bool update_UB(const IntervalVector& box, int n);
 
-	/**
-	 * \brief Check time is not out.
-	 */
-	void time_limit_check();
 
 
 private:
