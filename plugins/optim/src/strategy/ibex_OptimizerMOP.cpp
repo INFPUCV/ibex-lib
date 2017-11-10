@@ -318,7 +318,17 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
 			//cout << "abs_eps:" << abs_eps << endl;
-			if(distance2(c) < abs_eps){delete c; continue;}
+			if(distance2(c) < abs_eps){
+				/*double y = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
+				if(y > c->box[n+1].lb() && y < c->box[n+1].ub())
+				    insert_lb_segment( point2(c->box[n].lb(),y),
+				    point2(c->get<CellBS>().w_lb-c->get<CellBS>().a*c->box[n+1].lb() ,  c->box[n+1].lb()) );
+				else*/ insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
+
+				plot(c); getchar();
+
+				delete c; continue;
+			}
 
 		 	plot(c); //getchar();
 
@@ -390,10 +400,17 @@ void OptimizerMOP::plot(Cell* c){
 	//}
 
 	output << "[";
-	map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
-	for(;ub!=UB.end();ub++){
-		output << "(" << ub->first.first << "," << ub->first.second << "),";
+
+	//map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
+	//for(;ub!=UB.end();ub++){
+	//	output << "(" << ub->first.first << "," << ub->first.second << "),";
+	//}
+
+	set< point2 > :: iterator lb=LB.begin();
+	for(;lb!=LB.end();lb++){
+		output << "(" << lb->x << "," << lb->y << "),";
 	}
+
 	output << "]" << endl;
 	output.close();
 	// system("python3 plot.py");

@@ -26,6 +26,33 @@
 using namespace std;
 namespace ibex {
 
+
+class point2{
+public:
+	double x;
+	double y;
+
+	point2()  : x(0), y(0)  {}
+	point2(double x, double y) : x(x), y(y) { }
+
+	point2 operator+(const point2& p2) const {
+		return point2(x+p2.x, y+p2.y);
+	}
+
+	point2 operator-(const point2& p2) const {
+		return point2(x-p2.x, y-p2.y);
+	}
+
+	double operator*(const point2& p2) const {
+		return (x*p2.y - y*p2.x);
+	}
+
+	bool operator<(const point2& p2) const {
+		if(x!=p2.x) return x<p2.x;
+		if(y!=p2.y) return y>p2.y;
+		return false;
+	}
+};
 /**
  * \defgroup optim IbexOpt
  */
@@ -318,7 +345,7 @@ protected:
 		std::list< IntervalVector >::iterator it = Sout.begin();
 
 		for(;it!=Sout.end(); it++){
-		//	update_LB()
+			//update_LB();
 		}
 	}
 
@@ -344,12 +371,123 @@ protected:
 		update_LB(p, make_pair(POS_INFINITY, p.second));
 	}
 
+  void insert_lb_segment(point2 p1, point2 p2){
+	    if(LB.size()==0){
+	    	LB.insert(point2(NEG_INFINITY,POS_INFINITY));
+	    	LB.insert(point2(POS_INFINITY,POS_INFINITY));
+	    	LB.insert(point2(POS_INFINITY,NEG_INFINITY));
+	    }
+
+		point2 p1_p = point2(p1.x,POS_INFINITY);
+		point2 p2_p = point2(POS_INFINITY,p2.y);
+
+		std::set< point2 > new_points;
+		std::set< point2 >::iterator it=LB.lower_bound(p1);
+		it--;
+
+		point2 v1(it->x, it->y);
+		it++;
+		point2 v2(it->x, it->y);
+
+		bool in = false;
+
+
+		point2 s;
+		if (intersect(v1, v2, p1_p,  p1, s)) {
+			cout << "s1: (" << s.x << "," << s.y << ")" << endl;
+			in = true;
+			new_points.insert(s);
+			new_points.insert(p1);
+		    it--; LB.erase(v2); it++; v1 = v2; v2=*it;
+		}
+
+
+
+	    while(v1.y > p2.y){
+
+	        if (intersect(v1,v2, p1, p2, s)){
+	          cout << "s2: (" << s.x << "," << s.y << ")" << endl;
+	          in=!in;
+
+	          new_points.insert(s);
+	        }
+
+	        if ( v2.y < p2.y && intersect(v1,v2, p2, p2_p,s)){
+	          cout << "s3: (" << s.x << "," << s.y << ")" << endl;
+	          in = false;
+	          new_points.insert(s);
+	          new_points.insert(v2);
+	          break;
+	        }
+
+	        if(in){ it--; LB.erase(v2); }
+
+	        v1 = v2;
+	        it++;
+	        v2 = *it;
+	    }
+
+	    LB.insert(new_points.begin(), new_points.end());
+
+		cout << "LB points:" << endl;
+		for(it=LB.begin(); it!=LB.end(); it++){
+			cout << "(" << it->x << "," << it->y << ")" << endl;
+		}
+	}
+
+  bool intersect(const point2& p, const point2& p2,
+		const point2& q,  const point2& q2, point2& res){
+
+	  	  cout << "p-p2: (" << p.x << "," << p.y << ") --> (" << p2.x << "," << p2.y << ")" << endl;
+	  	  cout << "q-q2: (" << q.x << "," << q.y << ") --> (" << q2.x << "," << q2.y << ")" << endl;
+
+	  	  if( (p.x==p2.x && p.y==p2.y) || (q.x==q2.x && q.y==q2.y)) return false;
+
+	  	  if(p.y==POS_INFINITY && q2.x==POS_INFINITY){
+	  		  res=point2(p.x,q2.y);
+	  		  return true;
+	  	  }
+
+	  	  if(p2.x==POS_INFINITY && q.y==POS_INFINITY){
+	  		  res=point2(q.x,p2.y);
+	  		  return true;
+	  	  }
+
+	  	  if(q.y==POS_INFINITY){
+	  		  res=point2(q.x,p.y);
+	  		  return true;
+	  	  }
+
+			if (p.x == NEG_INFINITY){
+			   if(q.y== POS_INFINITY) {res=q; return true;}
+				 else return false;
+			}
+
+			if (p2.y == NEG_INFINITY){
+			   if (q2.x == POS_INFINITY) {res=q2; return true;}
+				 else return false;
+			}
+
+			point2 r = p2-p;
+			point2 s = q2-q;
+
+			//now we find a solution for the equation p+tr = q+us,
+
+			double t = ((q-p) * s) / (r * s);
+
+			if ((r * s)!=0 && t>0 && t <1){
+				res = p + point2(t*r.x,t*r.y);
+				cout << "res::(" << res.x << "," << res.y << ")"  << endl;
+				return true;
+			}
+
+			return false;
+		}
+
 	/**
 	 * \brief Main procedure for updating the loup.
 	 */
 	bool update_UB(const IntervalVector& box, int n);
-
-
 
 private:
 
@@ -386,7 +524,7 @@ private:
 	 * A set of points denoting the segments related to the lowerbound of the
 	 * pareto front.
 	 */
-	std::set< pair <double, double> > LB;
+	std::set< point2 > LB;
 
 
 	/** True if loup has changed in the last call to handle_cell(..) */
