@@ -373,16 +373,16 @@ protected:
 
   void insert_lb_segment(point2 p1, point2 p2){
 	    if(LB.size()==0){
-	    	LB.insert(point2(NEG_INFINITY,POS_INFINITY));
-	    	LB.insert(point2(POS_INFINITY,POS_INFINITY));
-	    	LB.insert(point2(POS_INFINITY,NEG_INFINITY));
+	    	LB.insert(point2(-1e10,1e10));
+	    	LB.insert(point2(1e10,1e10));
+	    	LB.insert(point2(1e10,-1e10));
 	    }
 
-		point2 p1_p = point2(p1.x,POS_INFINITY);
-		point2 p2_p = point2(POS_INFINITY,p2.y);
+		point2 p1_p = point2(p1.x,1e10);
+		point2 p2_p = point2(1e10,p2.y);
 
 		std::set< point2 > new_points;
-		std::set< point2 >::iterator it=LB.lower_bound(p1);
+		std::set< point2 >::iterator it=LB.upper_bound(p1);
 		it--;
 
 		point2 v1(it->x, it->y);
@@ -395,10 +395,13 @@ protected:
 		point2 s;
 		if (intersect(v1, v2, p1_p,  p1, s)) {
 			cout << "s1: (" << s.x << "," << s.y << ")" << endl;
-			in = true;
-			new_points.insert(s);
-			new_points.insert(p1);
-		    it--; LB.erase(v2); it++; v1 = v2; v2=*it;
+
+			if(s.x!=p1.x || s.y!=p1.y){
+				new_points.insert(s);
+				new_points.insert(p1);
+				in = true;
+				it--; LB.erase(v2); it++; v1 = v2; v2=*it;
+			}
 		}
 
 
@@ -416,7 +419,7 @@ protected:
 	          cout << "s3: (" << s.x << "," << s.y << ")" << endl;
 	          in = false;
 	          new_points.insert(s);
-	          new_points.insert(v2);
+	          new_points.insert(p2);
 	          break;
 	        }
 
@@ -441,32 +444,25 @@ protected:
 	  	  cout << "p-p2: (" << p.x << "," << p.y << ") --> (" << p2.x << "," << p2.y << ")" << endl;
 	  	  cout << "q-q2: (" << q.x << "," << q.y << ") --> (" << q2.x << "," << q2.y << ")" << endl;
 
+
+
+	  	  if(p.x==p2.x && q.y==q2.y) {
+	  		  if(q.x>p.x || q2.x < p.x || q.y < p2.y || q.y > p.y) return false;
+
+	  		  res.x=p.x;
+	  		  res.y=q.y;
+	  		  return true;
+	  	  }
+
+	  	  if(p.y==p2.y && q.x==q2.x){
+	  		  if(p.x > q.x || p2.x < q.x || p.y < q2.y || p.y > q.y) return false;
+	  		  res.x=q.x;
+	  		  res.y=p.y;
+	  		  return true;
+	  	  }
+	  	 // exit(0);
+
 	  	  if( (p.x==p2.x && p.y==p2.y) || (q.x==q2.x && q.y==q2.y)) return false;
-
-	  	  if(p.y==POS_INFINITY && q2.x==POS_INFINITY){
-	  		  res=point2(p.x,q2.y);
-	  		  return true;
-	  	  }
-
-	  	  if(p2.x==POS_INFINITY && q.y==POS_INFINITY){
-	  		  res=point2(q.x,p2.y);
-	  		  return true;
-	  	  }
-
-	  	  if(q.y==POS_INFINITY){
-	  		  res=point2(q.x,p.y);
-	  		  return true;
-	  	  }
-
-			if (p.x == NEG_INFINITY){
-			   if(q.y== POS_INFINITY) {res=q; return true;}
-				 else return false;
-			}
-
-			if (p2.y == NEG_INFINITY){
-			   if (q2.x == POS_INFINITY) {res=q2; return true;}
-				 else return false;
-			}
 
 			point2 r = p2-p;
 			point2 s = q2-q;

@@ -17,6 +17,7 @@ export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig   -> Est
 
 export PKG_CONFIG_PATH=/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/share/pkgconfig
 
+
 In plugins/optim/examples:
 make optimizer-mop
 
@@ -29,7 +30,7 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel diving-NDSdist 1e-1 100 1
+./optimizer-mop test2.txt acidhc4 compo smearsumrel NDSdist 1e-1 100 1
 
 
 TODO

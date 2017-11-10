@@ -319,6 +319,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){
+
 				/*double y = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
 				if(y > c->box[n+1].lb() && y < c->box[n+1].ub())
 				    insert_lb_segment( point2(c->box[n].lb(),y),
@@ -408,7 +409,14 @@ void OptimizerMOP::plot(Cell* c){
 
 	set< point2 > :: iterator lb=LB.begin();
 	for(;lb!=LB.end();lb++){
-		output << "(" << lb->x << "," << lb->y << "),";
+		point2 p(*lb);
+		if(lb->x >= 1e9)  p.x=POS_INFINITY;
+		if(lb->x <= -1e9)  p.x=NEG_INFINITY;
+
+		if(lb->y >= 1e9)  p.y=POS_INFINITY;
+		if(lb->y <= -1e9)  p.y=NEG_INFINITY;
+
+		output << "(" << p.x << "," << p.y << "),";
 	}
 
 	output << "]" << endl;
