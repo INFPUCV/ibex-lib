@@ -320,11 +320,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){
 
-				/*double y = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
+				double y = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
 				if(y > c->box[n+1].lb() && y < c->box[n+1].ub())
 				    insert_lb_segment( point2(c->box[n].lb(),y),
 				    point2(c->get<CellBS>().w_lb-c->get<CellBS>().a*c->box[n+1].lb() ,  c->box[n+1].lb()) );
-				else*/ insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
+				else insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
 
 				plot(c); getchar();
 

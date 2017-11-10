@@ -438,11 +438,8 @@ protected:
 		}
 	}
 
-  bool intersect(const point2& p, const point2& p2,
-		const point2& q,  const point2& q2, point2& res){
-
-	  	  cout << "p-p2: (" << p.x << "," << p.y << ") --> (" << p2.x << "," << p2.y << ")" << endl;
-	  	  cout << "q-q2: (" << q.x << "," << q.y << ") --> (" << q2.x << "," << q2.y << ")" << endl;
+  bool intersect(point2 p, point2 p2,
+		point2 q,  point2 q2, point2& res){
 
 
 
@@ -463,6 +460,14 @@ protected:
 	  	 // exit(0);
 
 	  	  if( (p.x==p2.x && p.y==p2.y) || (q.x==q2.x && q.y==q2.y)) return false;
+
+            if(p2.x>=1e9) p2.x = std::max(std::max(q.x,q2.x),p.x);
+            if(p.y>=1e9) p.y = std::max(std::max(q.y,q2.y),p2.y);
+            if(q2.x>=1e9) q2.x = std::max(std::max(p.x,p2.x),q.x);
+            if(q.y>=1e9){ q.y = std::max(std::max(p.y,p2.y),q2.y); }
+
+  	  	  cout << "p-p2: (" << p.x << "," << p.y << ") --> (" << p2.x << "," << p2.y << ")" << endl;
+  	  	  cout << "q-q2: (" << q.x << "," << q.y << ") --> (" << q2.x << "," << q2.y << ")" << endl;
 
 			point2 r = p2-p;
 			point2 s = q2-q;
