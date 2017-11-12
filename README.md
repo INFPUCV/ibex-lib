@@ -47,7 +47,7 @@ Técnicas de selección de nodo:
   - [x] [OC2](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb2
   - [x] [OC3](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1 + lb2
   - [ ] [OC4](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing value of
-  hypervolume of the point y (considering the initial values for z1_ub and z2_ub) --> Leer en detalle, modificar
+  hypervolume of the point y (considering the initial values for z1_ub and z2_ub) --> Leer en detalle, modificar **(Ignacio)**
   - [ ] [OC5](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing box size
   of boxes such that lb is not dominated **(Damir's CellNSSet)**
   - [ ] Escoger caja random del Nondominated Set **(Damir)**
@@ -60,7 +60,7 @@ Calculo de distancia:
 
 Criterio de termino:
   - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2)) --> reevaluar
-  - [ ] Calcular hipervolumen relativo de la solucion --> trabajando en ello
+  - [ ] Calcular hipervolumen relativo de la solucion --> trabajando en ello **(Ignacio)**
 
 Biseccion:
   - [x] Adaptar LSmear (tecnica de biseccion)
@@ -71,7 +71,7 @@ Discarding boxes:
   - [x] pendiente igual a pendiente entre puntos extremos
   - [ ] Filtrar cajas del buffer
 
-**(Ignacio, Damir)** Upperbounding:
+**(Ignacio)** Upperbounding:
   - [x] Criterio dinamico para establecer cantidad de puntos que se generan
   - [x] Adaptar para trabajar con ecuaciones (Hansen-Sengupta)
   - [ ] Bug: Problema con PdcHansenFeasibility (LoupFinderMOP) para problema test.bch
@@ -80,12 +80,15 @@ Discarding boxes:
   - [ ] Implementar metodos para manejar el set de segmentos no dominados (nuevo UB)
 
 Definicion del lowerbound (y eventualmente UB): 
-  - [ ] Algoritmo para definir segmentos LB o UB --> trabajando en ello
+  - [ ] Algoritmo para definir segmentos LB o UB -->  trabajando en ello **(Ignacio)**
+  
 [Algoritmo para encontrar interseccion entre 2 segmentos](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
+
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming:
 Corrections and improvements for the biobjective case
 
 **Estructura de papers.**
+
 *Paper 1. Nonlinear biobjective optimization. Improvements to interval Branch&Bounds algorithms*  (contribuciones):
   - Propiedad de las soluciones (ub):
   any feasible solution x is eps-dominated by at least one solution x' in the ub set, i.e.,
@@ -96,7 +99,7 @@ Corrections and improvements for the biobjective case
   - Discarding boxes by using an auxiliary constraint: z1+a*z2=w
 
 
-Experiments
+**Experiments**
 
   - Compare hypervolumes and times between using the line z1+a*z2=w for improving the lower bound and the traditional
   method (using just the boxes lb)
