@@ -47,9 +47,11 @@ def updateplot(q):
 
         if result !='Q':
             # print(result)
-            LB, UB = result
+            LB, UB, LB2 = result
             UBx = []
             UBy = []
+            LBx = []
+            LBy = []
             ax1.clear()
 
             ax1.add_patch(patches.Rectangle(
@@ -73,12 +75,16 @@ def updateplot(q):
             for ub in UB:
                 UBx.append(ub[0])
                 UBy.append(ub[1])
+            for lb in LB2:
+                LBx.append(lb[0])
+                LBy.append(lb[1])
             for lb in LB:
             	if (lb['pA'][0] < lb['pB'][0]) and (lb['pA'][1] > lb['pB'][1]):
             		line = plt.Line2D((lb['pA'][0], lb['pB'][0]),(lb['pA'][1], lb['pB'][1]),lw=0.5,markeredgecolor='black')
             		ax1.add_line(line)
             ax1.plot()
             plt.plot(UBx, UBy, 'r.', markersize=1)
+            plt.plot(LBx, LBy, '-b', markersize=1)
             plt.pause(1)
             updateplot(q)
              # print(result)
@@ -113,7 +119,8 @@ def simulation(q):
             reader = reader.replace('inf', "math.inf")
             LB = eval(reader.split("\n")[0])
             UB = eval(reader.split("\n")[1])
-            q.put((LB, UB))
+            LB2 = eval(reader.split("\n")[2])
+            q.put((LB, UB, LB2))
 
     # iterations = range(100)
     # for i in iterations:
