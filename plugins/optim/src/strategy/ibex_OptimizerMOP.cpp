@@ -113,12 +113,19 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		}
 
 		//the point is inserted in UB only if its distance to the neighbor points is greater than (abs_eps/2.0)
-		if( std::min(it2->first.first - eval.first,  eval.second - it2->first.second) > (abs_eps/4.0)){
+		if(	std::min(it2->first.first - eval.first,  eval.second - it2->first.second) > (abs_eps/4.0)){
+
+			if(eval.first < y1_ub) y1_ub=eval.first;
+			if(eval.second < y2_ub) y2_ub=eval.second;
+
 			UB.insert(make_pair(eval, vec));
 			new_ub = true;
 		}else{
 			it2--;
 			if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) > (abs_eps/4.0) ){
+				if(eval.first < y1_ub) y1_ub=eval.first;
+				if(eval.second < y2_ub) y2_ub=eval.second;
+
 				UB.insert(make_pair(eval, vec));
 				new_ub = true;
 			}
@@ -283,6 +290,18 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	root->box=init_box;
 
+	y1=eval_goal(goal1, root->box);
+	y2=eval_goal(goal2, root->box);
+  //Initial points
+	CellBS::y1_init=y1;
+	CellBS::y2_init=y2;
+
+	y1_ub=POS_INFINITY;
+	y2_ub=POS_INFINITY;
+
+	y1_max=NEG_INFINITY;
+	y2_max=NEG_INFINITY;
+
 	// add data required by the bisector
 	bsc.add_backtrackable(*root);
 
@@ -294,8 +313,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	timer.start();
 
 	handle_cell(*root,init_box);
-	CellBS::z1_init=root->box[n];
-	CellBS::z2_init=root->box[n+1];
+
 
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
@@ -319,19 +337,40 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){
+				if(LB.empty()) cout << "abs_eps: " << distance2(c) << endl;
+                if(y1_max < c->box[n].ub() &&  c->box[n+1].lb()<y2_ub)
+                	y1_max=c->box[n].ub();
+                if(y2_max < c->box[n+1].ub() &&  c->box[n].lb()<y1_ub)
+                	y2_max=c->box[n+1].ub();
 
-				double y = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
-				if(y > c->box[n+1].lb() && y < c->box[n+1].ub())
-				    insert_lb_segment( point2(c->box[n].lb(),y),
-				    point2(c->get<CellBS>().w_lb-c->get<CellBS>().a*c->box[n+1].lb() ,  c->box[n+1].lb()) );
-				else insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
+				double ya2 = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
+				if(ya2 > c->box[n+1].lb() && ya2 < c->box[n+1].ub()){
+					double yb1 = (c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].lb());
+					if(yb1 > c->box[n].lb() && yb1 < c->box[n].ub()){
+						    insert_lb_segment( point2(c->box[n].lb(),ya2),
+						    point2(yb1 ,  c->box[n+1].lb()) );
+					}else{
+						double yb2=((c)->get<CellBS>().w_lb-c->box[n].ub())/(c)->get<CellBS>().a;
+						insert_lb_segment( point2(c->box[n].lb(),ya2),
+								point2(c->box[n].ub() ,  yb2 ) );
+					}
 
-				plot(c); getchar();
+				}else if(ya2 > c->box[n+1].lb()){
+					double ya1=(c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].ub());
+					double yb1 = (c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].lb());
+
+					insert_lb_segment( point2(ya1, c->box[n+1].ub()),
+									point2(yb1 ,  c->box[n+1].lb() ) );
+
+
+				}else insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
+
+				plot(c); //getchar();
 
 				delete c; continue;
 			}
 
-		 	plot(c); //getchar();
+		 	//plot(c); //getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
@@ -364,10 +403,14 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	time = timer.get_time();
 
 
+	cout << "lb-hypervolume:" << compute_lb_hypervolume() << endl;
+	cout << "ub-hypervolume:" << compute_ub_hypervolume() << endl;
 
-	if (Sout.empty())
+	cout << "diff-hypervolume:" << (compute_lb_hypervolume()-compute_ub_hypervolume())/y1.diam() << endl;
+
+	//if (Sout.empty())
 		status=INFEASIBLE;
-	else
+	//else
 		status=SUCCESS;
 
 	return status;
@@ -402,21 +445,22 @@ void OptimizerMOP::plot(Cell* c){
 
 	output << "[";
 
-	//map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
-	//for(;ub!=UB.end();ub++){
-	//	output << "(" << ub->first.first << "," << ub->first.second << "),";
-	//}
+	map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
+	for(;ub!=UB.end();ub++){
+		output << "(" << ub->first.first << "," << ub->first.second << "),";
+	}
+output << "]" << endl;
 
+	output << "[";
 	set< point2 > :: iterator lb=LB.begin();
 	for(;lb!=LB.end();lb++){
-		point2 p(*lb);
-		if(lb->x >= 1e9)  p.x=POS_INFINITY;
-		if(lb->x <= -1e9)  p.x=NEG_INFINITY;
+		if(lb->x.mid() >= 1e9)  output << "(inf,";
+		else if(lb->x.mid() <= -1e9)  output << "(-inf,";
+		else output << "(" << lb->x.mid() << ",";
 
-		if(lb->y >= 1e9)  p.y=POS_INFINITY;
-		if(lb->y <= -1e9)  p.y=NEG_INFINITY;
-
-		output << "(" << p.x << "," << p.y << "),";
+		if(lb->y.mid() >= 1e9)  output << "inf),";
+		else if(lb->y.mid() <= -1e9)  output << "-inf),";
+		else output << lb->y.mid() << "),";
 	}
 
 	output << "]" << endl;
@@ -429,12 +473,12 @@ void OptimizerMOP::report(bool verbose) {
 	if (!verbose) {
 		cout << get_status() << endl;
 		cout << "LB:" << endl;
-		list<  IntervalVector > :: iterator sol=Sout.begin();
+		//list<  IntervalVector > :: iterator sol=Sout.begin();
 
 
-		for(;sol!=Sout.end();sol++){
-			cout << "(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << ")" << endl;
-		}
+		//for(;sol!=Sout.end();sol++){
+			//cout << "(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << ")" << endl;
+		//}
 
 		cout << "UB:" << UB.size() << endl;
 		map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();

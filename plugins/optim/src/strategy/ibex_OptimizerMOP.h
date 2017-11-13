@@ -26,32 +26,33 @@
 using namespace std;
 namespace ibex {
 
-
 class point2{
 public:
-	double x;
-	double y;
+	Interval x;
+	Interval y;
 
 	point2()  : x(0), y(0)  {}
-	point2(double x, double y) : x(x), y(y) { }
+	point2(double x, double y) : x(Interval(x)), y(Interval(y)) { }
+	point2(Interval x, Interval y) : x(x), y(y) { }
 
 	point2 operator+(const point2& p2) const {
-		return point2(x+p2.x, y+p2.y);
+		return point2( x+p2.x, y+p2.y );
 	}
 
 	point2 operator-(const point2& p2) const {
-		return point2(x-p2.x, y-p2.y);
+		return point2( x-p2.x, y-p2.y );
 	}
 
-	double operator*(const point2& p2) const {
-		return (x*p2.y - y*p2.x);
+	Interval operator*(const point2& p2) const {
+		return ( x*p2.y - y*p2.x );
 	}
 
 	bool operator<(const point2& p2) const {
-		if(x!=p2.x) return x<p2.x;
-		if(y!=p2.y) return y>p2.y;
+		if(x.mid()!=p2.x.mid()) return x.mid() < p2.x.mid();
+		if(y.mid()!=p2.y.mid()) return y.mid() > p2.y.mid();
 		return false;
 	}
+
 };
 /**
  * \defgroup optim IbexOpt
@@ -183,13 +184,6 @@ public:
 	 */
 	double get_nb_cells() const;
 
-	/**
-	 * \brief Get the number of solutions.
-	 */
-	int get_nb_sol(){
-		return Sout.size();
-	}
-
 	/* =========================== Settings ============================= */
 
 	/**
@@ -300,7 +294,10 @@ public:
 			if(pmax.first > z1.lb() && pmax.second > z2.lb()){
 				double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
 				//here we add the distance to the line
-			  dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
+			    //dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
+
+				//Damir's distance
+			    dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
 
 				if(dist > max_dist) max_dist=dist;
 
@@ -338,48 +335,19 @@ protected:
 
 
 
-	/**
-	 * TODO: Funcion que genera segmentos LB una vez terminada la busqueda
-	 */
-	void generate_LB(){
-		std::list< IntervalVector >::iterator it = Sout.begin();
-
-		for(;it!=Sout.end(); it++){
-			//update_LB();
-		}
-	}
-
-
-
-	/**
-	 * TODO: (DA, MC) Funcion que agrega segmentos al set LB
-	 * \brief Update the set LB by adding a segment
-	 */
-	void update_LB(const pair<double, double> p1, const pair<double, double> p2){
-        /** Idea:
-		* 1. Encontrar segmentos de LB que corten el segmento p1-p2
-		* 2. Encontrar puntos de interseccion
-		* 3. Actualizar LB
-		*/
-	}
-
-	/**
-	 * \brief Update the set LB by adding two segments (p.first, +inf)--(p.first, p.second) and (p.first, p.second)--(+inf, p.second)
-	 */
-	void update_LB(const pair<double, double> p){
-		update_LB(make_pair(p.first, POS_INFINITY), p);
-		update_LB(p, make_pair(POS_INFINITY, p.second));
-	}
-
   void insert_lb_segment(point2 p1, point2 p2){
 	    if(LB.size()==0){
-	    	LB.insert(point2(-1e10,1e10));
-	    	LB.insert(point2(1e10,1e10));
-	    	LB.insert(point2(1e10,-1e10));
+			LB.insert(point2(y1.lb(),y2.ub()));
+	    	LB.insert(point2(y1.ub(),y2.ub()));
+	    	LB.insert(point2(y1.ub(),y2.lb()));
+
 	    }
 
-		point2 p1_p = point2(p1.x,1e10);
-		point2 p2_p = point2(1e10,p2.y);
+		point2 p1_p = point2(p1.x,y2.ub());
+		point2 p2_p = point2(y1.ub(),p2.y);
+
+		//point2 p1_p = point2(p1.x,1e10);
+		//point2 p2_p = point2(1e10,p2.y);
 
 		std::set< point2 > new_points;
 		std::set< point2 >::iterator it=LB.upper_bound(p1);
@@ -394,7 +362,7 @@ protected:
 
 		point2 s;
 		if (intersect(v1, v2, p1_p,  p1, s)) {
-			cout << "s1: (" << s.x << "," << s.y << ")" << endl;
+			//cout << "s1: (" << s.x << "," << s.y << ")" << endl;
 
 			if(s.x!=p1.x || s.y!=p1.y){
 				new_points.insert(s);
@@ -406,19 +374,19 @@ protected:
 
 
 
-	    while(v1.y > p2.y){
+	    while(v1.y.mid() > p2.y.mid()){
 
 	        if (intersect(v1,v2, p1, p2, s)){
-	          cout << "s2: (" << s.x << "," << s.y << ")" << endl;
+	        //  cout << "s2: (" << s.x << "," << s.y << ")" << endl;
 	          in=!in;
 
-	          new_points.insert(s);
+	          new_points.insert(point2(s.x.lb(),s.y.lb()));
 	        }
 
-	        if ( v2.y < p2.y && intersect(v1,v2, p2, p2_p,s)){
-	          cout << "s3: (" << s.x << "," << s.y << ")" << endl;
+	        if ( v2.y.mid() < p2.y.mid() && intersect(v1,v2, p2, p2_p,s)){
+	       //   cout << "s3: (" << s.x << "," << s.y << ")" << endl;
 	          in = false;
-	          new_points.insert(s);
+	          new_points.insert(point2(s.x.lb(),s.y.lb()));
 	          new_points.insert(p2);
 	          break;
 	        }
@@ -432,53 +400,58 @@ protected:
 
 	    LB.insert(new_points.begin(), new_points.end());
 
+/*
 		cout << "LB points:" << endl;
 		for(it=LB.begin(); it!=LB.end(); it++){
 			cout << "(" << it->x << "," << it->y << ")" << endl;
-		}
+		}*/
 	}
 
   bool intersect(point2 p, point2 p2,
 		point2 q,  point2 q2, point2& res){
 
+	  	//  cout << "p-p2: (" << p.x << "," << p.y << ") --> (" << p2.x << "," << p2.y << ")" << endl;
+	  	 // cout << "q-q2: (" << q.x << "," << q.y << ") --> (" << q2.x << "," << q2.y << ")" << endl;
 
-
-	  	  if(p.x==p2.x && q.y==q2.y) {
-	  		  if(q.x>p.x || q2.x < p.x || q.y < p2.y || q.y > p.y) return false;
-
+        //orthogonal segments
+	  	  if(p.x.mid()==p2.x.mid() && q.y.mid()==q2.y.mid()) {
+	  		  if(q.x.mid()>p.x.mid() || q2.x.mid() < p.x.mid() ||
+					q.y.mid() < p2.y.mid() || q.y.mid() > p.y.mid()) return false;
 	  		  res.x=p.x;
 	  		  res.y=q.y;
 	  		  return true;
 	  	  }
 
-	  	  if(p.y==p2.y && q.x==q2.x){
-	  		  if(p.x > q.x || p2.x < q.x || p.y < q2.y || p.y > q.y) return false;
+        //orthogonal segments
+	  	  if(p.y.mid()==p2.y.mid() && q.x.mid()==q2.x.mid()){
+	  		  if(p.x.mid() > q.x.mid() || p2.x.mid() < q.x.mid() ||
+					p.y.mid() < q2.y.mid() || p.y.mid() > q.y.mid()) return false;
 	  		  res.x=q.x;
 	  		  res.y=p.y;
 	  		  return true;
 	  	  }
-	  	 // exit(0);
 
-	  	  if( (p.x==p2.x && p.y==p2.y) || (q.x==q2.x && q.y==q2.y)) return false;
+	  	  if( (p.x.mid()==p2.x.mid() && p.y.mid()==p2.y.mid()) ||
+				 (q.x.mid()==q2.x.mid() && q.y.mid()==q2.y.mid())) return false;
 
-            if(p2.x>=1e9) p2.x = std::max(std::max(q.x,q2.x),p.x);
-            if(p.y>=1e9) p.y = std::max(std::max(q.y,q2.y),p2.y);
-            if(q2.x>=1e9) q2.x = std::max(std::max(p.x,p2.x),q.x);
-            if(q.y>=1e9){ q.y = std::max(std::max(p.y,p2.y),q2.y); }
+      //  if(p2.x.mid()>=1e9) p2.x = std::max(std::max(q.x.ub(),q2.x.ub()),p.x.ub());
+      //  if(p.y.mid()>=1e9) p.y = std::max(std::max(q.y.ub(),q2.y.ub()),p2.y.ub());
+      //  if(q2.x.mid()>=1e9) q2.x = std::max(std::max(p.x.ub(),p2.x.ub()),q.x.ub());
+      //  if(q.y.mid()>=1e9) q.y = std::max(std::max(p.y.ub(),p2.y.ub()),q2.y.ub());
 
-  	  	  cout << "p-p2: (" << p.x << "," << p.y << ") --> (" << p2.x << "," << p2.y << ")" << endl;
-  	  	  cout << "q-q2: (" << q.x << "," << q.y << ") --> (" << q2.x << "," << q2.y << ")" << endl;
+
 
 			point2 r = p2-p;
 			point2 s = q2-q;
 
 			//now we find a solution for the equation p+tr = q+us,
 
-			double t = ((q-p) * s) / (r * s);
+			Interval t = ((q - p) * s) / (r * s);
+			Interval u = ((p - q) * r) / (s * r);
 
-			if ((r * s)!=0 && t>0 && t <1){
+			if ((r * s)!=0 && t.ub()>0 && t.lb() <1  && u.ub()>0 && u.lb() <1){
 				res = p + point2(t*r.x,t*r.y);
-				cout << "res::(" << res.x << "," << res.y << ")"  << endl;
+				//cout << "res::(" << res.x << "," << res.y << ")"  << endl;
 				return true;
 			}
 
@@ -490,6 +463,55 @@ protected:
 	 */
 	bool update_UB(const IntervalVector& box, int n);
 
+	Interval compute_lb_hypervolume(){
+
+        Interval volume(0.0);
+        point2 lb1 = *LB.begin();
+
+        std::set< point2 >::iterator lb2=LB.begin();
+
+		for(;lb2!=LB.end();lb2++){
+          if( (lb1.y.mid() <= y2_max) && ( lb2->x.mid() <= y1_max ) )
+        	  volume += (( y2_max - lb1.y ) + (lb1.y - lb2->y)/2.0) * ( lb2->x - lb1.x );
+
+          else if( lb2->x.mid() > y1_max ){
+        	  volume += ( y2_max - lb1.y )  * ( y1_max - lb1.x );
+        	  break;
+          }
+
+          lb1=*lb2;
+		}
+
+		return volume;
+	}
+
+	Interval compute_ub_hypervolume(){
+
+		//cout << y1_max << ";" <<y2_max << endl;
+        Interval volume(0.0);
+        pair <double, double> ub1 = UB.begin()->first;
+        map< pair <double, double>, IntervalVector >::iterator _ub2= UB.begin();
+
+		for(;_ub2!=UB.end();_ub2++){
+
+			pair <double, double> ub2=_ub2->first;
+			pair <double, double> ubx=make_pair(ub2.first, ub1.second);
+
+          if( (ub1.second <= y2_max) && ( ub2.first <= y1_max ) )
+        	  volume += (Interval(y2_max) - ub1.second ) * ( Interval(ubx.first) - ub1.first );
+
+          else if( ub2.first > y1_max ){
+        	  volume += ( Interval(y2_max) - ub1.second )  * ( Interval(y1_max) - ub1.first );
+        	  break;
+          }
+
+          ub1=ub2;
+		}
+
+		return volume;
+	}
+
+
 private:
 
 	/**
@@ -497,6 +519,17 @@ private:
 	 */
 	Interval eval_goal(const Function& goal, IntervalVector& x);
 
+	Interval y1,y2;
+
+	/**
+	 * min feasible value found for the objectives
+	 */
+    double y1_ub, y2_ub;
+
+    /**
+     * the max possible value for the objectives s.t. the other objective is minimized
+     */
+    double y1_max, y2_max;
 
 	/** Currently entailed constraints */
 	//EntailedCtr* entailed;
@@ -506,9 +539,6 @@ private:
 
 	/* Remember return status of the last optimization. */
 	Status status;
-
-	/** The set of final solutions */
-	std::list< IntervalVector > Sout;
 
   /** The cells in the buffer for plotting
 	 * the set should be updated each time the real buffer is popped
@@ -526,6 +556,7 @@ private:
 	 * pareto front.
 	 */
 	std::set< point2 > LB;
+
 
 
 	/** True if loup has changed in the last call to handle_cell(..) */

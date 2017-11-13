@@ -46,8 +46,8 @@ Técnicas de selección de nodo:
   - [x] SR1, [OC1](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1
   - [x] [OC2](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb2
   - [x] [OC3](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1 + lb2
-  - [ ] [OC4](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing value of
-  hypervolume of the point y (considering the initial values for z1_ub and z2_ub) --> Leer en detalle, modificar **(Ignacio)**
+  - [x] [OC4](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing value of
+  hypervolume of the point y (considering the initial values for z1_ub and z2_ub) 
   - [ ] [OC5](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing box size
   of boxes such that lb is not dominated **(Damir's CellNSSet)**
   - [ ] Escoger caja random del Nondominated Set **(Damir)**
@@ -56,11 +56,11 @@ Técnicas de selección de nodo:
   - [ ] Que hacer cuando aun no hay upperbounds?
 
 Calculo de distancia:
-  - [ ] Modificar funcion de calculo de distancia usando ideas de Damir
+  - [x] Modificar funcion de calculo de distancia usando ideas de Damir
 
 Criterio de termino:
-  - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2)) --> reevaluar
-  - [ ] Calcular hipervolumen relativo de la solucion --> trabajando en ello **(Ignacio)**
+  - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2)) --> **repensar**
+  - [x] Calcular hipervolumen relativo de la solucion 
 
 Biseccion:
   - [x] Adaptar LSmear (tecnica de biseccion)
@@ -80,7 +80,7 @@ Discarding boxes:
   - [ ] Implementar metodos para manejar el set de segmentos no dominados (nuevo UB)
 
 Definicion del lowerbound (y eventualmente UB): 
-  - [ ] Algoritmo para definir segmentos LB o UB -->  trabajando en ello **(Ignacio)**
+  - [x] Algoritmo para definir segmentos LB o UB **reparar bugs**
   
 [Algoritmo para encontrar interseccion entre 2 segmentos](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
 

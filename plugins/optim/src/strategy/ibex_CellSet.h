@@ -47,8 +47,8 @@ namespace ibex {
 		}
 
 		static int nb_cells;
-		static Interval z1_init;
-		static Interval z2_init;
+		static Interval y1_init;
+		static Interval y2_init;
 
 	    /**unique identifier for comparisons*/
 	    int id;
@@ -215,8 +215,8 @@ namespace ibex {
 	  {
 		  int n = c1->box.size();
 
-		  double hyper1=(CellBS::z1_init.ub()-c1->box[n-1].lb())*(CellBS::z2_init.ub()-c1->box[n-2].lb());
-		  double hyper2=(CellBS::z1_init.ub()-c1->box[n-1].lb())*(CellBS::z2_init.ub()-c1->box[n-2].lb());
+		  double hyper1=(CellBS::y1_init.ub()-c1->box[n-1].lb())*(CellBS::y2_init.ub()-c1->box[n-2].lb());
+		  double hyper2=(CellBS::y1_init.ub()-c1->box[n-1].lb())*(CellBS::y2_init.ub()-c1->box[n-2].lb());
 
 		  if(hyper1 != hyper2) return (hyper1 < hyper2);
 		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
@@ -230,11 +230,11 @@ namespace ibex {
 	  bool operator() (const Cell* c1, const Cell* c2) const
 	  {
 		  int n = c1->box.size();
-		  double c1_ev= (c1->box[n-2].lb()-CellBS::z1_init.lb())/CellBS::z1_init.diam() +
-				  (c1->box[n-1].lb()-CellBS::z2_init.lb())/CellBS::z2_init.diam();
+		  double c1_ev= (c1->box[n-2].lb()-CellBS::y1_init.lb())/CellBS::y1_init.diam() +
+				  (c1->box[n-1].lb()-CellBS::y2_init.lb())/CellBS::y2_init.diam();
 
-		  double c2_ev= (c2->box[n-2].lb()-CellBS::z1_init.lb())/CellBS::z1_init.diam() +
-				  (c2->box[n-1].lb()-CellBS::z2_init.lb())/CellBS::z2_init.diam();
+		  double c2_ev= (c2->box[n-2].lb()-CellBS::y1_init.lb())/CellBS::y1_init.diam() +
+				  (c2->box[n-1].lb()-CellBS::y2_init.lb())/CellBS::y2_init.diam();
 
 		  return c1_ev < c2_ev;
 	  }

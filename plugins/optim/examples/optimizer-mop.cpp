@@ -220,7 +220,7 @@ int main(int argc, char** argv){
 
 	// printing the results     
 	o.report(false);
-       cout << o.get_time() << "  " << o.get_nb_cells() << " "<< o.get_nb_sol() << endl;
+       cout << o.get_time() << "  " << o.get_nb_cells()  << endl;
 
 	//	if (filtering == "acidhc4"  )
 	//cout    << " nbcidvar " <<  acidhc4.nbvar_stat() << endl;
