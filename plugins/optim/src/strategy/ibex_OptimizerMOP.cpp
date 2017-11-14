@@ -339,7 +339,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){
-				nb_sols++;
+				if( distance2(c)>0 ) nb_sols++;
+
 				if(LB.empty()) {
 				//	plot(c);  getchar();
 					cout << "abs_eps: " << distance2(c) << endl;
@@ -347,20 +348,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 					y1_max=y2_ub.first;
 				}
 
-				/*if(c->box[n].lb() < -273.811 && c->box[n+1].lb() < 75.76){
-					cout << c->box[n] << endl;
-					cout << c->box[n+1] << endl;
-					cout << (c)->get<CellBS>().a << endl;
-					cout << (c)->get<CellBS>().w_lb << endl;
-
-					trace=1;
-					plot(c);  getchar();
-				}*/
-
-        if(y1_max < c->box[n].ub() &&  c->box[n+1].lb()<y2_ub.second)
-        	y1_max=c->box[n].ub();
-        if(y2_max < c->box[n+1].ub() &&  c->box[n].lb()<y1_ub.first)
-          y2_max=c->box[n+1].ub();
+                //for obtaining the nadir point (y1max, y2max) used to compute the hypervolume
+				if(y1_max < c->box[n].ub() &&  c->box[n+1].lb()<y2_ub.second)
+					y1_max=c->box[n].ub();
+				if(y2_max < c->box[n+1].ub() &&  c->box[n].lb()<y1_ub.first)
+					y2_max=c->box[n+1].ub();
 
 				double ya2 = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
 				if(trace) cout << "ya2:" << ya2 << endl;
