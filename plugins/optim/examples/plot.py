@@ -54,14 +54,15 @@ def updateplot(q):
             LBy = []
             ax1.clear()
 
-            ax1.add_patch(patches.Rectangle(
-                (LB[0]['pts'][0], LB[0]['pts'][1]),
-                LB[0]['diam_x'], LB[0]['diam_y'],
-                fill=False,
-                edgecolor='red',
-                linestyle='solid',
-                lw=0.1
-                ))
+            if len(LB) > 0:
+                ax1.add_patch(patches.Rectangle(
+                    (LB[0]['pts'][0], LB[0]['pts'][1]),
+                    LB[0]['diam_x'], LB[0]['diam_y'],
+                    fill=False,
+                    edgecolor='red',
+                    linestyle='solid',
+                    lw=0.1
+                    ))
 
             for p in [patches.Rectangle(
                         (lb['pts'][0], lb['pts'][1]),
@@ -84,7 +85,7 @@ def updateplot(q):
             		ax1.add_line(line)
             ax1.plot()
             plt.plot(UBx, UBy, 'r.', markersize=1)
-            plt.plot(LBx, LBy, '-b', markersize=1)
+            plt.plot(LBx, LBy, '-b', lw=0.5)
             plt.pause(1)
             updateplot(q)
              # print(result)

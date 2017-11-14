@@ -169,6 +169,7 @@ public:
 	 */
 	map< pair <double, double>, IntervalVector >& get_UB()  { return UB; }
 
+	std::set< point2 >& get_LB()  { return LB; }
 
 	/**
 	 * \brief Get the time spent.
@@ -184,6 +185,8 @@ public:
 	 */
 	double get_nb_cells() const;
 
+
+	int get_nb_sols() const {return nb_sols;}
 	/* =========================== Settings ============================= */
 
 	/**
@@ -307,6 +310,98 @@ public:
 		return max_dist;
 	}
 
+
+	Interval y1,y2;
+
+  //TODO: make it conservative!
+	void insert_lb_segment(point2 p1, point2 p2){
+      //trace=1;
+		  if(trace) cout << "p1-p2: (" << p1.x.mid() << "," << p1.y.mid() << ") --> (" << p2.x.mid() << "," << p2.y.mid() << ")" << endl;
+	    if(LB.size()==0){
+			LB.insert(point2(y1.lb(),y2.ub()));
+	    	LB.insert(point2(y1.ub(),y2.ub()));
+	    	LB.insert(point2(y1.ub(),y2.lb()));
+
+	    }
+
+		point2 p1_p = point2(p1.x,y2.ub());
+		point2 p2_p = point2(y1.ub(),p2.y);
+
+		//point2 p1_p = point2(p1.x,1e10);
+		//point2 p2_p = point2(1e10,p2.y);
+
+		std::set< point2 > new_points;
+		std::set< point2 >::iterator it=LB.upper_bound(p1);
+		it--;
+
+		point2 v1(it->x, it->y);
+		it++;
+		point2 v2(it->x, it->y);
+
+		bool in = false;
+
+
+		point2 s;
+		if (intersect(v1, v2, p1_p,  p1, s)) {
+			 if(trace) cout << "s1: (" << s.x << "," << s.y << ")" << endl;
+			 if(s.x.lb()==NEG_INFINITY) exit(0);
+
+      if(( (s.x==p1.x && s.y==p1.y) && ((p2-p1)*(v2-v1)).lb() <= 0 )){
+				new_points.insert(s);
+				new_points.insert(p1);
+				in = true;  if(trace) cout << "in"  << endl;
+				//it--; LB.erase(v2); it++; v1 = v2; v2=*it;
+			}
+
+
+			else if(s.x!=p1.x || s.y!=p1.y){
+				new_points.insert(s);
+				new_points.insert(p1);
+				in = true;  if(trace) cout << "in"  << endl;
+				//it--; LB.erase(v2); //it++; v1 = v2; v2=*it;
+			}
+			//it++; v1 = v2; v2=*it;
+		}
+
+
+
+	    while(v1.y.mid() > p2.y.mid()){
+
+	        if (intersect(v1,v2, p1, p2, s)){
+	           if(trace) cout << "s2: (" << s.x << "," << s.y << ")" << endl;
+						if(s.x.lb()==NEG_INFINITY) exit(0);
+
+	          in=!in;
+              if(trace) cout << ((in)? "in":"out")  << endl;
+	          new_points.insert(point2(s.x.lb(),s.y.lb()));
+	        }
+
+	        if ( v2.y.mid() <= p2.y.mid() && intersect(v1,v2, p2, p2_p,s)){
+	           if(trace) cout << "s3: (" << s.x << "," << s.y << ")" << endl;
+						if(s.x.lb()==NEG_INFINITY) exit(0);
+	          in = false;
+						 if(trace) cout << "out" << endl;
+	          new_points.insert(point2(s.x.lb(),s.y.lb()));
+	          new_points.insert(p2);
+	          break;
+	        }
+
+	        if(in){ it--; LB.erase(v2); }
+
+	        v1 = v2;
+	        it++;
+	        v2 = *it;
+	    }
+
+	    LB.insert(new_points.begin(), new_points.end());
+
+/*
+		cout << "LB points:" << endl;
+		for(it=LB.begin(); it!=LB.end(); it++){
+			cout << "(" << it->x << "," << it->y << ")" << endl;
+		}*/
+	}
+
 protected:
 
 	/**
@@ -334,84 +429,15 @@ protected:
 	void contract_and_bound(Cell& c, const IntervalVector& init_box);
 
 
-
-  void insert_lb_segment(point2 p1, point2 p2){
-	    if(LB.size()==0){
-			LB.insert(point2(y1.lb(),y2.ub()));
-	    	LB.insert(point2(y1.ub(),y2.ub()));
-	    	LB.insert(point2(y1.ub(),y2.lb()));
-
-	    }
-
-		point2 p1_p = point2(p1.x,y2.ub());
-		point2 p2_p = point2(y1.ub(),p2.y);
-
-		//point2 p1_p = point2(p1.x,1e10);
-		//point2 p2_p = point2(1e10,p2.y);
-
-		std::set< point2 > new_points;
-		std::set< point2 >::iterator it=LB.upper_bound(p1);
-		it--;
-
-		point2 v1(it->x, it->y);
-		it++;
-		point2 v2(it->x, it->y);
-
-		bool in = false;
-
-
-		point2 s;
-		if (intersect(v1, v2, p1_p,  p1, s)) {
-			//cout << "s1: (" << s.x << "," << s.y << ")" << endl;
-
-			if(s.x!=p1.x || s.y!=p1.y){
-				new_points.insert(s);
-				new_points.insert(p1);
-				in = true;
-				it--; LB.erase(v2); it++; v1 = v2; v2=*it;
-			}
-		}
-
-
-
-	    while(v1.y.mid() > p2.y.mid()){
-
-	        if (intersect(v1,v2, p1, p2, s)){
-	        //  cout << "s2: (" << s.x << "," << s.y << ")" << endl;
-	          in=!in;
-
-	          new_points.insert(point2(s.x.lb(),s.y.lb()));
-	        }
-
-	        if ( v2.y.mid() < p2.y.mid() && intersect(v1,v2, p2, p2_p,s)){
-	       //   cout << "s3: (" << s.x << "," << s.y << ")" << endl;
-	          in = false;
-	          new_points.insert(point2(s.x.lb(),s.y.lb()));
-	          new_points.insert(p2);
-	          break;
-	        }
-
-	        if(in){ it--; LB.erase(v2); }
-
-	        v1 = v2;
-	        it++;
-	        v2 = *it;
-	    }
-
-	    LB.insert(new_points.begin(), new_points.end());
-
-/*
-		cout << "LB points:" << endl;
-		for(it=LB.begin(); it!=LB.end(); it++){
-			cout << "(" << it->x << "," << it->y << ")" << endl;
-		}*/
-	}
-
+  /**
+  * \brief intersect two segments and return the intersection res
+  * https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+  */
   bool intersect(point2 p, point2 p2,
 		point2 q,  point2 q2, point2& res){
 
-	  	//  cout << "p-p2: (" << p.x << "," << p.y << ") --> (" << p2.x << "," << p2.y << ")" << endl;
-	  	 // cout << "q-q2: (" << q.x << "," << q.y << ") --> (" << q2.x << "," << q2.y << ")" << endl;
+	  	  if(trace) cout << "p-p2: (" << p.x.mid() << "," << p.y.mid() << ") --> (" << p2.x.mid() << "," << p2.y.mid() << ")" << endl;
+	  	  if(trace) cout << "q-q2: (" << q.x.mid() << "," << q.y.mid() << ") --> (" << q2.x.mid() << "," << q2.y.mid() << ")" << endl;
 
         //orthogonal segments
 	  	  if(p.x.mid()==p2.x.mid() && q.y.mid()==q2.y.mid()) {
@@ -446,10 +472,26 @@ protected:
 
 			//now we find a solution for the equation p+tr = q+us,
 
+
+      if( (r * s).lb() > -1e-8 && (r * s).ub() < 1e-8) {
+				//segments are collinear
+				if((q - p) * r == 0){
+					//segments are intersecting
+					if(p2.y.mid() > q2.y.mid() || (p2.y.mid() == q2.y.mid() && p2.x.mid()<q2.x.mid())) res=p2;
+					else res=q2;
+					return true;
+				}else //segments have no intersection
+				  return false;
+
+			}
+
 			Interval t = ((q - p) * s) / (r * s);
 			Interval u = ((p - q) * r) / (s * r);
 
-			if ((r * s)!=0 && t.ub()>0 && t.lb() <1  && u.ub()>0 && u.lb() <1){
+      //cout << (r * s) << endl;
+
+
+			if (t.ub()>=0 && t.lb() <=1  && u.ub()>=0 && u.lb() <=1){
 				res = p + point2(t*r.x,t*r.y);
 				//cout << "res::(" << res.x << "," << res.y << ")"  << endl;
 				return true;
@@ -465,12 +507,14 @@ protected:
 
 	Interval compute_lb_hypervolume(){
 
-        Interval volume(0.0);
-        point2 lb1 = *LB.begin();
+    Interval volume(0.0);
+    point2 lb1 = *LB.begin();
 
-        std::set< point2 >::iterator lb2=LB.begin();
+    std::set< point2 >::iterator lb2=LB.begin();
 
-		for(;lb2!=LB.end();lb2++){
+    cout << y1_max << "," << y2_max << endl;
+
+		for(lb2++;lb2!=LB.end();lb2++){
           if( (lb1.y.mid() <= y2_max) && ( lb2->x.mid() <= y1_max ) )
         	  volume += (( y2_max - lb1.y ) + (lb1.y - lb2->y)/2.0) * ( lb2->x - lb1.x );
 
@@ -519,12 +563,10 @@ private:
 	 */
 	Interval eval_goal(const Function& goal, IntervalVector& x);
 
-	Interval y1,y2;
-
 	/**
 	 * min feasible value found for the objectives
 	 */
-    double y1_ub, y2_ub;
+    pair <double, double> y1_ub, y2_ub;
 
     /**
      * the max possible value for the objectives s.t. the other objective is minimized
@@ -557,6 +599,7 @@ private:
 	 */
 	std::set< point2 > LB;
 
+	int nb_sols;
 
 
 	/** True if loup has changed in the last call to handle_cell(..) */

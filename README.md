@@ -47,7 +47,7 @@ Técnicas de selección de nodo:
   - [x] [OC2](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb2
   - [x] [OC3](https://tel.archives-ouvertes.fr/tel-01146856/document): Min lb1 + lb2
   - [x] [OC4](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing value of
-  hypervolume of the point y (considering the initial values for z1_ub and z2_ub) 
+  hypervolume of the point y (considering the initial values for z1_ub and z2_ub)
   - [ ] [OC5](https://tel.archives-ouvertes.fr/tel-01146856/document): Decreasing box size
   of boxes such that lb is not dominated **(Damir's CellNSSet)**
   - [ ] Escoger caja random del Nondominated Set **(Damir)**
@@ -60,13 +60,15 @@ Calculo de distancia:
 
 Criterio de termino:
   - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2)) --> **repensar**
-  - [x] Calcular hipervolumen relativo de la solucion 
+  - [x] Calcular hipervolumen relativo de la solucion
+  - [ ] Definicion del lowerbound tiene errores aun (limitarse a reparar errores graves por ahora)
+
 
 Biseccion:
   - [x] Adaptar LSmear (tecnica de biseccion)
 
 Discarding boxes:
-  - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w 
+  - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w
   - [x] w_lb delimitado por puntos UB
   - [x] pendiente igual a pendiente entre puntos extremos
   - [ ] Filtrar cajas del buffer
@@ -79,9 +81,9 @@ Discarding boxes:
   para luego obtener segmentos upperbound de la curva asociada en y
   - [ ] Implementar metodos para manejar el set de segmentos no dominados (nuevo UB)
 
-Definicion del lowerbound (y eventualmente UB): 
+Definicion del lowerbound (y eventualmente UB):
   - [x] Algoritmo para definir segmentos LB o UB **reparar bugs**
-  
+
 [Algoritmo para encontrar interseccion entre 2 segmentos](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
 
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming:
@@ -109,7 +111,3 @@ Corrections and improvements for the biobjective case
 *Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges.* (contribuciones):
   - Definicion del ub_set usando segmentos factibles
   - Proponer algoritmo eficiente (busqueda binaria) para encontrar soluciones factibles asociadas a puntos en los segmentos
-
-
-
-

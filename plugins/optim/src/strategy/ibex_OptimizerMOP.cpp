@@ -113,18 +113,18 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		}
 
 		//the point is inserted in UB only if its distance to the neighbor points is greater than (abs_eps/2.0)
-		if(	std::min(it2->first.first - eval.first,  eval.second - it2->first.second) > (abs_eps/4.0)){
+		if(	std::min(it2->first.first - eval.first,  eval.second - it2->first.second) > (abs_eps/2.0)){
 
-			if(eval.first < y1_ub) y1_ub=eval.first;
-			if(eval.second < y2_ub) y2_ub=eval.second;
+			if(eval.first < y1_ub.first) y1_ub=eval;
+			if(eval.second < y2_ub.second) y2_ub=eval;
 
 			UB.insert(make_pair(eval, vec));
 			new_ub = true;
 		}else{
 			it2--;
-			if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) > (abs_eps/4.0) ){
-				if(eval.first < y1_ub) y1_ub=eval.first;
-				if(eval.second < y2_ub) y2_ub=eval.second;
+			if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) > (abs_eps/2.0) ){
+				if(eval.first < y1_ub.first) y1_ub=eval;
+				if(eval.second < y2_ub.second) y2_ub=eval;
 
 				UB.insert(make_pair(eval, vec));
 				new_ub = true;
@@ -276,6 +276,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	nb_cells=0;
 
+	nb_sols=0;
+
 	buffer.flush();
 	buffer_cells.clear();
 	//LB.clear();
@@ -296,8 +298,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	CellBS::y1_init=y1;
 	CellBS::y2_init=y2;
 
-	y1_ub=POS_INFINITY;
-	y2_ub=POS_INFINITY;
+	y1_ub.first=POS_INFINITY;
+	y2_ub.second=POS_INFINITY;
 
 	y1_max=NEG_INFINITY;
 	y2_max=NEG_INFINITY;
@@ -337,15 +339,34 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			//cout << "abs_eps:" << abs_eps << endl;
 			if(distance2(c) < abs_eps){
-				if(LB.empty()) cout << "abs_eps: " << distance2(c) << endl;
-                if(y1_max < c->box[n].ub() &&  c->box[n+1].lb()<y2_ub)
-                	y1_max=c->box[n].ub();
-                if(y2_max < c->box[n+1].ub() &&  c->box[n].lb()<y1_ub)
-                	y2_max=c->box[n+1].ub();
+				nb_sols++;
+				if(LB.empty()) {
+				//	plot(c);  getchar();
+					cout << "abs_eps: " << distance2(c) << endl;
+					y2_max=y1_ub.second;
+					y1_max=y2_ub.first;
+				}
+
+				/*if(c->box[n].lb() < -273.811 && c->box[n+1].lb() < 75.76){
+					cout << c->box[n] << endl;
+					cout << c->box[n+1] << endl;
+					cout << (c)->get<CellBS>().a << endl;
+					cout << (c)->get<CellBS>().w_lb << endl;
+
+					trace=1;
+					plot(c);  getchar();
+				}*/
+
+        if(y1_max < c->box[n].ub() &&  c->box[n+1].lb()<y2_ub.second)
+        	y1_max=c->box[n].ub();
+        if(y2_max < c->box[n+1].ub() &&  c->box[n].lb()<y1_ub.first)
+          y2_max=c->box[n+1].ub();
 
 				double ya2 = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
+				if(trace) cout << "ya2:" << ya2 << endl;
 				if(ya2 > c->box[n+1].lb() && ya2 < c->box[n+1].ub()){
 					double yb1 = (c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].lb());
+					if(trace) cout << "yb1:" << yb1 << endl;
 					if(yb1 > c->box[n].lb() && yb1 < c->box[n].ub()){
 						    insert_lb_segment( point2(c->box[n].lb(),ya2),
 						    point2(yb1 ,  c->box[n+1].lb()) );
@@ -355,22 +376,36 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 								point2(c->box[n].ub() ,  yb2 ) );
 					}
 
-				}else if(ya2 > c->box[n+1].lb()){
+				}else if(ya2 >= c->box[n+1].ub()){
 					double ya1=(c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].ub());
 					double yb1 = (c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].lb());
+					if(trace) cout << "ya1:" << ya1 << endl;
+					if(trace) cout << "yb1:" << yb1 << endl;
+                    if(yb1 > c->box[n].lb() && yb1 < c->box[n].ub()){
 
-					insert_lb_segment( point2(ya1, c->box[n+1].ub()),
+						insert_lb_segment( point2(ya1, c->box[n+1].ub()),
 									point2(yb1 ,  c->box[n+1].lb() ) );
+					}else{
+
+						double yb2=((c)->get<CellBS>().w_lb-c->box[n].ub())/(c)->get<CellBS>().a;
+						insert_lb_segment( point2(ya1, c->box[n+1].ub()),
+									point2(c->box[n].ub() ,  yb2) );
+					}
 
 
-				}else insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
+				}else
+				  insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
 
-				plot(c); //getchar();
+				trace=0;
+                //if(buffer.empty())
+        	      // plot(c);
+
+
 
 				delete c; continue;
 			}
 
-		 	//plot(c); //getchar();
+		 //	plot(c); //getchar();
 
 			try {
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
@@ -395,6 +430,12 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	}
 	catch (TimeOutException& ) {
 		status = TIME_OUT;
+		cout << "timeout" << endl;
+		cout << "lb-hypervolume:" << compute_lb_hypervolume() << endl;
+		cout << "ub-hypervolume:" << compute_ub_hypervolume() << endl;
+
+		cout << "diff-hypervolume:" << (compute_lb_hypervolume()-compute_ub_hypervolume())/y1.diam() << endl;
+
 		return status;
 	}
 
@@ -421,15 +462,15 @@ void OptimizerMOP::plot(Cell* c){
 	output.open("output.txt");
 	set<  Cell* > :: iterator cell=buffer_cells.begin();
 
-	//if(c){
-	output << "(";
 
+	output << "(";
+	if(c){
 		output << "{'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
 		output << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam()<< ",";
 		output << "'pA':(" << c->box[n].lb() <<"," <<  (((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a)   << "),";
 		output << "'pB':(" << (c->get<CellBS>().w_lb-c->get<CellBS>().a*c->box[n+1].lb()) <<"," <<  c->box[n+1].lb()  << ")";
 		output << "},";
-
+  }
 
 	for(;cell!=buffer_cells.end();cell++){
 		if(distance2(*cell) < 0){continue;}
@@ -441,7 +482,7 @@ void OptimizerMOP::plot(Cell* c){
 		output << "},";
 	}
 	output << ")" << endl;
-	//}
+
 
 	output << "[";
 
