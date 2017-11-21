@@ -26,6 +26,7 @@ namespace ibex {
 
 const double OptimizerMOP::default_abs_eps = 1e-7;
 const double OptimizerMOP::default_rel_eps = 0.1;
+bool OptimizerMOP::_plot = false;;
 map< pair <double, double>, IntervalVector > OptimizerMOP::UB;
 
 
@@ -33,7 +34,8 @@ OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Functi
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double rel_eps, double abs_eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0), rel_eps(rel_eps), abs_eps(abs_eps) {
+                				time(0), nb_cells(0), rel_eps(rel_eps), abs_eps(abs_eps), nb_sols(0),
+								y1_max(NEG_INFINITY), y2_max(NEG_INFINITY) {
 
 	if (trace) cout.precision(12);
 }
@@ -90,7 +92,6 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		}
 		else continue;
 
-    //cout << 2 << endl;
 
 		it2= UB.lower_bound(eval);
 
@@ -102,18 +103,21 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 
 		/**** end UB correction ****/
 
-
-		//it is not dominated and we remove the new dominated points
+		bool domine=false;
 		for(it2++; it2!=UB.end(); ){
 			if(eval.second > it2->first.second) break;
 			std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
 			++aux;
 			UB.erase(it2);
 			it2 = aux;
+			domine=true;
 		}
 
+
 		//the point is inserted in UB only if its distance to the neighbor points is greater than (abs_eps/2.0)
-		if(	std::min(it2->first.first - eval.first,  eval.second - it2->first.second) > (abs_eps/2.0)){
+		if(domine || std::min(it2->first.first - eval.first,  eval.second - it2->first.second) > (abs_eps/4.0)){
+			//it is not dominated and we remove the new dominated points
+
 
 			if(eval.first < y1_ub.first) y1_ub=eval;
 			if(eval.second < y2_ub.second) y2_ub=eval;
@@ -122,7 +126,9 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 			new_ub = true;
 		}else{
 			it2--;
-			if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) > (abs_eps/2.0) ){
+			if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) > (abs_eps/4.0) ){
+				//it is not dominated and we remove the new dominated points
+
 				if(eval.first < y1_ub.first) y1_ub=eval;
 				if(eval.second < y2_ub.second) y2_ub=eval;
 
@@ -205,7 +211,6 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	if(valueZ2.second != NEG_INFINITY && valueZ2.first < c.box[n].ub() && valueZ2.first > c.box[n].lb()) {
 		c.box[n] = Interval(c.box[n].lb(), valueZ2.first);
 	}
-
 
 
 	/*================ contract x with f(x)=y1, f(x)=y2 and g(x)<=0 ================*/
@@ -297,12 +302,14 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
   //Initial points
 	CellBS::y1_init=y1;
 	CellBS::y2_init=y2;
+	abs_eps=rel_eps*CellBS::y1_init.diam();
 
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
 
 	y1_max=NEG_INFINITY;
 	y2_max=NEG_INFINITY;
+
 
 	// add data required by the bisector
 	bsc.add_backtrackable(*root);
@@ -326,24 +333,16 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			Cell *c = buffer.pop();
 			buffer_cells.erase(c);
-			if(UB.size()>=4){
-				pair <double, double> first=(*++UB.begin()).first;
-				pair <double, double> last=(*++UB.rbegin()).first;
-
-				double size = std::min(last.first - first.first,
-					first.second - last.second);
-
-				abs_eps=rel_eps*size;
-			}
-
 
 			//cout << "abs_eps:" << abs_eps << endl;
-			if(distance2(c) < abs_eps){
-				if( distance2(c)>0 ) nb_sols++;
+			double dist=distance2(c);
+
+			if(dist < abs_eps){
+				if( dist>0 ) nb_sols++;
 
 				if(LB.empty()) {
-				//	plot(c);  getchar();
-					cout << "abs_eps: " << distance2(c) << endl;
+					if(_plot) {plot(c);  getchar();}
+					cout << "abs_eps: " << dist << endl;
 					y2_max=y1_ub.second;
 					y1_max=y2_ub.first;
 				}
@@ -389,13 +388,15 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				  insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
 
 				trace=0;
-                //if(buffer.empty())
-        	      // plot(c);
+                if(_plot && buffer.empty())
+        	       plot(c);
 
 
 
 				delete c; continue;
 			}
+
+			//cout << c->get<CellBS>().ub_distance << ":" << abs_eps << endl;
 
 		 //	plot(c); //getchar();
 

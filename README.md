@@ -22,7 +22,7 @@ In plugins/optim/examples:
 make optimizer-mop
 
 Then, to run an example:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel diving-minlb 1e-1 100 1
+./optimizer-mop test2.txt acidhc4 compo smearsumrel diving-minlb 1e-1 100 1 0
 
 Para compilar todo en una sola linea yo hago lo siguiente:
 1. ingreso al directorio raiz de ibex (solo la primera vez)
@@ -30,7 +30,7 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel NDSdist 1e-1 100 1
+./optimizer-mop test2.txt acidhc4 compo smearsumrel NDSdist 1e-1 100 1 0
 
 
 TODO
@@ -88,6 +88,12 @@ Definicion del lowerbound (y eventualmente UB):
 
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming:
 Corrections and improvements for the biobjective case
+
+Preparar experimentos:
+  - [ ] Agregar todos los benchmarks de este [paper](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf)
+  - [ ] Agregar opcion de setear cantidad de soluciones del upperbounding
+  - [ ] Agregar opcion para mostrar/no mostrar plot
+  - [ ] Agregar opcion para modificar distancia minima aceptada entre soluciones factibles
 
 **Estructura de papers.**
 

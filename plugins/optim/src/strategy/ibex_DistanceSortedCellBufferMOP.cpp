@@ -28,7 +28,7 @@ namespace ibex {
 	void DistanceSortedCellBufferMOP::push(Cell* cell) {
 		double dist=OptimizerMOP::distance2(cell);
 		if(dist < cell->get<CellBS>().ub_distance )
-		   dist=cell->get<CellBS>().ub_distance;
+			cell->get<CellBS>().ub_distance=dist;
 		cells.push(cell);
 	}
 

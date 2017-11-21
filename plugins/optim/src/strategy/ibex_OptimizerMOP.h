@@ -268,7 +268,6 @@ public:
 	 * \brief returns true if the box+z1 + a*z2 > w_lb is dominated by the ub_set
 	 */
 	static double distance2(const Cell* c){
-		//if(c->get<CellBS>().ub_distance != POS_INFINITY) return c->get<CellBS>().ub_distance;
 		double max_dist=NEG_INFINITY;
 		if(UB.size()==2) return POS_INFINITY;
 
@@ -346,7 +345,7 @@ public:
 			 if(trace) cout << "s1: (" << s.x << "," << s.y << ")" << endl;
 			 if(s.x.lb()==NEG_INFINITY) exit(0);
 
-      if(( (s.x==p1.x && s.y==p1.y) && ((p2-p1)*(v2-v1)).lb() <= 0 )){
+			 if(( (s.x==p1.x && s.y==p1.y) && ((p2-p1)*(v2-v1)).lb() <= 0 )){
 				new_points.insert(s);
 				new_points.insert(p1);
 				in = true;  if(trace) cout << "in"  << endl;
@@ -369,7 +368,7 @@ public:
 
 	        if (intersect(v1,v2, p1, p2, s)){
 	           if(trace) cout << "s2: (" << s.x << "," << s.y << ")" << endl;
-						if(s.x.lb()==NEG_INFINITY) exit(0);
+				if(s.x.lb()==NEG_INFINITY) exit(0);
 
 	          in=!in;
               if(trace) cout << ((in)? "in":"out")  << endl;
@@ -395,12 +394,9 @@ public:
 
 	    LB.insert(new_points.begin(), new_points.end());
 
-/*
-		cout << "LB points:" << endl;
-		for(it=LB.begin(); it!=LB.end(); it++){
-			cout << "(" << it->x << "," << it->y << ")" << endl;
-		}*/
 	}
+
+	bool static _plot;
 
 protected:
 
@@ -460,20 +456,11 @@ protected:
 	  	  if( (p.x.mid()==p2.x.mid() && p.y.mid()==p2.y.mid()) ||
 				 (q.x.mid()==q2.x.mid() && q.y.mid()==q2.y.mid())) return false;
 
-      //  if(p2.x.mid()>=1e9) p2.x = std::max(std::max(q.x.ub(),q2.x.ub()),p.x.ub());
-      //  if(p.y.mid()>=1e9) p.y = std::max(std::max(q.y.ub(),q2.y.ub()),p2.y.ub());
-      //  if(q2.x.mid()>=1e9) q2.x = std::max(std::max(p.x.ub(),p2.x.ub()),q.x.ub());
-      //  if(q.y.mid()>=1e9) q.y = std::max(std::max(p.y.ub(),p2.y.ub()),q2.y.ub());
-
-
-
 			point2 r = p2-p;
 			point2 s = q2-q;
 
 			//now we find a solution for the equation p+tr = q+us,
-
-
-      if( (r * s).lb() > -1e-8 && (r * s).ub() < 1e-8) {
+			if( (r * s).lb() > -1e-8 && (r * s).ub() < 1e-8) {
 				//segments are collinear
 				if((q - p) * r == 0){
 					//segments are intersecting
@@ -487,8 +474,6 @@ protected:
 
 			Interval t = ((q - p) * s) / (r * s);
 			Interval u = ((p - q) * r) / (s * r);
-
-      //cout << (r * s) << endl;
 
 
 			if (t.ub()>=0 && t.lb() <=1  && u.ub()>=0 && u.lb() <=1){
@@ -550,10 +535,13 @@ protected:
           }
 
           ub1=ub2;
+          //cout << volume << endl;
+          //cout << endl;
 		}
 
 		return volume;
 	}
+
 
 
 private:

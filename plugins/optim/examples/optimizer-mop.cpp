@@ -65,6 +65,7 @@ int main(int argc, char** argv){
 	double eqeps= 1.e-8;
 
 	RNG::srand(atoi(argv[nbinput+3]));
+	OptimizerMOP::_plot = atoi(argv[nbinput+4]);
 
 	// the extended system 
 	// restricciones del sistema original + variables objetivo y restricciones
@@ -192,6 +193,10 @@ int main(int argc, char** argv){
 	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn")
           {
 		cxn_poly = new CtcPolytopeHull(*lr);
+		BitSet bset=BitSet(_ext_sys.nb_var);
+		bset.add(_ext_sys.nb_var-2); //w
+
+		//cxn_poly->set_contracted_vars(bset);
 		cxn_compo =new CtcCompo(*cxn_poly, hc44xn);
 		cxn = new CtcFixPoint (*cxn_compo, default_relax_ratio);
 	  }
