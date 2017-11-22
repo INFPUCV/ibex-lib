@@ -30,7 +30,14 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel NDSdist 1e-1 100 1 0
+./optimizer-mop ../benchs/MOP/osy.txt acidhc4 compo lsmear NDSdist 1e-6 10000 0 10 1e-7 1
+
+Parametros:
+./optimizer-mop instance filtering linear_relaxation bisector node_selection eps maxtime plot? nb_ub_sols min_ub_dist rand_seed 
+
+nb_ub_sols: max number of solutions returned by the upperbounding method on each tree node
+min_ub_dist: minimal distance between two ub points
+ 
 
 
 TODO
@@ -91,9 +98,9 @@ Corrections and improvements for the biobjective case
 
 Preparar experimentos:
   - [ ] Agregar todos los benchmarks de este [paper](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf)
-  - [ ] Agregar opcion de setear cantidad de soluciones del upperbounding
-  - [ ] Agregar opcion para mostrar/no mostrar plot
-  - [ ] Agregar opcion para modificar distancia minima aceptada entre soluciones factibles
+  - [x] Agregar opcion de setear cantidad de soluciones del upperbounding (nb_ub_sols)
+  - [x] Agregar opcion para mostrar/no mostrar plot (plot?)
+  - [x] Agregar opcion para modificar distancia minima aceptada entre soluciones factibles (min_ub_dist)
 
 **Estructura de papers.**
 

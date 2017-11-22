@@ -102,7 +102,7 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& feasible_point
     	IntervalVector box2(box);
     	box2.resize(n+2);
     	box2[n]=0.0; box2[n+1]=0.0;
-		IntervalVector ig= (i==0)? (goal1.gradient(box2.mid())+0.01*goal2.gradient(box2.mid())) : (goal2.gradient(box2.mid())+0.01*goal1.gradient(box2.mid()));
+		IntervalVector ig= (i==0)? (goal1.gradient(box2.mid())+0.001*goal2.gradient(box2.mid())) : (goal2.gradient(box2.mid())+0.001*goal1.gradient(box2.mid()));
 
 		if (ig.is_empty()) // unfortunately, at the midpoint the function is not differentiable
 			continue; // not a big deal: wait for another box...

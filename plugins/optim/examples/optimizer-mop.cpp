@@ -30,7 +30,7 @@ int main(int argc, char** argv){
 	// --------------------------
 	try {
 
-	if (argc<8) {
+	if (argc<1) {
 		cerr << "usage: optimizer04 filename filtering linear_relaxation bisection strategy prec timelimit "  << endl;
 		exit(1);
 	}
@@ -58,14 +58,16 @@ int main(int argc, char** argv){
 	string linearrelaxation= argv[3];
 	string bisection= argv[4];
 	string strategy= argv[5];
-	int nbinput=5;
-
-	double prec= atof(argv[nbinput+1]);
-	double timelimit = atof(argv[nbinput+2]);
+	double prec= atof(argv[6]);
+	double timelimit = atof(argv[7]);
 	double eqeps= 1.e-8;
 
-	RNG::srand(atoi(argv[nbinput+3]));
-	OptimizerMOP::_plot = atoi(argv[nbinput+4]);
+	OptimizerMOP::_plot = atoi(argv[8]);
+
+	OptimizerMOP::_nb_ub_sols = atoi(argv[9]);
+	OptimizerMOP::_min_ub_dist = atof(argv[10]);
+
+	RNG::srand(atoi(argv[11]));
 
 	// the extended system 
 	// restricciones del sistema original + variables objetivo y restricciones
@@ -103,8 +105,14 @@ int main(int argc, char** argv){
 	//LoupFinderDefault loupfinder (norm_sys,false);
 
 	CellBufferOptim* buffer;
-	if(strategy=="minlb")
+	if(strategy=="OC1")
 	  buffer = new CellSet<OC1>;
+	else if(strategy=="OC2")
+	  buffer = new CellSet<OC2>;
+	else if(strategy=="OC3")
+	  buffer = new CellSet<OC3>;
+	else if(strategy=="OC4")
+	  buffer = new CellSet<OC4>;
 	else if(strategy=="weighted_sum")
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")

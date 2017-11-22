@@ -343,7 +343,10 @@ public:
 		point2 s;
 		if (intersect(v1, v2, p1_p,  p1, s)) {
 			 if(trace) cout << "s1: (" << s.x << "," << s.y << ")" << endl;
-			 if(s.x.lb()==NEG_INFINITY) exit(0);
+			 if(s.x.lb()==NEG_INFINITY){
+				 cout << "s1: (" << s.x << "," << s.y << ")" << endl;
+				 return; exit(0);
+			 }
 
 			 if(( (s.x==p1.x && s.y==p1.y) && ((p2-p1)*(v2-v1)).lb() <= 0 )){
 				new_points.insert(s);
@@ -368,7 +371,10 @@ public:
 
 	        if (intersect(v1,v2, p1, p2, s)){
 	           if(trace) cout << "s2: (" << s.x << "," << s.y << ")" << endl;
-				if(s.x.lb()==NEG_INFINITY) exit(0);
+				if(s.x.lb()==NEG_INFINITY){
+					cout << "s2: (" << s.x << "," << s.y << ")" << endl;
+					return; exit(0);
+				}
 
 	          in=!in;
               if(trace) cout << ((in)? "in":"out")  << endl;
@@ -397,6 +403,8 @@ public:
 	}
 
 	bool static _plot;
+	int static _nb_ub_sols;
+	double static _min_ub_dist;
 
 protected:
 
