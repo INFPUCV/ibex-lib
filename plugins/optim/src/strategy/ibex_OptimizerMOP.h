@@ -278,7 +278,7 @@ public:
 		Interval z2 = c->box[n-1];
 		double a = c->get<CellBS>().a;
 		double w_lb = c->get<CellBS>().w_lb;
-
+		
 		//TODO: optimize this
 		map< pair <double, double>, IntervalVector >::iterator it = UB.begin();
 
@@ -299,8 +299,10 @@ public:
 				//here we add the distance to the line
 			    //dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
 
+				// distancia Damir
+				dist = std::min(dist, pmax.second - (w_lb - pmax.first - pmax.second)/(a - 1));
 				//Damir's distance
-			    dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
+				// dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
 
 				if(dist > max_dist) max_dist=dist;
 
