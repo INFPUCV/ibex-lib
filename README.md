@@ -102,6 +102,12 @@ Corrections and improvements for the biobjective case
 
 
 **Experiments**
+  - tiempo, nodos, soluciones
+  - upperbounding simplex (politopo)
+  - Selecccion de nodos (maxdistance (mas lejos del upperbound))
+  - Selecccion de nodos (diving decir que era buena para un objetivo y no para dos objetivos)
+  - Metodo de caja box + cy (lo que mejora la precision w_lowerbound)
+  - Metodo de caja box + cy (lo que mejora el filtrado w_upperbound) 
 
   - Compare hypervolumes and times between using the line z1+a*z2=w for improving the lower bound and the traditional
   method (using just the boxes lb)

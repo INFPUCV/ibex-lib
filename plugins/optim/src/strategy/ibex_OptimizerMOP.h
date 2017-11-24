@@ -303,9 +303,9 @@ public:
 			    //dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
 
 				// distancia Damir
-				dist = std::min(dist, z2.lb() - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ));
+				dist = std::min(dist, pmax.second - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ));
 //				cout << "damir " << pmax.second - (w_lb - pmax.first - pmax.second)/(a - 1) << endl;
-//				cout << "damir2 " <<  z2.lb() - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ) << endl;
+//				cout << "damir2 " <<  pmax.second - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ) << endl;
 				//Damir's distance
 				// dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
 
