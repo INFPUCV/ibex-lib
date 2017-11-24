@@ -71,6 +71,7 @@ public:
 	const Function& goal1;
 	const Function& goal2;
 
+	double static _weight2;
 protected:
 
 	/**

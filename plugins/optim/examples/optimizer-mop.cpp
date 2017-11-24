@@ -1,5 +1,5 @@
 //============================================================================
-//                                  I B E X                                   
+//                                  I B E X
 // File        : optimizer04.cpp
 // Author      : Gilles Chabert  Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
@@ -66,10 +66,11 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::_nb_ub_sols = atoi(argv[9]);
 	OptimizerMOP::_min_ub_dist = atof(argv[10]);
+	LoupFinderMOP::_weight2 = atof(argv[11]);
 
-	RNG::srand(atoi(argv[11]));
+	RNG::srand(atoi(argv[12]));
 
-	// the extended system 
+	// the extended system
 	// restricciones del sistema original + variables objetivo y restricciones
 
 	//ExtendedSystem ext_sys(sys, eqeps);
@@ -160,28 +161,28 @@ int main(int argc, char** argv){
 	CtcHC4 hc4(_ext_sys.ctrs,0.01,true);
 	// hc4 inside acid and 3bcid : incremental propagation beginning with the shaved variable
 	CtcHC4 hc44cid(_ext_sys.ctrs,0.1,true);
-	// hc4 inside xnewton loop 
+	// hc4 inside xnewton loop
 	CtcHC4 hc44xn (_ext_sys.ctrs,0.01,false);
 
-	// The 3BCID contractor on all variables (component of the contractor when filtering == "3bcidhc4") 
+	// The 3BCID contractor on all variables (component of the contractor when filtering == "3bcidhc4")
 	Ctc3BCid c3bcidhc4(hc44cid);
-	// hc4 followed by 3bcidhc4 : the actual contractor used when filtering == "3bcidhc4" 
+	// hc4 followed by 3bcidhc4 : the actual contractor used when filtering == "3bcidhc4"
 	CtcCompo hc43bcidhc4 (hc4, c3bcidhc4);
 
 	// The ACID contractor (component of the contractor  when filtering == "acidhc4")
 	CtcAcid acidhc4(_ext_sys,hc44cid,true);
-	// hc4 followed by acidhc4 : the actual contractor used when filtering == "acidhc4" 
+	// hc4 followed by acidhc4 : the actual contractor used when filtering == "acidhc4"
 	CtcCompo hc4acidhc4 (hc4, acidhc4);
 
-      
+
 
 	Ctc* ctc;
 	if (filtering == "hc4")
 	  ctc= &hc4;
 	else if
-	  (filtering =="acidhc4")   
+	  (filtering =="acidhc4")
 	  ctc= &hc4acidhc4;
-	else if 
+	else if
 	  (filtering =="3bcidhc4")
 	  ctc= &hc43bcidhc4;
 	else {cout << filtering <<  " is not an implemented  contraction  mode "  << endl; return -1;}
@@ -208,10 +209,10 @@ int main(int argc, char** argv){
 		cxn_compo =new CtcCompo(*cxn_poly, hc44xn);
 		cxn = new CtcFixPoint (*cxn_compo, default_relax_ratio);
 	  }
-	//  the actual contractor  ctc + linear relaxation 
+	//  the actual contractor  ctc + linear relaxation
 	Ctc* ctcxn;
 	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn")
-          ctcxn= new CtcCompo  (*ctc, *cxn); 
+          ctcxn= new CtcCompo  (*ctc, *cxn);
 	else
 	  ctcxn = ctc;
 
@@ -222,16 +223,16 @@ int main(int argc, char** argv){
 
 	//	cout << " sys.box " << sys.box << endl;
 
-	// the trace 
+	// the trace
 	o.trace=0;
 
 	// the allowed time for search
 	o.timeout=timelimit;
 
-	// the search itself 
+	// the search itself
 	o.optimize(ext_sys.box);
 
-	// printing the results     
+	// printing the results
 	o.report(false);
        cout << o.get_time() << "  " << o.get_nb_cells() << "  " << o.get_nb_sols() << endl;
 
@@ -251,7 +252,7 @@ int main(int argc, char** argv){
 
 
 	return 0;
-	
+
 	}
 
 

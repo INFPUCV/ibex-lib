@@ -406,6 +406,7 @@ public:
 	int static _nb_ub_sols;
 	double static _min_ub_dist;
 
+
 protected:
 
 	/**

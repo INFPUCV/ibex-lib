@@ -25,10 +25,12 @@ FncActivation::FncActivation(const System& sys, const Vector& pt, double activat
 			ith.add(i);
 
 			// call to eval_vector to avoid component generation
-			if (sys.f_ctrs.eval_vector(pt,ith)[0].mag() < activation_threshold) {
+			// cout << sys.f_ctrs.eval_vector(pt,ith)[0] << endl;
+			if (sys.f_ctrs.eval_vector(pt,ith)[0].ub() >= -activation_threshold) {
 				if (trace) cout << " activate inequality n°" << i << endl;
 				_activated.add(i);
-			}
+			}else if(trace)
+				cout << " non activate inequality n°" << i << endl;
 			ith.remove(i);
 		}
 	}

@@ -85,9 +85,8 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		if(eval.second >= it2->first.second)	continue;
 
 
+
 		/**** UB correction ****/
-
-
 		if(finder.ub_correction(vec.mid(), vec)){
 			//cout << "pre:" << eval.first << "," << eval.second << endl;
 			eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
@@ -140,6 +139,8 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 			}
 
 		}
+		if(trace) cout << eval.first  <<"," << eval.second << endl;
+
 
 		//UB.insert(make_pair(eval, vec));
 		//new_ub = true;
@@ -276,6 +277,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	/*========================= update loup =============================*/
 
 	bool loup_ch=update_UB(c.box, _nb_ub_sols);
+	if(trace && loup_ch && _plot) { plot(&c);  getchar(); }
 
 }
 
