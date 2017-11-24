@@ -1,5 +1,5 @@
 //============================================================================
-//                                  I B E X                                   
+//                                  I B E X
 // File        : optimizer04.cpp
 // Author      : Gilles Chabert  Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
@@ -30,7 +30,7 @@ int main(int argc, char** argv){
 	// --------------------------
 	try {
 
-	if (argc<8) {
+	if (argc<1) {
 		cerr << "usage: optimizer04 filename filtering linear_relaxation bisection strategy prec timelimit "  << endl;
 		exit(1);
 	}
@@ -58,15 +58,19 @@ int main(int argc, char** argv){
 	string linearrelaxation= argv[3];
 	string bisection= argv[4];
 	string strategy= argv[5];
-	int nbinput=5;
-
-	double prec= atof(argv[nbinput+1]);
-	double timelimit = atof(argv[nbinput+2]);
+	double prec= atof(argv[6]);
+	double timelimit = atof(argv[7]);
 	double eqeps= 1.e-8;
 
-	RNG::srand(atoi(argv[nbinput+3]));
+	OptimizerMOP::_plot = atoi(argv[8]);
 
-	// the extended system 
+	OptimizerMOP::_nb_ub_sols = atoi(argv[9]);
+	OptimizerMOP::_min_ub_dist = atof(argv[10]);
+	LoupFinderMOP::_weight2 = atof(argv[11]);
+
+	RNG::srand(atoi(argv[12]));
+
+	// the extended system
 	// restricciones del sistema original + variables objetivo y restricciones
 
 	//ExtendedSystem ext_sys(sys, eqeps);
@@ -102,8 +106,14 @@ int main(int argc, char** argv){
 	//LoupFinderDefault loupfinder (norm_sys,false);
 
 	CellBufferOptim* buffer;
-	if(strategy=="minlb")
+	if(strategy=="OC1")
 	  buffer = new CellSet<OC1>;
+	else if(strategy=="OC2")
+	  buffer = new CellSet<OC2>;
+	else if(strategy=="OC3")
+	  buffer = new CellSet<OC3>;
+	else if(strategy=="OC4")
+	  buffer = new CellSet<OC4>;
 	else if(strategy=="weighted_sum")
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")
@@ -151,28 +161,28 @@ int main(int argc, char** argv){
 	CtcHC4 hc4(_ext_sys.ctrs,0.01,true);
 	// hc4 inside acid and 3bcid : incremental propagation beginning with the shaved variable
 	CtcHC4 hc44cid(_ext_sys.ctrs,0.1,true);
-	// hc4 inside xnewton loop 
+	// hc4 inside xnewton loop
 	CtcHC4 hc44xn (_ext_sys.ctrs,0.01,false);
 
-	// The 3BCID contractor on all variables (component of the contractor when filtering == "3bcidhc4") 
+	// The 3BCID contractor on all variables (component of the contractor when filtering == "3bcidhc4")
 	Ctc3BCid c3bcidhc4(hc44cid);
-	// hc4 followed by 3bcidhc4 : the actual contractor used when filtering == "3bcidhc4" 
+	// hc4 followed by 3bcidhc4 : the actual contractor used when filtering == "3bcidhc4"
 	CtcCompo hc43bcidhc4 (hc4, c3bcidhc4);
 
 	// The ACID contractor (component of the contractor  when filtering == "acidhc4")
 	CtcAcid acidhc4(_ext_sys,hc44cid,true);
-	// hc4 followed by acidhc4 : the actual contractor used when filtering == "acidhc4" 
+	// hc4 followed by acidhc4 : the actual contractor used when filtering == "acidhc4"
 	CtcCompo hc4acidhc4 (hc4, acidhc4);
 
-      
+
 
 	Ctc* ctc;
 	if (filtering == "hc4")
 	  ctc= &hc4;
 	else if
-	  (filtering =="acidhc4")   
+	  (filtering =="acidhc4")
 	  ctc= &hc4acidhc4;
-	else if 
+	else if
 	  (filtering =="3bcidhc4")
 	  ctc= &hc43bcidhc4;
 	else {cout << filtering <<  " is not an implemented  contraction  mode "  << endl; return -1;}
@@ -192,13 +202,17 @@ int main(int argc, char** argv){
 	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn")
           {
 		cxn_poly = new CtcPolytopeHull(*lr);
+		BitSet bset=BitSet(_ext_sys.nb_var);
+		bset.add(_ext_sys.nb_var-2); //w
+
+		//cxn_poly->set_contracted_vars(bset);
 		cxn_compo =new CtcCompo(*cxn_poly, hc44xn);
 		cxn = new CtcFixPoint (*cxn_compo, default_relax_ratio);
 	  }
-	//  the actual contractor  ctc + linear relaxation 
+	//  the actual contractor  ctc + linear relaxation
 	Ctc* ctcxn;
 	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn")
-          ctcxn= new CtcCompo  (*ctc, *cxn); 
+          ctcxn= new CtcCompo  (*ctc, *cxn);
 	else
 	  ctcxn = ctc;
 
@@ -209,16 +223,16 @@ int main(int argc, char** argv){
 
 	//	cout << " sys.box " << sys.box << endl;
 
-	// the trace 
+	// the trace
 	o.trace=0;
 
 	// the allowed time for search
 	o.timeout=timelimit;
 
-	// the search itself 
+	// the search itself
 	o.optimize(ext_sys.box);
 
-	// printing the results     
+	// printing the results
 	o.report(false);
        cout << o.get_time() << "  " << o.get_nb_cells() << "  " << o.get_nb_sols() << endl;
 
@@ -238,7 +252,7 @@ int main(int argc, char** argv){
 
 
 	return 0;
-	
+
 	}
 
 

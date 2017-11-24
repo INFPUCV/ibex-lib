@@ -21,8 +21,6 @@ export PKG_CONFIG_PATH=/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/share/pkgc
 In plugins/optim/examples:
 make optimizer-mop
 
-Then, to run an example:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel diving-minlb 1e-1 100 1
 
 Para compilar todo en una sola linea yo hago lo siguiente:
 1. ingreso al directorio raiz de ibex (solo la primera vez)
@@ -30,7 +28,15 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop test2.txt acidhc4 compo smearsumrel NDSdist 1e-1 100 1
+./optimizer-mop ../benchs/MOP/osy.txt acidhc4 compo lsmear NDSdist 1e-6 10000 0 10 1e-7 0.0 1
+
+Parametros:
+./optimizer-mop instance filtering linear_relaxation bisector node_selection eps maxtime plot? nb_ub_sols min_ub_dist weight_finder rand_seed
+
+weight_finder: finder minimize f1+weight*f2 and weight*f1+f2
+nb_ub_sols: max number of solutions returned by the upperbounding method on each tree node
+min_ub_dist: minimal distance between two ub points
+
 
 
 TODO
@@ -89,6 +95,12 @@ Definicion del lowerbound (y eventualmente UB):
 Ver Vincent et al. (2013) Multiple objective branch and bound for mixed 0-1 linear programming:
 Corrections and improvements for the biobjective case
 
+Preparar experimentos:
+  - [x] Agregar todos los benchmarks de este [paper](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf)
+  - [x] Agregar opcion de setear cantidad de soluciones del upperbounding (nb_ub_sols)
+  - [x] Agregar opcion para mostrar/no mostrar plot (plot?)
+  - [x] Agregar opcion para modificar distancia minima aceptada entre soluciones factibles (min_ub_dist)
+
 **Estructura de papers.**
 
 *Paper 1. Nonlinear biobjective optimization. Improvements to interval Branch&Bounds algorithms*  (contribuciones):
@@ -111,8 +123,10 @@ Corrections and improvements for the biobjective case
 
   - Compare hypervolumes and times between using the line z1+a*z2=w for improving the lower bound and the traditional
   method (using just the boxes lb)
-  - Compare the new heuristic (max_distance) with other approaches. Compare also the anytime behaviour.
+  - Compare the new heuristic (max_distance) with other approaches. Show also the anytime behaviour.
   - Compare the upperbounding using the midpoint, simplex with n points and the dynamic version of simplex
+  - Compare different approaches for selecting variable to bisect
+  - Compare different contractor strategies (hc4, acidhc4, acidhc4+compo)
 
 *Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges.* (contribuciones):
   - Definicion del ub_set usando segmentos factibles
