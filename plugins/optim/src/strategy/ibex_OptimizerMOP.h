@@ -277,7 +277,7 @@ public:
 		Interval z2 = c->box[n-1];
 		double a = c->get<CellBS>().a;
 		double w_lb = c->get<CellBS>().w_lb;
-
+		
 		//TODO: optimize this
 		map< pair <double, double>, IntervalVector >::iterator it = UB.begin();
 
@@ -288,7 +288,10 @@ public:
 			pair <double, double> p2 = it->first;
 
 			pair <double, double> pmax= make_pair(p2.first, p.second);
-			//cout << "pmax: (" << pmax.first <<"," << pmax.second << ")" << endl;
+//			cout << "pmax: (" << pmax.first <<"," << pmax.second << ")" << endl;
+//			cout << "z: (" << z1.lb() <<"," << z2.lb() << ")" << endl;
+//			cout << "a: " << a << endl;
+//			cout << "w_lb: " << w_lb << endl;
 
 
 
@@ -298,9 +301,14 @@ public:
 				//here we add the distance to the line
 			    //dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
 
+				// distancia Damir
+				dist = std::min(dist, z2.lb() - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ));
+//				cout << "damir " << pmax.second - (w_lb - pmax.first - pmax.second)/(a - 1) << endl;
+//				cout << "damir2 " <<  z2.lb() - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ) << endl;
 				//Damir's distance
-			    dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
+				// dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
 
+//				cout << "nacho " << (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)-1.0)).ub() << endl;
 				if(dist > max_dist) max_dist=dist;
 
 			}
