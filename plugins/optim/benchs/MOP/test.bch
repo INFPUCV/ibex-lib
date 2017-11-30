@@ -13,7 +13,8 @@ constraints
 x2 = z2;
 
 //constraints
-x1 + x2 - 4 = 0;
+x1 + x2 - 4 <= 1e-8;
+x1 + x2 - 4 >= -1e-8;
 x1 + 2*x2 <= 6;
 x1 <=3;
 end

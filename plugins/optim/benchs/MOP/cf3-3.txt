@@ -5,8 +5,8 @@ Variables
 x1 in [0,1];
 x2 in [-2,2];
 x3 in [-2,2];
-z1 in [-1e8, 1e8];
-z2 in [-1e8, 1e8];
+z1 in [-1e8,1e8];
+z2 in [-1e8,1e8];
 
 function y2(x1,x2)
     return x2-sin(6*pi*x1 + 2*pi/3);

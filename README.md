@@ -28,15 +28,7 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop ../benchs/MOP/osy.txt acidhc4 compo lsmear NDSdist 1e-6 10000 0 10 1e-7 0.0 1
-
-Parametros:
-./optimizer-mop instance filtering linear_relaxation bisector node_selection eps maxtime plot? nb_ub_sols min_ub_dist weight_finder rand_seed
-
-weight_finder: finder minimize f1+weight*f2 and weight*f1+f2
-nb_ub_sols: max number of solutions returned by the upperbounding method on each tree node
-min_ub_dist: minimal distance between two ub points
-
+./optimizer-mop ../benchs/MOP/mop-7.txt --cy-contract --eps 0.02 -b lsmear --nb_ub_sols 10 --plot --w2 0.00
 
 
 TODO
@@ -77,6 +69,7 @@ Discarding boxes:
   - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w
   - [x] w_lb delimitado por puntos UB
   - [x] pendiente igual a pendiente entre puntos extremos
+  - [x] Implementar monotonicity test (FT) from [here](https://link.springer.com/content/pdf/10.1007%2Fs10589-007-9135-8.pdf)
   - [ ] Filtrar cajas del buffer
 
 **(Ignacio)** Upperbounding:
@@ -89,6 +82,8 @@ Discarding boxes:
 
 Definicion del lowerbound (y eventualmente UB):
   - [x] Algoritmo para definir segmentos LB o UB **reparar bugs**
+  
+
 
 [Algoritmo para encontrar interseccion entre 2 segmentos](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
 

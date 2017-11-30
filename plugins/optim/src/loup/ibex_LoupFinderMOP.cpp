@@ -75,7 +75,7 @@ bool LoupFinderMOP::ub_correction(Vector p, IntervalVector& res){
 
 					/* TODO: && !entailed->original(j)*/
 						satisfy_inequalities=false;
-						//cout << "not corrected" << endl;
+						cout << "not corrected" << endl;
 						break;
 					}
 			}
@@ -92,14 +92,9 @@ bool LoupFinderMOP::ub_correction(Vector p, IntervalVector& res){
 
 void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& candidate_points, int nn) {
 
-	if (!(lp_solver.default_limit_diam_box.contains(box.max_diam()))){
-		cout << "box is to large or small for finder?" << endl;
-		return;
-	}
-
 	int n=norm_sys.nb_var;
 
-  if(nn>1){
+  if(nn>1 && (lp_solver.default_limit_diam_box.contains(box.max_diam()))){
 	  lp_solver.clean_ctrs();
 	  lp_solver.set_bounds(box);
 
@@ -147,41 +142,42 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& candidate_poin
 
 			//correct the point
 			for(int i=0;i<box.size();i++){
-				if(loup_point[i] < box[i].lb())  loup_point[i] = box[i].lb()+1e-8;
-				if(loup_point[i] > box[i].ub())  loup_point[i] = box[i].ub()-1e-8;
+				if(loup_point[i] < box[i].lb())  loup_point[i] = box[i].lb();
+				if(loup_point[i] > box[i].ub())  loup_point[i] = box[i].ub();
 			}
 
-			candidate_points.push_back(loup_point);
+            if(candidate_points.size()==0 || candidate_points.front()!=loup_point )
+			   candidate_points.push_back(loup_point);
 		}
     }
 	}
     //we add the feasible inner points
-    if(candidate_points.size()>=2){
-    	double step = 1.0/((double)nn-1);
+    if(candidate_points.size()==2 && nn>2){
+    	double step = 1.0/((double)nn-1.0);
 
     	double r=0.0;
-    	for(int i=0; i<=nn; i++, r+=step){
-    		if(i==nn) r=1.0;
-
+    	for(int i=0; i<nn; i++, r+=step){
+    		if(i==nn-1) r=1.0;
     		list<Vector>::iterator it = candidate_points.begin();
     		Vector vec1 = *it; it++;
     		Vector vec2 = *it;
     		Vector vec3 = (1.0-r)*vec1 + r*vec2;
-    		if (box.contains(vec3)) candidate_points.push_back(vec3);
+			  for(int i=0;i<box.size();i++){
+				  if(vec3[i] < box[i].lb())  vec3[i] = box[i].lb();
+				  if(vec3[i] > box[i].ub())  vec3[i] = box[i].ub();
+			  }
+
+    		candidate_points.push_back(vec3);
+
 
     	}
     	candidate_points.pop_front();
     	candidate_points.pop_front();
+    	//cout << candidate_points.size() << endl;
     }else{
-			if(candidate_points.size()==0){
-				for(int i=0; i<nn; i++){
-					Vector vec=box.mid();
-					if(i>0) vec=box.random();
-
-					if(norm_sys.is_inner(vec)) candidate_points.push_back(vec);
-			  }
-			}
-		}
+		Vector vec=box.mid();
+		if(norm_sys.is_inner(vec)) candidate_points.push_back(vec);
+	}
 
     return;
 }

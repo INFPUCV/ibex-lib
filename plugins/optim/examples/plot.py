@@ -118,6 +118,7 @@ def simulation(q):
             f = open("output.txt")
             reader = f.read()
             reader = reader.replace('inf', "math.inf")
+            reader = reader.replace('nan', "0")
             LB = eval(reader.split("\n")[0])
             UB = eval(reader.split("\n")[1])
             LB2 = eval(reader.split("\n")[2])

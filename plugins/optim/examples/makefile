@@ -5,9 +5,9 @@ CXXFLAGS := $(shell pkg-config --cflags ibex)
 LIBS	 := $(shell pkg-config --libs  ibex)
 
 ifeq ($(DEBUG), yes)
-CXXFLAGS := $(CXXFLAGS) -O0 -g -pg -Wall 
+CXXFLAGS := $(CXXFLAGS) -O0 -g -pg -Wall -std=c++11
 else
-CXXFLAGS := $(CXXFLAGS) -O3 -DNDEBUG 
+CXXFLAGS := $(CXXFLAGS) -O3 -DNDEBUG  -std=c++11
 endif
 
 CXXFLAGS := $(CXXFLAGS) -DIBEX_BENCHS_DIR=\"${ROOT_DIR}../plugins/solver/benchs\"

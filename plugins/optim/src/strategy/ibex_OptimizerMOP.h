@@ -54,6 +54,12 @@ public:
 	}
 
 };
+
+struct sorty{
+	bool operator()(const pair<double,double> p1, const pair<double,double> p2){
+		return p1.second>p2.second;
+	}
+};
 /**
  * \defgroup optim IbexOpt
  */
@@ -98,7 +104,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, double rel_eps=default_rel_eps, double abs_eps=default_abs_eps);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,  double eps=default_eps);
 
 	/**
 	 * \brief Delete *this.
@@ -232,16 +238,11 @@ public:
 	 */
 	LoupFinderMOP& finder;
 
-	/** Precision (bisection control objective functions) */
-	double abs_eps;
+	/** Precision of the pareto frontier */
+	double eps;
 
-	const double rel_eps;
-
-	/** Default absolute precision: 1e-7 */
-	static const double default_abs_eps;
-
-	/** Default relative precision: 0.1 */
-	static const double default_rel_eps;
+	/** Default precision: 0.01 */
+	static const double default_eps;
 
 	/**
 	 * \brief Trace activation flag.
@@ -265,74 +266,24 @@ public:
 
 
 	/**
-	 * \brief returns true if the box+z1 + a*z2 > w_lb is dominated by the ub_set
+	 * \brief returns the distance from the box to the non-dominated set of points
 	 */
-	static double distance2(const Cell* c){
-		double max_dist=NEG_INFINITY;
-		if(UB.size()==2) return POS_INFINITY;
+	static double distance2(const Cell* c);
 
-		int n=c->box.size();
-
-		Interval z1 = c->box[n-2];
-		Interval z2 = c->box[n-1];
-		double a = c->get<CellBS>().a;
-		double w_lb = c->get<CellBS>().w_lb;
-		
-		//TODO: optimize this
-		map< pair <double, double>, IntervalVector >::iterator it = UB.begin();
-
-
-		for(;it!=UB.end(); ){
-			pair <double, double> p = it->first; it++;
-			if(it==UB.end()) break;
-			pair <double, double> p2 = it->first;
-
-			pair <double, double> pmax= make_pair(p2.first, p.second);
-//			cout << "pmax: (" << pmax.first <<"," << pmax.second << ")" << endl;
-//			cout << "z: (" << z1.lb() <<"," << z2.lb() << ")" << endl;
-//			cout << "a: " << a << endl;
-//			cout << "w_lb: " << w_lb << endl;
-
-
-
-			//el punto esta dentro de la zona de interes
-			if(pmax.first > z1.lb() && pmax.second > z2.lb()){
-				double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
-				//here we add the distance to the line
-			    //dist = std::min (dist, (Interval(pmax.first) + Interval(a)*Interval(pmax.second) - Interval(w_lb)).ub() );
-
-				// distancia Damir
-				dist = std::min(dist, pmax.second - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ));
-//				cout << "damir " << pmax.second - (w_lb - pmax.first - pmax.second)/(a - 1) << endl;
-//				cout << "damir2 " <<  pmax.second - ( (w_lb - pmax.first + pmax.second)/(a+1.0) ) << endl;
-				//Damir's distance
-				// dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
-
-//				cout << "nacho " << (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)-1.0)).ub() << endl;
-				if(dist > max_dist) max_dist=dist;
-
-			}
-		}
-
-		return max_dist;
-	}
-
-
-	Interval y1,y2;
 
   //TODO: make it conservative!
 	void insert_lb_segment(point2 p1, point2 p2){
       //trace=1;
 		  if(trace) cout << "p1-p2: (" << p1.x.mid() << "," << p1.y.mid() << ") --> (" << p2.x.mid() << "," << p2.y.mid() << ")" << endl;
 	    if(LB.size()==0){
-			LB.insert(point2(y1.lb(),y2.ub()));
-	    	LB.insert(point2(y1.ub(),y2.ub()));
-	    	LB.insert(point2(y1.ub(),y2.lb()));
+			LB.insert(point2(CellBS::y1_init.lb(),CellBS::y2_init.ub()));
+	    	LB.insert(point2(CellBS::y1_init.ub(),CellBS::y2_init.ub()));
+	    	LB.insert(point2(CellBS::y1_init.ub(),CellBS::y2_init.lb()));
 
 	    }
 
-		point2 p1_p = point2(p1.x,y2.ub());
-		point2 p2_p = point2(y1.ub(),p2.y);
+		point2 p1_p = point2(p1.x,CellBS::y2_init.ub());
+		point2 p2_p = point2(CellBS::y1_init.ub(),p2.y);
 
 		//point2 p1_p = point2(p1.x,1e10);
 		//point2 p2_p = point2(1e10,p2.y);
@@ -413,20 +364,15 @@ public:
 	bool static _plot;
 	int static _nb_ub_sols;
 	double static _min_ub_dist;
+	static bool cy_contract_var;
 
 
 protected:
 
 	/**
-	 * \brief Main procedure for processing a box.
-	 *
-	 * <ul>
-	 * <li> contract the cell box and try to find a new loup (see contract_and_bound)
-	 * <li> push the cell into the buffer or delete the cell in case of empty box detected.
-	 * </ul>
-	 *
+	 * The contraction using y+cy
 	 */
-	void handle_cell(Cell& c, const IntervalVector& init_box);
+	void cy_contract(Cell& c);
 
 	/**
 	 * \brief Contract and bound procedure for processing a box.
@@ -441,6 +387,87 @@ protected:
 	 */
 	void contract_and_bound(Cell& c, const IntervalVector& init_box);
 
+	/**
+	 * \brief The box is reduced using the set of nondominated points as shown in EJOR2016, page 13
+	 */
+	void dominance_peeler(IntervalVector& box);
+
+    bool is_inner_facet(IntervalVector box, int i, Interval bound){
+    	box.resize(n);
+    	box[i]=Interval(bound);
+    	//TODO: should be strict inner!
+    	return finder.norm_sys.is_inner(box);
+    }
+
+
+	bool discard_generalized_monotonicty_test(IntervalVector& box, const IntervalVector& initbox){
+		IntervalVector grad_f1= goal1.gradient(box);
+		IntervalVector grad_f2= goal2.gradient(box);
+
+		IntervalVector new_box(box);
+
+
+		bool discard=false;
+
+		for(int i=0;i<n;i++){
+			for(int j=0;j<n;j++){
+				if(grad_f1[i].lb() > 0.0 && grad_f2[j].lb()>0.0 &&
+					    (i==j || (Interval(grad_f2[i].lb()) / grad_f2[j].lb() -  Interval(grad_f1[i].lb()) / grad_f1[j].lb()).lb()  > 0.0) ){
+
+					    if(i==j) new_box[i] = box[i].lb(); //simple monotonicity test
+
+						if( box[i].lb() != initbox[i].lb() && box[j].lb() != initbox[j].lb() ){
+							if(is_inner_facet(box,i,box[i].lb()) && is_inner_facet(box,j,box[j].lb())){
+								box.set_empty();
+								return true;
+							}
+						}
+				}else if(grad_f1[i].ub() < 0.0 && grad_f2[j].lb()>0.0 &&
+						(Interval(grad_f1[i].ub()) / grad_f1[j].lb() -  Interval(grad_f2[i].ub()) / grad_f2[j].lb()).lb()  > 0.0) {
+
+					    if( box[i].ub() == initbox[i].ub() && box[j].lb() != initbox[j].lb() ) {
+							if(is_inner_facet(box,i,box[i].ub()) && is_inner_facet(box,j,box[j].lb())){
+								box.set_empty();
+								return true;
+							}
+						}
+
+				}else if(grad_f1[i].lb() > 0.0 && grad_f2[j].ub()<0.0 &&
+						(Interval(grad_f1[i].lb()) / grad_f1[j].ub() -  Interval(grad_f2[i].lb()) / grad_f2[j].ub()).lb()  > 0.0) {
+
+					    if( box[i].lb() != initbox[i].lb() && box[j].ub() != initbox[j].ub() )
+					    {
+							if(is_inner_facet(box,i,box[i].lb()) && is_inner_facet(box,j,box[j].ub())){
+								box.set_empty();
+								return true;
+							}
+						}
+
+				 }else if(grad_f1[i].ub() < 0.0 && grad_f2[j].ub() < 0.0 &&
+						(i==j || (Interval(grad_f2[i].ub()) / grad_f2[j].ub() -  Interval(grad_f1[i].ub()) / grad_f1[j].ub()).lb()  > 0.0) ){
+
+						if(i==j) new_box[i] = box[i].ub(); //simple monotonicity test
+
+						if( box[i].ub() != initbox[i].ub() && box[j].ub() != initbox[j].ub() )
+						{
+							if(is_inner_facet(box,i,box[i].ub()) && is_inner_facet(box,j,box[j].ub())){
+								box.set_empty();
+								return true;
+							}
+						}
+				}
+			}
+		}
+
+		IntervalVector bb=new_box;
+		bb.resize(n);
+
+		if(finder.norm_sys.is_inner(bb))
+			box=new_box;
+
+		return false;
+
+	}
 
   /**
   * \brief intersect two segments and return the intersection res
@@ -534,6 +561,7 @@ protected:
 	Interval compute_ub_hypervolume(){
 
 		//cout << y1_max << ";" <<y2_max << endl;
+
         Interval volume(0.0);
         pair <double, double> ub1 = UB.begin()->first;
         map< pair <double, double>, IntervalVector >::iterator _ub2= UB.begin();
@@ -546,7 +574,7 @@ protected:
           if( (ub1.second <= y2_max) && ( ub2.first <= y1_max ) )
         	  volume += (Interval(y2_max) - ub1.second ) * ( Interval(ubx.first) - ub1.first );
 
-          else if( ub2.first > y1_max ){
+          else if(ub1.second <= y2_max && ub2.first > y1_max ){
         	  volume += ( Interval(y2_max) - ub1.second )  * ( Interval(y1_max) - ub1.first );
         	  break;
           }
@@ -593,10 +621,13 @@ private:
 	 */
 	set< Cell* > buffer_cells;
 
+	//TODO: arreglar esto (static)
 	/** The current upper bounds (f1(x), f2(x)) of the pareto front associated
 	 * to its corresponding  point x
 	 */
 	static map< pair <double, double>, IntervalVector > UB;
+
+	map< pair <double, double>, IntervalVector, sorty > UBy;
 
 	/**
 	 * A set of points denoting the segments related to the lowerbound of the

@@ -10,7 +10,7 @@
 
 
 #include "ibex.h"
-
+#include "../main/args.hxx"
 
 
 #ifndef _IBEX_WITH_OPTIM_
@@ -35,8 +35,49 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
+	args::ArgumentParser parser("********* IbexOpt (defaultoptimizer) *********.", "Solve a Minibex file.");
+	args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+	args::ValueFlag<std::string> _filtering(parser, "string", "the filtering method", {'f', "filt"});
+	args::ValueFlag<std::string> _linear_relax(parser, "string", "the linear relaxation method", {"lr","linear-relax"});
+	args::ValueFlag<std::string> _bisector(parser, "string", "the bisection method", {'b', "bis"});
+	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy", {'s', "search"});
+	args::ValueFlag<double> _eps(parser, "float", "eps (the precision of the pareto front)", {"eps"});
+	args::ValueFlag<double> _epsx(parser, "float", "eps_x (the precision of the x boxes)", {"eps_x"});
+	args::ValueFlag<double> _timelimit(parser, "float", "timelimit", {'t',"time"});
+	args::Flag _plot(parser, "plot", "Save a python plot.", {"plot"});
+	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
+	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy.", {"cy-contract"});
+	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-simplex", {"nb_ub_sols"});
+	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
+	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
+	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
+
+	args::Positional<std::string> filename(parser, "filename", "The name of the MINIBEX file.");
+
+	try
+	{
+		parser.ParseCLI(argc, argv);
+	}
+	catch (args::Help&)
+	{
+		std::cout << parser;
+		return 0;
+	}
+	catch (args::ParseError& e)
+	{
+		std::cerr << e.what() << std::endl;
+		std::cerr << parser;
+		return 1;
+	}
+	catch (args::ValidationError& e)
+	{
+		std::cerr << e.what() << std::endl;
+		std::cerr << parser;
+		return 1;
+	}
+
 	//restricciones del sistema original + goal=NULL
-	System ext_sys(argv[1]);
+	System ext_sys(filename.Get().c_str());
 
 	SystemFactory fac2;
 
@@ -50,25 +91,47 @@ int main(int argc, char** argv){
 	fac2.add_var(ext_sys.args[ext_sys.nb_var-1]);
 	fac2.add_ctr(ext_sys.args[ext_sys.nb_var-2] + a * ext_sys.args[ext_sys.nb_var-1] - w = 0);
 
-	System _ext_sys(ext_sys, System(fac2));
 
-	cout << _ext_sys << endl;
+	OptimizerMOP::cy_contract_var= _cy_contract;
 
-	string filtering = argv[2];
-	string linearrelaxation= argv[3];
-	string bisection= argv[4];
-	string strategy= argv[5];
-	double prec= atof(argv[6]);
-	double timelimit = atof(argv[7]);
+	System *_ext_sys;
+	if(OptimizerMOP::cy_contract_var)	_ext_sys=new System(ext_sys, System(fac2));
+	else _ext_sys =new System(ext_sys);
+
+
+	cout << *_ext_sys << endl;
+
+	string filtering = (_filtering)? _filtering.Get() : "acidhc4";
+	string linearrelaxation= (_linear_relax)? _linear_relax.Get() : "compo";
+	string bisection= (_bisector)? _bisector.Get() : "largestfirst";
+	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
+	double eps= (_eps)? _eps.Get() : 0.01 ;
+	double eps_x= (_epsx)? _epsx.Get() : 1e-8 ;
+	double timelimit = (_timelimit)? _timelimit.Get() : 1e4 ;
 	double eqeps= 1.e-8;
 
-	OptimizerMOP::_plot = atoi(argv[8]);
+	OptimizerMOP::_plot = _plot;
 
-	OptimizerMOP::_nb_ub_sols = atoi(argv[9]);
-	OptimizerMOP::_min_ub_dist = atof(argv[10]);
-	LoupFinderMOP::_weight2 = atof(argv[11]);
+	OptimizerMOP::_nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 1 ;
+	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : eps*0.1;
+	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
+	bool no_bisect_y  = _nobisecty;
 
-	RNG::srand(atoi(argv[12]));
+	RNG::srand(atoi(argv[15]));
+
+	cout << "Instance: " << argv[1] << endl;
+	cout << "Filtering: " << filtering << endl;
+	cout << "Linear Relax: " << linearrelaxation << endl;
+	cout << "Bisector: " << bisection << endl;
+	cout << "Strategy: " << strategy << endl;
+	cout << "eps: " << eps << endl;
+	cout << "eps_x: " << eps_x << endl;
+	cout << "nb_ub_sols: " << OptimizerMOP::_nb_ub_sols << endl;
+	cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
+	cout << "plot: " <<  ((OptimizerMOP::_plot)? "yes":"no") << endl;
+	cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
+	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
+	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
 
 	// the extended system
 	// restricciones del sistema original + variables objetivo y restricciones
@@ -139,30 +202,36 @@ int main(int argc, char** argv){
 
 	Bsc * bs;
 
+	Vector p(ext_sys.nb_var, eps_x);
+	if(no_bisect_y){
+		p[ext_sys.nb_var-2]=POS_INFINITY;
+		p[ext_sys.nb_var-1]=POS_INFINITY;
+	}
+
 	if (bisection=="roundrobin")
 	  bs = new RoundRobin (0);
-	else if (bisection== "largestfirst")
-          bs= new LargestFirst(0);
-	else if (bisection=="smearsum")
-	  bs = new SmearSum(ext_sys,1e-8);
+	else if (bisection== "largestfirst"){
+          bs= new LargestFirst(p);
+	}else if (bisection=="smearsum")
+	  bs = new SmearSum(ext_sys,p);
 	else if (bisection=="smearmax")
-	  bs = new SmearMax(ext_sys,1e-8);
+	  bs = new SmearMax(ext_sys,p);
 	else if (bisection=="smearsumrel")
-	  bs = new SmearSumRelative(ext_sys,1e-8);
+	  bs = new SmearSumRelative(ext_sys,p);
 	else if (bisection=="smearmaxrel")
-	  bs = new SmearMaxRelative(ext_sys,1e-8);
+	  bs = new SmearMaxRelative(ext_sys,p);
 	else if (bisection=="lsmear")
-	  bs = new LSmear(ext_sys,1e-8);
+	  bs = new LSmear(ext_sys,p);
 	else {cout << bisection << " is not an implemented  bisection mode "  << endl; return -1;}
 
 	// The contractors
 
 	// the first contractor called
-	CtcHC4 hc4(_ext_sys.ctrs,0.01,true);
+	CtcHC4 hc4(_ext_sys->ctrs,0.01,true);
 	// hc4 inside acid and 3bcid : incremental propagation beginning with the shaved variable
-	CtcHC4 hc44cid(_ext_sys.ctrs,0.1,true);
+	CtcHC4 hc44cid(_ext_sys->ctrs,0.1,true);
 	// hc4 inside xnewton loop
-	CtcHC4 hc44xn (_ext_sys.ctrs,0.01,false);
+	CtcHC4 hc44xn (_ext_sys->ctrs,0.01,false);
 
 	// The 3BCID contractor on all variables (component of the contractor when filtering == "3bcidhc4")
 	Ctc3BCid c3bcidhc4(hc44cid);
@@ -170,7 +239,7 @@ int main(int argc, char** argv){
 	CtcCompo hc43bcidhc4 (hc4, c3bcidhc4);
 
 	// The ACID contractor (component of the contractor  when filtering == "acidhc4")
-	CtcAcid acidhc4(_ext_sys,hc44cid,true);
+	CtcAcid acidhc4(*_ext_sys,hc44cid,true);
 	// hc4 followed by acidhc4 : the actual contractor used when filtering == "acidhc4"
 	CtcCompo hc4acidhc4 (hc4, acidhc4);
 
@@ -189,11 +258,11 @@ int main(int argc, char** argv){
 
 	Linearizer* lr;
 	if (linearrelaxation=="art")
-	  lr= new LinearizerCombo(_ext_sys,LinearizerCombo::ART);
+	  lr= new LinearizerCombo(*_ext_sys,LinearizerCombo::ART);
 	else if  (linearrelaxation=="compo")
-	  lr= new LinearizerCombo(_ext_sys,LinearizerCombo::COMPO);
+	  lr= new LinearizerCombo(*_ext_sys,LinearizerCombo::COMPO);
 	else if (linearrelaxation=="xn")
-	  lr= new LinearizerXTaylor (_ext_sys, LinearizerXTaylor::RELAX, LinearizerXTaylor::RANDOM_OPP);
+	  lr= new LinearizerXTaylor (*_ext_sys, LinearizerXTaylor::RELAX, LinearizerXTaylor::RANDOM_OPP);
 	//	else {cout << linearrelaxation  <<  " is not an implemented  linear relaxation mode "  << endl; return -1;}
 	// fixpoint linear relaxation , hc4  with default fix point ratio 0.2
 	CtcFixPoint* cxn;
@@ -202,8 +271,8 @@ int main(int argc, char** argv){
 	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn")
           {
 		cxn_poly = new CtcPolytopeHull(*lr);
-		BitSet bset=BitSet(_ext_sys.nb_var);
-		bset.add(_ext_sys.nb_var-2); //w
+		//BitSet bset=BitSet(_ext_sys->nb_var);
+		//bset.add(_ext_sys.nb_var-2); //w
 
 		//cxn_poly->set_contracted_vars(bset);
 		cxn_compo =new CtcCompo(*cxn_poly, hc44xn);
@@ -217,14 +286,14 @@ int main(int argc, char** argv){
 	  ctcxn = ctc;
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,prec, 1e-8);
+	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,eps);
 	max_distance::UB= &o.get_UB();
 
 
 	//	cout << " sys.box " << sys.box << endl;
 
 	// the trace
-	o.trace=0;
+	o.trace=(_trace)? _trace.Get() : false;
 
 	// the allowed time for search
 	o.timeout=timelimit;
@@ -241,6 +310,7 @@ int main(int argc, char** argv){
 
 	delete bs;
 	delete buffer;
+	delete _ext_sys;
 	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn") {
 		delete lr;
 	    delete ctcxn;
