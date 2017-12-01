@@ -109,19 +109,20 @@ Preparar experimentos:
 
 
 **Experiments**
-  - determinar buen valor para la precision (precision relativa al rango de las soluciones no dominadas)
+  - determinar buen valor para la precision para obtener resultados en todas las instancias en tiempo razonable
+  (precision relativa al rango de las soluciones no dominadas)
   - tiempo, nodos, soluciones
-  - Estrategia basica (std): hc4 + largestfirst + weighted_sum + mid_point
-  - Estrategia full contractor (fullctc)
+  - Estrategia basica (std): -f hc4 -b largestfirst -s weighted_sum --nb_ub_sols=1
+  - Estrategia full contractor (fullctc): -f acidhc4 --lr=compo
   - upperbounding simplex (politopo) + (acidhc4 + compo)
-  	- std (midpoint, i.e., nb_ub_sols=1)
-  	- std(distintos valores de nb_ub_sols)
-  	- fullctc + distintos valores de nb_ub_sols
+  	- std
+  	- std + --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
+  	- fullctc + --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
   - Metodo de caja box + cy (lo que mejora la precision w_lowerbound) 
-    - fullctc + nb_ub_sols=best_value
-    - fullctc + nb_ub_sols=best_value + cy-contract
+    - fullctc + --nb_ub_sols=best_X
+    - fullctc + --nb_ub_sols=best_X + --cy-contract
   - Metodo de caja box + cy (lo que mejora el filtrado w_upperbound) 
-    - fullctc + nb_ub_sols=best_value + cy-contract-full
+    - fullctc + --nb_ub_sols=best_X + --cy-contract-full
   - Comparar estrategias de seleccion de nodo (NDSdist - diving-NDSdist)
     - -s weighted_sum, -s NDSdist, -s diving-NDSdist
   - Comparar estrategias de biseccion (lsmear - largestfirst)
