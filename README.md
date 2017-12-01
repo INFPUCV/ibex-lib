@@ -114,19 +114,19 @@ Preparar experimentos:
   - tiempo, nodos, soluciones
   - Estrategia basica (std): -f hc4 -b largestfirst -s weighted_sum --nb_ub_sols=1
   - Estrategia full contractor (fullctc): -f acidhc4 --lr=compo
-  - upperbounding simplex (politopo) + (acidhc4 + compo)
-  	- std
-  	- std + --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
-  	- fullctc + --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
+  - upperbounding simplex + full contractor:
+  	- $std
+  	- $std --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
+  	- $fullctc --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
   - Metodo de caja box + cy (lo que mejora la precision w_lowerbound) 
-    - fullctc + --nb_ub_sols=best_X
-    - fullctc + --nb_ub_sols=best_X + --cy-contract
+    - $fullctc --nb_ub_sols=best_X
+    - $fullctc --nb_ub_sols=best_X --cy-contract
   - Metodo de caja box + cy (lo que mejora el filtrado w_upperbound) 
-    - fullctc + --nb_ub_sols=best_X + --cy-contract-full
+    - $fullctc --nb_ub_sols=best_X --cy-contract-full
   - Comparar estrategias de seleccion de nodo (NDSdist - diving-NDSdist)
-    - -s weighted_sum, -s NDSdist, -s diving-NDSdist
+    - agregar -s weighted_sum, -s NDSdist o -s diving-NDSdist
   - Comparar estrategias de biseccion (lsmear - largestfirst)
-    - -b largestfirst, -b lsmear
+    - agregar -b largestfirst o -b lsmear
 
 
 *Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges.* (contribuciones):
