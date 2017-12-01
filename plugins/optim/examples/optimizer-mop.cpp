@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 	args::ArgumentParser parser("********* IbexOpt (defaultoptimizer) *********.", "Solve a Minibex file.");
 	args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 	args::ValueFlag<std::string> _filtering(parser, "string", "the filtering method", {'f', "filt"});
-	args::ValueFlag<std::string> _linear_relax(parser, "string", "the linear relaxation method", {"lr","linear-relax"});
+	args::ValueFlag<std::string> _linear_relax(parser, "string", "the linear relaxation method", {"linear-relax"});
 	args::ValueFlag<std::string> _bisector(parser, "string", "the bisection method", {'b', "bis"});
 	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy", {'s', "search"});
 	args::ValueFlag<double> _eps(parser, "float", "eps (the precision of the pareto front)", {"eps"});
@@ -46,10 +46,12 @@ int main(int argc, char** argv){
 	args::ValueFlag<double> _timelimit(parser, "float", "timelimit", {'t',"time"});
 	args::Flag _plot(parser, "plot", "Save a python plot.", {"plot"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
-	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy.", {"cy-contract"});
+	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
+	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the box y+cy.", {"cy-contract-full"});
 	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-simplex", {"nb_ub_sols"});
 	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
 	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
+	args::Flag _hv(parser, "hv", "Compute the hypervolume", {"hv"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 
 	args::Positional<std::string> filename(parser, "filename", "The name of the MINIBEX file.");
@@ -92,7 +94,9 @@ int main(int argc, char** argv){
 	fac2.add_ctr(ext_sys.args[ext_sys.nb_var-2] + a * ext_sys.args[ext_sys.nb_var-1] - w = 0);
 
 
-	OptimizerMOP::cy_contract_var= _cy_contract;
+	OptimizerMOP::cy_contract_var= _cy_contract || _cy_contract_full;
+	OptimizerMOP::_cy_upper= _cy_contract_full;
+  OptimizerMOP::_hv=_hv;
 
 	System *_ext_sys;
 	if(OptimizerMOP::cy_contract_var)	_ext_sys=new System(ext_sys, System(fac2));

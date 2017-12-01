@@ -364,7 +364,9 @@ public:
 	bool static _plot;
 	int static _nb_ub_sols;
 	double static _min_ub_dist;
+	static bool _cy_upper;
 	static bool cy_contract_var;
+	static bool _hv;
 
 
 protected:
@@ -394,7 +396,7 @@ protected:
 
     bool is_inner_facet(IntervalVector box, int i, Interval bound){
     	box.resize(n);
-    	box[i]=Interval(bound);
+    	box[i]=bound;
     	//TODO: should be strict inner!
     	return finder.norm_sys.is_inner(box);
     }
@@ -406,8 +408,7 @@ protected:
 
 		IntervalVector new_box(box);
 
-
-		bool discard=false;
+		//bool discard=false;
 
 		for(int i=0;i<n;i++){
 			for(int j=0;j<n;j++){

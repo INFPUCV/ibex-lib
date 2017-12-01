@@ -109,19 +109,24 @@ Preparar experimentos:
 
 
 **Experiments**
+  - determinar buen valor para la precision (precision relativa al rango de las soluciones no dominadas)
   - tiempo, nodos, soluciones
-  - upperbounding simplex (politopo)
-  - Selecccion de nodos (maxdistance (mas lejos del upperbound))
-  - Selecccion de nodos (diving decir que era buena para un objetivo y no para dos objetivos)
-  - Metodo de caja box + cy (lo que mejora la precision w_lowerbound)
+  - Estrategia basica (std): hc4 + largestfirst + weighted_sum + mid_point
+  - Estrategia full contractor (fullctc)
+  - upperbounding simplex (politopo) + (acidhc4 + compo)
+  	- std (midpoint, i.e., nb_ub_sols=1)
+  	- std(distintos valores de nb_ub_sols)
+  	- fullctc + distintos valores de nb_ub_sols
+  - Metodo de caja box + cy (lo que mejora la precision w_lowerbound) 
+    - fullctc + nb_ub_sols=best_value
+    - fullctc + nb_ub_sols=best_value + cy-contract
   - Metodo de caja box + cy (lo que mejora el filtrado w_upperbound) 
+    - fullctc + nb_ub_sols=best_value + cy-contract-full
+  - Comparar estrategias de seleccion de nodo (NDSdist - diving-NDSdist)
+    - -s weighted_sum, -s NDSdist, -s diving-NDSdist
+  - Comparar estrategias de biseccion (lsmear - largestfirst)
+    - -b largestfirst, -b lsmear
 
-  - Compare hypervolumes and times between using the line z1+a*z2=w for improving the lower bound and the traditional
-  method (using just the boxes lb)
-  - Compare the new heuristic (max_distance) with other approaches. Show also the anytime behaviour.
-  - Compare the upperbounding using the midpoint, simplex with n points and the dynamic version of simplex
-  - Compare different approaches for selecting variable to bisect
-  - Compare different contractor strategies (hc4, acidhc4, acidhc4+compo)
 
 *Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges.* (contribuciones):
   - Definicion del ub_set usando segmentos factibles
