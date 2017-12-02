@@ -28,7 +28,7 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop ../benchs/MOP/mop-7.txt --cy-contract --eps 0.02 -b lsmear --nb_ub_sols 10 --plot --w2 0.00
+./optimizer-mop ../benchs/MOP/mop-7.txt --cy-contract --eps_rel 0.02 -b lsmear --nb_ub_sols 10 --plot --w2 0.00
 
 
 TODO
@@ -82,7 +82,7 @@ Discarding boxes:
 
 Definicion del lowerbound (y eventualmente UB):
   - [x] Algoritmo para definir segmentos LB o UB **reparar bugs**
-  
+
 
 
 [Algoritmo para encontrar interseccion entre 2 segmentos](https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect)
@@ -110,7 +110,7 @@ Preparar experimentos:
 
 **Experiments**
   - determinar buen valor para la precision para obtener resultados en todas las instancias en tiempo razonable
-  (precision relativa al rango de las soluciones no dominadas)
+  (precision relativa al rango de las soluciones no dominadas). 0.01 o 0.001
   - tiempo, nodos, soluciones
   - Estrategia basica (std): -f hc4 -b largestfirst -s weighted_sum --nb_ub_sols=1
   - Estrategia full contractor (fullctc): -f acidhc4 --lr=compo
@@ -118,15 +118,15 @@ Preparar experimentos:
   	- $std
   	- $std --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
   	- $fullctc --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
-  - Metodo de caja box + cy (lo que mejora la precision w_lowerbound) 
+  - Metodo de caja box + cy (lo que mejora la precision w_lowerbound)
     - $fullctc --nb_ub_sols=best_X
     - $fullctc --nb_ub_sols=best_X --cy-contract
-  - Metodo de caja box + cy (lo que mejora el filtrado w_upperbound) 
+  - Metodo de caja box + cy (lo que mejora el filtrado w_upperbound)
     - $fullctc --nb_ub_sols=best_X --cy-contract-full
   - Comparar estrategias de seleccion de nodo (NDSdist - diving-NDSdist)
     - agregar -s weighted_sum, -s NDSdist o -s diving-NDSdist
   - Comparar estrategias de biseccion (lsmear - largestfirst)
-    - agregar -b largestfirst o -b lsmear
+      - agregar -b largestfirst o -b lsmear
 
 
 *Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges.* (contribuciones):

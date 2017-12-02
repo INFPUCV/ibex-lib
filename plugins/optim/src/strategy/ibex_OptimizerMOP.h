@@ -60,6 +60,8 @@ struct sorty{
 		return p1.second>p2.second;
 	}
 };
+
+
 /**
  * \defgroup optim IbexOpt
  */
@@ -104,7 +106,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,  double eps=default_eps);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,  double eps_rel=default_eps_rel);
 
 	/**
 	 * \brief Delete *this.
@@ -241,8 +243,11 @@ public:
 	/** Precision of the pareto frontier */
 	double eps;
 
+	/** Relative precision of the pareto frontier */
+	double eps_rel;
+
 	/** Default precision: 0.01 */
-	static const double default_eps;
+	static const double default_eps_rel;
 
 	/**
 	 * \brief Trace activation flag.
@@ -270,6 +275,58 @@ public:
 	 */
 	static double distance2(const Cell* c);
 
+
+	void updateLB(Cell* c, int dist){
+		if(LB.empty()) {
+			//cout << "dist: " << dist << ":" << abs_eps << endl;
+			if(_plot  && dist>=0) {plot(c);  getchar();}
+			y2_max=y1_ub.second;
+			y1_max=y2_ub.first;
+		}
+
+        //for obtaining the nadir point (y1max, y2max) used to compute the hypervolume
+		if(y1_max < c->box[n].ub() &&  c->box[n+1].lb()<y2_ub.second)
+			y1_max=c->box[n].ub();
+		if(y2_max < c->box[n+1].ub() &&  c->box[n].lb()<y1_ub.first)
+			y2_max=c->box[n+1].ub();
+
+		if(cy_contract_var){
+			double ya2 = ((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a;
+			if(trace) cout << "ya2:" << ya2 << endl;
+			if(ya2 > c->box[n+1].lb() && ya2 < c->box[n+1].ub()){
+				double yb1 = (c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].lb());
+				if(trace) cout << "yb1:" << yb1 << endl;
+				if(yb1 > c->box[n].lb() && yb1 < c->box[n].ub()){
+						insert_lb_segment( point2(c->box[n].lb(),ya2),
+						point2(yb1 ,  c->box[n+1].lb()) );
+				}else{
+					double yb2=((c)->get<CellBS>().w_lb-c->box[n].ub())/(c)->get<CellBS>().a;
+					insert_lb_segment( point2(c->box[n].lb(),ya2),
+							point2(c->box[n].ub() ,  yb2 ) );
+				}
+
+			}else if(ya2 >= c->box[n+1].ub()){
+				double ya1=(c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].ub());
+				double yb1 = (c)->get<CellBS>().w_lb-((c)->get<CellBS>().a*c->box[n+1].lb());
+				if(trace) cout << "ya1:" << ya1 << endl;
+				if(trace) cout << "yb1:" << yb1 << endl;
+				if(yb1 > c->box[n].lb() && yb1 < c->box[n].ub()){
+
+					insert_lb_segment( point2(ya1, c->box[n+1].ub()),
+								point2(yb1 ,  c->box[n+1].lb() ) );
+				}else{
+
+					double yb2=((c)->get<CellBS>().w_lb-c->box[n].ub())/(c)->get<CellBS>().a;
+					insert_lb_segment( point2(ya1, c->box[n+1].ub()),
+								point2(c->box[n].ub() ,  yb2) );
+				}
+
+
+			}else
+			  insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
+		}else
+			insert_lb_segment(point2(c->box[n].lb(),c->box[n+1].lb()),point2(c->box[n].lb(),c->box[n+1].lb()));
+	}
 
   //TODO: make it conservative!
 	void insert_lb_segment(point2 p1, point2 p2){
@@ -402,7 +459,7 @@ protected:
     }
 
 
-	bool discard_generalized_monotonicty_test(IntervalVector& box, const IntervalVector& initbox){
+	void discard_generalized_monotonicty_test(IntervalVector& box, const IntervalVector& initbox){
 		IntervalVector grad_f1= goal1.gradient(box);
 		IntervalVector grad_f2= goal2.gradient(box);
 
@@ -420,7 +477,7 @@ protected:
 						if( box[i].lb() != initbox[i].lb() && box[j].lb() != initbox[j].lb() ){
 							if(is_inner_facet(box,i,box[i].lb()) && is_inner_facet(box,j,box[j].lb())){
 								box.set_empty();
-								return true;
+								return;
 							}
 						}
 				}else if(grad_f1[i].ub() < 0.0 && grad_f2[j].lb()>0.0 &&
@@ -429,7 +486,7 @@ protected:
 					    if( box[i].ub() == initbox[i].ub() && box[j].lb() != initbox[j].lb() ) {
 							if(is_inner_facet(box,i,box[i].ub()) && is_inner_facet(box,j,box[j].lb())){
 								box.set_empty();
-								return true;
+								return;
 							}
 						}
 
@@ -440,7 +497,7 @@ protected:
 					    {
 							if(is_inner_facet(box,i,box[i].lb()) && is_inner_facet(box,j,box[j].ub())){
 								box.set_empty();
-								return true;
+								return;
 							}
 						}
 
@@ -453,7 +510,7 @@ protected:
 						{
 							if(is_inner_facet(box,i,box[i].ub()) && is_inner_facet(box,j,box[j].ub())){
 								box.set_empty();
-								return true;
+								return;
 							}
 						}
 				}
@@ -465,8 +522,6 @@ protected:
 
 		if(finder.norm_sys.is_inner(bb))
 			box=new_box;
-
-		return false;
 
 	}
 

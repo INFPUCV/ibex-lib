@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _linear_relax(parser, "string", "the linear relaxation method", {"linear-relax"});
 	args::ValueFlag<std::string> _bisector(parser, "string", "the bisection method", {'b', "bis"});
 	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy", {'s', "search"});
-	args::ValueFlag<double> _eps(parser, "float", "eps (the precision of the pareto front)", {"eps"});
+	args::ValueFlag<double> _eps_rel(parser, "float", "eps_rel (the precision of the pareto front)", {"eps_rel"});
 	args::ValueFlag<double> _epsx(parser, "float", "eps_x (the precision of the x boxes)", {"eps_x"});
 	args::ValueFlag<double> _timelimit(parser, "float", "timelimit", {'t',"time"});
 	args::Flag _plot(parser, "plot", "Save a python plot.", {"plot"});
@@ -109,7 +109,7 @@ int main(int argc, char** argv){
 	string linearrelaxation= (_linear_relax)? _linear_relax.Get() : "compo";
 	string bisection= (_bisector)? _bisector.Get() : "largestfirst";
 	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
-	double eps= (_eps)? _eps.Get() : 0.01 ;
+	double eps_rel= (_eps_rel)? _eps_rel.Get() : 0.01 ;
 	double eps_x= (_epsx)? _epsx.Get() : 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 1e4 ;
 	double eqeps= 1.e-8;
@@ -117,7 +117,7 @@ int main(int argc, char** argv){
 	OptimizerMOP::_plot = _plot;
 
 	OptimizerMOP::_nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 1 ;
-	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : eps*0.1;
+	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : 0.1;
 	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 
@@ -128,7 +128,7 @@ int main(int argc, char** argv){
 	cout << "Linear Relax: " << linearrelaxation << endl;
 	cout << "Bisector: " << bisection << endl;
 	cout << "Strategy: " << strategy << endl;
-	cout << "eps: " << eps << endl;
+	cout << "eps_rel: " << eps_rel << endl;
 	cout << "eps_x: " << eps_x << endl;
 	cout << "nb_ub_sols: " << OptimizerMOP::_nb_ub_sols << endl;
 	cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
@@ -290,7 +290,7 @@ int main(int argc, char** argv){
 	  ctcxn = ctc;
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,eps);
+	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,eps_rel);
 	max_distance::UB= &o.get_UB();
 
 
