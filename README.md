@@ -121,9 +121,8 @@ Ejemplo:
   - Estrategia basica (std), similar a la del paper: -f hc4 -b largestfirst -s weighted_sum --nb_ub_sols=1
   - Estrategia full contractor (fullctc), usando componentes de ibexOpt: -f acidhc4 --lr=compo -b largestfirst -s weighted_sum --nb_ub_sols=1
   - [ ] upperbounding simplex + full contractor:
-  	- $std
-  	- $std --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
-  	- $fullctc --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
+  	- $std --nb_ub_sols=X, X in {1, 3, 5, 10, 50, 100}
+  	- $fullctc --nb_ub_sols=X, X in {1, 3, 5, 10, 50, 100}
   - [ ] Metodo de caja box + cy (lo que mejora la precision w_lowerbound)
     - $fullctc --nb_ub_sols=best_X (best_X es el mejor valor obtenido en la experimentación anterior)
     - $fullctc --nb_ub_sols=best_X --cy-contract
