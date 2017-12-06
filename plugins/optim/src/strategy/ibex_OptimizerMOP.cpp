@@ -529,8 +529,8 @@ output << "]" << endl;
 void OptimizerMOP::report(bool verbose) {
 
 	if (!verbose) {
-		cout << get_status() << endl;
-		cout << "LB:" << endl;
+		//cout << get_status() << endl;
+		//cout << "#nb_sols:" << nb_sols << endl;
 		//list<  IntervalVector > :: iterator sol=Sout.begin();
 
 
@@ -538,7 +538,7 @@ void OptimizerMOP::report(bool verbose) {
 			//cout << "(" << (*sol)[n].lb() << "," << (*sol)[n+1].lb() << ")" << endl;
 		//}
 
-		cout << "UB:" << UB.size() << endl;
+		//cout << "|Y|:" << UB.size() << endl;
 		map< pair <double, double>, IntervalVector > :: iterator ub=UB.begin();
 /*
 		for(;ub!=UB.end();ub++){
@@ -546,7 +546,8 @@ void OptimizerMOP::report(bool verbose) {
 			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
 		}
 */
-		cout << endl << get_time() << " " << get_nb_cells() << endl;
+    cout << endl 	<< "time #nodes |Y| #sols" << endl;
+		cout << endl 	<< get_time() << " " << get_nb_cells() << " " << UB.size()  << " " << nb_sols  <<  endl;
 		return;
 	}
 
