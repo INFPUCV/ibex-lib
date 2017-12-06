@@ -109,8 +109,11 @@ Preparar experimentos:
 
 
 **Experiments**
+
 Ejemplo:
-./optimizer-mop ../benchs/MOP/binh.txt --cy-contract-full --eps_rel=0.01 -b lsmear --nb_ub_sols 50 --w2 0.001  | sed  '$!d'
+
+        ./optimizer-mop ../benchs/MOP/binh.txt --cy-contract-full --eps_rel=0.01 -b lsmear --nb_ub_sols 50 --w2 0.001  | sed  '$!d'
+
   - Para cada estrategia reportar: tiempo, #nodos, |Y|, #nb_sols
   - En las tablas las instancias deberían corresponder a las filas y las estrategias a multi-columnas de 4 columnas
   - Almacenar resultados en spreadsheets indicar commit (versión del solver utilizada)
