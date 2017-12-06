@@ -112,7 +112,7 @@ Preparar experimentos:
 
 Ejemplo:
 
-        ./optimizer-mop ../benchs/MOP/binh.txt --cy-contract-full --eps_rel=0.01 -b lsmear --nb_ub_sols 50 --w2 0.001  | sed  '$!d'
+      ./optimizer-mop ../benchs/MOP/binh.txt --cy-contract-full --eps_rel=0.01 -b lsmear --nb_ub_sols 50 --w2 0.001  | sed  '$!d'
 
   - Para cada estrategia reportar: tiempo, #nodos, |Y|, #nb_sols
   - En las tablas las instancias deberían corresponder a las filas y las estrategias a multi-columnas de 4 columnas
@@ -120,20 +120,20 @@ Ejemplo:
   - Parámetros fijos: --eps_rel=0.01 --w2 0.001 (usar en todos los experimentos)
   - Estrategia basica (std), similar a la del paper: -f hc4 -b largestfirst -s weighted_sum --nb_ub_sols=1
   - Estrategia full contractor (fullctc), usando componentes de ibexOpt: -f acidhc4 --lr=compo -b largestfirst -s weighted_sum --nb_ub_sols=1
-  [ ] upperbounding simplex + full contractor:
+  - [ ] upperbounding simplex + full contractor:
   	- $std
   	- $std --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
   	- $fullctc --nb_ub_sols=X, X in {3, 5, 10, 50, 100}
-  [ ] Metodo de caja box + cy (lo que mejora la precision w_lowerbound)
+  - [ ] Metodo de caja box + cy (lo que mejora la precision w_lowerbound)
     - $fullctc --nb_ub_sols=best_X (best_X es el mejor valor obtenido en la experimentación anterior)
     - $fullctc --nb_ub_sols=best_X --cy-contract
-  [ ] Metodo de caja box + cy (lo que mejora el filtrado w_upperbound)
+  - [ ] Metodo de caja box + cy (lo que mejora el filtrado w_upperbound)
     - $fullctc --nb_ub_sols=best_X --cy-contract-full
-  [ ] Comparar estrategias de seleccion de nodo (NDSdist - diving-NDSdist)
+  - [ ] Comparar estrategias de seleccion de nodo (NDSdist - diving-NDSdist)
     - $fullctc --nb_ub_sols=best_X --cy-contract-full -s weighted_sum
     - $fullctc --nb_ub_sols=best_X --cy-contract-full -s NDSdist
     - $fullctc --nb_ub_sols=best_X --cy-contract-full -s diving-NDSdist
-  [ ] Comparar estrategias de biseccion (lsmear - largestfirst)
+  - [ ] Comparar estrategias de biseccion (lsmear - largestfirst)
     - $fullctc --nb_ub_sols=best_X --cy-contract-full -s NDSdist -b lsmear
 
 
