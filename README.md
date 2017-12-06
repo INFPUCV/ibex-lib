@@ -129,12 +129,14 @@ Ejemplo:
     - $fullctc --nb_ub_sols=best_X --cy-contract
   - [ ] Metodo de caja box + cy (lo que mejora el filtrado w_upperbound)
     - $fullctc --nb_ub_sols=best_X --cy-contract-full
+  - [ ] epsilon_contract
+    - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract
   - [ ] Comparar estrategias de seleccion de nodo (NDSdist - diving-NDSdist)
-    - $fullctc --nb_ub_sols=best_X --cy-contract-full -s weighted_sum
-    - $fullctc --nb_ub_sols=best_X --cy-contract-full -s NDSdist
-    - $fullctc --nb_ub_sols=best_X --cy-contract-full -s diving-NDSdist
+    - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s weighted_sum
+    - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s NDSdist
+    - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s diving-NDSdist
   - [ ] Comparar estrategias de biseccion (lsmear - largestfirst)
-    - $fullctc --nb_ub_sols=best_X --cy-contract-full -s NDSdist -b lsmear
+    - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s NDSdist? -b lsmear
 
 
 *Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges.* (contribuciones):

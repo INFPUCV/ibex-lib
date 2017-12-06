@@ -48,6 +48,7 @@ int main(int argc, char** argv){
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the box y+cy.", {"cy-contract-full"});
+	args::Flag _eps_contract(parser, "eps-contract", "Contract using eps.", {"eps-contract"});
 	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-simplex", {"nb_ub_sols"});
 	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
 	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
@@ -120,6 +121,7 @@ int main(int argc, char** argv){
 	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : 0.1;
 	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
 	bool no_bisect_y  = _nobisecty;
+	OptimizerMOP::_eps_contract = _eps_contract;
 
 	RNG::srand(atoi(argv[15]));
 

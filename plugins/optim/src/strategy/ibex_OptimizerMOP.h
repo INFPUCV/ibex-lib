@@ -424,6 +424,7 @@ public:
 	static bool _cy_upper;
 	static bool cy_contract_var;
 	static bool _hv;
+	static bool _eps_contract;
 
 
 protected:

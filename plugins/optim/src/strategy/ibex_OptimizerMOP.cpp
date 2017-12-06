@@ -32,6 +32,7 @@ double OptimizerMOP::_min_ub_dist = 1e-7;
 bool OptimizerMOP::_cy_upper =false;
 bool OptimizerMOP::_hv =false;
 bool OptimizerMOP::cy_contract_var = false;
+bool OptimizerMOP::_eps_contract = false;
 
 map< pair <double, double>, IntervalVector > OptimizerMOP::UB;
 
@@ -234,7 +235,11 @@ void OptimizerMOP::cy_contract(Cell& c){
 					if(pmax.first==POS_INFINITY || pmax.second==POS_INFINITY)
 					   w_ub = POS_INFINITY;
 					else{
-			  		double ww = ( Interval(pmax.first) + box3[n+3]*Interval(pmax.second) ).ub();
+						double ww;
+						if(_eps_contract)
+							ww = ( Interval(pmax.first)-eps + box3[n+3]*(Interval(pmax.second)-eps) ).ub();
+						else
+							ww = ( Interval(pmax.first) + box3[n+3]*(Interval(pmax.second)) ).ub();
 			  		if(w_ub < ww )  w_ub = ww;
 					}
 				}
@@ -242,7 +247,7 @@ void OptimizerMOP::cy_contract(Cell& c){
 	  }
 		//cout << w_ub << endl;
 		//box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); // w
-		box3[n+2] = Interval(NEG_INFINITY, w_ub-eps); // w
+		box3[n+2] = Interval(NEG_INFINITY, w_ub); // w
 		//the contraction is performed
 		ctc.contract(box3);
 		c.get<CellBS>().a = box3[n+3].mid();
@@ -409,18 +414,21 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
-			IntervalVector left(c->box);
-		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first + 10*(y1_ub.first-c->box[n].lb())){
-				left[n]=Interval(c->box[n].lb(),y1_ub.first);
-				c->box[n]=Interval(y1_ub.first,c->box[n].ub());
-			}else left.set_empty();
+		  IntervalVector left(c->box);
+		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
+				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
 
-      pair<Cell*,Cell*> new_cells;
+			 left[n]=Interval(c->box[n].lb(),y1_ub.first);
+			 c->box[n]=Interval(y1_ub.first,c->box[n].ub());
+		  }else left.set_empty();
+
+         pair<Cell*,Cell*> new_cells;
 			if(!left.is_empty())
 				  new_cells=c->bisect(left,c->box);
 			else{
 				IntervalVector bottom(c->box);
-		  	if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  + 10*(y2_ub.second-c->box[n+1].lb()) ) {
+		  	if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  &&
+		  			(c->box[n].ub()-y2_ub.first)*(c->box[n+1].ub()-y2_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ) {
 					bottom[n+1]=Interval(c->box[n+1].lb(),y2_ub.second);
 					c->box[n+1]=Interval(y2_ub.second,c->box[n+1].ub());
 				}else bottom.set_empty();
