@@ -112,12 +112,12 @@ Preparar experimentos:
 
 Ejemplo:
 
-      ./optimizer-mop ../benchs/MOP/binh.txt --cy-contract-full --eps_rel=0.01 -b lsmear --nb_ub_sols 50 --w2 0.001  | sed  '$!d'
+      ./optimizer-mop ../benchs/MOP/binh.txt --cy-contract-full --eps_rel=0.01 -b lsmear --nb_ub_sols 50 --w2 0.01  | sed  '$!d'
 
   - Para cada estrategia reportar: tiempo, #nodos, |Y|, #nb_sols
   - En las tablas las instancias deberían corresponder a las filas y las estrategias a multi-columnas de 4 columnas
   - Almacenar resultados en spreadsheets indicar commit (versión del solver utilizada)
-  - Parámetros fijos: --eps_rel=0.01 --w2 0.001 (usar en todos los experimentos)
+  - Parámetros fijos: --eps_rel=0.01 --w2 0.01 (usar en todos los experimentos)
   - Estrategia basica (std), similar a la del paper: -f hc4 -b largestfirst -s weighted_sum --nb_ub_sols=1
   - Estrategia full contractor (fullctc), usando componentes de ibexOpt: -f acidhc4 --lr=compo -b largestfirst -s weighted_sum --nb_ub_sols=1
   - [ ] upperbounding simplex + full contractor:
