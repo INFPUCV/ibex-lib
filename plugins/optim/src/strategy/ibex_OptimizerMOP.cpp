@@ -247,7 +247,7 @@ void OptimizerMOP::cy_contract(Cell& c){
 	  }
 		//cout << w_ub << endl;
 		//box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); // w
-		box3[n+2] = Interval(NEG_INFINITY, w_ub); // w
+		box3[n+2] = Interval(NEG_INFINITY, w_ub-eps); // w
 		//the contraction is performed
 		ctc.contract(box3);
 		c.get<CellBS>().a = box3[n+3].mid();
