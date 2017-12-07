@@ -231,8 +231,8 @@ void OptimizerMOP::cy_contract(Cell& c){
 					if(it==UB.end() || p.second < box[n+1].lb()) break;
 					pair <double, double> p2 = it->first;
 					pair <double, double> pmax= make_pair(p2.first, p.second);
-	        //cout << "pmax:" << pmax.first << "," << pmax.second << endl;
-					if(pmax.first==POS_INFINITY || pmax.second==POS_INFINITY)
+					//cout << "pmax:" << pmax.first << "," << pmax.second << endl;
+			 		if(pmax.first==POS_INFINITY || pmax.second==POS_INFINITY)
 					   w_ub = POS_INFINITY;
 					else{
 						double ww;
