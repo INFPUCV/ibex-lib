@@ -255,6 +255,7 @@ void OptimizerMOP::cy_contract(Cell& c){
 
 		box=box3;
 		box.resize(n+2);
+
 }
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
