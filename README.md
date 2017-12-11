@@ -118,11 +118,15 @@ Ejemplo:
   - En las tablas las instancias deberían corresponder a las filas y las estrategias a multi-columnas de 4 columnas
   - Almacenar resultados en spreadsheets indicar commit (versión del solver utilizada)
   - Parámetros fijos: --eps_rel=0.01 --w2 0.01 (usar en todos los experimentos)
-  - Estrategia basica (std), similar a la del paper: -f hc4 -b largestfirst -s weighted_sum --nb_ub_sols=1
-  - Estrategia full contractor (fullctc), usando componentes de ibexOpt: -f acidhc4 --lr=compo -b largestfirst -s weighted_sum --nb_ub_sols=1
+  - Estrategia basica (std), similar a la del paper: -f hc4 -s weighted_sum --nb_ub_sols=1 -b largestfirst --no-bisecty
+  - Estrategia full contractor (fullctc), usando componentes de ibexOpt: -f acidhc4 --linear-relax=compo -s weighted_sum --nb_ub_sols=1 -b largestfirst --no-bisecty
+  - Estrategia full contractor + lsmear: -f acidhc4 --linear-relax=compo -s weighted_sum --nb_ub_sols=1 -b lsmear
   - [ ] upperbounding simplex + full contractor:
   	- $std --nb_ub_sols=X, X in {1, 3, 5, 10, 50, 100}
   	- $fullctc --nb_ub_sols=X, X in {1, 3, 5, 10, 50, 100}
+  - [ ] Comparar estrategias de biseccion (lsmear - largestfirst-nobisect-y)
+    - $fullctc --nb_ub_sols=best_X
+    - $fullctc-lsmear --nb_ub_sols=best_X
   - [ ] Metodo de caja box + cy (lo que mejora la precision w_lowerbound)
     - $fullctc --nb_ub_sols=best_X (best_X es el mejor valor obtenido en la experimentación anterior)
     - $fullctc --nb_ub_sols=best_X --cy-contract
@@ -134,8 +138,6 @@ Ejemplo:
     - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s weighted_sum
     - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s NDSdist
     - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s diving-NDSdist
-  - [ ] Comparar estrategias de biseccion (lsmear - largestfirst)
-    - $fullctc --nb_ub_sols=best_X --cy-contract-full --eps-contract -s NDSdist? -b lsmear
 
 
 *Paper 2. Nonlinear biobjective optimization. Improving the precision of the nondominated set by using edges.* (contribuciones):
