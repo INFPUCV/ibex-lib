@@ -24,7 +24,7 @@ using namespace std;
 
 namespace ibex {
 
-const double OptimizerMOP::default_eps_rel=0.01;
+const double OptimizerMOP::default_eps=0.01;
 
 bool OptimizerMOP::_plot = false;
 int OptimizerMOP::_nb_ub_sols = 3;
@@ -37,10 +37,10 @@ bool OptimizerMOP::_eps_contract = false;
 map< pair <double, double>, IntervalVector > OptimizerMOP::UB;
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,double eps_rel) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,double eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0), eps_rel(eps_rel), nb_sols(0), eps(0.0),
+                				time(0), nb_cells(0), nb_sols(0), eps(eps),
 								y1_max(NEG_INFINITY), y2_max(NEG_INFINITY) {
 
 	if (trace) cout.precision(12);
@@ -370,21 +370,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
         	double dist=0.0;
         	if(!atomic_box /*&& eps>0.0*/) dist=distance2(c);
         	//cout << dist << endl;
-        	if(trace && loup_ch && _plot  && dist>=0) { plot(c);  getchar(); }
-
-          if(UB.size()>10){
-						 map< pair <double, double>, IntervalVector > :: iterator it = UB.begin(); it++;
-						 pair <double, double> first = it->first;
-						 it = UB.end(); it--; it--;
-						 pair <double, double> last = it->first;
-
-						 eps = eps_rel * std::min( last.first - first.first, first.second-last.second );
-            // cout <<  first.first << "," <<  first.second << endl;
-            // cout <<  last.first << "," <<  last.second << endl;
-
-					}
-					//cout << dist << ":" << eps << endl;
-
+        	if(trace && loup_ch && _plot  && dist>=0) { cout << c->box[n] << ";" << c->box[n+1 ] << endl;   ; plot(c);  getchar(); }
 
         	if(dist < eps || atomic_box){
 						//cout << dist << ":" << eps << endl;
