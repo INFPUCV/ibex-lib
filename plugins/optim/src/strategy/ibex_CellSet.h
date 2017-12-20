@@ -75,7 +75,11 @@ namespace ibex {
 
 
 		bool operator() (const Cell* c1, const Cell* c2){
-	       return (c1->get<CellBS>().ub_distance < c2->get<CellBS>().ub_distance);
+		   int n = c1->box.size();
+		   if(c1->get<CellBS>().ub_distance != c2->get<CellBS>().ub_distance)
+			   return (c1->get<CellBS>().ub_distance < c2->get<CellBS>().ub_distance);
+		   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
+		   else return false;
 	    }
 
 		static map< pair <double, double>, IntervalVector >* UB;

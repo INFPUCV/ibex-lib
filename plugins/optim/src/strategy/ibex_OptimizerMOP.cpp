@@ -89,7 +89,6 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		if(eval.second >= it2->first.second) continue;
 
 
-
 		/**** UB correction ****/
 		if(finder.ub_correction(vec.mid(), vec)){
 			eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
@@ -103,6 +102,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		it2--;
 		//it is dominated by the previous ub point
 		if(eval.second >= it2->first.second)	continue;
+
 
 		/**** end UB correction ****/
 
@@ -142,7 +142,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 			}
 
 		}
-		if(trace) cout << eval.first  <<"," << eval.second << endl;
+		if(trace) {cout << eval.first  <<"," << eval.second << "(" << UB.size() << ")" << endl;}
 
 
 		//UB.insert(make_pair(eval, vec));
