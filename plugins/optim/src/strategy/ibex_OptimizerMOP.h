@@ -522,7 +522,7 @@ protected:
 		if(finder.norm_sys.is_inner(bb))
 			box=new_box;
 
-	}
+  }
 
   /**
   * \brief intersect two segments and return the intersection res

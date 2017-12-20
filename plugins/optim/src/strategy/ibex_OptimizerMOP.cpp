@@ -172,7 +172,7 @@ void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	valueZ2.second = NEG_INFINITY;
 
 
-	map< pair <double, double>, IntervalVector >:: iterator ent1=UB.upper_bound(make_pair(box[n].lb(),box[n+1].lb()));
+	map< pair <double, double>, IntervalVector >:: iterator ent1=UB.upper_bound(make_pair(box[n].lb(),POS_INFINITY /*box[n+1].lb()*/));
     ent1--;
 
     //z1 < box[n].lb()
@@ -190,13 +190,13 @@ void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	}
 
 
-	map< pair <double, double>, IntervalVector, sorty>:: iterator ent2=UBy.upper_bound(make_pair(box[n].lb(),box[n+1].lb()));
+	map< pair <double, double>, IntervalVector, sorty>:: iterator ent2=UBy.lower_bound(make_pair(NEG_INFINITY,box[n+1].lb()));
 	if(ent2==UBy.end()) return;
 
 	valueZ2 = ent2->first;
 	//cout << valueZ1.first <<","<<valueZ1.second << " ; " << valueZ2.first <<","<<valueZ2.second << endl;
 
-	if(valueZ2.first > box[n].lb() && valueZ2.first < box[n].ub() ) {
+	if(valueZ2.first > box[n].lb() && valueZ2.first <= box[n].ub() ) {
 		box[n] = Interval(box[n].lb(), valueZ2.first);
 	}
 
@@ -268,13 +268,18 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		return;
 	}*/
 
+  if(trace && _plot ) { plot(&c);  cout << "init" << endl; getchar(); }
+
 	dominance_peeler(c.box);
+	if(!c.box.is_empty() && trace && _plot ) { plot(&c);  cout << "dominance_peeler" << endl;  getchar();}
 	discard_generalized_monotonicty_test(c.box, init_box);
 
 	if(cy_contract_var){
 		cy_contract(c);
 	}else
 		ctc.contract(c.box);
+
+	if(!c.box.is_empty() && trace && _plot ) { plot(&c);  cout << "contreacted" << endl; getchar(); }
 
 	if (c.box.is_empty()) return;
 
