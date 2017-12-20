@@ -117,7 +117,7 @@ Ejemplo:
   - Para cada estrategia reportar: tiempo, #nodos, |Y|, #nb_sols
   - En las tablas las instancias deberían corresponder a las filas y las estrategias a multi-columnas de 4 columnas
   - Almacenar resultados en spreadsheets indicar commit (versión del solver utilizada)
-  - Parámetros fijos: --eps_rel=0.01 --w2 0.01 (usar en todos los experimentos)
+  - Parámetros fijos: --w2 0.01 (usar en todos los experimentos)
   - Estrategia basica (std), similar a la del paper: -f hc4 -s weighted_sum --nb_ub_sols=1 -b largestfirst --no-bisecty
   - Estrategia full contractor (fullctc), usando componentes de ibexOpt: -f acidhc4 --linear-relax=compo -s weighted_sum --nb_ub_sols=1 -b largestfirst --no-bisecty
   - Estrategia full contractor + lsmear: -f acidhc4 --linear-relax=compo -s weighted_sum --nb_ub_sols=1 -b lsmear
