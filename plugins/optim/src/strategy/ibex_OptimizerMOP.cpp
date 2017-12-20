@@ -374,7 +374,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
         	double dist=0.0;
         	if(!atomic_box /*&& eps>0.0*/) dist=distance2(c);
-        	//cout << dist << endl;
+
+        	if(trace) cout << "distance:" << dist << endl;
         	if(trace && loup_ch && _plot  && dist>=0) { cout << c->box[n] << ";" << c->box[n+1 ] << endl;   ; plot(c);  getchar(); }
 
         	if(dist < eps || atomic_box){
@@ -573,7 +574,6 @@ void OptimizerMOP::report(bool verbose) {
 
 double OptimizerMOP::distance2(const Cell* c){
 	double max_dist=NEG_INFINITY;
-	if(UB.size()==2) return POS_INFINITY;
 
 	int n=c->box.size();
 
@@ -592,6 +592,8 @@ double OptimizerMOP::distance2(const Cell* c){
 		pair <double, double> p2 = it->first;
 
 		pair <double, double> pmax= make_pair(p2.first, p.second);
+		if(pmax.first==POS_INFINITY) pmax.first=CellBS::y1_init.ub();
+		if(pmax.second==POS_INFINITY) pmax.second=CellBS::y2_init.ub();
 
 		//el punto esta dentro de la zona de interes
 		if(pmax.first >= z1.lb() && pmax.second >= z2.lb()){
@@ -605,6 +607,7 @@ double OptimizerMOP::distance2(const Cell* c){
 
 		}else break;
 	}
+
 
 	return max_dist;
 }
