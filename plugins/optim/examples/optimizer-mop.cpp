@@ -123,6 +123,11 @@ int main(int argc, char** argv){
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
 
+	if(bisection=="largestfirst_noy"){
+		bisection="largestfirst";
+		no_bisect_y=true;
+	}
+
 	RNG::srand(atoi(argv[15]));
 
 	cout << "Instance: " << argv[1] << endl;

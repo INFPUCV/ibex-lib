@@ -1,0 +1,18 @@
+[base]
+test_instances = instances.txt
+mintime = 0.0001
+maxtime = 3600
+factors = 1 0.833 0.665 0.5 0.2 0.1
+sig_gain = 1.2
+max_seeds = 1
+min_seeds = 1
+algo_names = fullctc
+
+
+[fullctc]
+exec = "/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/examples/optimizer-mop"
+tuning_param = BISECTOR
+tuning_values = largestfirst largestfirst_noy lsmear
+params = _INSTANCE --time=_MAXTIME -f acidhc4 --linear-relax=compo --nb_ub_sols=10 -b _BISECTOR --cy-contract-full --eps-contract -s NDSdist 
+outputpos_times = 0
+outputpos_boxes = 1

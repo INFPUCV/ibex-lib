@@ -335,6 +335,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	buffer.push(root);
 	if(_plot) buffer_cells.insert(root);
 
+	top_dist=POS_INFINITY;
+
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
@@ -343,6 +345,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
 			Cell *c = buffer.pop();
+			top_dist=c->get<CellBS>().ub_distance;
+
 			if(_plot) buffer_cells.erase(c);
 			nb_cells++;
 
@@ -547,8 +551,8 @@ void OptimizerMOP::report(bool verbose) {
 			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
 		}
 */
-    cout << endl 	<< "time #nodes |Y| #sols" << endl;
-		cout << endl 	<< get_time() << " " << get_nb_cells() << " " << UB.size()  << " " << nb_sols  <<  endl;
+        cout << endl 	<< "time #nodes |Y| #sols" << endl;
+		cout << endl 	<< get_time() << " " << top_dist << " " << get_nb_cells() << " " << UB.size() <<  endl;
 		return;
 	}
 

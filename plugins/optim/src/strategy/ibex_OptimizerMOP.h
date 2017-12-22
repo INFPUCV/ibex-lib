@@ -243,6 +243,7 @@ public:
 	/** Precision of the pareto frontier */
 	double eps;
 
+	double top_dist;
 
 	/** Default precision: 0.01 */
 	static const double default_eps;

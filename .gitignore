@@ -43,9 +43,10 @@ doc/_build
 *~
 
 # files in examples
-**/examples/*
 !**/examples/*cpp
 !**/examples/makefile
+
+optimizer-mop
 
 .ftpconfig
 .ftpignore
