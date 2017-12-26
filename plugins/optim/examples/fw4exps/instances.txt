@@ -16,6 +16,5 @@
 /home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/benchs/MOP/ctp7-4m.txt --eps=0.0001
 /home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/benchs/MOP/ctp7-5m.txt --eps=0.0001
 /home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/benchs/MOP/mop-7.txt --eps=0.1
-/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/benchs/MOP/mop-10.txt --eps=0.1 
-/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/benchs/MOP/mop-13.txt --eps=0.1
-
+/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/benchs/MOP/mop-10.txt --eps=0.5 
+/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/plugins/optim/benchs/MOP/mop-13.txt --eps=2.5

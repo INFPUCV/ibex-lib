@@ -15,7 +15,7 @@ Instalation
 
 export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig   -> Esto se tiene que hacer cada vez que se conecta a la maquina
 
-export PKG_CONFIG_PATH=/home/iaraya/github/ibex/ibex-dev-dag/ibex-lib/share/pkgconfig
+export PKG_CONFIG_PATH=/home/iaraya/ibex-lib/share/pkgconfig
 
 
 In plugins/optim/examples:
