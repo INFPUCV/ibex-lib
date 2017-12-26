@@ -27,7 +27,7 @@ namespace ibex {
 		/**
 		 * \brief Constructor for the root node (followed by a call to init_root).
 		 */
-		CellBS() : depth(0), id(0), a(0.0), w_lb(0.0), ub_distance(POS_INFINITY) {}
+		CellBS() : depth(0), id(0), a(0.0), w_lb(POS_INFINITY), ub_distance(POS_INFINITY) {}
 
 		/**
 		 * \brief Copy constructor

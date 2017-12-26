@@ -345,7 +345,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
 			Cell *c = buffer.pop();
-			//if(trace) cout << "dist1:" << c->get<CellBS>().ub_distance << endl;
 			top_dist=c->get<CellBS>().ub_distance;
 
 			if(_plot) buffer_cells.erase(c);
@@ -591,8 +590,6 @@ double OptimizerMOP::distance2(const Cell* c){
 	map< pair <double, double>, IntervalVector >::iterator it = UB.lower_bound(make_pair(z1.lb(),-NEG_INFINITY)); //UB.begin();
 	it--;
 
-	cout << z1.lb() << "," << z2.lb() << endl;
-
 	for(;it!=UB.end(); ){
 		pair <double, double> p = it->first; it++;
 		if(it==UB.end()) break;
@@ -604,20 +601,17 @@ double OptimizerMOP::distance2(const Cell* c){
 
 		//el punto esta dentro de la zona de interes
 		if(pmax.first >= z1.lb() && pmax.second >= z2.lb()){
-			cout << "p:(" << pmax.first << "," <<  pmax.second << ")" << endl;
 			double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
-
 			//Damir's distance
-			if(cy_contract_var)
+			if(cy_contract_var && w_lb!=POS_INFINITY)
 			  dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
 
 			if(dist > max_dist) max_dist=dist;
-			cout << dist << endl;
 		}else break;
 	}
 
 
-    cout << max_dist << endl;
+
 	return max_dist;
 }
 

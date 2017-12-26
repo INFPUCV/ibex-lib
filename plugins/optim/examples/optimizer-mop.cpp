@@ -128,7 +128,7 @@ int main(int argc, char** argv){
 		no_bisect_y=true;
 	}
 
-	RNG::srand(atoi(argv[15]));
+	RNG::srand(0);
 
 	cout << "Instance: " << argv[1] << endl;
 	cout << "Filtering: " << filtering << endl;
