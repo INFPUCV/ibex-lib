@@ -24,7 +24,7 @@ using namespace std;
 
 namespace ibex {
 
-const double OptimizerMOP::default_eps_rel=0.01;
+const double OptimizerMOP::default_eps=0.01;
 
 bool OptimizerMOP::_plot = false;
 int OptimizerMOP::_nb_ub_sols = 3;
@@ -37,10 +37,10 @@ bool OptimizerMOP::_eps_contract = false;
 map< pair <double, double>, IntervalVector > OptimizerMOP::UB;
 
 OptimizerMOP::OptimizerMOP(int n, const Array<NumConstraint>& ctrs, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,double eps_rel) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,double eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), ctrs(ctrs), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0), eps_rel(eps_rel), nb_sols(0), eps(0.0),
+                				time(0), nb_cells(0), nb_sols(0), eps(eps),
 								y1_max(NEG_INFINITY), y2_max(NEG_INFINITY) {
 
 	if (trace) cout.precision(12);
@@ -89,7 +89,6 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		if(eval.second >= it2->first.second) continue;
 
 
-
 		/**** UB correction ****/
 		if(finder.ub_correction(vec.mid(), vec)){
 			eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
@@ -103,6 +102,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 		it2--;
 		//it is dominated by the previous ub point
 		if(eval.second >= it2->first.second)	continue;
+
 
 		/**** end UB correction ****/
 
@@ -144,7 +144,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 			}
 
 		}
-		if(trace) cout << eval.first  <<"," << eval.second << endl;
+		if(trace) {cout << eval.first  <<"," << eval.second << "(" << UB.size() << ")" << endl;}
 
 
 		//UB.insert(make_pair(eval, vec));
@@ -174,7 +174,7 @@ void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	valueZ2.second = NEG_INFINITY;
 
 
-	map< pair <double, double>, IntervalVector >:: iterator ent1=UB.upper_bound(make_pair(box[n].lb(),box[n+1].lb()));
+	map< pair <double, double>, IntervalVector >:: iterator ent1=UB.upper_bound(make_pair(box[n].lb(),POS_INFINITY /*box[n+1].lb()*/));
     ent1--;
 
     //z1 < box[n].lb()
@@ -192,13 +192,13 @@ void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	}
 
 
-	map< pair <double, double>, IntervalVector, sorty>:: iterator ent2=UBy.upper_bound(make_pair(box[n].lb(),box[n+1].lb()));
+	map< pair <double, double>, IntervalVector, sorty>:: iterator ent2=UBy.lower_bound(make_pair(NEG_INFINITY,box[n+1].lb()));
 	if(ent2==UBy.end()) return;
 
 	valueZ2 = ent2->first;
 	//cout << valueZ1.first <<","<<valueZ1.second << " ; " << valueZ2.first <<","<<valueZ2.second << endl;
 
-	if(valueZ2.first > box[n].lb() && valueZ2.first < box[n].ub() ) {
+	if(valueZ2.first > box[n].lb() && valueZ2.first <= box[n].ub() ) {
 		box[n] = Interval(box[n].lb(), valueZ2.first);
 	}
 
@@ -270,13 +270,18 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		return;
 	}*/
 
+  if(trace && _plot ) { plot(&c);  cout << "init" << endl; getchar(); }
+
 	dominance_peeler(c.box);
+	if(!c.box.is_empty() && trace && _plot ) { plot(&c);  cout << "dominance_peeler" << endl;  getchar();}
 	discard_generalized_monotonicty_test(c.box, init_box);
 
 	if(cy_contract_var){
 		cy_contract(c);
 	}else
 		ctc.contract(c.box);
+
+	if(!c.box.is_empty() && trace && _plot ) { plot(&c);  cout << "contreacted" << endl; getchar(); }
 
 	if (c.box.is_empty()) return;
 
@@ -338,6 +343,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	std::cout << "}" << endl;
 	if(_plot) buffer_cells.insert(root);
 
+	top_dist=POS_INFINITY;
+
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
@@ -348,6 +355,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			Cell *c = buffer.pop();
 			std::cout << "del: {\"id\":" << c->id;
 			std::cout << "}" << endl;
+			top_dist=c->get<CellBS>().ub_distance;
+
 			if(_plot) buffer_cells.erase(c);
 			nb_cells++;
 
@@ -379,22 +388,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
         	double dist=0.0;
         	if(!atomic_box /*&& eps>0.0*/) dist=distance2(c);
-        	//cout << dist << endl;
-        	if(trace && loup_ch && _plot  && dist>=0) { plot(c);  getchar(); }
 
-          if(UB.size()>10){
-						 map< pair <double, double>, IntervalVector > :: iterator it = UB.begin(); it++;
-						 pair <double, double> first = it->first;
-						 it = UB.end(); it--; it--;
-						 pair <double, double> last = it->first;
-
-						 eps = eps_rel * std::min( last.first - first.first, first.second-last.second );
-            // cout <<  first.first << "," <<  first.second << endl;
-            // cout <<  last.first << "," <<  last.second << endl;
-
-					}
-					//cout << dist << ":" << eps << endl;
-
+        	if(trace) cout << "distance:" << dist << endl;
+        	if(trace && loup_ch && _plot  && dist>=0) { cout << c->box[n] << ";" << c->box[n+1 ] << endl;   ; plot(c);  getchar(); }
 
         	if(dist < eps || atomic_box){
 
@@ -581,8 +577,8 @@ void OptimizerMOP::report(bool verbose) {
 			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
 		}
 */
-    cout << endl 	<< "time #nodes |Y| #sols" << endl;
-		cout << endl 	<< get_time() << " " << get_nb_cells() << " " << UB.size()  << " " << nb_sols  <<  endl;
+        cout << endl 	<< "time #nodes |Y| #sols" << endl;
+		cout << endl 	<< get_time() << " " << top_dist << " " << get_nb_cells() << " " << UB.size() <<  endl;
 		return;
 	}
 
@@ -608,7 +604,6 @@ void OptimizerMOP::report(bool verbose) {
 
 double OptimizerMOP::distance2(const Cell* c){
 	double max_dist=NEG_INFINITY;
-	if(UB.size()==2) return POS_INFINITY;
 
 	int n=c->box.size();
 
@@ -627,19 +622,21 @@ double OptimizerMOP::distance2(const Cell* c){
 		pair <double, double> p2 = it->first;
 
 		pair <double, double> pmax= make_pair(p2.first, p.second);
+		if(pmax.first==POS_INFINITY) pmax.first=CellBS::y1_init.ub();
+		if(pmax.second==POS_INFINITY) pmax.second=CellBS::y2_init.ub();
 
 		//el punto esta dentro de la zona de interes
 		if(pmax.first >= z1.lb() && pmax.second >= z2.lb()){
 			double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
-
 			//Damir's distance
-			if(cy_contract_var)
+			if(cy_contract_var && w_lb!=POS_INFINITY)
 			  dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
 
 			if(dist > max_dist) max_dist=dist;
-
 		}else break;
 	}
+
+
 
 	return max_dist;
 }

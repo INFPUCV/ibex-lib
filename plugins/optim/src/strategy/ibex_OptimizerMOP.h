@@ -106,7 +106,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Array<NumConstraint>& ctcs, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,  double eps_rel=default_eps_rel);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,  double eps=default_eps);
 
 	/**
 	 * \brief Delete *this.
@@ -243,11 +243,10 @@ public:
 	/** Precision of the pareto frontier */
 	double eps;
 
-	/** Relative precision of the pareto frontier */
-	double eps_rel;
+	double top_dist;
 
 	/** Default precision: 0.01 */
-	static const double default_eps_rel;
+	static const double default_eps;
 
 	/**
 	 * \brief Trace activation flag.
@@ -524,7 +523,7 @@ protected:
 		if(finder.norm_sys.is_inner(bb))
 			box=new_box;
 
-	}
+  }
 
   /**
   * \brief intersect two segments and return the intersection res

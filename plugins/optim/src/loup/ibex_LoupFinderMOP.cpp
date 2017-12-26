@@ -173,13 +173,16 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& candidate_poin
     	}
     	candidate_points.pop_front();
     	candidate_points.pop_front();
-    	//cout << candidate_points.size() << endl;
+
     }else{
+
 		Vector vec=box.mid();
-		if(norm_sys.is_inner(vec)) candidate_points.push_back(vec);
+		if(norm_sys.is_inner(vec)) {
+			candidate_points.push_back(vec);
+		}
 	}
 
-    return;
+
 }
 
 } /* namespace ibex */
