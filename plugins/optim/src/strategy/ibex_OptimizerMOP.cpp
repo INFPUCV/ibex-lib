@@ -111,6 +111,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 			if(eval.second > it2->first.second) break;
 			std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
 			++aux;
+			std::cout << "del ub: {\"pts\": (" << it2->first.first << "," << it2->first.second << ")}" << endl;
 			UBy.erase(it2->first);
 			UB.erase(it2);
 			it2 = aux;
@@ -126,6 +127,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 			if(eval.second < y2_ub.second) y2_ub=eval;
 
 			UB.insert(make_pair(eval, vec));
+			std::cout << "add ub: {\"pts\": (" << eval.first << "," << eval.second << ")}" << endl;
 			UBy.insert(make_pair(eval, vec));
 			new_ub = true;
 		}else{
@@ -135,7 +137,7 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 
 				if(eval.first < y1_ub.first) y1_ub=eval;
 				if(eval.second < y2_ub.second) y2_ub=eval;
-
+				std::cout << "add ub: {\"pts\": (" << eval.first << "," << eval.second << ")	}" << endl;
 				UB.insert(make_pair(eval, vec));
 				UBy.insert(make_pair(eval, vec));
 				new_ub = true;
@@ -328,6 +330,12 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	//handle_cell(*root,init_box);
 	buffer.push(root);
+	std::cout << "add: {\"id\":" << root->id;
+	std::cout << ", 'pts':(" << root->box[n].lb() << "," <<  root->box[n+1].lb() << "),";
+	std::cout << "'diam_x': " <<  root->box[n].diam() << ",'diam_y': " << root->box[n+1].diam()<< ",";
+	std::cout << "'pA':(" << root->box[n].lb() <<"," <<  (((root)->get<CellBS>().w_lb-root->box[n].lb())/(root)->get<CellBS>().a)   << "),";
+	std::cout << "'pB':(" << (root->get<CellBS>().w_lb-root->get<CellBS>().a*root->box[n+1].lb()) <<"," <<  root->box[n+1].lb()  << ")";
+	std::cout << "}" << endl;
 	if(_plot) buffer_cells.insert(root);
 
 	try {
@@ -338,6 +346,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
 			Cell *c = buffer.pop();
+			std::cout << "del: {\"id\":" << c->id;
+			std::cout << "}" << endl;
 			if(_plot) buffer_cells.erase(c);
 			nb_cells++;
 
@@ -387,11 +397,16 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
         	if(dist < eps || atomic_box){
+
 						//cout << dist << ":" << eps << endl;
         		if(dist <0.0){
         			delete c;
         			continue;
         		}
+
+        		std::cout << "add lb: {\"id\":" << root->id;
+        		std::cout << ", 'pts':(" << root->box[n].lb() << "," <<  root->box[n+1].lb() << ")";
+        		std::cout << "}" << endl;
 
         		map< pair <double, double>, IntervalVector >:: iterator ent1=UB.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
         		ent1--;
@@ -445,8 +460,20 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			delete c; // deletes the cell.
 
 			buffer.push(new_cells.first);
+			std::cout << "add: {\"id\":" << new_cells.first->id;
+			std::cout << ", 'pts':(" << new_cells.first->box[n].lb() << "," <<  new_cells.first->box[n+1].lb() << "),";
+			std::cout << "'diam_x': " <<  new_cells.first->box[n].diam() << ",'diam_y': " << new_cells.first->box[n+1].diam()<< ",";
+			std::cout << "'pA':(" << new_cells.first->box[n].lb() <<"," <<  (((new_cells.first)->get<CellBS>().w_lb-new_cells.first->box[n].lb())/(new_cells.first)->get<CellBS>().a)   << "),";
+			std::cout << "'pB':(" << (new_cells.first->get<CellBS>().w_lb-new_cells.first->get<CellBS>().a*new_cells.first->box[n+1].lb()) <<"," <<  new_cells.first->box[n+1].lb()  << ")";
+			std::cout << "}" << endl;
 			if(_plot) buffer_cells.insert(new_cells.first);
 			buffer.push(new_cells.second);
+			std::cout << "add: {\"id\":" << new_cells.second->id;
+			std::cout << ", 'pts':(" << new_cells.second->box[n].lb() << "," <<  new_cells.second->box[n+1].lb() << "),";
+			std::cout << "'diam_x': " <<  new_cells.second->box[n].diam() << ",'diam_y': " << new_cells.second->box[n+1].diam()<< ",";
+			std::cout << "'pA':(" << new_cells.second->box[n].lb() <<"," <<  (((new_cells.second)->get<CellBS>().w_lb-new_cells.second->box[n].lb())/(new_cells.second)->get<CellBS>().a)   << "),";
+			std::cout << "'pB':(" << (new_cells.second->get<CellBS>().w_lb-new_cells.second->get<CellBS>().a*new_cells.second->box[n+1].lb()) <<"," <<  new_cells.second->box[n+1].lb()  << ")";
+			std::cout << "}" << endl;
 			if(_plot) buffer_cells.insert(new_cells.second);
 
 
@@ -487,7 +514,6 @@ void OptimizerMOP::plot(Cell* c){
 	ofstream output;
 	output.open("output.txt");
 	set<  Cell* > :: iterator cell=buffer_cells.begin();
-
 
 	output << "(";
 	if(c){
