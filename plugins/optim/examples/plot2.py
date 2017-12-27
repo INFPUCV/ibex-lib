@@ -13,6 +13,20 @@ from tkinter import *
 import time
 from itertools import islice
 import subprocess
+import traceback
+
+
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __lt__(self, other):
+        if self.x < other.x:
+            return True
+        elif self.x == other.x:
+            return self.y < other.y
+        return False
 
 
 class Box:
@@ -21,17 +35,27 @@ class Box:
         box_string = box_string.replace('nan', "0")
         box_var = eval(box_string)
         self.createBox(box_var['id'], box_var['pts'][0], box_var['pts'][1],
-                       box_var['diam_x'], box_var['diam_y'])
+                       box_var['diam_x'], box_var['diam_y'], box_var['pA'],
+                       box_var['pB'])
 
     def __repr__(self):
         return str((self.x, self.y))
 
-    def createBox(self, id_box, x, y,  diam_x, diam_y):
+    def __lt__(self, other):
+        if self.x < other.x:
+            return True
+        elif self.x == other.x:
+            return self.y < other.y
+        return False
+
+    def createBox(self, id_box, x, y,  diam_x, diam_y, pA, pB):
         self.id_box = id_box
         self.x = x
         self.y = y
         self.diam_x = diam_x
         self.diam_y = diam_y
+        self.pA = pA
+        self.pB = pB
 
 
 class LB:
@@ -71,42 +95,68 @@ class DataDict:
     LB_set = {}
     pending_box = None
 
-    def get_ub_x(self):
-        box_list = []
+    def get_ub(self):
+        ub_list_x = []
+        ub_list_y = []
+        ub_list = []
         for x in self.UB_set.values():
-            box_list.append(x.x)
-        return box_list
-
-    def get_ub_y(self):
-        box_list = []
-        for x in self.UB_set.values():
-            box_list.append(x.y)
-        return box_list
+            ub_list.append(Point(x.x, x.y))
+        ub_list = sorted(ub_list)
+        i = 0
+        if ub_list:
+            ub_list_x.append(ub_list[0].x)
+            ub_list_y.append(ub_list[0].y)
+            for point in ub_list[1:]:
+                ub_list_x.append(point.x)
+                ub_list_y.append(ub_list[i].y)
+                ub_list_x.append(point.x)
+                ub_list_y.append(point.y)
+                i = i + 1
+            box = sorted(list(self.box_set.values()))[-1]
+            ub_list_x.append(box.x + box.diam_x)
+            ub_list_y.append(ub_list_y[-1])
+        return ub_list_x, ub_list_y
 
     def get_lb(self):
         lb_list_x = []
         lb_list_y = []
-        box_list = sorted(self.LB_set.values())
-        print(box_list)
+        box_list = []
+        for x in self.LB_set.values():
+            box_list.append(Point(x.x, x.y))
+        for x in self.box_set.values():
+            box_list.append(Point(x.x, x.y))
+        box_list = sorted(box_list)
         i = 0
         for box in box_list[1:]:
-            if box.y < box_list[i].y:
-                # print(box.y)
-                # print(box_list[i].y)
+            if box.y > box_list[i].y:
                 box_list.remove(box)
-            i = i + 1
+            else:
+                i = i + 1
         i = 0
-        print(box_list)
-        # lb_list_x.append(box_list[0].x)
-        # lb_list_y.append(box_list[0].y)
-        # for box in box_list[1:]:
-        #     lb_list_x.append(box.x)
-        #     lb_list_y.append(box_list[i].y)
-        #     lb_list_x.append(box.x)
-        #     lb_list_y.append(box.y)
-        #     i = i + 1
-        # print(lb_list_x)
+        if box_list:
+            lb_list_x.append(box_list[0].x)
+            lb_list_y.append(box_list[0].y)
+            for box in box_list[1:]:
+                if box.x != box_list[i].x:
+                    lb_list_x.append(box.x)
+                    lb_list_y.append(box_list[i].y)
+                lb_list_x.append(box.x)
+                lb_list_y.append(box.y)
+                i = i + 1
+            box = sorted(list(self.box_set.values()))[-1]
+            lb_list_x.append(box.x + box.diam_x)
+            lb_list_y.append(lb_list_y[-1])
         return lb_list_x, lb_list_y
+
+    def get_cy_lines(self):
+        line_list = []
+        for box in self.box_set.values():
+            if(box.pA[0] < box.pB[0]) and (box.pA[1] > box.pB[1]):
+                line = plt.Line2D((box.pA[0], box.pB[0]),
+                                  (box.pA[1], box.pB[1]),
+                                  lw=0.5, markeredgecolor='black')
+                line_list.append(line)
+        return line_list
 
     def append_lb(self, lb):
         self.LB_set[lb.key] = lb
@@ -127,7 +177,8 @@ class DataDict:
             fill=False,
             edgecolor='black',
             linestyle='solid',
-            lw=0.1
+            lw=0.1,
+            label="Box"
         )
 
     def get_patches(self):
@@ -150,9 +201,10 @@ class DataDict:
 
 def ibex(q):
     proc = subprocess.Popen([
-        "./optimizer-mop", "../benchs/MOP/binh.txt", "-f", "hc4", "-b",
-        "largestfirst", "-s", "NDSdist", "--nb_ub_sols=3",
-        "--linear-relax=compo", "--time=3600", "--eps_rel=0.01", "--w2=0.01"
+        "./optimizer-mop", "../benchs/MOP/osy.txt", "-f", "acidhc4", "-b",
+        "largestfirst", "-s", "NDSdist", "--nb_ub_sols=50",
+        "--linear-relax=compo", "--time=3600", "--eps=1", "--w2=0.01",
+        "--cy-contract-full"
         ], stdin=None, stdout=subprocess.PIPE
     )
     # box_set = {}
@@ -170,26 +222,28 @@ def plot():
     fig = plt.figure()
     ax = fig.add_subplot(111)
     # ax.set_aspect(1)
-    line, = plt.plot([], [], 'ro')
-    line2, = plt.plot([], [], 'r-')
-    plt.setp(line, color='b', linewidth=2.0, label='UB', marker='.')
+    line, = plt.plot([], [], 'b-', label='Upperbound')
+    line2, = plt.plot([], [], 'r-', label='Lowerbound')
+    plt.xlabel('Funcion Objetivo 1')
+    plt.ylabel('Funcion Objetivo 2')
+    plt.title('HECHO POR MATIAS CAMPUSANO')
+    # plt.setp(line, color='b', linewidth=2.0, label='UB', marker='-')
     # line.set_data([], [])
-    plt.xlim(-100, 100)
-    plt.ylim(-100, 100)
+    plt.xlim(-300, 300)
+    plt.ylim(-300, 300)
     return fig, line, ax, line2
 
 
-def updateplot(num, q, l, data, ax, patch_list, l2):
+def updateplot(num, q, l, data, ax, patch_list, l2, line_list):
     if pause:
         patch_list = [ax.add_patch(x) for x in data.get_patches()]
-        return tuple(patch_list) + (l, ) + (l2, )
+        return tuple(patch_list) + (l, l2,) + tuple(line_list)
     else:
         try:
             result = q.get_nowait()
-
             if result != 'Q':
                 # ax.clear()
-                print(result)
+                # print(result)
                 if 'add:' in result:
                     box = Box(result.split("add: ")[1])
                     data.append_box(box)
@@ -203,48 +257,81 @@ def updateplot(num, q, l, data, ax, patch_list, l2):
                     key = result.split("del ub: ")[1]
                     data.remove_ub(key)
                 if 'add lb:' in result:
-                    print(result)
                     lb = LB(result.split("add lb: ")[1])
                     data.append_lb(lb)
-                l.set_data(data.get_ub_x(), data.get_ub_y())
+                l.set_data(data.get_ub())
                 patch_list = [ax.add_patch(x) for x in data.get_patches()]
+                line_list = [ax.add_line(x) for x in data.get_cy_lines()]
                 l2.set_data(data.get_lb())
-                return tuple(patch_list) + (l, ) + (l2, )
+                # plt.legend(handles=[l, l2, patch_list[0]])
+                return tuple(patch_list) + (l, ) + (l2, ) + tuple(line_list)
             else:
                 print('done')
         except Exception as e:
+            print("Esto es un error:")
             print(e)
-            return l,
+            return tuple(patch_list) + (l, ) + (l2, ) + tuple(line_list)
 
 
 pause = False
 
 
-def onClick(event, line):
+def onClick(event, line, line2):
     global pause
     if(event.button == 2):
-        plt.xlim(min(line.get_xdata())-min(line.get_xdata())*.2,
-                 max(line.get_xdata())*1.2)
-        plt.ylim(min(line.get_ydata())-min(line.get_ydata())*.2,
-                 max(line.get_ydata())*1.2)
+        if min(line.get_xdata()[:-1]) < min(line2.get_xdata()):
+            x_min = min(line.get_xdata())
+        else:
+            x_min = min(line2.get_xdata())
+        if max(line.get_xdata()[:-1]) > max(line2.get_xdata()):
+            x_max = max(line.get_xdata())
+        else:
+            x_max = max(line2.get_xdata())
+        if x_min < 0:
+            x_min = x_min*1.5
+        else:
+            x_min = x_min*.8
+        if x_max < 0:
+            x_max = x_max*0.8
+        else:
+            x_max = x_max*1.5
+        if min(line2.get_ydata()) < 0:
+            y_min = min(line2.get_ydata())*1.5
+        else:
+            y_min = min(line2.get_ydata())*.8
+        if max(line.get_ydata()) < 0:
+            y_max = max(line.get_ydata())*0.8
+        else:
+            y_max = max(line.get_ydata())*1.5
+        plt.xlim(x_min,
+                 x_max)
+        plt.ylim(y_min,
+                 y_max)
     if(event.button == 3):
         pause ^= True
 
 
 def main():
-    q = multiprocessing.Queue()
-    ibex_proc = multiprocessing.Process(None, ibex, args=(q,))
-    ibex_proc.start()
-    fig, line, ax, line2 = plot()
-    patch_list = []
-    fig.canvas.mpl_connect('button_press_event', lambda event: onClick(event, line))
-    data = DataDict()
-    line_ani = animation.FuncAnimation(
-        fig, updateplot, q.qsize(), fargs=(q, line, data, ax, patch_list, line2),
-        interval=1, blit=True, repeat=False
-    )
-    plt.show()
-    print("Done")
+    try:
+        q = multiprocessing.Queue()
+        ibex_proc = multiprocessing.Process(None, ibex, args=(q,))
+        ibex_proc.start()
+        fig, line, ax, line2 = plot()
+        patch_list = []
+        line_list = []
+        fig.canvas.mpl_connect('button_press_event',
+                               lambda event: onClick(event, line, line2))
+        data = DataDict()
+        line_ani = animation.FuncAnimation(
+            fig, updateplot, q.qsize(),
+            fargs=(q, line, data, ax, patch_list, line2, line_list),
+            interval=0, blit=True, repeat=False
+        )
+        plt.show()
+        print("Done")
+        ibex_proc.terminate()
+    except Exception:
+        ibex_proc.terminate()
 
 
 if __name__ == '__main__':
