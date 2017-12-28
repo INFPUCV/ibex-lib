@@ -1,19 +1,13 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.animation as animation
-from matplotlib.backend_bases import NavigationToolbar2, Event
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
-                                               NavigationToolbar2TkAgg)
-import math
 import os
+import math
 import random
-from stat import *
-import multiprocessing
-from tkinter import *
-import time
-from itertools import islice
 import subprocess
+import multiprocessing
 import traceback
+import argparse
 
 
 class Point:
@@ -199,23 +193,28 @@ class DataDict:
             self.pending_box = id_box
 
 
-def ibex(q):
-    proc = subprocess.Popen([
-        "./optimizer-mop", "../benchs/MOP/osy.txt", "-f", "acidhc4", "-b",
-        "largestfirst", "-s", "NDSdist", "--nb_ub_sols=50",
-        "--linear-relax=compo", "--time=3600", "--eps=1", "--w2=0.01",
-        "--cy-contract-full"
-        ], stdin=None, stdout=subprocess.PIPE
+def ibex(q, args):
+    params = args.ibex.split(" ")
+    proc = subprocess.Popen(
+        ["./optimizer-mop", "--plot"] + params,
+        stdin=None, stdout=subprocess.PIPE
     )
-    # box_set = {}
     state = "run"
-    while state == "run":
-        for line in proc.stdout:
-            if 'add' in line.decode() or 'del' in line.decode():
-                q.put(line.decode())
-        proc.stdout.close()
-        proc.wait()
-        break
+    if "--help" in params or "-h" in params:
+        print(proc.stdout.read().decode())
+    else:
+        if 'variable' in proc.stdout.readline().decode():
+            q.put('start')
+        else:
+            q.put('stop')
+            state = 'stop'
+        while state != "stop":
+            for line in proc.stdout:
+                if 'add' in line.decode() or 'del' in line.decode():
+                    q.put(line.decode())
+            proc.stdout.close()
+            proc.wait()
+            break
 
 
 def plot():
@@ -226,7 +225,7 @@ def plot():
     line2, = plt.plot([], [], 'r-', label='Lowerbound')
     plt.xlabel('Funcion Objetivo 1')
     plt.ylabel('Funcion Objetivo 2')
-    plt.title('HECHO POR MATIAS CAMPUSANO')
+    plt.title('Plotter')
     # plt.setp(line, color='b', linewidth=2.0, label='UB', marker='-')
     # line.set_data([], [])
     plt.xlim(-300, 300)
@@ -266,10 +265,10 @@ def updateplot(num, q, l, data, ax, patch_list, l2, line_list):
                 # plt.legend(handles=[l, l2, patch_list[0]])
                 return tuple(patch_list) + (l, ) + (l2, ) + tuple(line_list)
             else:
-                print('done')
+                q.close()
         except Exception as e:
-            print("Esto es un error:")
-            print(e)
+            # print("Esto es un error:")
+            # print(e)
             return tuple(patch_list) + (l, ) + (l2, ) + tuple(line_list)
 
 
@@ -287,47 +286,62 @@ def onClick(event, line, line2):
             x_max = max(line.get_xdata())
         else:
             x_max = max(line2.get_xdata())
-        if x_min < 0:
-            x_min = x_min*1.5
+        y_min = min(line2.get_ydata())
+        y_max = max(line.get_ydata())
+        x_prom = (x_max + x_min)/2
+        y_prom = (y_max + y_min)/2
+        if x_max - x_min > y_max - y_min:
+            x_a = x_min - (x_max - x_min)*.1
+            x_b = x_max + (x_max - x_min)*.1
+            y_a = x_a - (x_prom - y_prom)
+            y_b = x_b - (x_prom - y_prom)
         else:
-            x_min = x_min*.8
-        if x_max < 0:
-            x_max = x_max*0.8
-        else:
-            x_max = x_max*1.5
-        if min(line2.get_ydata()) < 0:
-            y_min = min(line2.get_ydata())*1.5
-        else:
-            y_min = min(line2.get_ydata())*.8
-        if max(line.get_ydata()) < 0:
-            y_max = max(line.get_ydata())*0.8
-        else:
-            y_max = max(line.get_ydata())*1.5
-        plt.xlim(x_min,
-                 x_max)
-        plt.ylim(y_min,
-                 y_max)
+            y_a = y_min - (y_max - y_min)*.1
+            y_b = y_max + (y_max - y_min)*.1
+            x_a = y_a - (y_prom - x_prom)
+            x_b = y_b - (y_prom - x_prom)
+        plt.xlim(x_a,
+                 x_b)
+        plt.ylim(y_a,
+                 y_b)
     if(event.button == 3):
         pause ^= True
 
 
 def main():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-ib", "--ibex",
+                        help="Ibex arguments",
+                        type=str, required=True)
+    parser.add_argument("-s", "--speed",
+                        help="Speed of the plotter",
+                        type=int, default=100)
+    args = parser.parse_args()
     try:
         q = multiprocessing.Queue()
-        ibex_proc = multiprocessing.Process(None, ibex, args=(q,))
+        ibex_proc = multiprocessing.Process(None, ibex, args=(q, args))
         ibex_proc.start()
-        fig, line, ax, line2 = plot()
-        patch_list = []
-        line_list = []
-        fig.canvas.mpl_connect('button_press_event',
-                               lambda event: onClick(event, line, line2))
-        data = DataDict()
-        line_ani = animation.FuncAnimation(
-            fig, updateplot, q.qsize(),
-            fargs=(q, line, data, ax, patch_list, line2, line_list),
-            interval=0, blit=True, repeat=False
-        )
-        plt.show()
+        if "-h" not in args.ibex and "--h" not in args.ibex:
+            while True:
+                result = q.get()
+                if result == 'start':
+                    break
+                elif result == 'stop':
+                    ibex_prox.terminate()
+                    return 0
+            fig, line, ax, line2 = plot()
+            patch_list = []
+            line_list = []
+            fig.canvas.mpl_connect('button_press_event',
+                                   lambda event: onClick(event, line, line2))
+            data = DataDict()
+            line_ani = animation.FuncAnimation(
+                fig, updateplot, q.qsize(),
+                fargs=(q, line, data, ax, patch_list, line2, line_list),
+                interval=args.speed, blit=True, repeat=False
+            )
+            plt.show()
+        ibex_proc.join()
         print("Done")
         ibex_proc.terminate()
     except Exception:
