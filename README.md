@@ -28,7 +28,7 @@ Para compilar todo en una sola linea yo hago lo siguiente:
 3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
 
 Y luego resolver un problema de ejemplo:
-./optimizer-mop ../benchs/MOP/mop-7.txt --cy-contract --eps_rel 0.02 -b lsmear --nb_ub_sols 10 --plot --w2 0.00
+./optimizer-mop ../benchs/MOP/binh.txt --cy-contract --eps 1 -b largestfirst --nb_ub_sols 10 --plot --w2 0.01
 
 
 TODO
