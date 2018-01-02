@@ -163,6 +163,12 @@ public:
 
 	void plot(Cell* current);
 
+	void plot_add_ub(pair<double, double> eval);
+	void plot_del_ub(pair<double, double> eval);
+	void plot_add_lb(Cell* c);
+	void plot_add_box(Cell* c);
+	void plot_del_box(Cell* c);
+
 	/**
 	 * \brief Get the status.
 	 *
