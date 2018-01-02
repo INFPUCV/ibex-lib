@@ -112,20 +112,34 @@ IntervalVector& IntervalVector::operator|=(const IntervalVector& x)  {
 
 namespace {
 
-const IntervalVector* tmp;
-bool diam_lt(const int& i, const int& j) {
-	return (*tmp)[i].diam()<(*tmp)[j].diam();
-}
-bool diam_gt(const int& i, const int& j) {
-	return (*tmp)[i].diam()>(*tmp)[j].diam();
-}
+class DiamLT {
+	public:
+	DiamLT(const IntervalVector& box) : box(box) { }
+
+	bool operator()(const int& i, const int& j) {
+		return box[i].diam()<box[j].diam();
+	}
+	const IntervalVector& box;
+};
+
+class DiamGT {
+	public:
+	DiamGT(const IntervalVector& box) : box(box) { }
+
+	bool operator()(const int& i, const int& j) {
+		return box[i].diam()>box[j].diam();
+	}
+	const IntervalVector& box;
+};
 
 } // end anonymous namespace
 
 void IntervalVector::sort_indices(bool min, int tab[]) const {
 	for (int i=0; i<n; i++) tab[i]=i;
-	tmp=this;
-	std::sort(tab,tab+n,min? diam_lt:diam_gt);
+	if (min)
+		std::sort(tab,tab+n,DiamLT(*this));
+	else
+		std::sort(tab,tab+n,DiamGT(*this));
 }
 
 double distance(const IntervalVector& x1, const IntervalVector& x2) {
@@ -280,7 +294,7 @@ IntervalVector cart_prod(const Array<const IntervalVector>& x) {
 	}
 
 	IntervalVector z(size);
-	std::cout << "size=" << size << " z=" << z << std::endl;
+//	std::cout << "size=" << size << " z=" << z << std::endl;
 
 	for (int i=0, j=0; i<x.size(); j+=x[i].size(), i++) {
 		if (x[i].is_empty()) {
