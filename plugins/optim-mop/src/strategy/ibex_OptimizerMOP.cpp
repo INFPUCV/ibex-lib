@@ -13,12 +13,11 @@
 #include "ibex_NoBisectableVariableException.h"
 #include "ibex_Backtrackable.h"
 #include "ibex_OptimData.h"
-#include "ibex_CellSet.h"
-
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
 #include <iostream>
+#include "ibex_CellSet.h"
 
 using namespace std;
 
@@ -514,14 +513,14 @@ void OptimizerMOP::plot_del_ub(pair<double, double> eval){
 }
 
 void OptimizerMOP::plot_add_lb(Cell* c){
-	std::cout << "add lb: {\"id\":" << c->id;
+	std::cout << "add lb: {\"id\":" << c->get<CellBS>().id;
 	std::cout << ", 'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << ")";
 	std::cout << "}" << endl;
 
 }
 
 void OptimizerMOP::plot_add_box(Cell* c){
-	std::cout << "add: {\"id\":" << c->id;
+	std::cout << "add: {\"id\":" << c->get<CellBS>().id;
 	std::cout << ", 'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
 	std::cout << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam();
 	std::cout << ", 'pA':(" << c->box[n].lb() <<"," <<  (((c)->get<CellBS>().w_lb-c->box[n].lb())/(c)->get<CellBS>().a)   << "),";
@@ -530,7 +529,7 @@ void OptimizerMOP::plot_add_box(Cell* c){
 }
 
 void OptimizerMOP::plot_del_box(Cell* c){
-	std::cout << "del: {\"id\":" << c->id;
+	std::cout << "del: {\"id\":" << c->get<CellBS>().id;
 	std::cout << "}" << endl;
 }
 void OptimizerMOP::plot(Cell* c){

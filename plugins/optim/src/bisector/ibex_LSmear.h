@@ -49,6 +49,11 @@ public :
 			lsmear_mode lsmode=LSMEAR_MG);
 
 	/**
+	 * \brief Delete this.
+	 */
+	~LSmear();
+
+	/**
 	 * \brief Returns the variable to bisect.
 	 */
 	virtual int var_to_bisect(IntervalMatrix& J,const IntervalVector& box) const;
@@ -62,13 +67,12 @@ public :
 	 * \param x 	- the current box
 	 * \param dual 	- the dual solution that will be returned
 	 */
-	LPSolver::Status_Sol getdual(IntervalMatrix& J,const IntervalVector& x, Vector& dual, int goal_var) const;
+	LPSolver::Status_Sol getdual(IntervalMatrix& J,const IntervalVector& x, Vector& dual) const;
 
 	/**
 	 * \brief The linear solver
 	 */
 	LPSolver* mylinearsolver;
-
 
 	/**
 	 * \brief The lsmear variant (LSMEAR or LSMEAR_MG)
@@ -79,11 +83,9 @@ public :
 
 /*============================================ inline implementation ============================================ */
 
-
 inline LSmear::LSmear(System& sys,  double prec, double ratio, lsmear_mode lsmode) : SmearSumRelative(sys,prec,ratio),
 		lsmode(lsmode) {
 	mylinearsolver = new LPSolver(sys.nb_var);
-
 }
 
 inline LSmear::LSmear(System& sys, const Vector& prec, double ratio,lsmear_mode lsmode) : SmearSumRelative(sys,prec,ratio),

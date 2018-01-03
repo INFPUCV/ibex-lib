@@ -10,9 +10,9 @@
 
 #include "ibex_CellBuffer.h"
 #include "ibex_CellBufferOptim.h"
-#include "ibex_CellFeasibleDiving.h"
 #include <queue>
 #include <map>
+#include "ibex_CellFeasibleDiving.h"
 
 using namespace std;
 
