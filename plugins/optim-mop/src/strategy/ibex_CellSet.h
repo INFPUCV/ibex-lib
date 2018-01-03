@@ -33,7 +33,7 @@ namespace ibex {
 		 * \brief Copy constructor
 		 */
 
-		CellBS(const CellBS& c) : depth(c.depth+1), id(nb_cells++),
+		CellBS(const CellBS& c) : depth(c.depth+1), id(++nb_cells),
 				a(c.a), w_lb(c.w_lb), ub_distance(c.ub_distance) { }
 
 		/**

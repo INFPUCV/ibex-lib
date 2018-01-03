@@ -47,6 +47,8 @@ doc/_build
 !**/examples/makefile
 
 optimizer-mop
+ibexmop
+output.txt
 
 .ftpconfig
 .ftpignore

@@ -2,12 +2,11 @@
 #define __IBEX_CELL_FEASIBLE_DIVING_H__
 
 #include "ibex_CellBufferOptim.h"
-#include "ibex_CellSet.h"
 #include "ibex_ExtendedSystem.h"
 #include "ibex_CellCostFunc.h"
-#include "ibex_CellNSSet.h"
-
 #include <map>
+#include "ibex_CellNSSet.h"
+#include "ibex_CellSet.h"
 
 namespace ibex {
 

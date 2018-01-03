@@ -67,13 +67,12 @@ public :
 	 * \param x 	- the current box
 	 * \param dual 	- the dual solution that will be returned
 	 */
-	LPSolver::Status_Sol getdual(IntervalMatrix& J,const IntervalVector& x, Vector& dual, int goal_var) const;
+	LPSolver::Status_Sol getdual(IntervalMatrix& J,const IntervalVector& x, Vector& dual) const;
 
 	/**
 	 * \brief The linear solver
 	 */
 	LPSolver* mylinearsolver;
-
 
 	/**
 	 * \brief The lsmear variant (LSMEAR or LSMEAR_MG)

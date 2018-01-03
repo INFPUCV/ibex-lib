@@ -21,9 +21,9 @@ LPSolver::Status_Sol LSmear::getdual(IntervalMatrix& J, const IntervalVector& bo
 	int goal_ctr=-1, goal_var=rand()%box.size();
 	bool minimize=rand()%2;
 
-	if(dynamic_cast<ExtendedSystem*> (&sys)){
+	if (dynamic_cast<ExtendedSystem*> (&sys)) {
 		goal_ctr= dynamic_cast<ExtendedSystem*> (&sys)->goal_ctr();
-		//goal_var= dynamic_cast<ExtendedSystem*> (&sys)->goal_var();
+		goal_var= dynamic_cast<ExtendedSystem*> (&sys)->goal_var();
 		minimize=true;
 	}
 
@@ -100,10 +100,7 @@ int LSmear::var_to_bisect(IntervalMatrix& J, const IntervalVector& box) const {
 	//Linearization
 	LPSolver::Status_Sol stat = LPSolver::UNKNOWN;
 
-  Vector dual_solution(1);
-
-	int goal_var= (dynamic_cast<ExtendedSystem*> (&sys))?
-			(dynamic_cast<ExtendedSystem*> (&sys)->goal_var()) : (rand()%box.size());
+	Vector dual_solution(1);
 
 	if (lsmode==LSMEAR_MG) { //compute the Jacobian in the midpoint
 		IntervalMatrix J2(sys.f_ctrs.image_dim(), sys.nb_var);
@@ -111,15 +108,15 @@ int LSmear::var_to_bisect(IntervalMatrix& J, const IntervalVector& box) const {
 		box2 &= box;
 
 		sys.f_ctrs.jacobian(box2,J2);
-		stat = getdual(J2, box, dual_solution, goal_var);
+		stat = getdual(J2, box, dual_solution);
 
 	} else if (lsmode==LSMEAR) {
-		stat = getdual(J, box, dual_solution, goal_var);
+		stat = getdual(J, box, dual_solution);
 	}
 
 
-    int lvar = -1;
-
+	int lvar = -1;
+	int goal_var=dynamic_cast<ExtendedSystem*> (&sys)->goal_var();
 
 	if (stat == LPSolver::OPTIMAL) {
 		double max_Lmagn = 0.0;

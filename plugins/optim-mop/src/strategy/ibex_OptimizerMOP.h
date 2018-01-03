@@ -15,13 +15,12 @@
 #include "ibex_Bsc.h"
 #include "ibex_LoupFinderMOP.h"
 #include "ibex_CellBufferOptim.h"
-#include "ibex_CellSet.h"
-//#include "ibex_EntailedCtr.h"
 #include "ibex_CtcKhunTucker.h"
 
 #include <set>
 #include <map>
 #include <list>
+#include "ibex_CellSet.h"
 
 using namespace std;
 namespace ibex {
