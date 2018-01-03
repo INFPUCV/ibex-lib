@@ -1,11 +1,11 @@
 //============================================================================
 //                                  I B E X
-// File        : optimizer04.cpp
-// Author      : Gilles Chabert  Bertrand Neveu
-// Copyright   : Ecole des Mines de Nantes (France)
+// File        : ibexmop.cpp
+// Author      : Ignacio Araya, Matias Campusano, Damir Aliquintui
+// Copyright   : PUCV (Chile)
 // License     : See the LICENSE file
-// Created     : Jul 12, 2012
-// Last Update : Jul 12, 2012
+// Created     : Jan 01, 2017
+// Last Update : Jan 01, 2017
 //============================================================================
 
 

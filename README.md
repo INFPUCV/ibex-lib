@@ -9,35 +9,17 @@ http://www.ibex-lib.org
 Instalation
 -----------
 
-./waf configure --with-optim  --with-ampl --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
+./waf configure --with-optim --with-optim-mop  --with-ampl --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
 
 ./waf install
 
-export PKG_CONFIG_PATH=/home/directorio_ibex/ibex-2.3.4/share/pkgconfig   -> Esto se tiene que hacer cada vez que se conecta a la maquina
-
-export PKG_CONFIG_PATH=/home/iaraya/ibex-lib/share/pkgconfig
-
-
-In plugins/optim/examples:
-make optimizer-mop
-
-
-Para compilar todo en una sola linea yo hago lo siguiente:
-1. ingreso al directorio raiz de ibex (solo la primera vez)
-2. cd plugins/optim/examples (solo la primera vez)
-3. cd -; sudo ./waf install; cd -; rm optimizer-mop; make optimizer-mop (cada vez que quiero re-compilar todo)
-
-Y luego resolver un problema de ejemplo:
-./optimizer-mop ../benchs/MOP/binh.txt --cy-contract --eps 1 -b largestfirst --nb_ub_sols 10 --plot --w2 0.01
+Luego resolver un problema de ejemplo:
+__build__/plugins/optim-mop/ibexmop ../benchs/MOP/binh.txt --cy-contract --eps 1 -b largestfirst --nb_ub_sols 10 --plot --w2 0.01
 
 
 TODO
 ----
 
-Graficar resultados on-the-fly apretando tecla para avanzar **(Matias)**:
-  - [ ] Tener la opcion de mostrar UB como funcion escalonada/puntos
-  - [x] Graficar recta lb dentro de cajas: z1 + a*z2=w_lb
-  - [ ] Agregar parametros al ejecutable: mostrar plot (paso a paso)
 
 Técnicas de selección de nodo:
   - [x] [OC](http://ben-martin.fr/files/publications/2016/EJOR_2016.pdf): min (z1.lb-z1_init.lb)/wid(z1_init) +  (z2.lb-z2_init.lb)/wid(z2_init)
@@ -53,24 +35,6 @@ Técnicas de selección de nodo:
   - [x] Diving compatible con los metodos anteriores
   - [ ] Que hacer cuando aun no hay upperbounds?
 
-Calculo de distancia:
-  - [x] Modificar funcion de calculo de distancia usando ideas de Damir
-
-Criterio de termino:
-  - [x] Definir criterio relativo: abs_prec = rel_prec * min(wid(z1), wid(z2)) --> **repensar**
-  - [x] Calcular hipervolumen relativo de la solucion
-  - [ ] Definicion del lowerbound tiene errores aun (limitarse a reparar errores graves por ahora)
-
-
-Biseccion:
-  - [x] Adaptar LSmear (tecnica de biseccion)
-
-Discarding boxes:
-  - [x] Lowerbounding usando restriccion auxiliar z1+a*z2=w
-  - [x] w_lb delimitado por puntos UB
-  - [x] pendiente igual a pendiente entre puntos extremos
-  - [x] Implementar monotonicity test (FT) from [here](https://link.springer.com/content/pdf/10.1007%2Fs10589-007-9135-8.pdf)
-  - [ ] Filtrar cajas del buffer
 
 **(Ignacio)** Upperbounding:
   - [x] Criterio dinamico para establecer cantidad de puntos que se generan

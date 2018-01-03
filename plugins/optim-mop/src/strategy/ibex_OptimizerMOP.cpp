@@ -158,10 +158,6 @@ bool OptimizerMOP::update_UB(const IntervalVector& box, int np) {
 
 	}
 
-  //cout << 11 << endl;
-	//for(map< pair <double, double>, IntervalVector >:: iterator it= UB.begin(); it!=UB.end(); it++){
-	//	 cout << "(" << it->first.first << "," << it->first.second << ")" << endl;
-	//}
 	//5. Si el mapa UB fue modificado retornar true, si no false
 	return new_ub;
 
@@ -238,7 +234,7 @@ void OptimizerMOP::cy_contract(Cell& c){
 					if(it==UB.end() || p.second < box[n+1].lb()) break;
 					pair <double, double> p2 = it->first;
 					pair <double, double> pmax= make_pair(p2.first, p.second);
-					//cout << "pmax:" << pmax.first << "," << pmax.second << endl;
+
 			 		if(pmax.first==POS_INFINITY || pmax.second==POS_INFINITY)
 					   w_ub = POS_INFINITY;
 					else{
@@ -252,8 +248,7 @@ void OptimizerMOP::cy_contract(Cell& c){
 				}
 			}
 	  }
-		//cout << w_ub << endl;
-		//box3[n+2] = Interval(NEG_INFINITY, POS_INFINITY); // w
+
 		box3[n+2] = Interval(NEG_INFINITY, w_ub); // w
 		//the contraction is performed
 		ctc.contract(box3);
@@ -316,10 +311,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	CellBS::y1_init=eval_goal(goal1, root->box);
 	CellBS::y2_init=eval_goal(goal2, root->box);
-
-	cout << CellBS::y1_init << endl;
-	cout << CellBS::y2_init << endl;
-	//abs_eps=rel_eps*(CellBS::y1_init.diam()+CellBS::y1_init.diam());
 
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
@@ -387,7 +378,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				atomic_box=true;
 			}
 
-			//cout << "abs_eps:" << abs_eps << endl;
 
         	double dist=0.0;
         	if(!atomic_box /*&& eps>0.0*/) dist=distance2(c);
@@ -396,8 +386,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
         	if(trace && loup_ch && _plot  && dist>=0) { cout << c->box[n] << ";" << c->box[n+1 ] << endl;   ; plot(c);  getchar(); }
 
         	if(dist < eps || atomic_box){
-
-						//cout << dist << ":" << eps << endl;
         		if(dist <0.0){
         			delete c;
         			continue;
