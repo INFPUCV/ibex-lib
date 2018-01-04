@@ -11,7 +11,8 @@
 #ifndef __IBEX_DEFAULT_OPTIMIZER_H__
 #define __IBEX_DEFAULT_OPTIMIZER_H__
 
-#include "ibex_Optimizer.h"
+// #include "ibex_Optimizer.h"
+#include "ibex_OptimizerANN.h"
 #include "ibex_CtcCompo.h"
 #include "ibex_Memory.h"
 #include "ibex_NormalizedSystem.h"
@@ -24,7 +25,7 @@ namespace ibex {
  *
  * \brief Default optimizer.
  */
-class DefaultOptimizer : private Memory, public Optimizer {
+class DefaultOptimizer : private Memory, public OptimizerANN {
 public:
 	/**
 	 * \brief Create a default optimizer.
@@ -43,12 +44,12 @@ public:
 	 *                      (**deprecated**).
 	 */
     DefaultOptimizer(const System& sys,
-    		double rel_eps_f=Optimizer::default_rel_eps_f,
-			double abs_eps_f=Optimizer::default_abs_eps_f,
+    		double rel_eps_f=OptimizerANN::default_rel_eps_f,
+			double abs_eps_f=OptimizerANN::default_abs_eps_f,
 			double eps_h=NormalizedSystem::default_eps_h,
 			bool rigor=false, bool inHC4=true,
 			double random_seed=default_random_seed,
-    		double eps_x=Optimizer::default_eps_x);
+    		double eps_x=OptimizerANN::default_eps_x);
 
 	/** Default random seed: 1.0. */
 	static const double default_random_seed;

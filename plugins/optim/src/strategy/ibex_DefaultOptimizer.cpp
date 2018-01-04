@@ -59,7 +59,7 @@ ExtendedSystem& DefaultOptimizer::get_ext_sys(const System& sys, double eps_h) {
 }
 
 DefaultOptimizer::DefaultOptimizer(const System& sys, double rel_eps_f, double abs_eps_f, double eps_h, bool rigor, bool inHC4, double random_seed, double eps_x) :
-		Optimizer(sys.nb_var,
+		OptimizerANN(sys.nb_var,
 			  ctc(get_ext_sys(sys,eps_h)), // warning: we don't know which argument is evaluated first
 //			  rec(new SmearSumRelative(get_ext_sys(sys,eps_h),eps_x)),
 			  rec(new LSmear(get_ext_sys(sys,eps_h),eps_x)),
