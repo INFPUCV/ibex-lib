@@ -459,11 +459,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
 
-
-
-			//handle_cell(*new_cells.first, init_box);
-			//handle_cell(*new_cells.second, init_box);
-
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
 			time = timer.get_time();
 

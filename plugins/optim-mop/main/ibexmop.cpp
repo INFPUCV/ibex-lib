@@ -24,10 +24,6 @@ using namespace ibex;
 int main(int argc, char** argv){
 
 
-	// ------------------------------------------------
-	// Parameterized Optimizer (with a system loaded from a file, and choice of contractor, linearization  and bisector)
-        // Load a problem to optimize
-	// --------------------------
 	try {
 
 	if (argc<1) {
@@ -79,9 +75,10 @@ int main(int argc, char** argv){
 		return 1;
 	}
 
-	//restricciones del sistema original + goal=NULL
+  //original system: 2 objective functions and constraints
 	System ext_sys(filename.Get().c_str());
 
+  //for accing the cy envelope constraint
 	SystemFactory fac2;
 
 	Variable w;
@@ -93,7 +90,6 @@ int main(int argc, char** argv){
 	fac2.add_var(ext_sys.args[ext_sys.nb_var-2]);
 	fac2.add_var(ext_sys.args[ext_sys.nb_var-1]);
 	fac2.add_ctr(ext_sys.args[ext_sys.nb_var-2] + a * ext_sys.args[ext_sys.nb_var-1] - w = 0);
-
 
 	OptimizerMOP::cy_contract_var= _cy_contract || _cy_contract_full;
 	OptimizerMOP::_cy_upper= _cy_contract_full;
@@ -144,10 +140,6 @@ int main(int argc, char** argv){
 	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
 	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
 
-	// the extended system
-	// restricciones del sistema original + variables objetivo y restricciones
-
-	//ExtendedSystem ext_sys(sys, eqeps);
 
 	SystemFactory fac;
 
@@ -170,14 +162,7 @@ int main(int argc, char** argv){
 	box[sys.nb_var]=0;
 	box[sys.nb_var+1]=0;
 
-	cout << ext_sys.ctrs[0].f.eval(box) << endl;
-	cout << ext_sys.ctrs[1].f.eval(box) << endl;
-
 	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f);
-
-	//NormalizedSystem norm_sys(sys,eqeps);
-	//LoupFinderDefault loupfinder (norm_sys,true);
-	//LoupFinderDefault loupfinder (norm_sys,false);
 
 	CellBufferOptim* buffer;
 	if(strategy=="OC1")
@@ -203,11 +188,6 @@ int main(int argc, char** argv){
 	else if(strategy=="diving-NDSsize")
 	  buffer = new CellFeasibleDiving<maxsize>(*new CellNSSet);
 
-	/*else
-		buffer = new CellDoubleHeap  (ext_sys);*/
-
-	//        cout << "file " << argv[1] << endl;
-
 	// Build the bisection heuristic
 	// --------------------------
 
@@ -231,8 +211,8 @@ int main(int argc, char** argv){
 	  bs = new SmearSumRelative(ext_sys,p);
 	else if (bisection=="smearmaxrel")
 	  bs = new SmearMaxRelative(ext_sys,p);
-	else if (bisection=="lsmear")
-	  bs = new LSmear(ext_sys,p);
+	//else if (bisection=="lsmear")
+	//  bs = new LSmear(ext_sys,p);
 	else {cout << bisection << " is not an implemented  bisection mode "  << endl; return -1;}
 
 	// The contractors
