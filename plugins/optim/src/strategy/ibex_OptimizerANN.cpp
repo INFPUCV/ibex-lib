@@ -17,7 +17,8 @@
 #include "ibex_CtcCompo.h"
 
 #include "ibex_IntervalVector.h"
-#include <vector>
+
+#include "ibex_CellData.h"
 
 #include <float.h>
 #include <stdlib.h>
@@ -345,6 +346,18 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	time=0;
 	Timer timer;
 	timer.start();
+
+
+	CellData* otro=new CellData(root->box);
+	otro->HC4.insert(1);
+	otro->HC4.insert(0);
+	otro->HC4.insert(1);
+
+	set<int>::iterator it;
+	for (it=otro->HC4.begin(); it!=otro->HC4.end(); ++it)
+	    cout << "OTRO " << *it;
+	cout << endl;
+
 	handle_cell(*root,init_box);
 	
 	update_uplo();
@@ -354,7 +367,7 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 		  
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
-			Cell *c = buffer.top(); 
+			Cell *c = buffer.top();
 			if (trace >= 2) cout << " current box " << c->box << endl;
 
 			try {
