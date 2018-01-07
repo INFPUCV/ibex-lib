@@ -59,7 +59,7 @@ private:
     /**
      * The contractor: HC4 + acid(HC4) + X-Newton
      */
-	Ctc& ctc(const System& ext_sys);
+	CtcCompo& ctc(const System& ext_sys);
 
 	NormalizedSystem& get_norm_sys(const System& sys, double eps_h);
 

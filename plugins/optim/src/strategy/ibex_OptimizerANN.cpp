@@ -14,6 +14,11 @@
 #include "ibex_Backtrackable.h"
 #include "ibex_OptimData.h"
 
+#include "ibex_CtcCompo.h"
+
+#include "ibex_IntervalVector.h"
+#include <vector>
+
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
@@ -44,7 +49,7 @@ void OptimizerANN::read_ext_box(const IntervalVector& ext_box, IntervalVector& b
 
 
 
-OptimizerANN::OptimizerANN(int n, Ctc& ctc, Bsc& bsc, LoupFinder& finder,
+OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
 		CellBufferOptim& buffer,
 		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f) :
                 				n(n), goal_var(goal_var),
@@ -201,6 +206,49 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	//TODO: extender OptimizerANN y modificar contract and bound y OptimizerANN y extender cellset para agregar acid compoold y compo
 	// CtcCompo ctc2;
 	// ctc2.contract(c.box);
+	// CtcHC4 -> 0
+	// CtcAcid -> 1
+	// CtcCompo -> 2
+	cout << "aplicando contractores" << endl;
+	IntervalVector boxOld = c.box;
+	for(int i=0; i < ctc.list.size(); i++) {
+
+		if(i==0) cout << "contractor CtcHC4";
+		else if(i==1) cout << "contractor CtcAcid";
+		else if(i==2) cout << "contractor CtcCompo";
+		else cout << "contractor OTRO";
+
+
+		boxOld = c.box;
+		// cout << c.box << endl;
+		if(c.box.is_empty())
+			break;
+		try {
+			ctc.list[i].contract(c.box);
+		}
+		catch(Exception& e) { // ibex exceptions
+			cout << "Error " << i << endl;
+			throw e;
+		}
+		catch (std::exception& e) { // other exceptions
+			cout << "Error " << i << endl;
+			throw e;
+		}
+		catch (...) {
+			ibex_error("contract: cannot handle exception");
+		}
+		cout << " dataset (";
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) cout << 0 << ", ";
+			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << ", ";
+			else  cout << 0 << ", ";
+		}
+		if(c.box.is_empty())  cout << 1 << ")" << endl;
+		else  cout << 0 << ")" << endl;
+
+	}
+
+
 
 
 	if (c.box.is_empty()) return;

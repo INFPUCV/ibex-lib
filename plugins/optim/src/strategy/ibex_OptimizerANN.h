@@ -11,7 +11,7 @@
 #ifndef __IBEX_OptimizerANN_H__
 #define __IBEX_OptimizerANN_H__
 
-#include "ibex_Ctc.h"
+#include "ibex_CtcCompo.h"
 #include "ibex_Bsc.h"
 #include "ibex_LoupFinder.h"
 #include "ibex_CellBufferOptim.h"
@@ -78,7 +78,7 @@ public:
 	 *          the OptimizerANN will only rely on the evaluation of f and will be very slow.
 	 *
 	 */
-	OptimizerANN(int n, Ctc& ctc, Bsc& bsc, LoupFinder& finder, CellBufferOptim& buffer,
+	OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder, CellBufferOptim& buffer,
 			int goal_var,
 			double eps_x=default_eps_x,
 			double rel_eps_f=default_rel_eps_f,
@@ -216,7 +216,7 @@ public:
 	 * The extended system:
 	 * (y=f(x), g_1(x)<=0,...,g_m(x)<=0).
 	 */
-	Ctc& ctc;
+	CtcCompo& ctc;
 
 	/**
 	 * \brief Bisector.

@@ -80,7 +80,7 @@ DefaultOptimizer::DefaultOptimizer(const System& sys, double rel_eps_f, double a
 
 }
 
-Ctc&  DefaultOptimizer::ctc(const System& ext_sys) {
+CtcCompo&  DefaultOptimizer::ctc(const System& ext_sys) {
 	Array<Ctc> ctc_list(3);
 
 	// first contractor on ext_sys : incremental HC4 (propag ratio=0.01)
