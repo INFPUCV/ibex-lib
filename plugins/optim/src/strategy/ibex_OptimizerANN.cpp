@@ -20,6 +20,8 @@
 
 #include "ibex_CellData.h"
 
+#include <map>
+
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
@@ -175,11 +177,13 @@ void OptimizerANN::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 	contract_and_bound(c, init_box);
 
+	cout << "FIn del contract" << endl;
 	if (c.box.is_empty()) {
 		delete &c;
 	} else {
 		buffer.push(&c);
 	}
+	cout << "fin del push" << endl;
 }
 
 void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
@@ -324,13 +328,41 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 	Cell* root=new Cell(IntervalVector(n+1));
 
+	/*
+	// convert root to rootData
+	CellData* rootData=new CellData(IntervalVector(n+1));
+	rootData->HC4.insert(1);
+	rootData->HC4.insert(0);
+	rootData->HC4.insert(1);
+
+
+	set<int>::iterator it;
+	for (it=rootData->HC4.begin(); it!=rootData->HC4.end(); ++it)
+	    cout << "OTRO " << *it;
+	cout << endl;
+	*/
+
+
+
 	write_ext_box(init_box,root->box);
+	// write_ext_box(init_box,root->box);
 
 	// add data required by the bisector
+	// root->add<DATA>();
+	root->add<CellData>();
+	root->get<CellData>().HC4.insert(1);
+
+	set<int>::iterator it;
+		for (it=root->get<CellData>().HC4.begin(); it!=root->get<CellData>().HC4.end(); ++it)
+		    cout << "OTRO " << *it;
+		cout << endl;
+
 	bsc.add_backtrackable(*root);
+	// bsc.add_backtrackable(*root);
 
 	// add data required by the buffer
 	buffer.add_backtrackable(*root);
+	// buffer.add_backtrackable(*root);
 
 	// add data required by OptimizerANN + KKT contractor
 //	root->add<EntailedCtr>();
@@ -347,27 +379,22 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	Timer timer;
 	timer.start();
 
-
-	CellData* otro=new CellData(root->box);
-	otro->HC4.insert(1);
-	otro->HC4.insert(0);
-	otro->HC4.insert(1);
-
-	set<int>::iterator it;
-	for (it=otro->HC4.begin(); it!=otro->HC4.end(); ++it)
-	    cout << "OTRO " << *it;
-	cout << endl;
-
 	handle_cell(*root,init_box);
-	
+
 	update_uplo();
 
 	try {
 	     while (!buffer.empty()) {
 		  
+	    	 break;
+
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
+			// Cell *c = buffer.top();
 			Cell *c = buffer.top();
+
+
+
 			if (trace >= 2) cout << " current box " << c->box << endl;
 
 			try {
@@ -380,7 +407,7 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 				delete c; // deletes the cell.
 
 				nb_cells+=2;  // counting the cells handled ( in previous versions nb_cells was the number of cells put into the buffer after being handled)
-                
+
 				handle_cell(*new_cells.first, init_box);
 				handle_cell(*new_cells.second, init_box);
 

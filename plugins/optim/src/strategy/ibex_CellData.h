@@ -14,56 +14,38 @@
 #include "ibex_Cell.h"
 #include <set>
 
+#include "ibex_Random.h"
+#include "ibex_Backtrackable.h"
+#include "ibex_CellBuffer.h"
+#include <map>
+#include <queue>
+
+
+using namespace std;
+
 namespace ibex {
 
-/**
- * \defgroup strategy Strategies
- */
+	class CellData : public Backtrackable {
 
-/** \ingroup strategy
- *
- * \brief Representation of the search space.
- *
- * This representation includes default data (current box) and data related to
- * user-defined contractors or bisectors. A different cell is associated to each
- * node and cell construction/inheritance can be controlled (see #ibex::Backtrackable).
- *
- * The cell on its own contains the minimum of information associated to the actual search space.
- * Besides the current box (the search space), this minimum information includes, e.g., the number
- * of the last bisected variable (other fields might be added with future releases).
- *
- * The amount of information contained in a cell can be arbitrarily augmented thanks to the
- * "data registration" technique (see #ibex::Contractor::require()).
- */
-class CellData: public Cell {
 public:
+		/**
+		 * \brief Constructor for the root node (followed by a call to init_root).
+		 */
+	CellData();
 
-	/**
-	 * \brief Create the root cell.
-	 *
-	 * \param box - Box (passed by copy).
-	 */
-	CellData(const IntervalVector& box);
+		/**
+		 * \brief Copy constructor
+		 */
+
+	CellData(const CellData& c);
+
+	std::pair<Backtrackable*,Backtrackable*> down();
 
 
+		std::set<int> HC4;
+		std::set<int> Acid;
+		std::set<int> Compo;
 
-
-	std::set<int> HC4;
-	std::set<int> Acid;
-	std::set<int> Compo;
-
-	/**
-	 * \set<int>::iterator it;
-	myset.insert(0);
-	myset.insert(1);
-
-	for (it=myset.begin(); it!=myset.end(); ++it)
-	    cout << ' ' << *it;
-	 */
-
-private:
-	/* A constant to be used when no variable has been split yet (root cell). */
-	//static const int ROOT_CELL;
 };
 
 } // end namespace ibex

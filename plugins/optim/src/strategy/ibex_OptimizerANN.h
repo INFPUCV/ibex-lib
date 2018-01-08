@@ -20,6 +20,9 @@
 
 #include "ibex_Optimizer.h"
 
+
+#include "ibex_CellData.h"
+
 namespace ibex {
 
 /**

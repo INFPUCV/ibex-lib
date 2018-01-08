@@ -9,10 +9,27 @@
 //============================================================================
 
 #include "ibex_CellData.h"
+#include "ibex_Backtrackable.h"
 
 namespace ibex {
 
- CellData::CellData(const IntervalVector& box) : Cell(box) { }
+ CellData::CellData() {}
 
+ 		/**
+ 		 * \brief Copy constructor
+ 		 */
+
+ CellData::CellData(const CellData& c) {}
+
+
+	/**
+	 * \brief Duplicate the structure into the left/right nodes
+	 */
+	std::pair<Backtrackable*,Backtrackable*> CellData::down(){
+		CellData* c1= new CellData(*this);
+		CellData* c2=new CellData(*this);
+
+		return std::pair<Backtrackable*,Backtrackable*>(c1,c2);
+	}
 
 } // end namespace ibex
