@@ -177,13 +177,11 @@ void OptimizerANN::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 	contract_and_bound(c, init_box);
 
-	cout << "FIn del contract" << endl;
 	if (c.box.is_empty()) {
 		delete &c;
 	} else {
 		buffer.push(&c);
 	}
-	cout << "fin del push" << endl;
 }
 
 void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
@@ -203,56 +201,128 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		return;
 	}
 
-	/*================ contract x with f(x)=y and g(x)<=0 ================*/
-	//cout << " [contract]  x before=" << c.box << endl;
-	//cout << " [contract]  y before=" << y << endl;
+	cout << "NODO" << endl;
 
-	// ctc.contract(c.box);
-	//TODO: extender OptimizerANN y modificar contract and bound y OptimizerANN y extender cellset para agregar acid compoold y compo
-	// CtcCompo ctc2;
-	// ctc2.contract(c.box);
-	// CtcHC4 -> 0
-	// CtcAcid -> 1
-	// CtcCompo -> 2
-	cout << "aplicando contractores" << endl;
-	IntervalVector boxOld = c.box;
-	for(int i=0; i < ctc.list.size(); i++) {
+	vector<int>::iterator it;
+	if(c.get<CellData>().HC4.size() > 0) {
+		cout << " UP HC4 dataset (";
+			for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
+				cout << *it << " ";
+			cout << ")" << endl;
 
-		if(i==0) cout << "contractor CtcHC4";
-		else if(i==1) cout << "contractor CtcAcid";
-		else if(i==2) cout << "contractor CtcCompo";
-		else cout << "contractor OTRO";
+		cout << " UP  ACID dataset (";
+			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
+				cout << *it << " ";
+			cout << ")" << endl;
 
-
-		boxOld = c.box;
-		// cout << c.box << endl;
-		if(c.box.is_empty())
-			break;
-		try {
-			ctc.list[i].contract(c.box);
-		}
-		catch(Exception& e) { // ibex exceptions
-			cout << "Error " << i << endl;
-			throw e;
-		}
-		catch (std::exception& e) { // other exceptions
-			cout << "Error " << i << endl;
-			throw e;
-		}
-		catch (...) {
-			ibex_error("contract: cannot handle exception");
-		}
-		cout << " dataset (";
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) cout << 0 << ", ";
-			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << ", ";
-			else  cout << 0 << ", ";
-		}
-		if(c.box.is_empty())  cout << 1 << ")" << endl;
-		else  cout << 0 << ")" << endl;
-
+		cout << " UP COMPO dataset (";
+			for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it)
+				cout << *it << " ";
+			cout << ")" << endl;
 	}
 
+	c.get<CellData>().HC4.clear();
+	c.get<CellData>().ACID.clear();
+	c.get<CellData>().COMPO.clear();
+
+	IntervalVector boxOld = c.box;
+	// HC4 -> 0
+	cout << "contractor CtcHC4";
+	boxOld = c.box;
+	if (c.box.is_empty()) return;
+	try {
+		ctc.list[0].contract(c.box);
+	}
+	catch(Exception& e) { // ibex exceptions
+		cout << "Error " << 0 << endl;
+		throw e;
+	}
+	catch (std::exception& e) { // other exceptions
+		cout << "Error " << 0 << endl;
+		throw e;
+	}
+	catch (...) {
+		ibex_error("contract: cannot handle exception");
+	}
+	for(int i=0; i < c.box.size(); i++) {
+		if(c.box.is_empty()) c.get<CellData>().HC4.push_back(0);
+		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().HC4.push_back(1);
+		else  c.get<CellData>().HC4.push_back(0);
+	}
+	if(c.box.is_empty())  c.get<CellData>().HC4.push_back(1);
+	else  c.get<CellData>().HC4.push_back(0);
+
+
+	cout << " dataset (";
+		for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
+		    cout << *it << " ";
+		cout << ")" << endl;
+
+
+	// ACID -> 1
+	cout << "contractor ACID";
+	boxOld = c.box;
+	if (c.box.is_empty()) return;
+	try {
+		ctc.list[1].contract(c.box);
+	}
+	catch(Exception& e) { // ibex exceptions
+		cout << "Error " << 1 << endl;
+		throw e;
+	}
+	catch (std::exception& e) { // other exceptions
+		cout << "Error " << 1 << endl;
+		throw e;
+	}
+	catch (...) {
+		ibex_error("contract: cannot handle exception");
+	}
+	for(int i=0; i < c.box.size(); i++) {
+		if(c.box.is_empty()) c.get<CellData>().ACID.push_back(0);
+		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().ACID.push_back(1);
+		else  c.get<CellData>().ACID.push_back(0);
+	}
+	if(c.box.is_empty())  c.get<CellData>().ACID.push_back(1);
+	else  c.get<CellData>().ACID.push_back(0);
+
+
+	cout << " dataset (";
+		for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
+		    cout << *it << " ";
+		cout << ")" << endl;
+
+
+	// COMPO -> 2
+	cout << "contractor COMPO";
+	boxOld = c.box;
+	if (c.box.is_empty()) return;
+	try {
+		ctc.list[2].contract(c.box);
+	}
+	catch(Exception& e) { // ibex exceptions
+		cout << "Error " << 2 << endl;
+		throw e;
+	}
+	catch (std::exception& e) { // other exceptions
+		cout << "Error " << 2 << endl;
+		throw e;
+	}
+	catch (...) {
+		ibex_error("contract: cannot handle exception");
+	}
+	for(int i=0; i < c.box.size(); i++) {
+		if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
+		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
+		else  c.get<CellData>().COMPO.push_back(0);
+	}
+	if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
+	else  c.get<CellData>().COMPO.push_back(0);
+
+
+	cout << " dataset (";
+		for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it)
+		    cout << *it << " ";
+		cout << ")" << endl;
 
 
 
@@ -328,47 +398,17 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 	Cell* root=new Cell(IntervalVector(n+1));
 
-	/*
-	// convert root to rootData
-	CellData* rootData=new CellData(IntervalVector(n+1));
-	rootData->HC4.insert(1);
-	rootData->HC4.insert(0);
-	rootData->HC4.insert(1);
-
-
-	set<int>::iterator it;
-	for (it=rootData->HC4.begin(); it!=rootData->HC4.end(); ++it)
-	    cout << "OTRO " << *it;
-	cout << endl;
-	*/
-
-
+	root->add<CellData>();
 
 	write_ext_box(init_box,root->box);
-	// write_ext_box(init_box,root->box);
 
 	// add data required by the bisector
-	// root->add<DATA>();
-	root->add<CellData>();
-	root->get<CellData>().HC4.insert(1);
-
-	set<int>::iterator it;
-		for (it=root->get<CellData>().HC4.begin(); it!=root->get<CellData>().HC4.end(); ++it)
-		    cout << "OTRO " << *it;
-		cout << endl;
-
 	bsc.add_backtrackable(*root);
 	// bsc.add_backtrackable(*root);
 
 	// add data required by the buffer
 	buffer.add_backtrackable(*root);
 	// buffer.add_backtrackable(*root);
-
-	// add data required by OptimizerANN + KKT contractor
-//	root->add<EntailedCtr>();
-//	//root->add<Multipliers>();
-//	entailed=&root->get<EntailedCtr>();
-//	entailed->init_root(user_sys,sys);
 
 	loup_changed=false;
 	initial_loup=obj_init_bound;
@@ -386,14 +426,12 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	try {
 	     while (!buffer.empty()) {
 		  
-	    	 break;
+
 
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
 			// Cell *c = buffer.top();
 			Cell *c = buffer.top();
-
-
 
 			if (trace >= 2) cout << " current box " << c->box << endl;
 

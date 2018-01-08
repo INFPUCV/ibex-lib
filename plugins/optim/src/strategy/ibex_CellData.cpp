@@ -19,7 +19,7 @@ namespace ibex {
  		 * \brief Copy constructor
  		 */
 
- CellData::CellData(const CellData& c) {}
+ CellData::CellData(const CellData& c): HC4(c.HC4), ACID(c.ACID), COMPO(c.COMPO) { }
 
 
 	/**

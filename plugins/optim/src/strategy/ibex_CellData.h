@@ -12,13 +12,9 @@
 #define __IBEX_CELL_DATA_H__
 
 #include "ibex_Cell.h"
-#include <set>
+#include <vector>
 
-#include "ibex_Random.h"
 #include "ibex_Backtrackable.h"
-#include "ibex_CellBuffer.h"
-#include <map>
-#include <queue>
 
 
 using namespace std;
@@ -42,9 +38,9 @@ public:
 	std::pair<Backtrackable*,Backtrackable*> down();
 
 
-		std::set<int> HC4;
-		std::set<int> Acid;
-		std::set<int> Compo;
+		std::vector<int> HC4;
+		std::vector<int> ACID;
+		std::vector<int> COMPO;
 
 };
 
