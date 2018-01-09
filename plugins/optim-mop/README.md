@@ -113,7 +113,7 @@ A part of the set Y and the lower envelope for the instance kim with e= 1 and n=
 Comparison of the anytime behavior of the search strategies.
 Figures show the envelope of the non-dominated set for the instances osy after 100 iterations (top) and tan after 50 iterations (down), using the weighted sum search strategy (left) and the NDSdist search strategy (right).
 
-### Contact:
-
-+ Author: Ignacio Araya @rilianx
-+ mail: ignacio.araya@pucv.cl
+## Authors:
+ - Ignacio Araya - <ignacio.araya@pucv.cl>
+ - Damir Aliquintui - <damir.aliquintui.p@mail.ucv.cl>
+ - Jose Campusano - <jose.campusano.c@mail.ucv.cl>
