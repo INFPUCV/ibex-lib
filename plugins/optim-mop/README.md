@@ -31,7 +31,7 @@ sizes reach a given precision.
 ## Requirements
 
 Optim-mop is a Plugin for the Ibex-Lib, so it's neccesary to have it before you could install it.
-This repo includes it, but if you just want to add this pluggin for your own installation, you should add this folder to the plugins folder in your ibex directory.
+This repo includes it, but if you just want to add this pluggin for your own installation, you could download the ibex-mop.zip that is in this folder and add it to the plugins folder in your ibex root directory.
 
 ## Configure
 
