@@ -1,30 +1,46 @@
 # Description
 
-Interval based solvers are commonly used for solving 
-single-objective non linear optimization problems. 
-Their reliability and increasing performance make them useful
-when proofs of infeasibility and/or certification of solutions
-are a must.
-On the other hand, there exist only a few approaches dealing with
-non linear optimization problems, when they consider multiple objectives.
+This plugin implements a **Nonlinear BiObjective Optimization** (NLBOO) interval branch & bound 
+Solver in the library [Ibex](https://github.com/ibex-team/ibex-lib).
 
-Interval branch & bound solvers start with an initial box 
-and build a search tree. 
-In each iteration a node is selected and treated by *filtering* 
-and *upper-bounding* procedures.
-Filtering (or contraction) consists in removing inconsistent 
-values from the bounds of the box, while the upper-bounding 
-procedures attempt to find good 
-feasible solutions for improving the upper envelope.
-Some filtering methods take into account the upper 
-envelope for filtering dominated solutions (e.g., discarding 
-tests~).
+The solver finds a thin envelope
+containing the set of non-dominated vectors and a set of feasible 
+solutions delimiting the upper bound of the envelope.
+
+It follows a branch & bound strategy starting with an initial box 
+and building a search tree. In each iteration a node is selected and treated by *filtering* 
+and *upper-bounding* procedures. The plugin include some methods to take into account the upper 
+envelope for filtering dominated solutions.
 If the box has not been discarded by the filtering process, 
 it is split into two sub-boxes by dividing the domain of one 
 variable and generating two child nodes in the search tree.
 The procedure iterates until a termination criteria is reached.
-In current solvers, boxes are no longer treated when their
-sizes reach a given precision.
+
+The plugin offers several improvements related to other algorithms:
+
+* It uses a termination criteria directly related with the 
+precision of the envelope containing the non-dominated vectors.
+
+* We include an additional constraint for better defining the feasible 
+objective region related to each box. This constraint is used 
+by the filtering procedures improving the perfomance of the solver.
+
+* In each iteration we select the node maximizing the distance to
+the upper envelope of the non-dominated vectors.
+Our criteria has an anytime behaviour, i.e., it can return valid solutions
+even if it is interrupted before it ends. Also, the search strategy
+allows to improve the precision of the envelope in a homogeneous and 
+quite uniform way.
+
+* For upperbounding we use a inner polytope algorithm used for monobjective optimization. 
+The algorithm constructs a feasible and convex polytope and then it finds 
+a feasible solution inside the polytope minimizing a linearization of the 
+objective function. We adapted the algorithm for finding n feasible solutions: two solution vectors minimizing each one of the 
+linearized objectives and a set of $n-2$ equidistant feasible solutions 
+between this two vectors. As the first two vectors are inside the
+feasible and convex polytope, we ensure that any solution between these
+two vectors is also feasible.
+
 
 # Instalation
 
