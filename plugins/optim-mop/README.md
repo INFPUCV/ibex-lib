@@ -105,10 +105,11 @@ To run an example just write this in your terminal inside the ibex root:
 ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/MOP/binh.txt --cy-contract --eps 1 -b largestfirst --nb_ub_sols 10 --w2 0.01
 ```
 
-![Cy Comparison](https://imgur.com/a/x3sgP)
+![Cy Comparison](https://i.imgur.com/yLIxyUV.png)
 A part of the set Y and the lower envelope for the instance kim with e= 1 and n= 50. In the left side the reference strategy, whitout the cy-contractor (79 boxes for reaching the precision). In the right side the strategy using the constraint cy which allows us to approximate better the lower envelope (only 19 boxes for reaching the precision).
 
-![Cy Comparison](https://imgur.com/a/15yT8)
+![Cy Comparison](https://i.imgur.com/uyZq6gB.png)
+
 Comparison of the anytime behavior of the search strategies.
 Figures show the envelope of the non-dominated set for the instances osy after 100 iterations (top) and tan after 50 iterations (down), using the weighted sum search strategy (left) and the NDSdist search strategy (right).
 
