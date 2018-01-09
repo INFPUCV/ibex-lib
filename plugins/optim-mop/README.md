@@ -32,7 +32,7 @@ even if it is interrupted before it ends. Also, the search strategy
 allows to improve the precision of the envelope in a homogeneous and 
 quite uniform way.
 
-* For upperbounding we use a inner polytope algorithm used for monobjective optimization. 
+* For upperbounding we use a [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf) used for monobjective optimization. 
 The algorithm constructs a feasible and convex polytope and then it finds 
 a feasible solution inside the polytope minimizing a linearization of the 
 objective function. We adapted the algorithm for finding n feasible solutions: two solution vectors minimizing each one of the 
