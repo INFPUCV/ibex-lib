@@ -22,14 +22,14 @@ and *splitting* techniques.
 * Uses a termination criteria directly related with the 
 precision of the *envelope*.
 
-* Includes an additional dynamic constraint for better defining the feasible 
+* Includes an *additional dynamic constraint* **cy** for better defining the feasible 
 objective region related to each box. This constraint is used 
 by the filtering procedures improving the perfomance of the solver.
 
 ![Cy Comparison](https://i.imgur.com/yLIxyUV.png)
 The *envelope* for the instance *kim* with *eps*=1. 
-In the left side the strategy whitout the additional constraint. 
-In the right side the strategy using the additional constraint which allows  
+In the left side the strategy whitout the additional constraint **cy**. 
+In the right side the strategy using **cy** which allows  
 to approximate better the *envelope* of non-dominated solutions.
 
 * Includes *NDSdist* a new strategy for selecting nodes. *NDSdist*
