@@ -14,9 +14,6 @@ y5 in [-1e8,1e8];
 z1 in [-1e8,1e8];
 z2 in [-1e8,1e8];
 
-
-
-
 function f1(x1,x2,x3,x4,x5,y3,y5)
   return x1 + ( 4*y3^2 + 4*y5^2  - 2*cos(20*y3*pi/sqrt(3)) * cos(20*y5*pi/sqrt(5)) + 2 );
 end
@@ -24,7 +21,6 @@ end
 function f2(x1,x2,x3,x4,x5,y2,y4)
   return 1-x1^2 + ( 4*y2^2 + 4*y4^2  - 2*cos(20*y2*pi/sqrt(2)) * cos(20*y4*pi/sqrt(4)) + 2 );
 end
-
 
 
 Constraints

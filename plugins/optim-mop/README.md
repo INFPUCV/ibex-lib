@@ -43,8 +43,8 @@ even if it is interrupted before it ends. See the figure below:
 ![Cy Comparison](https://i.imgur.com/uyZq6gB.png)
 Comparison of the anytime behavior of the search strategies.
 Figures show the envelope of the non-dominated set for the instances 
-[*osy*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/MOP/osy.txt) 
-after 100 iterations (top) and [*tan*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/MOP/tan.txt) 
+[*osy*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/osy.txt) 
+after 100 iterations (top) and [*tan*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/tan.txt) 
 after 50 iterations (down), 
 using the [OC search strategy](http://www.sciencedirect.com/science/article/pii/S0377221716303824) (left) 
 and the *NDSdist* search strategy (right).
@@ -121,7 +121,7 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
 
 To run an example with the default parmeters just write this line in your terminal in the root directory of the Ibex library:
 ```
-./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/MOP/binh.txt
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt
 ```
 
 ## Format of the instances (Minibex):
@@ -134,7 +134,7 @@ Constraints
 <expression of the second objective function> = z2;
 // other constraints...
 ```
-You can see some examples in [benchs/MOP](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs/MOP).
+You can see some examples in [benchs](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs).
 
 ## Authors:
  - Ignacio Araya - <ignacio.araya@pucv.cl>
