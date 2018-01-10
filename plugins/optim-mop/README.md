@@ -96,7 +96,7 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
       -b[string], --bis=[string]        the bisection method (default: largestfirst)
       -s[string], --search=[string]     the search strategy (default: NDSdist)
       --eps=[float]                     the precision (default: 0.01)
-      -t[float], --time=[float]         timelimit (default: 100s)
+      -t[float], --time=[float]         timelimit (default: 100)
       --cy-contract-full                Contract using the additional constraint.
       --eps-contract                    Contract using eps.
       --nb_ub_sols=[int]                Max number of solutions added by the
