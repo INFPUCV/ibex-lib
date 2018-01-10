@@ -201,25 +201,7 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		return;
 	}
 
-	cout << "NODO" << endl;
-
-	vector<int>::iterator it;
-	if(c.get<CellData>().HC4.size() > 0) {
-		cout << " UP HC4 dataset (";
-			for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
-				cout << *it << " ";
-			cout << ")" << endl;
-
-		cout << " UP  ACID dataset (";
-			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
-				cout << *it << " ";
-			cout << ")" << endl;
-
-		cout << " UP COMPO dataset (";
-			for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it)
-				cout << *it << " ";
-			cout << ")" << endl;
-	}
+	if (c.box.is_empty()) return;
 
 	c.get<CellData>().HC4.clear();
 	c.get<CellData>().ACID.clear();
@@ -227,9 +209,7 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	IntervalVector boxOld = c.box;
 	// HC4 -> 0
-	cout << "contractor CtcHC4";
 	boxOld = c.box;
-	if (c.box.is_empty()) return;
 	try {
 		ctc.list[0].contract(c.box);
 	}
@@ -252,15 +232,12 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	if(c.box.is_empty())  c.get<CellData>().HC4.push_back(1);
 	else  c.get<CellData>().HC4.push_back(0);
 
-
-	cout << " dataset (";
-		for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
-		    cout << *it << " ";
-		cout << ")" << endl;
-
+	/*
+	for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
+		cout << *it << ".0 ";
+	*/
 
 	// ACID -> 1
-	cout << "contractor ACID";
 	boxOld = c.box;
 	if (c.box.is_empty()) return;
 	try {
@@ -285,15 +262,12 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	if(c.box.is_empty())  c.get<CellData>().ACID.push_back(1);
 	else  c.get<CellData>().ACID.push_back(0);
 
-
-	cout << " dataset (";
-		for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
-		    cout << *it << " ";
-		cout << ")" << endl;
-
+	/*
+	for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
+		cout << *it << ".0 ";
+	*/
 
 	// COMPO -> 2
-	cout << "contractor COMPO";
 	boxOld = c.box;
 	if (c.box.is_empty()) return;
 	try {
@@ -319,10 +293,32 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	else  c.get<CellData>().COMPO.push_back(0);
 
 
-	cout << " dataset (";
-		for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it)
-		    cout << *it << " ";
-		cout << ")" << endl;
+	cout << "in: ";
+	vector<int>::iterator it;
+	if(c.get<CellData>().ACID.size() > 0) {
+			/*
+			for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
+				cout << *it << ".0 ";
+
+			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
+				cout << *it << ".0 ";
+			*/
+
+			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
+				cout << *it << ".0 ";
+	}
+	cout << endl;
+
+	cout << "out: ";
+	int aux = 0;
+	for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
+		aux += *it;
+		if(it==c.get<CellData>().COMPO.end())
+			cout << *it << ".0 ";
+	}
+	if(aux == 0) cout << "0.0 ";
+	else cout << "1.0 ";
+	cout << endl;
 
 
 

@@ -38,9 +38,12 @@ public:
 	std::pair<Backtrackable*,Backtrackable*> down();
 
 
-		std::vector<int> HC4;
-		std::vector<int> ACID;
-		std::vector<int> COMPO;
+	std::vector<int> HC4_old;
+	std::vector<int> ACID_old;
+	std::vector<int> COMPO_old;
+	std::vector<int> HC4;
+	std::vector<int> ACID;
+	std::vector<int> COMPO;
 
 };
 
