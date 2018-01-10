@@ -88,7 +88,7 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
 ```
 ./__build__/plugins/optim-mop/ibexmop {OPTIONS} [filename]
 ```
-  OPTIONS:
+  OPTIONS (the most important ones):
 
       -h, --help                        Display this help menu
       -f[string], --filt=[string]       the filtering method (default: acidhc4)
