@@ -32,7 +32,7 @@ In the left side the strategy without the additional constraint **cy**.
 In the right side the strategy using **cy** which allows 
 to approximate better the *envelope* of non-dominated solutions.
 Red points corresponds to the set of feasible vectors found by the strategies.
-Note that no feasible vector can be found under or left the lower envelope (blue segments).
+Remark that no feasible vector can be found under or left the lower envelope (blue segments).
 
 * Includes *NDSdist*, a new strategy for selecting nodes. *NDSdist*
 selects in each iteration the node/box maximizing its distance to the
