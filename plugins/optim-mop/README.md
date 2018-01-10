@@ -29,7 +29,7 @@ by the filtering procedures improving the perfomance of the solver.
 ![Cy Comparison](https://i.imgur.com/yLIxyUV.png)
 The *envelope* for the instance *kim* with *eps*=1. 
 In the left side the strategy whitout the additional constraint **cy**. 
-In the right side the strategy using **cy** which allows  
+In the right side the strategy using **cy** which allows 
 to approximate better the *envelope* of non-dominated solutions.
 
 * Includes *NDSdist* a new strategy for selecting nodes. *NDSdist*
