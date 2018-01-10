@@ -12,7 +12,6 @@
 namespace ibex {
 
 int py_Plotter::n=0;
-set< Cell* > py_Plotter::buffer_cells;
 
 void py_Plotter::plot_add_ub(pair<double, double> eval){
 	std::cout << "add ub: {\"pts\": (" << eval.first << "," << eval.second << ")}" << endl;
@@ -45,8 +44,8 @@ void py_Plotter::plot_del_box(Cell* c){
 void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector >& NDS){
 	ofstream output;
 	output.open("output.txt");
-	set<  Cell* > :: iterator cell=buffer_cells.begin();
-
+	//set<  Cell* > :: iterator cell=buffer_cells.begin();
+/*
 	output << "(";
 	if(c){
 		output << "{'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
@@ -66,7 +65,7 @@ void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVecto
 		output << "},";
 	}
 	output << ")" << endl;
-
+*/
 
 	output << "[";
 

@@ -13,6 +13,11 @@
 
 namespace ibex {
 
+
+/**
+ * \brief Backtrackable class required by #OptimizerMOP cells
+ */
+
 class CellMOP : public Backtrackable {
 public:
 	/**
@@ -37,8 +42,19 @@ public:
 		return std::pair<Backtrackable*,Backtrackable*>(c1,c2);
 	}
 
+	/**
+	 * the current number of generated cells (for instantiating the id)
+	 */
 	static int nb_cells;
+
+	/**
+	 * The evaluation of the objective f1 with the initial box
+	 */
 	static Interval y1_init;
+
+	/**
+	 * The evaluation of the objective f2 with the initial box
+	 */
 	static Interval y2_init;
 
     /**unique identifier for comparisons*/
@@ -47,13 +63,16 @@ public:
 	/** depth of the node **/
 	int depth;
 
-	/** MOP: after filtering we know that z1+a*z2 > w_lb and we can
+	/** Parameter of the constraint c_y. After filtering we know that y1+a*y2 > w_lb and we can
 	 * use this information for filtering**/
 	double a;
+
+	/** Parameter of the constraint c_y. After filtering we know that y1+a*y2 > w_lb and we can
+	 * use this information for filtering**/
 	double w_lb;
 
 
-	/** MOP: distance of the box to the current non dominated set (UB) */
+	/** Distance of the box to the current non dominated set  */
 	double ub_distance;
 
 };

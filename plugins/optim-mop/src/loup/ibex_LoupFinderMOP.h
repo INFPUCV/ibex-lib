@@ -49,8 +49,14 @@ public:
 	LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps=NormalizedSystem::default_eps_h);
 
 
+	/**
+	 * \brief Correct the solution p by using a Hansen feasibility test with eps-inflation
+	 */
 	bool ub_correction(Vector p, IntervalVector& res);
 
+	/*
+	 * find up to n feasible points inside a inner-polytope
+	 */
 	void find(const IntervalVector& box, list<Vector>& feasible_points, int n=2);
 
 	/**
@@ -64,13 +70,20 @@ public:
 	const NormalizedSystem norm_sys;
 
 	/**
-	 * \brief Objective functions
+	 * \brief Objective function f1
 	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
 	 * evaluate them we have to set z1 and z2 to [0,0].
 	 */
 	const Function& goal1;
+
+	/**
+	 * \brief Objective function f2
+	 */
 	const Function& goal2;
 
+	/**
+	 * Weight of the secondary objective function for the linear program
+	 */
 	double static _weight2;
 protected:
 

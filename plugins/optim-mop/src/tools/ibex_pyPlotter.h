@@ -32,17 +32,15 @@ public:
 	 */
 	static void offline_plot(Cell* current, map< pair <double, double>, IntervalVector >& NDS);
 
+	/**
+	* write line commands to be interpreted by the python3 program plot.py
+	*/
 	static void plot_add_ub(pair<double, double> eval);
 	static void plot_del_ub(pair<double, double> eval);
 	static void plot_add_lb(Cell* c);
 	static void plot_add_box(Cell* c);
 	static void plot_del_box(Cell* c);
 
-    /** The cells in the buffer for plotting
-	 * the set should be updated each time the real buffer is popped
-	 * and pushed.
-	 */
-	static set< Cell* > buffer_cells;
 
 
 	static int n;

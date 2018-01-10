@@ -86,6 +86,9 @@ class DistanceSortedCellBufferMOP : public CellBufferOptim {
 	}
 
 
+	/**
+	 * A heap data structure for keeping the cells sorted by distance
+	 */
 	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distance > cells;
 
 

@@ -348,8 +348,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
 	buffer.flush();
-	py_Plotter::buffer_cells.clear();
-	//LB.clear();
+
 	NDS.clear();
 	//the first point
 	NDS.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));

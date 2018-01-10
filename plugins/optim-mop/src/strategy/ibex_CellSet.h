@@ -15,13 +15,19 @@
 #include <set>
 #include <map>
 #include <queue>
-// #include "ibex_Set.h"
-// #include "../strategy/ibex_Cell.h"
+
 
 using namespace std;
 
 namespace ibex {
 
+/**
+ * \ingroup optim
+ *
+ * \brief cell Set buffer (for global optimization)
+ *  This is a simple-set buffer where the heap criterion
+ * is passed by template
+ */
 
 	template<class T>
 	class CellSet : public CellBufferOptim {
