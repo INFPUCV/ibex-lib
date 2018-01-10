@@ -1,46 +1,59 @@
 # Description
 
-This plugin implements a **Nonlinear BiObjective Optimization** (NLBOO) interval branch & bound 
-Solver in the library [Ibex](https://github.com/ibex-team/ibex-lib).
+This plugin implements *ibexMop*, an 
+interval branch & bound solver for **Nonlinear BiObjective Optimization** problems 
+in the library [Ibex](https://github.com/ibex-team/ibex-lib).
 
-The solver finds a thin envelope
-containing the set of non-dominated vectors and a set of feasible 
-solutions delimiting the upper bound of the envelope.
+*ibexMop* returns a set of solutions X and its images Y
+guaranteeing a maximal distance *eps* between
+any *non-dominated* feasible vector and the returned set Y. 
 
-It follows a branch & bound strategy starting with an initial box 
-and building a search tree. In each iteration a node is selected and treated by *filtering* 
-and *upper-bounding* procedures. The plugin include some methods to take into account the upper 
-envelope for filtering dominated solutions.
-If the box has not been discarded by the filtering process, 
-it is split into two sub-boxes by dividing the domain of one 
-variable and generating two child nodes in the search tree.
-The procedure iterates until a termination criteria is reached.
+*ibexMop* constructs an **envelope** for the non-dominated set
+by following a branch & bound strategy starting with an initial *box* (containing the variable domains) 
+and building a search tree. In each iteration of the algorithm, 
+a node is selected and treated by classical *filtering*, *upper-bounding* 
+and *splitting* techniques. 
 
-The plugin offers several improvements related to other algorithms:
+*ibexMop* includes some methods to take into account the upper bound of the 
+*envelope* for filtering dominated solutions (e.g., well-known discarding tests).
 
-* It uses a termination criteria directly related with the 
-precision of the envelope containing the non-dominated vectors.
+*ibexMop* also offers several improvements related to other NLBOO algorithms:
 
-* We include an additional constraint for better defining the feasible 
+* Uses a termination criteria directly related with the 
+precision of the *envelope*.
+
+* Includes an additional dynamic constraint for better defining the feasible 
 objective region related to each box. This constraint is used 
 by the filtering procedures improving the perfomance of the solver.
 
-* In each iteration we select the node maximizing the distance to
-the upper envelope of the non-dominated vectors.
-Our criteria has an anytime behaviour, i.e., it can return valid solutions
-even if it is interrupted before it ends. Also, the search strategy
-allows to improve the precision of the envelope in a homogeneous and 
-quite uniform way.
+![Cy Comparison](https://i.imgur.com/yLIxyUV.png)
+The *envelope* for the instance *kim* with *eps*=1. 
+In the left side the strategy whitout the additional constraint. 
+In the right side the strategy using the additional constraint which allows  
+to approximate better the *envelope* of non-dominated solutions.
 
-* For upperbounding we use a [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf) used for monobjective optimization. 
+* Includes *NDSdist* a new strategy for selecting nodes. *NDSdist*
+selects in each iteration the node/box maximizing its distance to the
+upper envelope.
+*NDSdist* has an anytime behaviour, i.e., it can return valid solutions
+even if it is interrupted before it ends. See the figure below:
+
+![Cy Comparison](https://i.imgur.com/uyZq6gB.png)
+Comparison of the anytime behavior of the search strategies.
+Figures show the envelope of the non-dominated set for the instances 
+[*osy*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/MOP/osy.txt) 
+after 100 iterations (top) and [*tan*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/MOP/tan.txt) 
+after 50 iterations (down), 
+using the [OC search strategy](http://www.sciencedirect.com/science/article/pii/S0377221716303824) (left) 
+and the *NDSdist* search strategy (right).
+
+* Includes a [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf) 
+for updating the upper envelope using feasible solutions. 
 The algorithm constructs a feasible and convex polytope and then it finds 
-a feasible solution inside the polytope minimizing a linearization of the 
-objective function. We adapted the algorithm for finding n feasible solutions: two solution vectors minimizing each one of the 
-linearized objectives and a set of $n-2$ equidistant feasible solutions 
-between this two vectors. As the first two vectors are inside the
-feasible and convex polytope, we ensure that any solution between these
-two vectors is also feasible.
-
+two feasible vectors inside the polytope by minimizing a linearization of each one of the 
+objective functions in the polytope. 
+Then it finds a set of $n-2$ equidistant feasible solutions 
+between this two vectors.
 
 # Instalation
 
@@ -121,13 +134,9 @@ To run an example just write this in your terminal inside the ibex root:
 ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/MOP/binh.txt --cy-contract --eps 1 -b largestfirst --nb_ub_sols 10 --w2 0.01
 ```
 
-![Cy Comparison](https://i.imgur.com/yLIxyUV.png)
-A part of the set Y and the lower envelope for the instance kim with e= 1 and n= 50. In the left side the reference strategy, whitout the cy-contractor (79 boxes for reaching the precision). In the right side the strategy using the constraint cy which allows us to approximate better the lower envelope (only 19 boxes for reaching the precision).
 
-![Cy Comparison](https://i.imgur.com/uyZq6gB.png)
 
-Comparison of the anytime behavior of the search strategies.
-Figures show the envelope of the non-dominated set for the instances osy after 100 iterations (top) and tan after 50 iterations (down), using the weighted sum search strategy (left) and the NDSdist search strategy (right).
+
 
 ## Authors:
  - Ignacio Araya - <ignacio.araya@pucv.cl>
