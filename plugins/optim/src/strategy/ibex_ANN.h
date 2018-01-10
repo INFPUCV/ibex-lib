@@ -35,6 +35,8 @@ namespace ibex {
 	private:
 		vector<unsigned> topology;
 
+		void showVectorVals(string label, vector<double> &v);
+
 };
 
 } // end namespace ibex
