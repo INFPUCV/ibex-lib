@@ -2,7 +2,7 @@
 
 This plugin implements *ibexMop*, an 
 interval branch & bound solver for **Nonlinear BiObjective Optimization** problems 
-in the library [Ibex](https://github.com/ibex-team/ibex-lib).
+in the [Ibex library](https://github.com/ibex-team/ibex-lib).
 
 *ibexMop* returns a set of solutions X and its images Y
 guaranteeing a maximal distance *eps* between
