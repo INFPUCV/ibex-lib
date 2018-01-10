@@ -1,4 +1,6 @@
-# Description
+### ibexMop
+
+## Description
 
 This plugin implements *ibexMop*, an 
 interval branch & bound solver for **Nonlinear BiObjective Optimization** problems 
@@ -55,9 +57,9 @@ objective functions.
 Then it finds a set of $n-2$ equidistant feasible solutions 
 between this two vectors.
 
-# Installation
+## Installation
 
-## Requirements
+### Requirements
 
 *ibexMop* is a plugin of the Ibex Library, so if you already have the library, 
 you only have to add this folder 
@@ -65,7 +67,7 @@ you only have to add this folder
 folder of Ibex. 
 Otherwise you can download the entire library (including ibexMop) from [here](https://github.com/INFPUCV/ibex-lib).
 
-## Configure
+### Configure
 
 Once you have the plugin in the plugins' folder, you should go to the root folder of the  Ibex library 
 and run the following line in your terminal.
@@ -82,7 +84,7 @@ This will configure Ibex to use the Optimizer MOP plugin and then will build it 
 <ibex-root>/__build__/plugins/optim-mop/
 ```
 
-# Uses
+## Uses
 ```
 ./__build__/plugins/optim-mop/ibexmop {OPTIONS} [filename]
 ```
