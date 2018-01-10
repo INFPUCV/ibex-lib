@@ -63,7 +63,7 @@ between this two vectors.
 
 *ibexMop* is a plugin of the Ibex Library, so if you already have the library, 
 you only have to add this folder 
-([optim-mop.zip](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/optim-mop.zip)) in the plugin
+([optim-mop.zip](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/optim-mop-20180110.zip)) in the plugin
 folder of Ibex. 
 Otherwise you can download the entire library (including ibexMop) from [here](https://github.com/INFPUCV/ibex-lib).
 
