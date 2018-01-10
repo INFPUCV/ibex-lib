@@ -109,6 +109,7 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
  + hc4
  + acidhc4
 ### Linear Relaxation Method (--linear-relax):
+ + no
  + compo (a method combining two linearization techniques: AF2 and XNewton)
 ### Search Strategy (-s):
  + weighted_sum (or the [OC search strategy](http://www.sciencedirect.com/science/article/pii/S0377221716303824))
