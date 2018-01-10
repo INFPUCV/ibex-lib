@@ -31,26 +31,26 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
-	args::ArgumentParser parser("********* IbexOpt (defaultoptimizer) *********.", "Solve a Minibex file.");
+	args::ArgumentParser parser("********* IbexMop *********.", "Solve a NLBOOP (Minibex file).");
 	args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
-	args::ValueFlag<std::string> _filtering(parser, "string", "the filtering method", {'f', "filt"});
-	args::ValueFlag<std::string> _linear_relax(parser, "string", "the linear relaxation method", {"linear-relax"});
-	args::ValueFlag<std::string> _bisector(parser, "string", "the bisection method", {'b', "bis"});
-	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy", {'s', "search"});
-	args::ValueFlag<double> _eps(parser, "float", "eps (the precision of the pareto front)", {"eps"});
-	args::ValueFlag<double> _epsx(parser, "float", "eps_x (the precision of the x boxes)", {"eps_x"});
-	args::ValueFlag<double> _timelimit(parser, "float", "timelimit", {'t',"time"});
-	args::Flag _plot(parser, "plot", "Save a python plot.", {"plot"});
-	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
-	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
-	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the box y+cy.", {"cy-contract-full"});
+	args::ValueFlag<std::string> _filtering(parser, "string", "the filtering method (default: acidhc4)", {'f', "filt"});
+	args::ValueFlag<std::string> _linear_relax(parser, "string", "the linear relaxation method (default: compo)", {"linear-relax"});
+	args::ValueFlag<std::string> _bisector(parser, "string", "the bisection method (default: largestfirst)", {'b', "bis"});
+	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy (default: NDSdist)", {'s', "search"});
+	args::ValueFlag<double> _eps(parser, "float", "the desired precision (default: 0.01)", {"eps"});
+	args::ValueFlag<double> _timelimit(parser, "float", "timelimit (default: 100)", {'t',"timelimit"});
+	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the additional constraint cy.", {"cy-contract-full"});
 	args::Flag _eps_contract(parser, "eps-contract", "Contract using eps.", {"eps-contract"});
-	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-simplex", {"nb_ub_sols"});
+	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"nb_ub_sols"});
+	args::ValueFlag<double> _epsx(parser, "float", "The minimum size of boxes", {"eps_x"});
 	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
 	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
-	args::Flag _hv(parser, "hv", "Compute the hypervolume", {"hv"});
+	//args::Flag _hv(parser, "hv", "Compute the hypervolume", {"hv"});
+	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
+	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
+	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
-
+	args::Flag _plot(parser, "plot", "Save a file to be plotted by plot.py.", {"plot"});
 	args::Positional<std::string> filename(parser, "filename", "The name of the MINIBEX file.");
 
 	try
@@ -93,14 +93,13 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::cy_contract_var= _cy_contract || _cy_contract_full;
 	OptimizerMOP::_cy_upper= _cy_contract_full;
-  OptimizerMOP::_hv=_hv;
 
 	System *_ext_sys;
 	if(OptimizerMOP::cy_contract_var)	_ext_sys=new System(ext_sys, System(fac2));
 	else _ext_sys =new System(ext_sys);
 
 
-	cout << *_ext_sys << endl;
+	//cout << *_ext_sys << endl;
 
 	string filtering = (_filtering)? _filtering.Get() : "acidhc4";
 	string linearrelaxation= (_linear_relax)? _linear_relax.Get() : "compo";
@@ -108,12 +107,12 @@ int main(int argc, char** argv){
 	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
 	double eps= (_eps)? _eps.Get() : 0.01 ;
 	double eps_x= (_epsx)? _epsx.Get() : 1e-8 ;
-	double timelimit = (_timelimit)? _timelimit.Get() : 1e4 ;
+	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
 	double eqeps= 1.e-8;
 
 	OptimizerMOP::_plot = _plot;
 
-	OptimizerMOP::_nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 1 ;
+	OptimizerMOP::_nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 50 ;
 	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : 0.1;
 	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
 	bool no_bisect_y  = _nobisecty;
@@ -134,9 +133,9 @@ int main(int argc, char** argv){
 	cout << "eps: " << eps << endl;
 	cout << "eps_x: " << eps_x << endl;
 	cout << "nb_ub_sols: " << OptimizerMOP::_nb_ub_sols << endl;
-	cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
+	//cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
 	cout << "plot: " <<  ((OptimizerMOP::_plot)? "yes":"no") << endl;
-	cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
+	//cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
 	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
 	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
 
@@ -156,7 +155,7 @@ int main(int argc, char** argv){
 		sys.box[i] = ext_sys.box[i];
 
 
-	cout << sys << endl;
+	//cout << sys << endl;
 
 	IntervalVector box = ext_sys.box.mid();
 	box[sys.nb_var]=0;
@@ -177,16 +176,7 @@ int main(int argc, char** argv){
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
-	else if(strategy=="NDSsize")
-	  buffer = new CellFeasibleDiving<maxsize>(*new CellNSSet);
-	else if(strategy=="diving-minlb")
-      buffer = new CellFeasibleDiving<minLB>(*new CellSet<minLB>);
-	else if(strategy=="diving-weighted_sum")
-	  buffer = new CellFeasibleDiving<weighted_sum>(*new CellSet<weighted_sum>);
-	else if(strategy=="diving-NDSdist")
-	  buffer = new CellFeasibleDiving<max_distance>(*new DistanceSortedCellBufferMOP);
-	else if(strategy=="diving-NDSsize")
-	  buffer = new CellFeasibleDiving<maxsize>(*new CellNSSet);
+
 
 	// Build the bisection heuristic
 	// --------------------------
@@ -254,18 +244,14 @@ int main(int argc, char** argv){
 	  lr= new LinearizerCombo(*_ext_sys,LinearizerCombo::COMPO);
 	else if (linearrelaxation=="xn")
 	  lr= new LinearizerXTaylor (*_ext_sys, LinearizerXTaylor::RELAX, LinearizerXTaylor::RANDOM_OPP);
-	//	else {cout << linearrelaxation  <<  " is not an implemented  linear relaxation mode "  << endl; return -1;}
-	// fixpoint linear relaxation , hc4  with default fix point ratio 0.2
+
 	CtcFixPoint* cxn;
 	CtcPolytopeHull* cxn_poly;
 	CtcCompo* cxn_compo;
 	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn")
           {
 		cxn_poly = new CtcPolytopeHull(*lr);
-		//BitSet bset=BitSet(_ext_sys->nb_var);
-		//bset.add(_ext_sys.nb_var-2); //w
 
-		//cxn_poly->set_contracted_vars(bset);
 		cxn_compo =new CtcCompo(*cxn_poly, hc44xn);
 		cxn = new CtcFixPoint (*cxn_compo, default_relax_ratio);
 	  }
@@ -277,7 +263,7 @@ int main(int argc, char** argv){
 	  ctcxn = ctc;
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,sys.ctrs,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,eps);
+	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,eps);
 	max_distance::UB= &o.get_UB();
 
 
@@ -293,11 +279,7 @@ int main(int argc, char** argv){
 	o.optimize(ext_sys.box);
 
 	// printing the results
-	o.report(false);
-  //cout << o.get_time() << "  " << o.get_nb_cells() << "  " << o.get_nb_sols() << endl;
-
-	//	if (filtering == "acidhc4"  )
-	//cout    << " nbcidvar " <<  acidhc4.nbvar_stat() << endl;
+	o.report(verbose);
 
 	delete bs;
 	delete buffer;

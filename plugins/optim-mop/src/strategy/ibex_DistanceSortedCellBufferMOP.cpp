@@ -11,6 +11,11 @@
 
 namespace ibex {
 
+
+
+	map< pair <double, double>, IntervalVector >* max_distance::UB=NULL;
+
+
 	void DistanceSortedCellBufferMOP::flush() {
 		while (!cells.empty()) {
 			delete pop();
@@ -27,8 +32,8 @@ namespace ibex {
 
 	void DistanceSortedCellBufferMOP::push(Cell* cell) {
 		double dist=OptimizerMOP::distance2(cell);
-		if(dist < cell->get<CellBS>().ub_distance )
-			cell->get<CellBS>().ub_distance=dist;
+		if(dist < cell->get<CellMOP>().ub_distance )
+			cell->get<CellMOP>().ub_distance=dist;
 		cells.push(cell);
 	}
 
@@ -48,9 +53,9 @@ namespace ibex {
 		double dist=OptimizerMOP::distance2(c);
 
 		//we update the distance and reinsert the element
-		while(dist < c->get<CellBS>().ub_distance){
+		while(dist < c->get<CellMOP>().ub_distance){
 			cells.pop();
-			c->get<CellBS>().ub_distance=dist;
+			c->get<CellMOP>().ub_distance=dist;
 			cells.push(c);
 			c = cells.top();
 			dist=OptimizerMOP::distance2(c);

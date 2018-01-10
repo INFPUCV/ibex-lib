@@ -196,7 +196,7 @@ class DataDict:
 def ibex(q, args):
     params = args.ibex.split(" ")
     proc = subprocess.Popen(
-        ["./ibexmop", "--plot"] + params,
+        ["__build__/plugins/optim-mop/ibexmop", "--plot"] + params,
         stdin=None, stdout=subprocess.PIPE
     )
     state = "run"

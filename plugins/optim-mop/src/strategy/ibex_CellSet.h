@@ -11,7 +11,7 @@
 #define __IBEX_CELL_SET_H__
 
 #include "ibex_Random.h"
-#include "ibex_CellBuffer.h"
+#include "ibex_CellMOP.h"
 #include <set>
 #include <map>
 #include <queue>
@@ -22,68 +22,6 @@ using namespace std;
 
 namespace ibex {
 
-	class CellBS : public Backtrackable {
-	public:
-		/**
-		 * \brief Constructor for the root node (followed by a call to init_root).
-		 */
-		CellBS() : depth(0), id(0), a(0.0), w_lb(POS_INFINITY), ub_distance(POS_INFINITY) {}
-
-		/**
-		 * \brief Copy constructor
-		 */
-
-		CellBS(const CellBS& c) : depth(c.depth+1), id(++nb_cells),
-				a(c.a), w_lb(c.w_lb), ub_distance(c.ub_distance) { }
-
-		/**
-		 * \brief Duplicate the structure into the left/right nodes
-		 */
-		std::pair<Backtrackable*,Backtrackable*> down(){
-			CellBS* c1=new CellBS(*this);
-			CellBS* c2=new CellBS(*this);
-
-			return std::pair<Backtrackable*,Backtrackable*>(c1,c2);
-		}
-
-		static int nb_cells;
-		static Interval y1_init;
-		static Interval y2_init;
-
-	    /**unique identifier for comparisons*/
-	    int id;
-
-		/** depth of the node **/
-		int depth;
-
-		/** MOP: after filtering we know that z1+a*z2 > w_lb and we can
-		 * use this information for filtering**/
-		double a;
-		double w_lb;
-
-
-		/** MOP: distance of the box to the current non dominated set (UB) */
-		double ub_distance;
-
-	};
-
-
-	/**
-	 * Criteria for bi-objective problems
-	 */
-	struct max_distance {
-
-
-		bool operator() (const Cell* c1, const Cell* c2){
-		   int n = c1->box.size();
-		   if(c1->get<CellBS>().ub_distance != c2->get<CellBS>().ub_distance)
-			   return (c1->get<CellBS>().ub_distance < c2->get<CellBS>().ub_distance);
-		   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
-		   else return false;
-	    }
-
-		static map< pair <double, double>, IntervalVector >* UB;
-	};
 
 	template<class T>
 	class CellSet : public CellBufferOptim {
@@ -94,7 +32,7 @@ namespace ibex {
 	  void flush();
 
 	    virtual void add_backtrackable(Cell& root){
-	    	root.add<CellBS>();
+	    	root.add<CellMOP>();
 	    }
 
 	  /** Return the size of the buffer. */
@@ -133,7 +71,7 @@ namespace ibex {
 		  int n = c1->box.size();
 
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
-		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
 
 	  }
 	};
@@ -149,8 +87,8 @@ namespace ibex {
 
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
 		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
-		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
-		  //return (c1->get<CellBS>().id > c2->get<CellBS>().id);
+		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
+		  //return (c1->get<CellMOP>().id > c2->get<CellMOP>().id);
 	  }
 	};
 
@@ -165,8 +103,8 @@ namespace ibex {
 
 		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
-		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
-		  //return (c1->get<CellBS>().id > c2->get<CellBS>().id);
+		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
+		  //return (c1->get<CellMOP>().id > c2->get<CellMOP>().id);
 	  }
 	};
 
@@ -181,7 +119,7 @@ namespace ibex {
 
 		  if(c1->box[n-1].lb() + c1->box[n-2].lb() != c2->box[n-1].lb() + c2->box[n-2].lb())
 			  return (c1->box[n-1].lb() + c1->box[n-2].lb() < c2->box[n-1].lb() + c2->box[n-2].lb());
-		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
 	  }
 	};
 
@@ -194,11 +132,11 @@ namespace ibex {
 	  {
 		  int n = c1->box.size();
 
-		  double hyper1=(CellBS::y1_init.ub()-c1->box[n-1].lb())*(CellBS::y2_init.ub()-c1->box[n-2].lb());
-		  double hyper2=(CellBS::y1_init.ub()-c1->box[n-1].lb())*(CellBS::y2_init.ub()-c1->box[n-2].lb());
+		  double hyper1=(CellMOP::y1_init.ub()-c1->box[n-1].lb())*(CellMOP::y2_init.ub()-c1->box[n-2].lb());
+		  double hyper2=(CellMOP::y1_init.ub()-c1->box[n-1].lb())*(CellMOP::y2_init.ub()-c1->box[n-2].lb());
 
 		  if(hyper1 != hyper2) return (hyper1 < hyper2);
-		  return (c1->get<CellBS>().depth < c2->get<CellBS>().depth);
+		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
 	  }
 	};
 
@@ -209,11 +147,11 @@ namespace ibex {
 	  bool operator() (const Cell* c1, const Cell* c2) const
 	  {
 		  int n = c1->box.size();
-		  double c1_ev= (c1->box[n-2].lb()-CellBS::y1_init.lb())/CellBS::y1_init.diam() +
-				  (c1->box[n-1].lb()-CellBS::y2_init.lb())/CellBS::y2_init.diam();
+		  double c1_ev= (c1->box[n-2].lb()-CellMOP::y1_init.lb())/CellMOP::y1_init.diam() +
+				  (c1->box[n-1].lb()-CellMOP::y2_init.lb())/CellMOP::y2_init.diam();
 
-		  double c2_ev= (c2->box[n-2].lb()-CellBS::y1_init.lb())/CellBS::y1_init.diam() +
-				  (c2->box[n-1].lb()-CellBS::y2_init.lb())/CellBS::y2_init.diam();
+		  double c2_ev= (c2->box[n-2].lb()-CellMOP::y1_init.lb())/CellMOP::y1_init.diam() +
+				  (c2->box[n-1].lb()-CellMOP::y2_init.lb())/CellMOP::y2_init.diam();
 
 		  return c1_ev < c2_ev;
 	  }
@@ -283,11 +221,5 @@ namespace ibex {
 	}
 
 
-	template class CellSet<OC1>;
-	template class CellSet<OC2>;
-	template class CellSet<OC3>;
-	template class CellSet<OC4>;
-	template class CellSet<minLB>;
-	template class CellSet<weighted_sum>;
 }
 #endif // __IBEX_CELL_SET_H__

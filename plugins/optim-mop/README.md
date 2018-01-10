@@ -95,9 +95,9 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
       --linear-relax=[string]           the linear relaxation method (default: compo)
       -b[string], --bis=[string]        the bisection method (default: largestfirst)
       -s[string], --search=[string]     the search strategy (default: NDSdist)
-      --eps=[float]                     the precision (default: 0.01)
+      --eps=[float]                     the desired precision (default: 0.01)
       -t[float], --time=[float]         timelimit (default: 100)
-      --cy-contract-full                Contract using the additional constraint.
+      --cy-contract-full                Contract using the additional constraint cy.
       --eps-contract                    Contract using eps.
       --nb_ub_sols=[int]                Max number of solutions added by the
                                         inner-polytope algorithm (default: 50)
@@ -116,12 +116,13 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
  + NDSdist
 ### Bisection Method (-b):
  + largestfirst
+ + roundrobin
 
 ## Run an example:
 
-To run an example with the default parmeters just write this line in your terminal in the root directory of the Ibex library:
+To run an example you can just write this line in your terminal in the root directory of the Ibex library:
 ```
-./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract-full --eps-contract
 ```
 
 ## Format of the instances (Minibex):

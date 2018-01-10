@@ -8,15 +8,33 @@
 #ifndef OPTIM_SRC_STRATEGY_IBEX_DISTANCESORTEDCELLBUFFERMOP_H_
 #define OPTIM_SRC_STRATEGY_IBEX_DISTANCESORTEDCELLBUFFERMOP_H_
 
-#include "ibex_CellBuffer.h"
-#include "ibex_CellBufferOptim.h"
+
+
+#include "ibex_CellMOP.h"
+#include "ibex_CellSet.h"
 #include <queue>
 #include <map>
-#include "ibex_CellFeasibleDiving.h"
 
 using namespace std;
 
 namespace ibex {
+
+/**
+ * Criteria for bi-objective problems
+ */
+struct max_distance {
+
+
+	bool operator() (const Cell* c1, const Cell* c2){
+	   int n = c1->box.size();
+	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
+		   return (c1->get<CellMOP>().ub_distance < c2->get<CellMOP>().ub_distance);
+	   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
+	   else return false;
+	}
+
+	static map< pair <double, double>, IntervalVector >* UB;
+};
 
 
 /** \ingroup strategy
@@ -27,7 +45,7 @@ class DistanceSortedCellBufferMOP : public CellBufferOptim {
  public:
 
    virtual void add_backtrackable(Cell& root){
-     root.add<CellBS>();
+     root.add<CellMOP>();
    }
    
   /** Flush the buffer.

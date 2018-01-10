@@ -121,7 +121,8 @@ def simulation(q):
             reader = reader.replace('nan', "0")
             LB = eval(reader.split("\n")[0])
             UB = eval(reader.split("\n")[1])
-            LB2 = eval(reader.split("\n")[2])
+            LB2 = {}
+            # LB2 = eval(reader.split("\n")[2])
             q.put((LB, UB, LB2))
 
     # iterations = range(100)
