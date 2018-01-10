@@ -114,10 +114,6 @@ This will configure Ibex to use the Optimizer MOP plugin and then will build it 
 ### Bisection Method (-b):
  + largestfirst
 
-### Instances:
-Inside the folder [benchs/MOP](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs/MOP) 
-you can find example instances.
-
 ## Run an example:
 
 To run an example with the default parmeters just write this line in your terminal in the root directory of the Ibex library:
@@ -128,7 +124,7 @@ To run an example with the default parmeters just write this line in your termin
 ## Format of the instances (Minibex):
 
 Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html), 
-considering that the objectives *must correspond* to the two first two constraints with the following syntax:
+considering that the objectives *must correspond* to the first two constraints with the following syntax:
 ```
 Constraints
 <expression of the first objective function> = z1;
