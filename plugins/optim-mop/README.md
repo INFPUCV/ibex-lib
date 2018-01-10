@@ -1,7 +1,5 @@
 # ibexMop
 
-## Description
-
 This plugin implements *ibexMop*, an 
 interval branch & bound solver for **Nonlinear BiObjective Optimization** problems 
 in the library [Ibex](https://github.com/ibex-team/ibex-lib).
