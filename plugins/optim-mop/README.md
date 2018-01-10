@@ -34,10 +34,10 @@ In the left side the strategy whitout the additional constraint **cy**.
 In the right side the strategy using **cy** which allows 
 to approximate better the *envelope* of non-dominated solutions.
 
-* Includes *NDSdist* a new strategy for selecting nodes. *NDSdist*
+* Includes *NDSdist*, a new strategy for selecting nodes. *NDSdist*
 selects in each iteration the node/box maximizing its distance to the
 upper envelope.
-*NDSdist* has an anytime behaviour, i.e., it can return valid solutions
+*NDSdist* has an *anytime behaviour*, i.e., it can return valid solutions
 even if it is interrupted before it ends. See the figure below:
 
 ![Cy Comparison](https://i.imgur.com/uyZq6gB.png)
