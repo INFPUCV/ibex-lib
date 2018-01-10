@@ -23,6 +23,9 @@
 
 #include "ibex_CellData.h"
 
+
+#include "ibex_ANN.h"
+
 namespace ibex {
 
 /**
@@ -278,6 +281,8 @@ public:
 	 */
 	double timeout;
 
+
+	TrainingData trainData;
 
 protected:
 

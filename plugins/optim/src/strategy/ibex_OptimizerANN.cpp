@@ -20,6 +20,8 @@
 
 #include "ibex_CellData.h"
 
+#include "ibex_ANN.h"
+
 #include <map>
 
 #include <float.h>
@@ -63,8 +65,7 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
                 				//kkt(normalized_user_sys),
 						uplo(NEG_INFINITY), uplo_of_epsboxes(POS_INFINITY), loup(POS_INFINITY),
                 				loup_point(n), initial_loup(POS_INFINITY), loup_changed(false),
-                                                time(0), nb_cells(0) {
-
+                                                time(0), nb_cells(0), trainData("trainingData.txt") {
 	if (trace) cout.precision(12);
 }
 
@@ -419,10 +420,18 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 	update_uplo();
 
+
+	// obtiene la topologia [cant inputs, cant nodo escondido, cant output, cantidad de datos]
+	vector<unsigned> topology;
+	trainData.getTopology(topology);
+	cout << "topology: " << topology[3] << endl;
+
+
+
 	try {
 	     while (!buffer.empty()) {
 		  
-
+	    	 break;
 
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
