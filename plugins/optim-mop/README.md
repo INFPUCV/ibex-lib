@@ -83,7 +83,7 @@ This will configure Ibex to use the Optimizer MOP plugin and then will build it 
 
 # Uses
 ```
-./ibexmop {OPTIONS} [filename]
+./__build__/plugins/optim-mop/ibexmop {OPTIONS} [filename]
 ```
   OPTIONS:
 
@@ -126,9 +126,8 @@ To run an example with the default parmeters just write this line in your termin
 
 ## Format of the instances (Minibex):
 
-Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html).
-
-However the objectives *must correspond* to the two first two constraints with the following syntax:
+Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html), 
+considering that the objectives *must correspond* to the two first two constraints with the following syntax:
 ```
 Constraints
 <expression of the first objective function> = z1;
