@@ -8,8 +8,8 @@
 // Last Update : May 10, 2012
 //============================================================================
 
-#ifndef __IBEX_ANN_H__
-#define __IBEX_ANN_H__
+#ifndef __IBEX_TRAINING_DATA_H__
+#define __IBEX_TRAINING_DATA_H__
 
 #include <vector>
 #include <iostream>
@@ -19,24 +19,29 @@
 #include <fstream>
 #include <sstream>
 
-#include <ibex_TrainingData.h>
-
 
 using namespace std;
 
 namespace ibex {
 
-	class ANN {
+	class TrainingData {
 
 	public:
-		ANN(const string filename);
-		TrainingData trainData;
+		TrainingData(const string filename);
+
+		bool isEof(void);
+
+		void getTopology(vector<unsigned> &topology);
+
+		// Returns the number of input values read from the file:
+		unsigned getNextInputs(vector<double> &inputVals);
+		unsigned getTargetOutputs(vector<double> &targetOutputVals);
 
 	private:
-		vector<unsigned> topology;
+		ifstream m_trainingDataFile;
 
 };
 
 } // end namespace ibex
 
-#endif // __IBEX_ANN_H__
+#endif // __IBEX_TRAINING_DATA_H__

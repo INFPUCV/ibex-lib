@@ -281,8 +281,7 @@ public:
 	 */
 	double timeout;
 
-
-	TrainingData trainData;
+	ANN ann;
 
 protected:
 
