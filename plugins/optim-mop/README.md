@@ -48,23 +48,26 @@ using the [OC search strategy](http://www.sciencedirect.com/science/article/pii/
 and the *NDSdist* search strategy (right).
 
 * Includes a [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf) 
-for updating the upper envelope using feasible solutions. 
+for finding feasible solutions. 
 The algorithm constructs a feasible and convex polytope and then it finds 
-two feasible vectors inside the polytope by minimizing a linearization of each one of the 
-objective functions in the polytope. 
+two feasible vectors inside this polytope by minimizing a linearization of each one of the 
+objective functions. 
 Then it finds a set of $n-2$ equidistant feasible solutions 
 between this two vectors.
 
-# Instalation
+# Installation
 
 ## Requirements
 
-Optim-mop is a Plugin for the Ibex-Lib, so it's neccesary to have it before you could install it.
-This repo includes it, but if you just want to add this pluggin for your own installation, you could download the ibex-mop.zip that is in this folder and add it to the plugins folder in your ibex root directory.
+*ibexMop* is a plugin of the Ibex Library, so if you already have the library, 
+you only have to add this folder (optim-mop.zip) in the plugin
+folder of Ibex. 
+Otherwise you can download the entire library (including ibexMop) from [here](https://github.com/INFPUCV/ibex-lib).
 
 ## Configure
 
-Once you have the optim-mop in your plugins folder, you should go to the root folder of your ibex-lib and run the following line in your terminal.
+Once you have the plugin in the plugins' folder, you should go to the root folder of the  Ibex library 
+and run the following line in your terminal.
 
 ```
 ./waf configure --with-optim --with-optim-mop --with-ampl --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
@@ -73,7 +76,7 @@ Once you have the optim-mop in your plugins folder, you should go to the root fo
 ./waf install
 ```
 
-This will configure Ibex to use the Optimizer MOP plugin and then build it in:
+This will configure Ibex to use the Optimizer MOP plugin and then will build it in:
 ```
 <ibex-root>/__build__/plugins/optim-mop/
 ```
@@ -89,24 +92,12 @@ This will configure Ibex to use the Optimizer MOP plugin and then build it in:
       --linear-relax=[string]           the linear relaxation method
       -b[string], --bis=[string]        the bisection method
       -s[string], --search=[string]     the search strategy
-      --eps=[float]                     eps (the precision of the pareto front)
-      --eps_x=[float]                   eps_x (the precision of the x boxes)
+      --eps=[float]                     eps (the precision of the envelope)
       -t[float], --time=[float]         timelimit
-      --plot                            Save a python plot.
-      --no-bisecty                      Do not bisect y variables.
-      --cy-contract                     Contract using the box y+cy, w_ub=+inf.
-      --cy-contract-full                Contract using the box y+cy.
+      --cy-contract-full                Contract using the additional constraint.
       --eps-contract                    Contract using eps.
       --nb_ub_sols=[int]                Max number of solutions added by the
-                                        inner-simplex
-      --weight2=[float], --w2=[float]   Min distance between two non dominated
-                                        points to be considered (default: 0.01)
-      --min_ub_dist=[float]             Min distance between two non dominated
-                                        points to be considered (default:
-                                        eps/10)
-      --hv                              Compute the hypervolume
-      --trace                           Activate trace. Updates of loup/uplo are
-                                        printed while minimizing.
+                                        inner-polytope algorithm
       filename                          The name of the MINIBEX file.
       "--" can be used to terminate flag options and force all following
       arguments to be treated as positional options
@@ -119,24 +110,32 @@ This will configure Ibex to use the Optimizer MOP plugin and then build it in:
 ### Search Strategy (-s):
  + weighted_sum
  + NDSdist
- + diving-NDSdist
 ### Bisection Method (-b):
- + lsmear
  + largestfirst
 
-### Benchs:
-Inside benchs/MOP folder you could find Multi Objective Problems to solve.
+### Instances:
+Inside the folder [benchs/MOP](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs/MOP) 
+you can find example instances.
 
-## Examples:
+## Run an example:
 
-To run an example just write this in your terminal inside the ibex root:
+To run an example with the default parmeters just write this line in your terminal in the root directory of the Ibex library:
 ```
-./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/MOP/binh.txt --cy-contract --eps 1 -b largestfirst --nb_ub_sols 10 --w2 0.01
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/MOP/binh.txt
 ```
 
+## Format of the instances (Minibex):
 
+Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html).
 
-
+However the objectives *must correspond* to the two first two constraints with the following syntax:
+```
+Constraints
+<expression of the first objective function> = z1;
+<expression of the second objective function> = z2;
+// other constraints...
+```
+You can see some examples in [benchs/MOP](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs/MOP).
 
 ## Authors:
  - Ignacio Araya - <ignacio.araya@pucv.cl>
