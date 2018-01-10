@@ -79,7 +79,7 @@ and run the following line in your terminal.
 ./waf install
 ```
 
-This will configure Ibex to use the Optimizer MOP plugin and then will build it in:
+This will configure Ibex to use the *IbexMop* plugin and then will build it in:
 ```
 <ibex-root>/__build__/plugins/optim-mop/
 ```
@@ -91,16 +91,16 @@ This will configure Ibex to use the Optimizer MOP plugin and then will build it 
   OPTIONS:
 
       -h, --help                        Display this help menu
-      -f[string], --filt=[string]       the filtering method
-      --linear-relax=[string]           the linear relaxation method
-      -b[string], --bis=[string]        the bisection method
-      -s[string], --search=[string]     the search strategy
-      --eps=[float]                     eps (the precision of the envelope)
-      -t[float], --time=[float]         timelimit
+      -f[string], --filt=[string]       the filtering method (default: acidhc4)
+      --linear-relax=[string]           the linear relaxation method (default: compo)
+      -b[string], --bis=[string]        the bisection method (default: largestfirst)
+      -s[string], --search=[string]     the search strategy (default: NDSdist)
+      --eps=[float]                     the precision (default: 0.01)
+      -t[float], --time=[float]         timelimit (default: 100s)
       --cy-contract-full                Contract using the additional constraint.
       --eps-contract                    Contract using eps.
       --nb_ub_sols=[int]                Max number of solutions added by the
-                                        inner-polytope algorithm
+                                        inner-polytope algorithm (default: 50)
       filename                          The name of the MINIBEX file.
       "--" can be used to terminate flag options and force all following
       arguments to be treated as positional options
@@ -109,9 +109,9 @@ This will configure Ibex to use the Optimizer MOP plugin and then will build it 
  + hc4
  + acidhc4
 ### Linear Relaxation Method (--linear-relax):
- + compo
+ + compo (a method combining two linearization techniques: AF2 and XNewton)
 ### Search Strategy (-s):
- + weighted_sum
+ + weighted_sum (or the [OC search strategy](http://www.sciencedirect.com/science/article/pii/S0377221716303824))
  + NDSdist
 ### Bisection Method (-b):
  + largestfirst
