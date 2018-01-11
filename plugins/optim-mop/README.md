@@ -101,6 +101,10 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
       --eps-contract                    Contract using eps.
       --nb_ub_sols=[int]                Max number of solutions added by the
                                         inner-polytope algorithm (default: 50)
+      -v, --verbose                     Verbose output. Shows the dominance-free
+                                        set of solutions obtained by the solver.
+      --plot                            Save a file to be plotted by plot.py.
+
       filename                          The name of the MINIBEX file.
       "--" can be used to terminate flag options and force all following
       arguments to be treated as positional options
@@ -124,6 +128,13 @@ To run an example you can just write this line in your terminal in the root dire
 ```
 ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract-full --eps-contract
 ```
+
+For plotting the non-dominated vectors returned by the solver:
+```
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract-full --eps-contract --plot
+python3 plugins/optim-mop/main/plot.py 
+```
+
 
 ## Format of the instances (Minibex):
 
