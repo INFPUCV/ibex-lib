@@ -10,6 +10,7 @@
 
 #include "ibex_Vector.h"
 #include "ibex_System.h"
+#include "ibex_LoupFinder.h"
 #include "ibex_LinearizerXTaylor.h"
 #include "ibex_NormalizedSystem.h"
 
@@ -32,7 +33,7 @@ namespace ibex {
  *
  * \note Only works with inequality constraints.
  */
-class LoupFinderMOP {
+class LoupFinderMOP : public LoupFinder{
 
 public:
 
@@ -46,7 +47,7 @@ public:
 	 * \param goal1
 	 * \param goal2
 	 */
-	LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps=NormalizedSystem::default_eps_h);
+	LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps=NormalizedSystem::default_eps_h, int nb_sol=50);
 
 
 	/**
@@ -54,20 +55,53 @@ public:
 	 */
 	bool ub_correction(Vector p, IntervalVector& res);
 
-	/*
-	 * find up to n feasible points inside a inner-polytope
+	/**
+	 * \brief Find a candidate solution for the non-dominated set.
+	 *
+	 * \param box        - the box where the solution is searched
+	 * \param loup_point - not used
+	 * \param loup       - not used
+	 * \return             a candidate solution <x,f(x)> (may be not feasible)
+	 * \throws             NotFound in case of failure.
 	 */
-	void find(const IntervalVector& box, list<Vector>& feasible_points, int n=2);
+	virtual std::pair<IntervalVector, double> find(const IntervalVector& box, const IntervalVector& loup_point, double loup=POS_INFINITY);
+
+
+	/**
+	 * \brief True if equalities are accepted.
+	 *
+	 * This function is abstract and may be overriden in the subclass.
+	 *
+	 * By default: return true.
+	 */
+	virtual bool rigorous() const {
+		return false;
+	}
+
+	/**
+	 * \brief Delete this.
+	 */
+	virtual ~LoupFinderMOP() {}
+
+
+	/**
+	 * \brief The relaxed NLP problem for finding feasible points
+	 */
+	const NormalizedSystem norm_sys;
+
+	/**
+	 * Weight of the secondary objective function for the linear program
+	 */
+	double static _weight2;
+
+protected:
 
 	/**
 	 * \brief The real NLP problem.
 	 */
 	const System& sys;
 
-	/**
-	 * \brief The relaxed NLP problem for finding feasible points
-	 */
-	const NormalizedSystem norm_sys;
+
 
 	/**
 	 * \brief Objective function f1
@@ -82,12 +116,6 @@ public:
 	const Function& goal2;
 
 	/**
-	 * Weight of the secondary objective function for the linear program
-	 */
-	double static _weight2;
-protected:
-
-	/**
 	 * \brief True iff there is an equality.
 	 */
 	const bool has_equality;
@@ -97,6 +125,19 @@ protected:
 
 	/** linear solver */
 	LPSolver lp_solver;
+
+private:
+
+	//number of solutions to find
+	int nb_sol;
+
+	//0: means the first solution of the polytope (or the midpoint)
+	//1: means the second solution of the polytope
+	//>=2: means the solutions in the line
+	int phase;
+	Vector vec1; //the first solution of the poltytope
+	Vector vec2; //the second solution of the polytope
+
 
 
 };

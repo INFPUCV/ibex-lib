@@ -26,7 +26,6 @@ namespace ibex {
 const double OptimizerMOP::default_eps=0.01;
 
 bool OptimizerMOP::_plot = false;
-int OptimizerMOP::_nb_ub_sols = 50;
 double OptimizerMOP::_min_ub_dist = 1e-7;
 bool OptimizerMOP::_cy_upper =false;
 //bool OptimizerMOP::_hv =false;
@@ -63,32 +62,51 @@ Interval OptimizerMOP::eval_goal(const Function& goal, IntervalVector& x){
 	return goal.eval(xz);
 }
 
-bool OptimizerMOP::update_NDS(const IntervalVector& box, int np) {
+bool OptimizerMOP::is_dominated(pair< double, double>& eval){
+	std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval);
+
+	//there is an equivalent point
+	if(it2->first == eval) return true;
+	it2--;
+	//it is dominated by the previous ub point
+	if(eval.second >= it2->first.second) return true;
+
+	return false;
+}
+
+bool OptimizerMOP::update_NDS(const IntervalVector& box) {
 
 	list<Vector> feasible_points;
 
 	//We attempt to find two feasible points which minimize both objectives
 	//and the middle point between them
 	IntervalVector box2(box); box2.resize(n);
-	finder.find(box2,feasible_points,np);
-	bool new_ub=false;
-	list<Vector>::iterator it=feasible_points.begin();
-	for(;it!=feasible_points.end();it++){
 
-		IntervalVector vec=*it;
+
+	bool new_ub=false;
+	bool flag=true;
+
+
+	int i=0;
+	while(flag){
+		i++;
+		IntervalVector vec(n);
+
+		try{
+			vec = finder.find(box2,box2,POS_INFINITY).first;
+		}catch (LoupFinder::NotFound& ) {
+			vec = box2.mid();
+			if(!finder.norm_sys.is_inner(vec)) break;
+			flag=false;
+		}
 
 		//3. Se evalua el punto usando funciones objetivo (goal1 y goal2)
 		pair< double, double> eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
 
+		//cout << eval.first << "," << eval.second << endl;
 		//4. Insertar en mapa NDS (si es no dominada) y actualizar eliminar soluciones dominadas de NDS
-		std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval);
 
-		//there is an equivalent point
-		if(it2->first == eval) continue;
-		it2--;
-		//it is dominated by the previous ub point
-		if(eval.second >= it2->first.second) continue;
-
+		if (is_dominated(eval)) continue;
 
 		/**** NDS correction ****/
 		if(finder.ub_correction(vec.mid(), vec)){
@@ -96,19 +114,16 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box, int np) {
 		}
 		else continue;
 
-		it2= NDS.lower_bound(eval);
-
-		//there is an equivalent point
-		if(it2->first == eval) continue;
-		it2--;
-		//it is dominated by the previous ub point
-		if(eval.second >= it2->first.second)	continue;
+		if (is_dominated(eval)) continue;
 
 
 		/**** end NDS correction ****/
 
 		bool domine=false;
-		for(it2++; it2!=NDS.end(); ){
+		std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval);
+
+		for(; it2!=NDS.end(); ){
+
 			if(eval.second > it2->first.second) break;
 			std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
 			++aux;
@@ -130,6 +145,7 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box, int np) {
 
 			NDS.insert(make_pair(eval, vec));
 			NDSy.insert(make_pair(eval, vec));
+			//cout << "passed" << endl;
 			new_ub = true;
 		}else{
 			it2--;
@@ -141,6 +157,7 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box, int np) {
 
 				NDS.insert(make_pair(eval, vec));
 				NDSy.insert(make_pair(eval, vec));
+				//cout << "passed" << endl;
 				new_ub = true;
 			}
 		}
@@ -148,11 +165,10 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box, int np) {
 		if(_plot && new_ub) py_Plotter::plot_add_ub(eval);
 		if(trace) {cout << eval.first  <<"," << eval.second << "(" << NDS.size() << ")" << endl;}
 
-
-
-
-
 	}
+
+    //cout << i << endl;
+
 
 	return new_ub;
 
@@ -402,7 +418,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 			}
 
-			bool loup_ch=update_NDS(c->box, _nb_ub_sols);
+			bool loup_ch=update_NDS(c->box);
 
 
 

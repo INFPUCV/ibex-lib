@@ -15,9 +15,10 @@ namespace ibex {
  double LoupFinderMOP::_weight2=0.0;
 
 //TODO: remove this recipe for the argument of the max number of iterations of the LP solver
-LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps) :
+LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps, int nb_sol) :
 		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT),
-		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LPSolver::default_max_iter)), goal1(goal1), goal2(goal2), has_equality(false) {
+		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LPSolver::default_max_iter)),
+		goal1(goal1), goal2(goal2), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var) {
 
 	if (sys.nb_ctr>0)
 		// ==== check if the system contains equalities ====
@@ -90,24 +91,28 @@ bool LoupFinderMOP::ub_correction(Vector p, IntervalVector& res){
 	return false;
 }
 
-void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& candidate_points, int nn) {
+std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box, const IntervalVector& lp, double l) {
 
 	int n=norm_sys.nb_var;
 
-  if(nn>1 && (lp_solver.default_limit_diam_box.contains(box.max_diam()))){
-	  lp_solver.clean_ctrs();
-	  lp_solver.set_bounds(box);
+	//phase 0 or 1: call to simplex
+    if(phase < nb_sol && phase<=1 && (lp_solver.default_limit_diam_box.contains(box.max_diam()))){
 
 
-    for(int i=0; i<2; i++){
+		lp_solver.clean_ctrs();
+		lp_solver.set_bounds(box);
 
-    	IntervalVector box2(box);
-    	box2.resize(n+2);
-    	box2[n]=0.0; box2[n+1]=0.0;
-		IntervalVector ig= (i==0)? (goal1.gradient(box2.mid())+ _weight2*goal2.gradient(box2.mid())) : (goal2.gradient(box2.mid())+ _weight2*goal1.gradient(box2.mid()));
+		IntervalVector box2(box);
+		box2.resize(n+2);
+		box2[n]=0.0; box2[n+1]=0.0;
+		IntervalVector ig= (phase==0 && (nb_sol>1 || rand()%2==0))?
+				(goal1.gradient(box2.mid())+ _weight2*goal2.gradient(box2.mid())) :
+				(goal2.gradient(box2.mid())+ _weight2*goal1.gradient(box2.mid()));
 
-		if (ig.is_empty()) // unfortunately, at the midpoint the function is not differentiable
-			continue; // not a big deal: wait for another box...
+		if (ig.is_empty()){ // unfortunately, at the midpoint the function is not differentiable
+			phase = 0;
+			throw NotFound(); // not a big deal: wait for another box...
+		}
 
 		ig.resize(n);
 
@@ -116,17 +121,16 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& candidate_poin
 		// set the objective coefficient
 		// TODO: replace with lp_solver.set_obj(g) when implemented
 		for (int j=0; j<n; j++)
+			//lp_solver.set_obj(g);
 			lp_solver.set_obj_var(j,g[j]);
 
 		int count = lr.linearize(box,lp_solver);
 
 		if (count==-1) {
 			lp_solver.clean_ctrs();
-			return;
+			phase = 0;
+			throw NotFound();
 		}
-
-		//lp_solver.write_file("holo.txt");
-
 
 		LPSolver::Status_Sol stat = lp_solver.solve();
 
@@ -146,42 +150,34 @@ void LoupFinderMOP::find(const IntervalVector& box, list<Vector>& candidate_poin
 				if(loup_point[i] > box[i].ub())  loup_point[i] = box[i].ub();
 			}
 
-            if(candidate_points.size()==0 || candidate_points.front()!=loup_point )
-			   candidate_points.push_back(loup_point);
+			if(phase==0) vec1=loup_point;
+			if(phase==1) {
+				if(vec1==vec2){
+				    phase=0;
+				    throw NotFound();
+				 }
+				vec2=loup_point;
+			}
+
+			phase ++;
+			return make_pair(loup_point, 0.0);
+
+		}else{
+			phase = 0;
+			throw NotFound();
 		}
+    }else if(phase>=2 && phase < nb_sol){
+    	Vector vec3 = vec1 + (((double)phase-1.0)/((double)nb_sol))*(vec2-vec1);
+		for(int i=0;i<box.size();i++){
+		    if(vec3[i] < box[i].lb())  vec3[i] = box[i].lb();
+			if(vec3[i] > box[i].ub())  vec3[i] = box[i].ub();
+		}
+		phase ++;
+		return make_pair(vec3, 0.0);
     }
-	}
-    //we add the feasible inner points
-    if(candidate_points.size()==2 && nn>2){
-    	double step = 1.0/((double)nn-1.0);
 
-    	double r=0.0;
-    	for(int i=0; i<nn; i++, r+=step){
-    		if(i==nn-1) r=1.0;
-    		list<Vector>::iterator it = candidate_points.begin();
-    		Vector vec1 = *it; it++;
-    		Vector vec2 = *it;
-    		Vector vec3 = (1.0-r)*vec1 + r*vec2;
-			  for(int i=0;i<box.size();i++){
-				  if(vec3[i] < box[i].lb())  vec3[i] = box[i].lb();
-				  if(vec3[i] > box[i].ub())  vec3[i] = box[i].ub();
-			  }
-
-    		candidate_points.push_back(vec3);
-
-
-    	}
-    	candidate_points.pop_front();
-    	candidate_points.pop_front();
-
-    }else{
-
-		Vector vec=box.mid();
-		if(norm_sys.is_inner(vec)) {
-			candidate_points.push_back(vec);
-		}
-	}
-
+    phase=0;
+    throw NotFound();
 
 }
 

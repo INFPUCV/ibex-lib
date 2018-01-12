@@ -219,9 +219,6 @@ public:
 	//if true: Save a file to be plotted by plot.py (default value= false).
 	bool static _plot;
 
-	//Max number of solutions added by the inner-polytope algorithm (default value= 50)
-	int static _nb_ub_sols;
-
 	//Min distance between two non dominated points to be considered, expressed as a fraction of eps (default value= 0.1)
 	double static _min_ub_dist;
 
@@ -274,6 +271,11 @@ protected:
     }
 
     /**
+     * \brief return true is the pair is dominated by some NDS point, false otherwise
+     */
+    bool is_dominated(pair< double, double>& eval);
+
+    /**
      * \brief Implements the method for discarding boxes proposed in [J. Fernandez and B. Toth,
      * "Obtaining the efficient set of nonlinear biobjective optimiza-tion  problems  via  interval
      * branch-and-bound  methods" (2009)]
@@ -290,7 +292,7 @@ protected:
 	 * <li> add the non-dominated vectors to NDS
 	 * </ul>
 	 */
-	bool update_NDS(const IntervalVector& box, int n);
+	bool update_NDS(const IntervalVector& box);
 
 
 private:

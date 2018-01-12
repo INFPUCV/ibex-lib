@@ -112,7 +112,7 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::_plot = _plot;
 
-	OptimizerMOP::_nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 50 ;
+	int nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 50 ;
 	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : 0.1;
 	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
 	bool no_bisect_y  = _nobisecty;
@@ -132,7 +132,7 @@ int main(int argc, char** argv){
 	cout << "Strategy: " << strategy << endl;
 	cout << "eps: " << eps << endl;
 	cout << "eps_x: " << eps_x << endl;
-	cout << "nb_ub_sols: " << OptimizerMOP::_nb_ub_sols << endl;
+	cout << "nb_ub_sols: " << nb_ub_sols << endl;
 	//cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
 	cout << "plot: " <<  ((OptimizerMOP::_plot)? "yes":"no") << endl;
 	//cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
@@ -161,7 +161,7 @@ int main(int argc, char** argv){
 	box[sys.nb_var]=0;
 	box[sys.nb_var+1]=0;
 
-	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f);
+	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f, 1e-8, nb_ub_sols);
 
 	CellBufferOptim* buffer;
 	if(strategy=="OC1")
