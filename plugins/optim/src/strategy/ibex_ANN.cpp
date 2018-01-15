@@ -33,32 +33,92 @@ void ANN::showVectorVals(string label, vector<double> &v)
 	cout << endl;
 }
 
-ANN::ANN(const string filename) : trainData(filename) {
+vector<double> ANN::trainingNeuron(vector<double> &inputVals, vector<double> &targetVals) {
+	vector<double> resultVals;
+
+	++trainingPass;
+	cout << endl << "Pass " << trainingPass;
+
+	// Get new input data and feed it forward:
+	if(trainData.getNextInputs(inputVals) != topology[0])
+		return resultVals;
+	showVectorVals(": Inputs :", inputVals);
+	myNet->feedForward(inputVals);
+
+	// Collect the net's actual results:
+	myNet->getResults(resultVals);
+	showVectorVals("Outputs:", resultVals);
+
+	// Train the net what the outputs should have been:
+	trainData.getTargetOutputs(targetVals);
+	showVectorVals("Targets:", targetVals);
+	assert(targetVals.size() == topology.back());
+
+	myNet->backProp(targetVals);
+
+	// Report how well the training is working, average over recnet
+	cout << "Net recent average error: "
+		 << myNet->getRecentAverageError() << endl;
+
+	return resultVals;
+}
+
+
+vector<double> ANN::testingNeuron(vector<double> &inputVals) {
+	vector<double> resultVals, targetVals;
+	++trainingPass;
+	cout << endl << "Pass " << trainingPass;
+
+	// Get new input data and feed it forward:
+	if(trainData.getNextInputs(inputVals) != topology[0])
+		return resultVals;
+	showVectorVals(": Inputs :", inputVals);
+	myNet->feedForward(inputVals);
+
+	// Collect the net's actual results:
+	myNet->getResults(resultVals);
+	showVectorVals("Outputs:", resultVals);
+
+
+	// Train the net what the outputs should have been:
+	trainData.getTargetOutputs(targetVals);
+	showVectorVals("Targets:", targetVals);
+	assert(targetVals.size() == topology.back());
+
+	// Report how well the training is working, average over recnet
+	cout << "Net recent average error: "
+		 << myNet->getRecentAverageError() << endl;
+
+	return resultVals;
+}
+
+
+ANN::ANN(const string filename) : trainData(filename), trainingPass(0), totalTraining(10) {
 
 	// obtiene la topologia [cant inputs, cant nodo escondido, cant output, cantidad de datos]
+	unsigned arr[] = {8, 3, 1};
+	topology = vector<unsigned>(arr, arr+3);
 	trainData.getTopology(topology);
-	cout << "topology: " << topology[3] << endl;
 
 	// crea la red neuronal con la topologia obtenida
-	Network myNet(topology);
+	myNet = new Network(topology);
 
+	/*
 	vector<double> inputVals, targetVals, resultVals;
-	int trainingPass = 0;
-	int iter = 0;
 
 	while(!trainData.isEof())
 		{
 			++trainingPass;
-			cout << endl << "Pass" << trainingPass;
+			cout << endl << "Pass " << trainingPass;
 
 			// Get new input data and feed it forward:
 			if(trainData.getNextInputs(inputVals) != topology[0])
 				break;
 			showVectorVals(": Inputs :", inputVals);
-			myNet.feedForward(inputVals);
+			myNet->feedForward(inputVals);
 
 			// Collect the net's actual results:
-			myNet.getResults(resultVals);
+			myNet->getResults(resultVals);
 			showVectorVals("Outputs:", resultVals);
 
 			// Train the net what the outputs should have been:
@@ -66,19 +126,49 @@ ANN::ANN(const string filename) : trainData(filename) {
 			showVectorVals("Targets:", targetVals);
 			assert(targetVals.size() == topology.back());
 
-			myNet.backProp(targetVals);
+			myNet->backProp(targetVals);
 
 			// Report how well the training is working, average over recnet
 			cout << "Net recent average error: "
-			     << myNet.getRecentAverageError() << endl;
+			     << myNet->getRecentAverageError() << endl;
 
-			iter++;
+			if(trainingPass > totalTraining) break;
 		}
 
 		// get error ANN
 		cout << "Net recent average error: "
-	                     << myNet.getRecentAverageError() << endl;
+	                     << myNet->getRecentAverageError() << endl;
 
+
+		cout << "testing data" << endl;
+
+		while(!trainData.isEof())
+		{
+			++trainingPass;
+			cout << endl << "Pass " << trainingPass;
+
+			// Get new input data and feed it forward:
+			if(trainData.getNextInputs(inputVals) != topology[0])
+				break;
+			showVectorVals(": Inputs :", inputVals);
+			myNet->feedForward(inputVals);
+
+			// Collect the net's actual results:
+			myNet->getResults(resultVals);
+			showVectorVals("Outputs:", resultVals);
+
+			// Train the net what the outputs should have been:
+			trainData.getTargetOutputs(targetVals);
+			showVectorVals("Targets:", targetVals);
+			assert(targetVals.size() == topology.back());
+
+			// Report how well the training is working, average over recnet
+			cout << "Net recent average error: "
+				 << myNet->getRecentAverageError() << endl;
+
+			if(trainingPass > totalTraining + 5) break;
+		}
+		*/
 
 }
 

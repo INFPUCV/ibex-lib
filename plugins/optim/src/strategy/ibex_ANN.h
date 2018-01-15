@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include <ibex_TrainingData.h>
+#include "ibex_Network.h"
 
 
 using namespace std;
@@ -31,10 +32,14 @@ namespace ibex {
 	public:
 		ANN(const string filename);
 		TrainingData trainData;
+		vector<double> trainingNeuron(vector<double> &inputVals, vector<double> &targetVals);
+		vector<double> testingNeuron(vector<double> &inputVals);
 
 	private:
+		int trainingPass;
 		vector<unsigned> topology;
-
+		Network *myNet;
+		int totalTraining;
 		void showVectorVals(string label, vector<double> &v);
 
 };

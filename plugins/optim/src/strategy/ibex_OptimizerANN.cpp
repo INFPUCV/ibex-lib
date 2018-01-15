@@ -67,6 +67,20 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
                 				loup_point(n), initial_loup(POS_INFINITY), loup_changed(false),
                                                 time(0), nb_cells(0), ann("trainingData.txt") {
 	if (trace) cout.precision(12);
+
+	vector<double> inputVals;
+	cout << "training " << endl;
+	// training ANN
+	for(int i=0; i < 7000; i++) {
+		ann.trainingNeuron(inputVals, inputVals);
+
+	}
+	cout << "testing " << endl;
+	// testing ANN
+	for(int i=0; i < 10; i++) {
+		ann.testingNeuron(inputVals);
+	}
+
 }
 
 
