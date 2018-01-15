@@ -112,7 +112,7 @@ void Network::feedForward(const vector<double> &inputVals)
 Network::Network(const vector<unsigned> &topology) : m_recentAverageError(0), m_error(0)
 {
 	unsigned numLayers = topology.size()-1;
-	for(unsigned layerNum = 0; layerNum < numLayers; ++layerNum){
+	for(unsigned layerNum = 0; layerNum <= numLayers; ++layerNum){
 		m_layers.push_back(Layer());
 		// numOutputs of layer[i] is the numInputs of layer[i+1]
 		// numOutputs of last layer is 0
