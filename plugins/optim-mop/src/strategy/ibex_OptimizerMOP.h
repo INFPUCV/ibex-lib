@@ -36,6 +36,39 @@ struct sorty{
 	}
 };
 
+/**
+ * Parameterized function f(t) ← f1(xt) - m*f2(xt)
+ * xt = xa + t*(xb-xa)
+ */
+class PFunction{
+
+public:
+	PFunction(const Function& f1, const Function& f2, const Interval& m, const IntervalVector& xa, const IntervalVector& xb);
+
+	Interval eval(const Interval& t) const;
+
+	Interval deriv(const Interval& t) const;
+
+private:
+
+	const Function& f1;
+	const Function& f2;
+	Interval m;
+	IntervalVector xa;
+	IntervalVector xb;
+};
+
+class Node_t{
+public:
+	Node_t(Interval t, Interval ft) : t(t), ft(ft) { }
+
+	friend bool operator>(Node_t& n1, Node_t& n2){
+		return n1.ft.ub() > n2.ft.ub();
+	}
+
+	Interval t;
+	Interval ft;
+};
 
 
 /**
@@ -231,6 +264,15 @@ public:
 	//True: the solver reduces the search spaces by reducing the NDS vectors in (eps, eps)
 	static bool _eps_contract;
 
+	/**
+	 * \brief Evaluate the goal in the point x
+	 */
+	static Interval eval_goal(const Function& goal, const IntervalVector& x, int n);
+
+	/**
+	 * \brief Gradient of the goal in the point x
+	 */
+	static IntervalVector deriv_goal(const Function& goal, const IntervalVector& x, int n);
 
 protected:
 
@@ -295,12 +337,116 @@ protected:
 	bool update_NDS(const IntervalVector& box);
 
 
-private:
+	/**
+	 * \brief Main procedure for updating the NDS.
+	 * <ul>
+	 * <li> finds two points xa and xb in a polytope using the #LoupFinderMOP,
+	 * <li> finds a segment passing over the points (f1(x),f2(x)) in the segment xa-xb,
+	 * <li> add the segment to NDS
+	 * </ul>
+	 */
+	bool update_NDS2(const IntervalVector& box);
 
 	/**
-	 * \brief Evaluate the goal in the point x
+	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
 	 */
-	Interval eval_goal(const Function& goal, IntervalVector& x);
+
+	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
+		Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
+		Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
+		Interval yb1=OptimizerMOP::eval_goal(goal1,xb,n);
+		Interval yb2=OptimizerMOP::eval_goal(goal2,xb,n);
+
+
+		Interval m = (yb1-ya1)/(yb2-ya2);
+		PFunction pf(goal1, goal2, m, xa, xb);
+
+		double step=0.001;
+		double tinf=0.0;
+		double min = POS_INFINITY;
+		double max = NEG_INFINITY;
+		Interval maxinterval(0);
+		while(tinf<1.0){
+			double tsup=tinf+step;
+			if(tsup>1.0) tsup=1.0;
+			double ub = pf.eval(Interval(tinf,tsup)).ub();
+			double lb = pf.eval(Interval(tinf,tsup)).lb();
+			if(ub > max){maxinterval=Interval(tinf,tsup); max=ub;}
+			if(lb < min) min=lb;
+			tinf=tsup;
+
+		}
+
+		cout << "-----" << endl;
+		//cout << "(" << ya1 << "," << ya2 << ")" << endl;
+		//cout << "(" << yb1 << "," << yb2 << ")" << endl;
+		//cout << m << endl;
+		cout << pf.eval(Interval(0.0,1.0)) << endl;
+		cout <<  "(" << min << "," << max << ")" << endl;
+		cout << pf.eval(0.5) << endl;
+		cout << pf.deriv(Interval(0.0,1.0)) << endl;
+
+		stack<Node_t> nodes;
+		//std::priority_queue<Interval, std::vector<Interval> > nodes;
+		double LB=NEG_INFINITY, prec=0.01;
+		double UB=NEG_INFINITY;
+		Interval t=Interval(0.0,1.0);
+
+		nodes.push(Node_t(t,pf.eval(t)));
+
+		int i=0;
+		while(!nodes.empty()){
+			i++;
+			Node_t n= nodes.top(); nodes.pop();
+
+			if(n.ft.ub() < LB+prec) continue;
+			if(n.t.diam() < 0.01) {
+				if(n.ft.ub() > UB) UB=n.ft.ub();
+				continue;
+			}
+
+			double probing = pf.eval(n.t.mid()).ub();
+			if(probing > LB) LB=probing;
+
+			//newton step
+			Interval d(pf.deriv(n.t));
+			while(true){
+				Interval y0 = pf.eval(n.t.lb());
+				if(y0.is_empty() || d.ub()==0.0) break;
+				Interval x= (Interval(LB+prec) - y0)/Interval(d.ub());
+				if(x.lb()>0.01)
+					n.t=Interval((n.t.lb()+x).lb(),n.t.ub());
+				else break;
+			}
+
+			while(true){
+				Interval y0 = pf.eval(n.t.ub());
+				if(y0.is_empty() || d.lb()==0.0) break;
+				Interval x= (Interval(LB+prec) - y0)/Interval(-d.lb());
+				if(x.ub()>0)
+					n.t=Interval(n.t.lb(),(n.t.lb()-x).ub());
+				else break;
+			}
+
+			//bisection
+			Interval tl = Interval(n.t.lb(), n.t.mid());
+			Interval tr = Interval(n.t.mid(), n.t.ub());
+
+			nodes.push(Node_t(Interval(tl),pf.eval(tl)));
+			nodes.push(Node_t(Interval(tr),pf.eval(tr)));
+
+
+		}
+
+		cout << i << ":" << ((UB==NEG_INFINITY)? std::max(UB,LB+prec):LB+prec) <<  endl;
+
+
+	}
+
+
+private:
+
+
 
 	/**
 	 * min feasible value found for each objective

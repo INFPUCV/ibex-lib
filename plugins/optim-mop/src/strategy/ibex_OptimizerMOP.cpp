@@ -34,6 +34,22 @@ bool OptimizerMOP::_eps_contract = false;
 
 map< pair <double, double>, IntervalVector > OptimizerMOP::NDS;
 
+PFunction::PFunction(const Function& f1, const Function& f2, const Interval& m, const IntervalVector& xa, const IntervalVector& xb):
+		f1(f1),f2(f2), m(m), xa(xa), xb(xb) {}
+
+Interval PFunction::eval(const Interval& t) const{
+	IntervalVector xt = xa+t*(xb-xa);
+	return OptimizerMOP::eval_goal(f1,xt, xt.size()) - m*OptimizerMOP::eval_goal(f2,xt,  xt.size());
+}
+
+Interval PFunction::deriv(const Interval& t) const{
+	IntervalVector xt = xa+t*(xb-xa);
+	IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
+	IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
+
+	return (g1-m*g2)*(xb-xa);
+}
+
 OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,double eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
@@ -52,7 +68,7 @@ OptimizerMOP::~OptimizerMOP() {
 }
 
 
-Interval OptimizerMOP::eval_goal(const Function& goal, IntervalVector& x){
+Interval OptimizerMOP::eval_goal(const Function& goal, const IntervalVector& x, int n){
 	//the objectives are set to 0.0
 	IntervalVector xz(x);
 	xz.resize(n+2);
@@ -61,6 +77,17 @@ Interval OptimizerMOP::eval_goal(const Function& goal, IntervalVector& x){
 	xz[n+1]=0.0;
 	return goal.eval(xz);
 }
+
+IntervalVector OptimizerMOP::deriv_goal(const Function& goal, const IntervalVector& x, int n){
+	//the objectives are set to 0.0
+	IntervalVector xz(x);
+	xz.resize(n+2);
+
+	xz[n]=0.0;
+	xz[n+1]=0.0;
+	return goal.gradient(xz);
+}
+
 
 bool OptimizerMOP::is_dominated(pair< double, double>& eval){
 	std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval);
@@ -72,6 +99,30 @@ bool OptimizerMOP::is_dominated(pair< double, double>& eval){
 	if(eval.second >= it2->first.second) return true;
 
 	return false;
+}
+
+bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
+
+	//We attempt to find two feasible points which minimize both objectives
+	//and the middle point between them
+	IntervalVector box2(box); box2.resize(n);
+	IntervalVector xa(n), xb(n);
+
+	try{
+		xa = finder.find(box2,box2,POS_INFINITY).first;
+	}catch (LoupFinder::NotFound& ) {
+		return false;
+	}
+
+	try{
+		xb = finder.find(box2,box2,POS_INFINITY).first;
+	}catch (LoupFinder::NotFound& ) {
+		return false;
+	}
+
+
+
+	dominated_segment(xa, xb);
 }
 
 bool OptimizerMOP::update_NDS(const IntervalVector& box) {
@@ -101,7 +152,7 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box) {
 		}
 
 		//3. Se evalua el punto usando funciones objetivo (goal1 y goal2)
-		pair< double, double> eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
+		pair< double, double> eval = make_pair(eval_goal(goal1,vec,n).ub(), eval_goal(goal2,vec,n).ub());
 
 		//cout << eval.first << "," << eval.second << endl;
 		//4. Insertar en mapa NDS (si es no dominada) y actualizar eliminar soluciones dominadas de NDS
@@ -110,7 +161,7 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box) {
 
 		/**** NDS correction ****/
 		if(finder.ub_correction(vec.mid(), vec)){
-			eval = make_pair(eval_goal(goal1,vec).ub(), eval_goal(goal2,vec).ub());
+			eval = make_pair(eval_goal(goal1,vec,n).ub(), eval_goal(goal2,vec,n).ub());
 		}
 		else continue;
 
@@ -376,8 +427,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	root->box=init_box;
 
-	CellMOP::y1_init=eval_goal(goal1, root->box);
-	CellMOP::y2_init=eval_goal(goal2, root->box);
+	CellMOP::y1_init=eval_goal(goal1, root->box, n);
+	CellMOP::y2_init=eval_goal(goal2, root->box, n);
 
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
@@ -419,6 +470,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
 			bool loup_ch=update_NDS(c->box);
+			update_NDS2(c->box);
 
 
 
