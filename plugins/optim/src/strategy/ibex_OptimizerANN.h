@@ -283,6 +283,8 @@ public:
 
 	ANN ann;
 
+	int iter = 0;
+
 protected:
 
 	/**

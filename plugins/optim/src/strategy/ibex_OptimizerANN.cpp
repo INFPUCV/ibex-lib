@@ -68,6 +68,7 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
                                                 time(0), nb_cells(0), ann("trainingData.txt") {
 	if (trace) cout.precision(12);
 
+	/*
 	vector<double> inputVals;
 	cout << "training " << endl;
 	// training ANN
@@ -80,6 +81,7 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
 	for(int i=0; i < 10; i++) {
 		ann.testingNeuron(inputVals);
 	}
+	*/
 
 }
 
@@ -308,7 +310,9 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	else  c.get<CellData>().COMPO.push_back(0);
 
 
-	cout << "in: ";
+	vector<double> inputVals, targetVals;
+
+	cout << endl << "in: ";
 	vector<int>::iterator it;
 	if(c.get<CellData>().ACID.size() > 0) {
 			/*
@@ -317,23 +321,49 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
 				cout << *it << ".0 ";
+		for (it=c.get<CellData>().COMPO_old.begin(); it!=c.get<CellData>().COMPO_old.end(); ++it) {
+			cout << *it << ".0 ";
+			inputVals.push_back(*it);
+		}
 			*/
-
-			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
-				cout << *it << ".0 ";
+		for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
+			cout << *it << ".0 ";
+			inputVals.push_back(*it);
+		}
 	}
 	cout << endl;
 
 	cout << "out: ";
 	int aux = 0;
 	for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
-		aux += *it;
-		if(it==c.get<CellData>().COMPO.end())
+		aux += (int) *it;
+		//if(it==c.get<CellData>().COMPO.end()) {
 			cout << *it << ".0 ";
+			targetVals.push_back(*it);
+		//}
 	}
-	if(aux == 0) cout << "0.0 ";
-	else cout << "1.0 ";
+	/*
+	if(aux == 0) {
+		cout << "0.0 ";
+		targetVals.push_back(0.0);
+	}
+	else {
+		cout << "1.0 ";
+		targetVals.push_back(1.0);
+	}
+	*/
 	cout << endl;
+
+
+	cout << "input size " << inputVals.size() <<  endl;
+	cout << "output size " << targetVals.size() <<  endl;
+
+	if(iter > 2000)
+		ann.testingNeuron(inputVals, targetVals);
+	else
+		ann.trainingNeuron(inputVals, targetVals);
+
+
 
 
 
@@ -435,11 +465,11 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	update_uplo();
 
 
-
 	try {
 	     while (!buffer.empty()) {
 		  
-	    	 break;
+	    	 // if(iter > 4000 ) break;
+	    	 iter++;
 
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop

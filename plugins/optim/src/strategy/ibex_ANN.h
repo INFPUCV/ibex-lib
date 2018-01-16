@@ -33,7 +33,7 @@ namespace ibex {
 		ANN(const string filename);
 		TrainingData trainData;
 		vector<double> trainingNeuron(vector<double> &inputVals, vector<double> &targetVals);
-		vector<double> testingNeuron(vector<double> &inputVals);
+		vector<double> testingNeuron(vector<double> &inputVals, vector<double> &targetVals);
 
 	private:
 		int trainingPass;
@@ -41,6 +41,7 @@ namespace ibex {
 		Network *myNet;
 		int totalTraining;
 		void showVectorVals(string label, vector<double> &v);
+		int VNC=0, FNC=0, VC=0, FC=0, VAC=0, FAC=0;
 
 };
 
