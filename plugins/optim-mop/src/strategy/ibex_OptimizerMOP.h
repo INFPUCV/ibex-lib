@@ -347,10 +347,97 @@ protected:
 	 */
 	bool update_NDS2(const IntervalVector& box);
 
+
+	/**
+	 * \brief minimize/maximize the function pf: f1(t)+w*f2(t)
+	 * returning the best solution found t and its the lb/ub of its evaluation
+	 */
+	pair<double, double> optimize_pf(PFunction& pf, bool minimize=false){
+		if(minimize){
+			cout << "minimize f1(t)+w*f2(t) is not implemented yet!" << endl;
+			exit(0);
+		}
+		//deep-first search
+		stack<Node_t> nodes;
+		//std::priority_queue<Interval, std::vector<Interval> > nodes;
+
+		double LB=NEG_INFINITY, eps=0.01;
+		double UB=NEG_INFINITY;
+		double best_t=0.0;
+
+		Interval t=Interval(0.0,1.0);
+
+		nodes.push(Node_t(t,pf.eval(t)));
+
+		int i=0;
+		while(!nodes.empty()){
+			i++;
+			Node_t n= nodes.top(); nodes.pop();
+
+			//the nodes is removed if its ub is lower than LB+eps
+			if(n.ft.ub() < LB+eps) {UB=std::max(UB, n.ft.ub()); continue;}
+
+			//the size of the node is too small, then the UB is updated
+			if(n.t.diam() < 0.01) {
+				if(n.ft.ub() > UB) UB=n.ft.ub();
+				continue;
+			}
+
+			//we search for a better solution in the midpoint
+			double probing = pf.eval(n.t.mid()).ub();
+			if(probing > LB) {
+				best_t=n.t.mid();
+				LB=probing;
+			}
+
+
+			//newton step
+			Interval d(pf.deriv(n.t));
+
+			while(true){
+				Interval y0 = pf.eval(n.t.lb());
+				if(y0.is_empty()) break;
+				if(y0.ub() > LB) {LB=y0.ub(); best_t=n.t.lb(); break;}
+
+				if(d.ub()==0.0) break;
+				Interval x= (Interval(LB) - y0)/Interval(d.ub());
+
+				//contract t
+				if(x.lb()>eps)
+					n.t=Interval((n.t.lb()+x).lb(),n.t.ub());
+				else break;
+			}
+
+			while(true){
+				Interval y0 = pf.eval(n.t.ub());
+				if(y0.is_empty()) break;
+				if(y0.ub() > LB) {LB=y0.ub(); best_t=n.t.ub(); break;}
+
+				if(d.lb()==0.0) break;
+				Interval x= (Interval(LB) - y0)/Interval(-d.lb());
+
+				//contract t
+				if(x.ub()>eps)
+					n.t=Interval(n.t.lb(),(n.t.ub()-x).ub());
+				else break;
+			}
+
+			//bisection
+			Interval tl = Interval(n.t.lb(), n.t.mid());
+			Interval tr = Interval(n.t.mid(), n.t.ub());
+
+			nodes.push(Node_t(Interval(tl),pf.eval(tl)));
+			nodes.push(Node_t(Interval(tr),pf.eval(tr)));
+		}
+
+		cout << i << endl;
+		return make_pair(best_t, UB);
+
+	}
+
 	/**
 	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
 	 */
-
 	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
 		Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
 		Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
@@ -386,59 +473,11 @@ protected:
 		cout << pf.eval(0.5) << endl;
 		cout << pf.deriv(Interval(0.0,1.0)) << endl;
 
-		stack<Node_t> nodes;
-		//std::priority_queue<Interval, std::vector<Interval> > nodes;
-		double LB=NEG_INFINITY, prec=0.01;
-		double UB=NEG_INFINITY;
-		Interval t=Interval(0.0,1.0);
-
-		nodes.push(Node_t(t,pf.eval(t)));
-
-		int i=0;
-		while(!nodes.empty()){
-			i++;
-			Node_t n= nodes.top(); nodes.pop();
-
-			if(n.ft.ub() < LB+prec) continue;
-			if(n.t.diam() < 0.01) {
-				if(n.ft.ub() > UB) UB=n.ft.ub();
-				continue;
-			}
-
-			double probing = pf.eval(n.t.mid()).ub();
-			if(probing > LB) LB=probing;
-
-			//newton step
-			Interval d(pf.deriv(n.t));
-			while(true){
-				Interval y0 = pf.eval(n.t.lb());
-				if(y0.is_empty() || d.ub()==0.0) break;
-				Interval x= (Interval(LB+prec) - y0)/Interval(d.ub());
-				if(x.lb()>0.01)
-					n.t=Interval((n.t.lb()+x).lb(),n.t.ub());
-				else break;
-			}
-
-			while(true){
-				Interval y0 = pf.eval(n.t.ub());
-				if(y0.is_empty() || d.lb()==0.0) break;
-				Interval x= (Interval(LB+prec) - y0)/Interval(-d.lb());
-				if(x.ub()>0)
-					n.t=Interval(n.t.lb(),(n.t.lb()-x).ub());
-				else break;
-			}
-
-			//bisection
-			Interval tl = Interval(n.t.lb(), n.t.mid());
-			Interval tr = Interval(n.t.mid(), n.t.ub());
-
-			nodes.push(Node_t(Interval(tl),pf.eval(tl)));
-			nodes.push(Node_t(Interval(tr),pf.eval(tr)));
+		pair <double,double> d = optimize_pf(pf, false);
 
 
-		}
 
-		cout << i << ":" << ((UB==NEG_INFINITY)? std::max(UB,LB+prec):LB+prec) <<  endl;
+		cout << "optim:" << d.second <<  endl;
 
 
 	}
