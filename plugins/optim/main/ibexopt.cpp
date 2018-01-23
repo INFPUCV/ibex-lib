@@ -23,6 +23,7 @@
 using namespace std;
 using namespace ibex;
 
+
 int main(int argc, char** argv) {
 
 	stringstream _rel_eps_f, _abs_eps_f, _eps_h, _random_seed, _eps_x;
@@ -41,10 +42,12 @@ int main(int argc, char** argv) {
 	args::ValueFlag<double> random_seed(parser, "float", _random_seed.str(), {"random-seed"});
 	args::ValueFlag<double> eps_x(parser, "float", _eps_x.str(), {"eps-x"});
 	args::ValueFlag<double> initial_loup(parser, "float", "Intial \"loup\" (a priori known upper bound).", {"initial-loup"});
+	args::ValueFlag<double>  threshold(parser, "threshold", "If the ANN output is more than this value will be return 1, default 0.5",{"threshold"});
 	args::Flag rigor(parser, "rigor", "Activate rigor mode (certify feasibility of equalities).", {"rigor"});
 	args::Flag trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag format(parser, "format", "Display the output format in quiet mode", {"format"});
 	args::Flag quiet(parser, "quiet", "Print no message and display minimal information (for automatic output processing). See --format.",{'q',"quiet"});
+	args::Flag ANN(parser, "ANN", "Activate the ANN, you can used threshold",{"ANN"});
 
 	args::Positional<std::string> filename(parser, "filename", "The name of the MINIBEX file.");
 
@@ -103,9 +106,17 @@ int main(int argc, char** argv) {
 	try {
 
 		// Load a system of equations
-		System sys(filename.Get().c_str());
+		System* sys; //(filename.Get().c_str());
 
-		if (!sys.goal) {
+	    std::size_t found = string(filename.Get().c_str()).find(".nl");
+		if (found!=std::string::npos){
+		       AmplInterface interface (argv[1]);
+		       sys= new System(interface);
+	     }else
+	           sys = new System(argv[1]);
+
+
+		if (!sys->goal) {
 			ibex_error(" input file has not goal (it is not an optimization problem).");
 		}
 
@@ -153,59 +164,124 @@ int main(int argc, char** argv) {
 
 		bool inHC4=true;
 
-		if (sys.nb_ctr<sys.f_ctrs.image_dim()) {
+		if (sys->nb_ctr<sys->f_ctrs.image_dim()) {
 			inHC4=false;
 		}
 
 		// Build the default optimizer
-		DefaultOptimizer o(sys,
-				rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
-				abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
-				eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
-				rigor, inHC4,
-				random_seed? random_seed.Get() : DefaultOptimizer::default_random_seed,
-				eps_x ?    eps_x.Get() :     Optimizer::default_eps_x
-				);
+		if(!ANN) {
+			DefaultOptimizer o(*sys,
+					rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
+					abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
+					eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
+					rigor, inHC4,
+					random_seed? random_seed.Get() : DefaultOptimizer::default_random_seed,
+					eps_x ?    eps_x.Get() :     Optimizer::default_eps_x
+					);
 
-		// This option limits the search time
-		if (timeout) {
+			// This option limits the search time
+			if (timeout) {
+				if (!quiet)
+					cout << "  timeout:\t" << timeout.Get() << "s" << endl;
+				o.timeout=timeout.Get();
+			}
+
+			// This option prints each better feasible point when it is found
+			if (trace) {
+				if (!quiet)
+					cout << "  trace:\tON" << endl;
+				o.trace=trace.Get();
+			}
+
+			if (!inHC4) {
+				cerr << "\n  \033[33mwarning: inHC4 disabled\033[0m (does not support vector/matrix operations)" << endl;
+			}
+
+			if (!quiet) {
+				cout << "*******************************************************" << endl << endl;
+			}
+
+			// display solutions with up to 12 decimals
+			cout.precision(12);
+
 			if (!quiet)
-				cout << "  timeout:\t" << timeout.Get() << "s" << endl;
-			o.timeout=timeout.Get();
-		}
+				cout << "running............" << endl << endl;
 
-		// This option prints each better feasible point when it is found
-		if (trace) {
+			cout << threshold << endl;
+			getchar();
+
+			// Search for the optimum
+			if (initial_loup)
+				o.optimize(sys->box, initial_loup.Get());
+			else
+				o.optimize(sys->box);
+
+			if (trace) cout << endl;
+
+			// Report some information (computation time, etc.)
+
+			o.report(!quiet);
+			// Build the default optimizerANN
+		}
+		else {
+			cout << "threshold ";
+			threshold ? cout << threshold.Get() : cout << OptimizerANN::default_threshold;
+			cout << endl;
+			DefaultOptimizerANN o(*sys,
+					rel_eps_f? rel_eps_f.Get() : OptimizerANN::default_rel_eps_f,
+					abs_eps_f? abs_eps_f.Get() : OptimizerANN::default_abs_eps_f,
+					eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
+					rigor, inHC4,
+					random_seed? random_seed.Get() : DefaultOptimizer::default_random_seed,
+					eps_x ?    eps_x.Get() :     OptimizerANN::default_eps_x,
+					threshold ? threshold.Get() : OptimizerANN::default_threshold
+					);
+
+
+			// This option limits the search time
+			if (timeout) {
+				if (!quiet)
+					cout << "  timeout:\t" << timeout.Get() << "s" << endl;
+				o.timeout=timeout.Get();
+			}
+
+			// This option prints each better feasible point when it is found
+			if (trace) {
+				if (!quiet)
+					cout << "  trace:\tON" << endl;
+				o.trace=trace.Get();
+			}
+
+			if (!inHC4) {
+				cerr << "\n  \033[33mwarning: inHC4 disabled\033[0m (does not support vector/matrix operations)" << endl;
+			}
+
+			if (!quiet) {
+				cout << "*******************************************************" << endl << endl;
+			}
+
+			// display solutions with up to 12 decimals
+			cout.precision(12);
+
 			if (!quiet)
-				cout << "  trace:\tON" << endl;
-			o.trace=trace.Get();
+				cout << "running............" << endl << endl;
+
+			cout << threshold << endl;
+			getchar();
+
+			// Search for the optimum
+			if (initial_loup)
+				o.optimize(sys->box, initial_loup.Get());
+			else
+				o.optimize(sys->box);
+
+			if (trace) cout << endl;
+
+			// Report some information (computation time, etc.)
+
+			o.report(!quiet);
 		}
 
-		if (!inHC4) {
-			cerr << "\n  \033[33mwarning: inHC4 disabled\033[0m (does not support vector/matrix operations)" << endl;
-		}
-
-		if (!quiet) {
-			cout << "*******************************************************" << endl << endl;
-		}
-
-		// display solutions with up to 12 decimals
-		cout.precision(12);
-
-		if (!quiet)
-			cout << "running............" << endl << endl;
-
-		// Search for the optimum
-		if (initial_loup)
-			o.optimize(sys.box, initial_loup.Get());
-		else
-			o.optimize(sys.box);
-
-		if (trace) cout << endl;
-
-		// Report some information (computation time, etc.)
-
-		o.report(!quiet);
 
 		return 0;
 
@@ -216,4 +292,5 @@ int main(int argc, char** argv) {
 	catch(ibex::SyntaxError& e) {
 		cout << e << endl;
 	}
+
 }

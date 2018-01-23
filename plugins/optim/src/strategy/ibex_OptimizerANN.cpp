@@ -28,6 +28,11 @@
 #include <stdlib.h>
 #include <iomanip>
 
+#include "ibex_BitSet.h"
+#include "ibex_CtcFixPoint.h"
+#include "ibex_CtcCompo.h"
+#include "ibex_CtcPolytopeHull.h"
+
 using namespace std;
 
 namespace ibex {
@@ -35,6 +40,7 @@ namespace ibex {
 const double OptimizerANN::default_eps_x = 0;
 const double OptimizerANN::default_rel_eps_f = 1e-03;
 const double OptimizerANN::default_abs_eps_f = 1e-07;
+const double OptimizerANN::default_threshold = 0.5;
 
 void OptimizerANN::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
 	int i2=0;
@@ -56,7 +62,7 @@ void OptimizerANN::read_ext_box(const IntervalVector& ext_box, IntervalVector& b
 
 OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
 		CellBufferOptim& buffer,
-		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f) :
+		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f, double threshold) :
                 				n(n), goal_var(goal_var),
                 				ctc(ctc), bsc(bsc), loup_finder(finder), buffer(buffer),
                 				eps_x(eps_x), rel_eps_f(rel_eps_f), abs_eps_f(abs_eps_f),
@@ -65,7 +71,7 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
                 				//kkt(normalized_user_sys),
 						uplo(NEG_INFINITY), uplo_of_epsboxes(POS_INFINITY), loup(POS_INFINITY),
                 				loup_point(n), initial_loup(POS_INFINITY), loup_changed(false),
-                                                time(0), nb_cells(0), ann("trainingData.txt") {
+                                                time(0), nb_cells(0), ann("trainingData.txt", n+1) {
 	if (trace) cout.precision(12);
 
 	/*
@@ -225,6 +231,8 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	c.get<CellData>().COMPO.clear();
 
 	IntervalVector boxOld = c.box;
+
+	// contractor HC4 y ACID
 	// HC4 -> 0
 	boxOld = c.box;
 	try {
@@ -248,11 +256,11 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	}
 	if(c.box.is_empty())  c.get<CellData>().HC4.push_back(1);
 	else  c.get<CellData>().HC4.push_back(0);
-
 	/*
 	for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
 		cout << *it << ".0 ";
 	*/
+	if (c.box.is_empty()) return;
 
 	// ACID -> 1
 	boxOld = c.box;
@@ -278,54 +286,175 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	}
 	if(c.box.is_empty())  c.get<CellData>().ACID.push_back(1);
 	else  c.get<CellData>().ACID.push_back(0);
-
 	/*
 	for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
 		cout << *it << ".0 ";
 	*/
-
-	// COMPO -> 2
-	boxOld = c.box;
 	if (c.box.is_empty()) return;
-	try {
-		ctc.list[2].contract(c.box);
-	}
-	catch(Exception& e) { // ibex exceptions
-		cout << "Error " << 2 << endl;
-		throw e;
-	}
-	catch (std::exception& e) { // other exceptions
-		cout << "Error " << 2 << endl;
-		throw e;
-	}
-	catch (...) {
-		ibex_error("contract: cannot handle exception");
-	}
-	for(int i=0; i < c.box.size(); i++) {
-		if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
-		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
-		else  c.get<CellData>().COMPO.push_back(0);
-	}
-	if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
-	else  c.get<CellData>().COMPO.push_back(0);
 
+	// contractor COMPO
+	// training ANN with COMPO
+	if(iter < 1000) {
+		// COMPO -> 2
+		boxOld = c.box;
+		if (c.box.is_empty()) return;
+		try {
+			ctc.list[2].contract(c.box);
+		}
+		catch(Exception& e) { // ibex exceptions
+			cout << "Error " << 2 << endl;
+			throw e;
+		}
+		catch (std::exception& e) { // other exceptions
+			cout << "Error " << 2 << endl;
+			throw e;
+		}
+		catch (...) {
+			ibex_error("contract: cannot handle exception");
+		}
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
+			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
+			else  c.get<CellData>().COMPO.push_back(0);
+		}
+		if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
+		else  c.get<CellData>().COMPO.push_back(0);
+
+
+		vector<double> inputVals, targetVals;
+		//cout << endl << "in: ";
+		vector<int>::iterator it;
+		if(c.get<CellData>().ACID.size() > 0) {
+			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
+				//cout << *it << ".0 ";
+				inputVals.push_back(*it);
+			}
+		}
+		//cout << endl;
+
+		//cout << "out: ";
+		int aux = 0;
+		for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
+			aux += (int) *it;
+			//cout << *it << ".0 ";
+			targetVals.push_back(*it);
+		}
+		//cout << endl;
+
+		ann.trainingNeuron(inputVals, targetVals);
+
+		//cout << "input size " << inputVals.size() <<  endl;
+		//cout << "output size " << targetVals.size() <<  endl;
+
+	// testing ANN with COMPO
+	} else {
+
+		boxOld = c.box;
+
+		vector<double> inputVals, targetVals, resultsVals;
+
+		//cout << endl << "in: ";
+		vector<int>::iterator it;
+		if(c.get<CellData>().ACID.size() > 0) {
+			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
+				//cout << *it << ".0 ";
+				inputVals.push_back(*it);
+			}
+		}
+		//cout << endl;
+
+		resultsVals = ann.testingNeuron(inputVals, inputVals);
+		//cout << "out: ";
+		int aux = 0;
+		for (int i=0; i< resultsVals.size(); i++) {
+			//cout << resultsVals[i] << " ";
+			targetVals.push_back(*it);
+		}
+		//cout << endl;
+
+		BitSet contractors(resultsVals.size()-1);
+
+
+		/*
+		if(resultsVals[resultsVals.size()-1] > 0.3) {
+			for(int i=0; i<resultsVals.size()-1;i++) {
+				contractors.add(i);
+			}
+		} else {
+			for(int i=0; i<resultsVals.size()-1;i++) {
+				if(resultsVals[i] > 0.2) contractors.add(i);
+			}
+		}
+		*/
+
+		/*
+		if(resultsVals[resultsVals.size()-1] > 0.7) {
+			contractors.add(0);
+		} else {
+			for(int i=0; i<resultsVals.size()-1;i++) {
+				if(resultsVals[i] > 0.5) contractors.add(i);
+			}
+		}
+		*/
+
+
+
+		// contract all
+		for(int i=0; i<resultsVals.size()-1;i++) {
+			contractors.add(i);
+		}
+
+
+		// COMPO -> 2
+		boxOld = c.box;
+		try {
+			CtcFixPoint* fixpoint = dynamic_cast<CtcFixPoint*> (&ctc.list[2]);
+			CtcCompo* compo = dynamic_cast<CtcCompo*> (&fixpoint->ctc);
+			CtcPolytopeHull* poly = dynamic_cast<CtcPolytopeHull*> (&compo->list[0]);
+			poly->set_contracted_vars(contractors);
+			poly->contract(c.box);
+
+		}
+		catch(Exception& e) { // ibex exceptions
+			cout << "Error " << 2 << endl;
+			throw e;
+		}
+		catch (std::exception& e) { // other exceptions
+			cout << "Error " << 2 << endl;
+			throw e;
+		}
+		catch (...) {
+			ibex_error("contract: cannot handle exception");
+		}
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
+			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
+			else  c.get<CellData>().COMPO.push_back(0);
+		}
+		if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
+		else  c.get<CellData>().COMPO.push_back(0);
+
+		/*
+		cout << "out: ";
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
+			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+			else  cout << 0 << " ";
+		}
+		cout << endl;
+		*/
+
+		//cout << "input size " << inputVals.size() <<  endl;
+		//cout << "output size " << targetVals.size() <<  endl;
+	}
+
+	/*
 
 	vector<double> inputVals, targetVals;
 
 	cout << endl << "in: ";
 	vector<int>::iterator it;
 	if(c.get<CellData>().ACID.size() > 0) {
-			/*
-			for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
-				cout << *it << ".0 ";
-
-			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
-				cout << *it << ".0 ";
-		for (it=c.get<CellData>().COMPO_old.begin(); it!=c.get<CellData>().COMPO_old.end(); ++it) {
-			cout << *it << ".0 ";
-			inputVals.push_back(*it);
-		}
-			*/
 		for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
 			cout << *it << ".0 ";
 			inputVals.push_back(*it);
@@ -337,21 +466,9 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	int aux = 0;
 	for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
 		aux += (int) *it;
-		//if(it==c.get<CellData>().COMPO.end()) {
-			cout << *it << ".0 ";
-			targetVals.push_back(*it);
-		//}
+		cout << *it << ".0 ";
+		targetVals.push_back(*it);
 	}
-	/*
-	if(aux == 0) {
-		cout << "0.0 ";
-		targetVals.push_back(0.0);
-	}
-	else {
-		cout << "1.0 ";
-		targetVals.push_back(1.0);
-	}
-	*/
 	cout << endl;
 
 
@@ -363,7 +480,7 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	else
 		ann.trainingNeuron(inputVals, targetVals);
 
-
+	*/
 
 
 
@@ -438,6 +555,9 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	buffer.flush();
 
 	Cell* root=new Cell(IntervalVector(n+1));
+
+	//cout << root->box.size() << " " << n << endl;
+	//getchar();
 
 	root->add<CellData>();
 

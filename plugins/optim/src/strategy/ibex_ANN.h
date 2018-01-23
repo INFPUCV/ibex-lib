@@ -30,7 +30,7 @@ namespace ibex {
 	class ANN {
 
 	public:
-		ANN(const string filename);
+		ANN(const string filename, int inputSize);
 		TrainingData trainData;
 		vector<double> trainingNeuron(vector<double> &inputVals, vector<double> &targetVals);
 		vector<double> testingNeuron(vector<double> &inputVals, vector<double> &targetVals);

@@ -88,7 +88,8 @@ public:
 			int goal_var,
 			double eps_x=default_eps_x,
 			double rel_eps_f=default_rel_eps_f,
-			double abs_eps_f=default_abs_eps_f);
+			double abs_eps_f=default_abs_eps_f,
+			double threshold=default_threshold);
 
 	/**
 	 * \brief Delete *this.
@@ -284,6 +285,9 @@ public:
 	ANN ann;
 
 	int iter = 0;
+
+	/** return value. */
+	static const double default_threshold;
 
 protected:
 

@@ -38,34 +38,34 @@ vector<double> ANN::trainingNeuron(vector<double> &inputVals, vector<double> &ta
 
 	// if(trainingPass > 2000) return testingNeuron(inputVals, targetVals);
 
-	cout << "Training" << endl;
+	//cout << "Training" << endl;
 
 	++trainingPass;
-	cout << "Pass " << trainingPass;
+	//cout << "Pass " << trainingPass << " ";
 
 	// Get new input data and feed it forward:
 	// if(trainData.getNextInputs(inputVals) != topology[0])
 	// 	return resultVals;
 	if(inputVals.size() != topology[0])
 			return resultVals;
-	showVectorVals(": Inputs :", inputVals);
+	//showVectorVals(": Inputs :", inputVals);
 	myNet->feedForward(inputVals);
 
 	// Collect the net's actual results:
 	myNet->getResults(resultVals);
-	cout << "results size " << resultVals.size() << endl;
-	showVectorVals("Outputs:", resultVals);
+	//cout << "results size " << resultVals.size() << endl;
+	//showVectorVals("Outputs:", resultVals);
 
 	// Train the net what the outputs should have been:
 	// trainData.getTargetOutputs(targetVals);
-	showVectorVals("Targets:", targetVals);
+	//showVectorVals("Targets:", targetVals);
 	assert(targetVals.size() == topology.back());
 
 	myNet->backProp(targetVals);
 
 	// Report how well the training is working, average over recnet
-	cout << "Net recent average error: "
-		 << myNet->getRecentAverageError() << endl;
+	//cout << "Net recent average error: "
+	//	 << myNet->getRecentAverageError() << endl;
 
 	return resultVals;
 }
@@ -75,32 +75,33 @@ vector<double> ANN::testingNeuron(vector<double> &inputVals, vector<double> &tar
 	vector<double> resultVals;
 	++trainingPass;
 
-	cout << "Testing" << endl;
+	// cout << "Testing" << endl;
 
-	cout << "Pass " << trainingPass;
+	// cout << "Pass " << trainingPass << " ";
 
 	// Get new input data and feed it forward:
 	// if(trainData.getNextInputs(inputVals) != topology[0])
 	// 	return resultVals;
 	if(inputVals.size() != topology[0])
 			return resultVals;
-	showVectorVals(": Inputs :", inputVals);
+	//showVectorVals(": Inputs :", inputVals);
 	myNet->feedForward(inputVals);
 
 	// Collect the net's actual results:
 	myNet->getResults(resultVals);
-	showVectorVals("Outputs:", resultVals);
+	//showVectorVals("Outputs:", resultVals);
 
 
 	// Train the net what the outputs should have been:
 	// trainData.getTargetOutputs(targetVals);
-	showVectorVals("Targets:", targetVals);
+	//showVectorVals("Targets:", targetVals);
 	assert(targetVals.size() == topology.back());
 
 	// Report how well the training is working, average over recnet
-	cout << "Net recent average error: "
-		 << myNet->getRecentAverageError() << endl;
+	// cout << "Net recent average error: "
+	//	 << myNet->getRecentAverageError() << endl;
 
+	/*
 	int auxTarget=0, auxResults=0;
 	// any contract result
 	if(targetVals[targetVals.size()-1] == 1) {
@@ -140,15 +141,16 @@ vector<double> ANN::testingNeuron(vector<double> &inputVals, vector<double> &tar
 	falso = (float) (FNC+FC+FAC)/(VNC+VC+VAC+FNC+FC+FAC);
 	cout << "verdadero " << verdadero << " falso " << falso << endl;
 	// if(resultVals[targetVals.size()-1] > 0.5 || auxResults > 0) getchar();
+	 */
 
 	return resultVals;
 }
 
 
-ANN::ANN(const string filename) : trainData(filename), trainingPass(0), totalTraining(10) {
+ANN::ANN(const string filename, int inputSize) : trainData(filename), trainingPass(0), totalTraining(10) {
 
 	// obtiene la topologia [cant inputs, cant nodo escondido, cant output, cantidad de datos]
-	unsigned arr[] = {8, 5, 8};
+	unsigned arr[] = { (unsigned) inputSize+1, 5, (unsigned) inputSize+1};
 	topology = vector<unsigned>(arr, arr+3);
 
 	// trainData.getTopology(topology);

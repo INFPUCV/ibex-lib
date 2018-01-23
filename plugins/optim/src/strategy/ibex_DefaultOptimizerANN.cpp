@@ -1,6 +1,6 @@
 //============================================================================
 //                                  I B E X                                   
-// File        : ibex_DefaultOptimizer.cpp
+// File        : ibex_DefaultOptimizerANN.cpp
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
 // License     : See the LICENSE file
@@ -8,7 +8,7 @@
 // Last Update : Nov 21, 2017
 //============================================================================
 
-#include "ibex_DefaultOptimizer.h"
+#include "ibex_DefaultOptimizerANN.h"
 
 #include "ibex_CtcHC4.h"
 #include "ibex_CtcAcid.h"
@@ -30,7 +30,7 @@ using namespace std;
 
 namespace ibex {
 
-const double DefaultOptimizer::default_random_seed = 1.0;
+const double DefaultOptimizerANN::default_random_seed = 1.0;
 
 #define NORMALIZED_SYSTEM_TAG 1
 #define EXTENDED_SYSTEM_TAG 2
@@ -42,7 +42,7 @@ const double DefaultOptimizer::default_random_seed = 1.0;
 // arguments of the base class constructor (ctc, bsc, loup finder, etc.)
 // and we don't know which argument is evaluated first
 
-NormalizedSystem& DefaultOptimizer::get_norm_sys(const System& sys, double eps_h) {
+NormalizedSystem& DefaultOptimizerANN::get_norm_sys(const System& sys, double eps_h) {
 	if (found(NORMALIZED_SYSTEM_TAG)) {
 		return get<NormalizedSystem>(NORMALIZED_SYSTEM_TAG);
 	} else {
@@ -50,7 +50,7 @@ NormalizedSystem& DefaultOptimizer::get_norm_sys(const System& sys, double eps_h
 	}
 }
 
-ExtendedSystem& DefaultOptimizer::get_ext_sys(const System& sys, double eps_h) {
+ExtendedSystem& DefaultOptimizerANN::get_ext_sys(const System& sys, double eps_h) {
 	if (found(EXTENDED_SYSTEM_TAG)) {
 		return get<ExtendedSystem>(EXTENDED_SYSTEM_TAG);
 	} else {
@@ -58,8 +58,9 @@ ExtendedSystem& DefaultOptimizer::get_ext_sys(const System& sys, double eps_h) {
 	}
 }
 
-DefaultOptimizer::DefaultOptimizer(const System& sys, double rel_eps_f, double abs_eps_f, double eps_h, bool rigor, bool inHC4, double random_seed, double eps_x) :
-		Optimizer(sys.nb_var,
+DefaultOptimizerANN::DefaultOptimizerANN(const System& sys, double rel_eps_f, double abs_eps_f,
+		double eps_h, bool rigor, bool inHC4, double random_seed, double eps_x, double threshold) :
+		OptimizerANN(sys.nb_var,
 			  ctc(get_ext_sys(sys,eps_h)), // warning: we don't know which argument is evaluated first
 //			  rec(new SmearSumRelative(get_ext_sys(sys,eps_h),eps_x)),
 			  rec(new LSmear(get_ext_sys(sys,eps_h),eps_x)),
@@ -73,14 +74,14 @@ DefaultOptimizer::DefaultOptimizer(const System& sys, double rel_eps_f, double a
 			  get_ext_sys(sys,eps_h).goal_var(),
 			  eps_x,
 			  rel_eps_f,
-			  abs_eps_f) {
+			  abs_eps_f, threshold) {
   
 
 	RNG::srand(random_seed);
 
 }
 
-CtcCompo&  DefaultOptimizer::ctc(const System& ext_sys) {
+CtcCompo&  DefaultOptimizerANN::ctc(const System& ext_sys) {
 	Array<Ctc> ctc_list(3);
 
 	// first contractor on ext_sys : incremental HC4 (propag ratio=0.01)

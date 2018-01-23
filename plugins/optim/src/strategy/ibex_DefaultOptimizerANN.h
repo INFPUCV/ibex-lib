@@ -1,6 +1,6 @@
 //============================================================================
 //                                  I B E X                                   
-// File        : ibex_DefaultOptimizer.h
+// File        : ibex_DefaultOptimizerANN.h
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : IMT Atlantique (France)
 // License     : See the LICENSE file
@@ -8,11 +8,11 @@
 // Last Update : Jul 25, 2017
 //============================================================================
 
-#ifndef __IBEX_DEFAULT_OPTIMIZER_H__
-#define __IBEX_DEFAULT_OPTIMIZER_H__
+#ifndef __IBEX_DEFAULT_OPTIMIZER_ANN_H__
+#define __IBEX_DEFAULT_OPTIMIZER_ANN_H__
 
-#include "ibex_Optimizer.h"
 // #include "ibex_Optimizer.h"
+#include "ibex_OptimizerANN.h"
 #include "ibex_CtcCompo.h"
 #include "ibex_Memory.h"
 #include "ibex_NormalizedSystem.h"
@@ -25,7 +25,7 @@ namespace ibex {
  *
  * \brief Default optimizer.
  */
-class DefaultOptimizer : private Memory, public Optimizer {
+class DefaultOptimizerANN : private Memory, public OptimizerANN {
 public:
 	/**
 	 * \brief Create a default optimizer.
@@ -42,17 +42,21 @@ public:
 	 *                      reproducibility). Set by default to #default_random_seed.
 	 * \param eps_x       - Stopping criterion for box splitting (absolute precision).
 	 *                      (**deprecated**).
+	 * \param threshold   - Value where the ANN return value will be 1.
+	 *                      (**deprecated**).
 	 */
-    DefaultOptimizer(const System& sys,
-    		double rel_eps_f=Optimizer::default_rel_eps_f,
-			double abs_eps_f=Optimizer::default_abs_eps_f,
+    DefaultOptimizerANN(const System& sys,
+    		double rel_eps_f=OptimizerANN::default_rel_eps_f,
+			double abs_eps_f=OptimizerANN::default_abs_eps_f,
 			double eps_h=NormalizedSystem::default_eps_h,
 			bool rigor=false, bool inHC4=true,
 			double random_seed=default_random_seed,
-    		double eps_x=Optimizer::default_eps_x);
+    		double eps_x=OptimizerANN::default_eps_x,
+    		double threshold=OptimizerANN::default_threshold);
 
 	/** Default random seed: 1.0. */
 	static const double default_random_seed;
+	static const double default_threshold;
 
 private:
 
@@ -69,4 +73,4 @@ private:
 
 } // end namespace ibex
 
-#endif // __IBEX_DEFAULT_OPTIMIZER_H__
+#endif // __IBEX_DEFAULT_OPTIMIZER_ANN_H__

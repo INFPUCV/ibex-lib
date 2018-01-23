@@ -121,10 +121,10 @@ Network::Network(const vector<unsigned> &topology) : m_recentAverageError(0), m_
 		// We have made a new Layer, now fill it ith neurons, and
 		// add a bias neuron to the layer:
 		// TODO: Verificar xq craa una mas por cada topology (permite varias capas escondidas)
-		cout << "creando " << topology[layerNum] << " neuronas." << endl;
+		//cout << "creando " << topology[layerNum] << " neuronas." << endl;
 		for(unsigned neuronNum = 0; neuronNum <= topology[layerNum]; ++neuronNum){
 			m_layers.back().push_back(Neuron(numOutputs, neuronNum));
-			cout << "Mad a Neuron!" << endl;
+			//cout << "Mad a Neuron!" << endl;
 		}
 
 		// Force the bias node's output value to 1.0. It's the last neuron created above
