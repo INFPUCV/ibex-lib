@@ -71,7 +71,7 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
                 				//kkt(normalized_user_sys),
 						uplo(NEG_INFINITY), uplo_of_epsboxes(POS_INFINITY), loup(POS_INFINITY),
                 				loup_point(n), initial_loup(POS_INFINITY), loup_changed(false),
-                                                time(0), nb_cells(0), ann("trainingData.txt", n+1) {
+                                                time(0), nb_cells(0), ann("trainingData.txt", n+1), threshold(threshold) {
 	if (trace) cout.precision(12);
 
 	/*
@@ -374,6 +374,17 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 		BitSet contractors(resultsVals.size()-1);
 
+		// contrae los valores sobre threshold
+		int contract = 0;
+		for(int i=0; i<resultsVals.size()-1;i++) {
+			if(resultsVals[i] > threshold) {
+				contractors.add(i);
+				contract++;
+			}
+		}
+		// Si no contrae nada y el ultimo valor de resultsVals
+		// esta sobre threshold se contrae uno de forma aleatoria
+		if(contract==0 && resultsVals[resultsVals.size()-1] > threshold) contractors.add(resultsVals.size()-1);
 
 		/*
 		if(resultsVals[resultsVals.size()-1] > 0.3) {
@@ -400,9 +411,11 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 		// contract all
+		/*
 		for(int i=0; i<resultsVals.size()-1;i++) {
 			contractors.add(i);
 		}
+		*/
 
 
 		// COMPO -> 2

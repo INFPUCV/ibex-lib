@@ -207,9 +207,6 @@ int main(int argc, char** argv) {
 			if (!quiet)
 				cout << "running............" << endl << endl;
 
-			cout << threshold << endl;
-			getchar();
-
 			// Search for the optimum
 			if (initial_loup)
 				o.optimize(sys->box, initial_loup.Get());
@@ -265,9 +262,6 @@ int main(int argc, char** argv) {
 
 			if (!quiet)
 				cout << "running............" << endl << endl;
-
-			cout << threshold << endl;
-			getchar();
 
 			// Search for the optimum
 			if (initial_loup)

@@ -289,6 +289,8 @@ public:
 	/** return value. */
 	static const double default_threshold;
 
+	double threshold;
+
 protected:
 
 	/**
