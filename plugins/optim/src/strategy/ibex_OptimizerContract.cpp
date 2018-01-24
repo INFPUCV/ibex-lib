@@ -1,5 +1,5 @@
 //                                  I B E X                                   
-// File        : ibex_OptimizerANN.cpp
+// File        : ibex_OptimizerContract.cpp
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
 // License     : See the LICENSE file
@@ -7,26 +7,17 @@
 // Last Update : December 24, 2012
 //============================================================================
 
-#include "ibex_OptimizerANN.h"
+#include "ibex_OptimizerContract.h"
 #include "ibex_Timer.h"
 #include "ibex_Function.h"
 #include "ibex_NoBisectableVariableException.h"
 #include "ibex_Backtrackable.h"
 #include "ibex_OptimData.h"
 
-#include "ibex_CtcCompo.h"
-
-#include "ibex_IntervalVector.h"
-
-#include "ibex_CellData.h"
-
-#include "ibex_ANN.h"
-
-#include <map>
-
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
+
 
 #include "ibex_BitSet.h"
 #include "ibex_CtcFixPoint.h"
@@ -37,12 +28,11 @@ using namespace std;
 
 namespace ibex {
 
-const double OptimizerANN::default_eps_x = 0;
-const double OptimizerANN::default_rel_eps_f = 1e-03;
-const double OptimizerANN::default_abs_eps_f = 1e-07;
-const double OptimizerANN::default_threshold = 0.5;
+const double OptimizerContract::default_eps_x = 0;
+const double OptimizerContract::default_rel_eps_f = 1e-03;
+const double OptimizerContract::default_abs_eps_f = 1e-07;
 
-void OptimizerANN::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
+void OptimizerContract::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
 	int i2=0;
 	for (int i=0; i<n; i++,i2++) {
 		if (i2==goal_var) i2++; // skip goal variable
@@ -50,7 +40,7 @@ void OptimizerANN::write_ext_box(const IntervalVector& box, IntervalVector& ext_
 	}
 }
 
-void OptimizerANN::read_ext_box(const IntervalVector& ext_box, IntervalVector& box) {
+void OptimizerContract::read_ext_box(const IntervalVector& ext_box, IntervalVector& box) {
 	int i2=0;
 	for (int i=0; i<n; i++,i2++) {
 		if (i2==goal_var) i2++; // skip goal variable
@@ -58,11 +48,9 @@ void OptimizerANN::read_ext_box(const IntervalVector& ext_box, IntervalVector& b
 	}
 }
 
-
-
-OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
+OptimizerContract::OptimizerContract(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
 		CellBufferOptim& buffer,
-		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f, double threshold) :
+		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f) :
                 				n(n), goal_var(goal_var),
                 				ctc(ctc), bsc(bsc), loup_finder(finder), buffer(buffer),
                 				eps_x(eps_x), rel_eps_f(rel_eps_f), abs_eps_f(abs_eps_f),
@@ -71,41 +59,25 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
                 				//kkt(normalized_user_sys),
 						uplo(NEG_INFINITY), uplo_of_epsboxes(POS_INFINITY), loup(POS_INFINITY),
                 				loup_point(n), initial_loup(POS_INFINITY), loup_changed(false),
-                                                time(0), nb_cells(0), ann("trainingData.txt", n+1), threshold(threshold) {
+                                                time(0), nb_cells(0) {
+
 	if (trace) cout.precision(12);
-
-	/*
-	vector<double> inputVals;
-	cout << "training " << endl;
-	// training ANN
-	for(int i=0; i < 7000; i++) {
-		ann.trainingNeuron(inputVals, inputVals);
-
-	}
-	cout << "testing " << endl;
-	// testing ANN
-	for(int i=0; i < 10; i++) {
-		ann.testingNeuron(inputVals);
-	}
-	*/
-
 }
 
-
-OptimizerANN::~OptimizerANN() {
+OptimizerContract::~OptimizerContract() {
 
 }
 
 // compute the value ymax (decreasing the loup with the precision)
 // the heap and the current box are contracted with y <= ymax
-double OptimizerANN::compute_ymax() {
+double OptimizerContract::compute_ymax() {
 	double ymax = loup - rel_eps_f*fabs(loup);
 	if (loup - abs_eps_f < ymax)
 		ymax = loup - abs_eps_f;
 	return ymax;
 }
 
-bool OptimizerANN::update_loup(const IntervalVector& box) {
+bool OptimizerContract::update_loup(const IntervalVector& box) {
 
 	try {
 		pair<IntervalVector,double> p=loup_finder.find(box,loup_point,loup);
@@ -128,7 +100,7 @@ bool OptimizerANN::update_loup(const IntervalVector& box) {
 	}
 }
 
-//bool OptimizerANN::update_entailed_ctr(const IntervalVector& box) {
+//bool OptimizerContract::update_entailed_ctr(const IntervalVector& box) {
 //	for (int j=0; j<m; j++) {
 //		if (entailed->normalized(j)) {
 //			continue;
@@ -142,18 +114,18 @@ bool OptimizerANN::update_loup(const IntervalVector& box) {
 //	return true;
 //}
 
-void OptimizerANN::update_uplo() {
+void OptimizerContract::update_uplo() {
 	double new_uplo=POS_INFINITY;
 
 	if (! buffer.empty()) {
 		new_uplo= buffer.minimum();
 		if (new_uplo > loup) {
 			cout << " loup = " << loup << " new_uplo=" << new_uplo << endl;
-			ibex_error("OptimizerANN: new_uplo>loup (please report bug)");
+			ibex_error("OptimizerContract: new_uplo>loup (please report bug)");
 		}
 		if (new_uplo < uplo) {
 			cout << "uplo= " << uplo << " new_uplo=" << new_uplo << endl;
-			ibex_error("OptimizerANN: new_uplo<uplo (please report bug)");
+			ibex_error("OptimizerContract: new_uplo<uplo (please report bug)");
 		}
 
 		// uplo <- max(uplo, min(new_uplo, uplo_of_epsboxes))
@@ -180,7 +152,7 @@ void OptimizerANN::update_uplo() {
 
 }
 
-void OptimizerANN::update_uplo_of_epsboxes(double ymin) {
+void OptimizerContract::update_uplo_of_epsboxes(double ymin) {
 
 	// the current box cannot be bisected.  ymin is a lower bound of the objective on this box
 	// uplo of epsboxes can only go down, but not under uplo : it is an upperbound for uplo,
@@ -196,7 +168,7 @@ void OptimizerANN::update_uplo_of_epsboxes(double ymin) {
 	}
 }
 
-void OptimizerANN::handle_cell(Cell& c, const IntervalVector& init_box ){
+void OptimizerContract::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 	contract_and_bound(c, init_box);
 
@@ -207,7 +179,8 @@ void OptimizerANN::handle_cell(Cell& c, const IntervalVector& init_box ){
 	}
 }
 
-void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
+void OptimizerContract::contract_and_bound(Cell& c, const IntervalVector& init_box) {
+
 	/*======================== contract y with y<=loup ========================*/
 	Interval& y=c.box[goal_var];
 
@@ -224,17 +197,12 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		return;
 	}
 
-	if (c.box.is_empty()) return;
+	/*================ contract x with f(x)=y and g(x)<=0 ================*/
+	//cout << " [contract]  x before=" << c.box << endl;
+	//cout << " [contract]  y before=" << y << endl;
 
-	c.get<CellData>().HC4.clear();
-	c.get<CellData>().ACID.clear();
-	c.get<CellData>().COMPO.clear();
-
-	IntervalVector boxOld = c.box;
-
-	// contractor HC4 y ACID
-	// HC4 -> 0
-	boxOld = c.box;
+	// ctc.contract(c.box);
+	// HC4
 	try {
 		ctc.list[0].contract(c.box);
 	}
@@ -249,22 +217,9 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	catch (...) {
 		ibex_error("contract: cannot handle exception");
 	}
-	for(int i=0; i < c.box.size(); i++) {
-		if(c.box.is_empty()) c.get<CellData>().HC4.push_back(0);
-		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().HC4.push_back(1);
-		else  c.get<CellData>().HC4.push_back(0);
-	}
-	if(c.box.is_empty())  c.get<CellData>().HC4.push_back(1);
-	else  c.get<CellData>().HC4.push_back(0);
-	/*
-	for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
-		cout << *it << ".0 ";
-	*/
 	if (c.box.is_empty()) return;
 
-	// ACID -> 1
-	boxOld = c.box;
-	if (c.box.is_empty()) return;
+	// ACID
 	try {
 		ctc.list[1].contract(c.box);
 	}
@@ -279,222 +234,34 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	catch (...) {
 		ibex_error("contract: cannot handle exception");
 	}
-	for(int i=0; i < c.box.size(); i++) {
-		if(c.box.is_empty()) c.get<CellData>().ACID.push_back(0);
-		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().ACID.push_back(1);
-		else  c.get<CellData>().ACID.push_back(0);
-	}
-	if(c.box.is_empty())  c.get<CellData>().ACID.push_back(1);
-	else  c.get<CellData>().ACID.push_back(0);
-	/*
-	for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
-		cout << *it << ".0 ";
-	*/
 	if (c.box.is_empty()) return;
 
-	// contractor COMPO
-	// training ANN with COMPO
-	if(iter < 1) {
-		// COMPO -> 2
-		boxOld = c.box;
-		if (c.box.is_empty()) return;
-		try {
-			ctc.list[2].contract(c.box);
-		}
-		catch(Exception& e) { // ibex exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (std::exception& e) { // other exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (...) {
-			ibex_error("contract: cannot handle exception");
-		}
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
-			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
-			else  c.get<CellData>().COMPO.push_back(0);
-		}
-		if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
-		else  c.get<CellData>().COMPO.push_back(0);
-
-
-		vector<double> inputVals, targetVals;
-		//cout << endl << "in: ";
-		vector<int>::iterator it;
-		if(c.get<CellData>().ACID.size() > 0) {
-			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
-				//cout << *it << ".0 ";
-				inputVals.push_back(*it);
-			}
-		}
-		//cout << endl;
-
-		//cout << "out: ";
-		int aux = 0;
-		for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
-			aux += (int) *it;
-			//cout << *it << ".0 ";
-			targetVals.push_back(*it);
-		}
-		//cout << endl;
-
-		ann.trainingNeuron(inputVals, targetVals);
-
-		//cout << "input size " << inputVals.size() <<  endl;
-		//cout << "output size " << targetVals.size() <<  endl;
-
-	// testing ANN with COMPO
-	} else {
-
-		boxOld = c.box;
-
-		vector<double> inputVals, targetVals, resultsVals;
-
-		//cout << endl << "in: ";
-		vector<int>::iterator it;
-		if(c.get<CellData>().ACID.size() > 0) {
-			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
-				//cout << *it << ".0 ";
-				inputVals.push_back(*it);
-			}
-		}
-		//cout << endl;
-
-		resultsVals = ann.testingNeuron(inputVals, inputVals);
-		//cout << "out: ";
-		int aux = 0;
-		for (int i=0; i< resultsVals.size(); i++) {
-			//cout << resultsVals[i] << " ";
-			targetVals.push_back(*it);
-		}
-		//cout << endl;
-
-		BitSet contractors(resultsVals.size()-1);
-
-		/*
-		// contrae los valores sobre threshold
-		int contract = 0;
-		for(int i=0; i<resultsVals.size()-1;i++) {
-			if(resultsVals[i] > threshold) {
-				contractors.add(i);
-				contract++;
-			}
-		}
-		// Si no contrae nada y el ultimo valor de resultsVals
-		// esta sobre threshold se contrae uno de forma aleatoria
-		if(contract==0 && resultsVals[resultsVals.size()-1] > threshold) contractors.add(resultsVals.size()-1);
-		*/
-
-		/*
-		if(resultsVals[resultsVals.size()-1] > 0.3) {
-			for(int i=0; i<resultsVals.size()-1;i++) {
-				contractors.add(i);
-			}
-		} else {
-			for(int i=0; i<resultsVals.size()-1;i++) {
-				if(resultsVals[i] > 0.2) contractors.add(i);
-			}
-		}
-		*/
-
-		/*
-		if(resultsVals[resultsVals.size()-1] > 0.7) {
-			contractors.add(0);
-		} else {
-			for(int i=0; i<resultsVals.size()-1;i++) {
-				if(resultsVals[i] > 0.5) contractors.add(i);
-			}
-		}
-		*/
-
-
-
-		// contract all
-		for(int i=0; i<resultsVals.size()-1;i++) {
-			contractors.add(i);
-		}
-
-
-		// COMPO -> 2
-		boxOld = c.box;
-		try {
-			CtcFixPoint* fixpoint = dynamic_cast<CtcFixPoint*> (&ctc.list[2]);
-			CtcCompo* compo = dynamic_cast<CtcCompo*> (&fixpoint->ctc);
-			CtcPolytopeHull* poly = dynamic_cast<CtcPolytopeHull*> (&compo->list[0]);
-			poly->set_contracted_vars(contractors);
-			poly->contract(c.box);
-
-		}
-		catch(Exception& e) { // ibex exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (std::exception& e) { // other exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (...) {
-			ibex_error("contract: cannot handle exception");
-		}
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
-			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
-			else  c.get<CellData>().COMPO.push_back(0);
-		}
-		if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
-		else  c.get<CellData>().COMPO.push_back(0);
-
-		/*
-		cout << "out: ";
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
-			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
-			else  cout << 0 << " ";
-		}
-		cout << endl;
-		*/
-
-		//cout << "input size " << inputVals.size() <<  endl;
-		//cout << "output size " << targetVals.size() <<  endl;
-	}
-
+	// COMPO
 	/*
-
-	vector<double> inputVals, targetVals;
-
-	cout << endl << "in: ";
-	vector<int>::iterator it;
-	if(c.get<CellData>().ACID.size() > 0) {
-		for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
-			cout << *it << ".0 ";
-			inputVals.push_back(*it);
-		}
+	try {
+		ctc.list[2].contract(c.box);
 	}
-	cout << endl;
-
-	cout << "out: ";
-	int aux = 0;
-	for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
-		aux += (int) *it;
-		cout << *it << ".0 ";
-		targetVals.push_back(*it);
+	catch(Exception& e) { // ibex exceptions
+		cout << "Error " << 2 << endl;
+		throw e;
 	}
-	cout << endl;
-
-
-	cout << "input size " << inputVals.size() <<  endl;
-	cout << "output size " << targetVals.size() <<  endl;
-
-	if(iter > 2000)
-		ann.testingNeuron(inputVals, targetVals);
-	else
-		ann.trainingNeuron(inputVals, targetVals);
-
+	catch (std::exception& e) { // other exceptions
+		cout << "Error " << 2 << endl;
+		throw e;
+	}
+	catch (...) {
+		ibex_error("contract: cannot handle exception");
+	}
 	*/
-
+	BitSet contractors(c.box.size());
+	for(int i=0; i<c.box.size();i++) {
+		contractors.add(i);
+	}
+	CtcFixPoint* fixpoint = dynamic_cast<CtcFixPoint*> (&ctc.list[2]);
+	CtcCompo* compo = dynamic_cast<CtcCompo*> (&fixpoint->ctc);
+	CtcPolytopeHull* poly = dynamic_cast<CtcPolytopeHull*> (&compo->list[0]);
+	poly->set_contracted_vars(contractors);
+	poly->contract(c.box);
 
 
 	if (c.box.is_empty()) return;
@@ -531,8 +298,8 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	/*====================================================================*/
 	// Note: there are three different cases of "epsilon" box,
 	// - NoBisectableVariableException raised by the bisector (---> see optimize(...)) which
-	//   is independent from the OptimizerANN
-	// - the width of the box is less than the precision given to the OptimizerANN ("prec" for the original variables
+	//   is independent from the OptimizerContract
+	// - the width of the box is less than the precision given to the OptimizerContract ("prec" for the original variables
 	//   and "goal_abs_prec" for the goal variable)
 	// - the extended box has no bisectable domains (if prec=0 or <1 ulp)
 	if ((tmp_box.max_diam()<=eps_x && y.diam() <=abs_eps_f) || !c.box.is_bisectable()) {
@@ -552,7 +319,7 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	}
 }
 
-OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, double obj_init_bound) {
+OptimizerContract::Status OptimizerContract::optimize(const IntervalVector& init_box, double obj_init_bound) {
 
 	loup=obj_init_bound;
 
@@ -569,20 +336,19 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 	Cell* root=new Cell(IntervalVector(n+1));
 
-	//cout << root->box.size() << " " << n << endl;
-	//getchar();
-
-	root->add<CellData>();
-
 	write_ext_box(init_box,root->box);
 
 	// add data required by the bisector
 	bsc.add_backtrackable(*root);
-	// bsc.add_backtrackable(*root);
 
 	// add data required by the buffer
 	buffer.add_backtrackable(*root);
-	// buffer.add_backtrackable(*root);
+
+	// add data required by OptimizerContract + KKT contractor
+//	root->add<EntailedCtr>();
+//	//root->add<Multipliers>();
+//	entailed=&root->get<EntailedCtr>();
+//	entailed->init_root(user_sys,sys);
 
 	loup_changed=false;
 	initial_loup=obj_init_bound;
@@ -592,23 +358,16 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	time=0;
 	Timer timer;
 	timer.start();
-
 	handle_cell(*root,init_box);
-
+	
 	update_uplo();
-
 
 	try {
 	     while (!buffer.empty()) {
 		  
-	    	 // if(iter > 4000 ) break;
-	    	 iter++;
-
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
-			// Cell *c = buffer.top();
-			Cell *c = buffer.top();
-
+			Cell *c = buffer.top(); 
 			if (trace >= 2) cout << " current box " << c->box << endl;
 
 			try {
@@ -621,7 +380,7 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 				delete c; // deletes the cell.
 
 				nb_cells+=2;  // counting the cells handled ( in previous versions nb_cells was the number of cells put into the buffer after being handled)
-
+                
 				handle_cell(*new_cells.first, init_box);
 				handle_cell(*new_cells.second, init_box);
 
@@ -684,7 +443,7 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	return status;
 }
 
-void OptimizerANN::report(bool verbose) {
+void OptimizerContract::report(bool verbose) {
 
 	if (!verbose) {
 		cout << get_status() << endl;

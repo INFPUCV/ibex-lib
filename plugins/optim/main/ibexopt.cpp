@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
 	args::Flag format(parser, "format", "Display the output format in quiet mode", {"format"});
 	args::Flag quiet(parser, "quiet", "Print no message and display minimal information (for automatic output processing). See --format.",{'q',"quiet"});
 	args::Flag ANN(parser, "ANN", "Activate the ANN, you can used threshold",{"ANN"});
+	args::Flag newcontract(parser, "newcontract", "Used other function for the contraction",{"newcontract"});
 
 	args::Positional<std::string> filename(parser, "filename", "The name of the MINIBEX file.");
 
@@ -169,7 +170,7 @@ int main(int argc, char** argv) {
 		}
 
 		// Build the default optimizer
-		if(!ANN) {
+		if(!ANN && !newcontract) {
 			DefaultOptimizer o(*sys,
 					rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
 					abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
@@ -219,8 +220,61 @@ int main(int argc, char** argv) {
 
 			o.report(!quiet);
 			// Build the default optimizerANN
-		}
-		else {
+
+		}else if(newcontract) {
+			cout << "newcontract" << endl;
+			DefaultOptimizerContract o(*sys,
+					rel_eps_f? rel_eps_f.Get() : OptimizerContract::default_rel_eps_f,
+					abs_eps_f? abs_eps_f.Get() : OptimizerContract::default_abs_eps_f,
+					eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
+					rigor, inHC4,
+					random_seed? random_seed.Get() : DefaultOptimizerContract::default_random_seed,
+					eps_x ?    eps_x.Get() :     OptimizerContract::default_eps_x
+					);
+
+			// This option limits the search time
+			if (timeout) {
+				if (!quiet)
+					cout << "  timeout:\t" << timeout.Get() << "s" << endl;
+				o.timeout=timeout.Get();
+			}
+
+			// This option prints each better feasible point when it is found
+			if (trace) {
+				if (!quiet)
+					cout << "  trace:\tON" << endl;
+				o.trace=trace.Get();
+			}
+
+			if (!inHC4) {
+				cerr << "\n  \033[33mwarning: inHC4 disabled\033[0m (does not support vector/matrix operations)" << endl;
+			}
+
+			if (!quiet) {
+				cout << "*******************************************************" << endl << endl;
+			}
+
+			// display solutions with up to 12 decimals
+			cout.precision(12);
+
+			if (!quiet)
+				cout << "running............" << endl << endl;
+
+			// Search for the optimum
+			if (initial_loup)
+				o.optimize(sys->box, initial_loup.Get());
+			else
+				o.optimize(sys->box);
+
+			if (trace) cout << endl;
+
+			// Report some information (computation time, etc.)
+
+			o.report(!quiet);
+			// Build the default optimizerANN
+
+
+		} else {
 			cout << "threshold ";
 			threshold ? cout << threshold.Get() : cout << OptimizerANN::default_threshold;
 			cout << endl;
