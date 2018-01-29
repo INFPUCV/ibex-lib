@@ -390,7 +390,6 @@ OptimizerContract::Status OptimizerContract::optimize(const IntervalVector& init
 
 	buffer.flush();
 
-	cout << "raiz "<< endl;
 	Cell* root=new Cell(IntervalVector(n+1));
 
 	root->add<CellData>();

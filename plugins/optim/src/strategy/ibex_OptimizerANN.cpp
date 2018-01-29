@@ -41,6 +41,7 @@ const double OptimizerANN::default_eps_x = 0;
 const double OptimizerANN::default_rel_eps_f = 1e-03;
 const double OptimizerANN::default_abs_eps_f = 1e-07;
 const double OptimizerANN::default_threshold = 0.5;
+const double OptimizerANN::default_trainingdata = 2000;
 
 void OptimizerANN::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
 	int i2=0;
@@ -62,7 +63,7 @@ void OptimizerANN::read_ext_box(const IntervalVector& ext_box, IntervalVector& b
 
 OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
 		CellBufferOptim& buffer,
-		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f, double threshold) :
+		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f, double threshold, double trainingdata) :
                 				n(n), goal_var(goal_var),
                 				ctc(ctc), bsc(bsc), loup_finder(finder), buffer(buffer),
                 				eps_x(eps_x), rel_eps_f(rel_eps_f), abs_eps_f(abs_eps_f),
@@ -71,7 +72,7 @@ OptimizerANN::OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
                 				//kkt(normalized_user_sys),
 						uplo(NEG_INFINITY), uplo_of_epsboxes(POS_INFINITY), loup(POS_INFINITY),
                 				loup_point(n), initial_loup(POS_INFINITY), loup_changed(false),
-                                                time(0), nb_cells(0), ann("trainingData.txt", n+1), threshold(threshold) {
+                                                time(0), nb_cells(0), ann("trainingData.txt", n+1), threshold(threshold), trainingdata(trainingdata) {
 	if (trace) cout.precision(12);
 
 	/*
@@ -294,7 +295,7 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	// contractor COMPO
 	// training ANN with COMPO
-	if(iter < 1) {
+	if(c.get<CellData>().id < trainingdata) {
 		// COMPO -> 2
 		boxOld = c.box;
 		if (c.box.is_empty()) return;
@@ -573,6 +574,7 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	//getchar();
 
 	root->add<CellData>();
+	root->get<CellData>().id = id;
 
 	write_ext_box(init_box,root->box);
 
@@ -594,15 +596,14 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 	timer.start();
 
 	handle_cell(*root,init_box);
+	id++;
+	int father = id;
 
 	update_uplo();
 
 
 	try {
 	     while (!buffer.empty()) {
-		  
-	    	 // if(iter > 4000 ) break;
-	    	 iter++;
 
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
@@ -617,13 +618,30 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 				pair<Cell*,Cell*> new_cells=c->bisect(boxes.first,boxes.second);
 
+				father = c->get<CellData>().id;
+
 				buffer.pop();
 				delete c; // deletes the cell.
 
 				nb_cells+=2;  // counting the cells handled ( in previous versions nb_cells was the number of cells put into the buffer after being handled)
 
+				new_cells.first->get<CellData>().id = id;
 				handle_cell(*new_cells.first, init_box);
+				if(!new_cells.first->box.is_empty()) {
+					cout << "\"" << father << "\":f0 -> \"" << new_cells.first->get<CellData>().id << "\":f0 [" << endl;
+					cout << "id = " << id << endl;
+					cout << "];" << endl;
+					id++;
+				}
+
+				new_cells.second->get<CellData>().id = id;
 				handle_cell(*new_cells.second, init_box);
+				if(!new_cells.second->box.is_empty()) {
+					cout << "\"" << father << "\":f0 -> \"" << new_cells.second->get<CellData>().id << "\":f0 [" << endl;
+					cout << "id = " << id << endl;
+					cout << "];" << endl;
+					id++;
+				}
 
 				if (uplo_of_epsboxes == NEG_INFINITY) {
 					cout << " possible infinite minimum " << endl;

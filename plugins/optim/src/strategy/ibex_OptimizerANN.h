@@ -89,7 +89,8 @@ public:
 			double eps_x=default_eps_x,
 			double rel_eps_f=default_rel_eps_f,
 			double abs_eps_f=default_abs_eps_f,
-			double threshold=default_threshold);
+			double threshold=default_threshold,
+			double trainingdata=default_trainingdata);
 
 	/**
 	 * \brief Delete *this.
@@ -289,10 +290,16 @@ public:
 	/** return value. */
 	static const double default_threshold;
 
+	static const double default_trainingdata;
+
 	double threshold;
+
+	double trainingdata;
+
 
 protected:
 
+	int id=0;
 	/**
 	 * \brief Main procedure for processing a box.
 	 *

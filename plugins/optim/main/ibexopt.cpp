@@ -43,6 +43,7 @@ int main(int argc, char** argv) {
 	args::ValueFlag<double> eps_x(parser, "float", _eps_x.str(), {"eps-x"});
 	args::ValueFlag<double> initial_loup(parser, "float", "Intial \"loup\" (a priori known upper bound).", {"initial-loup"});
 	args::ValueFlag<double>  threshold(parser, "threshold", "If the ANN output is more than this value will be return 1, default 0.5",{"threshold"});
+	args::ValueFlag<double>  trainingdata(parser, "trainingdata", "The ANN will be training the this value, the others cells will be using the ANN for decide where contract",{"trainingdata"});
 	args::Flag rigor(parser, "rigor", "Activate rigor mode (certify feasibility of equalities).", {"rigor"});
 	args::Flag trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag format(parser, "format", "Display the output format in quiet mode", {"format"});
@@ -278,14 +279,18 @@ int main(int argc, char** argv) {
 			cout << "threshold ";
 			threshold ? cout << threshold.Get() : cout << OptimizerANN::default_threshold;
 			cout << endl;
+			cout << "trainingdata ";
+			trainingdata ? cout << trainingdata.Get() : cout << OptimizerANN::default_trainingdata;
+			cout << endl;
 			DefaultOptimizerANN o(*sys,
 					rel_eps_f? rel_eps_f.Get() : OptimizerANN::default_rel_eps_f,
 					abs_eps_f? abs_eps_f.Get() : OptimizerANN::default_abs_eps_f,
 					eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
 					rigor, inHC4,
-					random_seed? random_seed.Get() : DefaultOptimizer::default_random_seed,
+					random_seed? random_seed.Get() : DefaultOptimizerANN::default_random_seed,
 					eps_x ?    eps_x.Get() :     OptimizerANN::default_eps_x,
-					threshold ? threshold.Get() : OptimizerANN::default_threshold
+					threshold ? threshold.Get() : OptimizerANN::default_threshold,
+					trainingdata ? trainingdata.Get() : OptimizerANN::default_trainingdata
 					);
 
 

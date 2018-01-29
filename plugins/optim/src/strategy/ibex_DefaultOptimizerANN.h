@@ -52,11 +52,13 @@ public:
 			bool rigor=false, bool inHC4=true,
 			double random_seed=default_random_seed,
     		double eps_x=OptimizerANN::default_eps_x,
-    		double threshold=OptimizerANN::default_threshold);
+    		double threshold=OptimizerANN::default_threshold,
+    		double trainingdata=OptimizerANN::default_trainingdata);
 
 	/** Default random seed: 1.0. */
 	static const double default_random_seed;
 	static const double default_threshold;
+	static const double default_trainingdata;
 
 private:
 
