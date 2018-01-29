@@ -45,6 +45,8 @@ public:
 	std::vector<int> ACID;
 	std::vector<int> COMPO;
 
+	int id;
+
 };
 
 } // end namespace ibex

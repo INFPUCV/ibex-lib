@@ -276,6 +276,7 @@ public:
 
 protected:
 
+	int id=0;
 	/**
 	 * \brief Main procedure for processing a box.
 	 *
