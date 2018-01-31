@@ -52,7 +52,7 @@ void OptimizerContract::read_ext_box(const IntervalVector& ext_box, IntervalVect
 
 OptimizerContract::OptimizerContract(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder,
 		CellBufferOptim& buffer,
-		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f) :
+		int goal_var, double eps_x, double rel_eps_f, double abs_eps_f, bool quiet) :
                 				n(n), goal_var(goal_var),
                 				ctc(ctc), bsc(bsc), loup_finder(finder), buffer(buffer),
                 				eps_x(eps_x), rel_eps_f(rel_eps_f), abs_eps_f(abs_eps_f),
@@ -61,7 +61,7 @@ OptimizerContract::OptimizerContract(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder&
                 				//kkt(normalized_user_sys),
 						uplo(NEG_INFINITY), uplo_of_epsboxes(POS_INFINITY), loup(POS_INFINITY),
                 				loup_point(n), initial_loup(POS_INFINITY), loup_changed(false),
-                                                time(0), nb_cells(0) {
+                                                time(0), nb_cells(0), quiet(quiet) {
 
 	if (trace) cout.precision(12);
 }
@@ -174,6 +174,13 @@ void OptimizerContract::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 	contract_and_bound(c, init_box);
 
+	if(!quiet && !c.box.is_empty() && father > 0) {
+		cout << "\"" << father << "\":f0 -> \"" << c.get<CellData>().id << "\":f0 [" << endl;
+		cout << "id = " << id << endl;
+		cout << "];" << endl;
+		id++;
+	}
+
 	if (c.box.is_empty()) {
 		delete &c;
 	} else {
@@ -203,16 +210,16 @@ void OptimizerContract::contract_and_bound(Cell& c, const IntervalVector& init_b
 	//cout << " [contract]  x before=" << c.box << endl;
 	//cout << " [contract]  y before=" << y << endl;
 
-	// ctc.contract(c.box);
 	IntervalVector boxOld = c.box;
-	cout << "\"" << c.get<CellData>().id << "\" [" << endl;
-	cout << "label = \" <f0> " << c.get<CellData>().id;
+
+	if(!quiet) {
+		cout << "\"" << c.get<CellData>().id << "\" [" << endl;
+		cout << "label = \" <f0> " << c.get<CellData>().id;
+	}
 
 	// HC4
 	if(!c.box.is_empty()) {
-		//cout << "Cell " << &c << endl;
 		boxOld = c.box;
-		//cout << "HC4 [ ";
 		try {
 			ctc.list[0].contract(c.box);
 		}
@@ -227,24 +234,22 @@ void OptimizerContract::contract_and_bound(Cell& c, const IntervalVector& init_b
 		catch (...) {
 			ibex_error("contract: cannot handle exception");
 		}
-		cout << "|";
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) cout << 0 << " ";
-			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+		if(!quiet) {
+			cout << "|";
+			for(int i=0; i < c.box.size(); i++) {
+				if(c.box.is_empty()) cout << 0 << " ";
+				else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+				else  cout << 0 << " ";
+			}
+			if(c.box.is_empty())  cout << 1 << " ";
 			else  cout << 0 << " ";
 		}
-		if(c.box.is_empty())  cout << 1 << " ";
-		else  cout << 0 << " ";
-		//cout << "]" << endl;
-
-		//if (c.box.is_empty()) return;
 	}
 
-	cout << "|";
+	if(!quiet) cout << "|";
 	// ACID
 	if(!c.box.is_empty()) {
 		boxOld = c.box;
-		//cout << "ACID [ ";
 		try {
 			ctc.list[1].contract(c.box);
 		}
@@ -259,40 +264,21 @@ void OptimizerContract::contract_and_bound(Cell& c, const IntervalVector& init_b
 		catch (...) {
 			ibex_error("contract: cannot handle exception");
 		}
-
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) cout << 0 << " ";
-			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+		if(!quiet) {
+			for(int i=0; i < c.box.size(); i++) {
+				if(c.box.is_empty()) cout << 0 << " ";
+				else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+				else  cout << 0 << " ";
+			}
+			if(c.box.is_empty())  cout << 1 << " ";
 			else  cout << 0 << " ";
 		}
-		if(c.box.is_empty())  cout << 1 << " ";
-		else  cout << 0 << " ";
-		//cout << "]" << endl;
-
-		//if (c.box.is_empty()) return;
 	}
 
-	cout << "|";
+	if(!quiet) cout << "|";
 	// COMPO
 	if(!c.box.is_empty()) {
 		boxOld = c.box;
-		//cout << "COMPO [ ";
-		/*
-		try {
-			ctc.list[2].contract(c.box);
-		}
-		catch(Exception& e) { // ibex exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (std::exception& e) { // other exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (...) {
-			ibex_error("contract: cannot handle exception");
-		}
-		*/
 		BitSet contractors(c.box.size());
 		for(int i=0; i<c.box.size();i++) {
 			contractors.add(i);
@@ -303,22 +289,23 @@ void OptimizerContract::contract_and_bound(Cell& c, const IntervalVector& init_b
 		poly->set_contracted_vars(contractors);
 		poly->contract(c.box);
 
-
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) cout << 0 << " ";
-			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+		if(!quiet) {
+			for(int i=0; i < c.box.size(); i++) {
+				if(c.box.is_empty()) cout << 0 << " ";
+				else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+				else  cout << 0 << " ";
+			}
+			if(c.box.is_empty())  cout << 1 << " ";
 			else  cout << 0 << " ";
 		}
-		if(c.box.is_empty())  cout << 1 << " ";
-		else  cout << 0 << " ";
-		//cout << "]" << endl;
 
 	}
 
-
-	cout << "\"" << endl;
-	cout << "shape = \"record\"" << endl;
-	cout << "];" << endl;
+	if(!quiet) {
+		cout << "\"" << endl;
+		cout << "shape = \"record\"" << endl;
+		cout << "];" << endl;
+	}
 
 	if (c.box.is_empty()) return;
 
@@ -418,12 +405,10 @@ OptimizerContract::Status OptimizerContract::optimize(const IntervalVector& init
 	time=0;
 	Timer timer;
 	timer.start();
-	//cout << "DATA" << endl;
-	//cout << "Cell Father NULL" << endl;
+
 	handle_cell(*root,init_box);
-	//getchar();
 	id++;
-	int father = id;
+
 	update_uplo();
 	try {
 	     while (!buffer.empty()) {
@@ -434,40 +419,23 @@ OptimizerContract::Status OptimizerContract::optimize(const IntervalVector& init
 			if (trace >= 2) cout << " current box " << c->box << endl;
 
 			try {
+				father = c->get<CellData>().id;
 
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
 
 				pair<Cell*,Cell*> new_cells=c->bisect(boxes.first,boxes.second);
 
-				father = c->get<CellData>().id;
 
 				buffer.pop();
 				delete c; // deletes the cell.
 
 				nb_cells+=2;  // counting the cells handled ( in previous versions nb_cells was the number of cells put into the buffer after being handled)
 
-				//cout << "DATA" << endl;
-				//cout << "Cell Father " << c << endl;
 				new_cells.first->get<CellData>().id = id;
 				handle_cell(*new_cells.first, init_box);
-				if(!new_cells.first->box.is_empty()) {
-					cout << "\"" << father << "\":f0 -> \"" << new_cells.first->get<CellData>().id << "\":f0 [" << endl;
-					cout << "id = " << id << endl;
-					cout << "];" << endl;
-					id++;
-				}
-				//getchar();
-				//cout << "DATA" << endl;
-				//cout << "Cell Father " << c << endl;
+
 				new_cells.second->get<CellData>().id = id;
 				handle_cell(*new_cells.second, init_box);
-				if(!new_cells.second->box.is_empty()) {
-					cout << "\"" << father << "\":f0 -> \"" << new_cells.second->get<CellData>().id << "\":f0 [" << endl;
-					cout << "id = " << id << endl;
-					cout << "];" << endl;
-					id++;
-				}
-				//getchar();
 
 				if (uplo_of_epsboxes == NEG_INFINITY) {
 					cout << " possible infinite minimum " << endl;

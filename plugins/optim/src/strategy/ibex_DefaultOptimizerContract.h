@@ -49,13 +49,13 @@ public:
 			double eps_h=NormalizedSystem::default_eps_h,
 			bool rigor=false, bool inHC4=true,
 			double random_seed=default_random_seed,
-    		double eps_x=OptimizerContract::default_eps_x);
+    		double eps_x=OptimizerContract::default_eps_x,
+			bool quiet = false);
 
 	/** Default random seed: 1.0. */
 	static const double default_random_seed;
 
 private:
-
     /**
      * The contractor: HC4 + acid(HC4) + X-Newton
      */

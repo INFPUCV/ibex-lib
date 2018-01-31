@@ -80,7 +80,8 @@ public:
 			int goal_var,
 			double eps_x=default_eps_x,
 			double rel_eps_f=default_rel_eps_f,
-			double abs_eps_f=default_abs_eps_f);
+			double abs_eps_f=default_abs_eps_f,
+			bool quiet = false);
 
 	/**
 	 * \brief Delete *this.
@@ -274,9 +275,15 @@ public:
 	double timeout;
 
 
+
 protected:
 
 	int id=0;
+
+	int father = 0;
+
+	bool quiet;
+
 	/**
 	 * \brief Main procedure for processing a box.
 	 *

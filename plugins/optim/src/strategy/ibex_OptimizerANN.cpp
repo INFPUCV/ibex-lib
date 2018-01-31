@@ -41,7 +41,7 @@ const double OptimizerANN::default_eps_x = 0;
 const double OptimizerANN::default_rel_eps_f = 1e-03;
 const double OptimizerANN::default_abs_eps_f = 1e-07;
 const double OptimizerANN::default_threshold = 0.5;
-const double OptimizerANN::default_trainingdata = 2000;
+const int OptimizerANN::default_trainingdata = 2000;
 
 void OptimizerANN::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
 	int i2=0;
@@ -201,6 +201,13 @@ void OptimizerANN::handle_cell(Cell& c, const IntervalVector& init_box ){
 
 	contract_and_bound(c, init_box);
 
+	if(!c.box.is_empty() && father > 0) {
+		cout << "\"" << father << "\":f0 -> \"" << c.get<CellData>().id << "\":f0 [" << endl;
+		cout << "id = " << id << endl;
+		cout << "];" << endl;
+		id++;
+	}
+
 	if (c.box.is_empty()) {
 		delete &c;
 	} else {
@@ -225,277 +232,269 @@ void OptimizerANN::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		return;
 	}
 
-	if (c.box.is_empty()) return;
+	// ctc.contract(c.box);
+	IntervalVector boxOld = c.box;
+	cout << "\"" << c.get<CellData>().id << "\" [" << endl;
+	cout << "label = \" <f0> " << c.get<CellData>().id;
 
+	/*
 	c.get<CellData>().HC4.clear();
 	c.get<CellData>().ACID.clear();
 	c.get<CellData>().COMPO.clear();
-
-	IntervalVector boxOld = c.box;
+	*/
 
 	// contractor HC4 y ACID
 	// HC4 -> 0
-	boxOld = c.box;
-	try {
-		ctc.list[0].contract(c.box);
-	}
-	catch(Exception& e) { // ibex exceptions
-		cout << "Error " << 0 << endl;
-		throw e;
-	}
-	catch (std::exception& e) { // other exceptions
-		cout << "Error " << 0 << endl;
-		throw e;
-	}
-	catch (...) {
-		ibex_error("contract: cannot handle exception");
-	}
-	for(int i=0; i < c.box.size(); i++) {
-		if(c.box.is_empty()) c.get<CellData>().HC4.push_back(0);
-		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().HC4.push_back(1);
+	if(!c.box.is_empty()) {
+		boxOld = c.box;
+		try {
+			ctc.list[0].contract(c.box);
+		}
+		catch(Exception& e) { // ibex exceptions
+			cout << "Error " << 0 << endl;
+			throw e;
+		}
+		catch (std::exception& e) { // other exceptions
+			cout << "Error " << 0 << endl;
+			throw e;
+		}
+		catch (...) {
+			ibex_error("contract: cannot handle exception");
+		}
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) c.get<CellData>().HC4.push_back(0);
+			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().HC4.push_back(1);
+			else  c.get<CellData>().HC4.push_back(0);
+		}
+		if(c.box.is_empty())  c.get<CellData>().HC4.push_back(1);
 		else  c.get<CellData>().HC4.push_back(0);
-	}
-	if(c.box.is_empty())  c.get<CellData>().HC4.push_back(1);
-	else  c.get<CellData>().HC4.push_back(0);
-	/*
-	for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
-		cout << *it << ".0 ";
-	*/
-	if (c.box.is_empty()) return;
-
-	// ACID -> 1
-	boxOld = c.box;
-	if (c.box.is_empty()) return;
-	try {
-		ctc.list[1].contract(c.box);
-	}
-	catch(Exception& e) { // ibex exceptions
-		cout << "Error " << 1 << endl;
-		throw e;
-	}
-	catch (std::exception& e) { // other exceptions
-		cout << "Error " << 1 << endl;
-		throw e;
-	}
-	catch (...) {
-		ibex_error("contract: cannot handle exception");
-	}
-	for(int i=0; i < c.box.size(); i++) {
-		if(c.box.is_empty()) c.get<CellData>().ACID.push_back(0);
-		else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().ACID.push_back(1);
-		else  c.get<CellData>().ACID.push_back(0);
-	}
-	if(c.box.is_empty())  c.get<CellData>().ACID.push_back(1);
-	else  c.get<CellData>().ACID.push_back(0);
-	/*
-	for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
-		cout << *it << ".0 ";
-	*/
-	if (c.box.is_empty()) return;
-
-	// contractor COMPO
-	// training ANN with COMPO
-	if(c.get<CellData>().id < trainingdata) {
-		// COMPO -> 2
-		boxOld = c.box;
-		if (c.box.is_empty()) return;
-		try {
-			ctc.list[2].contract(c.box);
-		}
-		catch(Exception& e) { // ibex exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (std::exception& e) { // other exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (...) {
-			ibex_error("contract: cannot handle exception");
-		}
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
-			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
-			else  c.get<CellData>().COMPO.push_back(0);
-		}
-		if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
-		else  c.get<CellData>().COMPO.push_back(0);
-
-
-		vector<double> inputVals, targetVals;
-		//cout << endl << "in: ";
-		vector<int>::iterator it;
-		if(c.get<CellData>().ACID.size() > 0) {
-			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
-				//cout << *it << ".0 ";
-				inputVals.push_back(*it);
-			}
-		}
-		//cout << endl;
-
-		//cout << "out: ";
-		int aux = 0;
-		for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
-			aux += (int) *it;
-			//cout << *it << ".0 ";
-			targetVals.push_back(*it);
-		}
-		//cout << endl;
-
-		ann.trainingNeuron(inputVals, targetVals);
-
-		//cout << "input size " << inputVals.size() <<  endl;
-		//cout << "output size " << targetVals.size() <<  endl;
-
-	// testing ANN with COMPO
-	} else {
-
-		boxOld = c.box;
-
-		vector<double> inputVals, targetVals, resultsVals;
-
-		//cout << endl << "in: ";
-		vector<int>::iterator it;
-		if(c.get<CellData>().ACID.size() > 0) {
-			for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
-				//cout << *it << ".0 ";
-				inputVals.push_back(*it);
-			}
-		}
-		//cout << endl;
-
-		resultsVals = ann.testingNeuron(inputVals, inputVals);
-		//cout << "out: ";
-		int aux = 0;
-		for (int i=0; i< resultsVals.size(); i++) {
-			//cout << resultsVals[i] << " ";
-			targetVals.push_back(*it);
-		}
-		//cout << endl;
-
-		BitSet contractors(resultsVals.size()-1);
-
 		/*
-		// contrae los valores sobre threshold
-		int contract = 0;
-		for(int i=0; i<resultsVals.size()-1;i++) {
-			if(resultsVals[i] > threshold) {
-				contractors.add(i);
-				contract++;
-			}
-		}
-		// Si no contrae nada y el ultimo valor de resultsVals
-		// esta sobre threshold se contrae uno de forma aleatoria
-		if(contract==0 && resultsVals[resultsVals.size()-1] > threshold) contractors.add(resultsVals.size()-1);
+		for (it=c.get<CellData>().HC4.begin(); it!=c.get<CellData>().HC4.end(); ++it)
+			cout << *it << ".0 ";
 		*/
 
-		/*
-		if(resultsVals[resultsVals.size()-1] > 0.3) {
-			for(int i=0; i<resultsVals.size()-1;i++) {
-				contractors.add(i);
-			}
-		} else {
-			for(int i=0; i<resultsVals.size()-1;i++) {
-				if(resultsVals[i] > 0.2) contractors.add(i);
-			}
-		}
-		*/
-
-		/*
-		if(resultsVals[resultsVals.size()-1] > 0.7) {
-			contractors.add(0);
-		} else {
-			for(int i=0; i<resultsVals.size()-1;i++) {
-				if(resultsVals[i] > 0.5) contractors.add(i);
-			}
-		}
-		*/
-
-
-
-		// contract all
-		for(int i=0; i<resultsVals.size()-1;i++) {
-			contractors.add(i);
-		}
-
-
-		// COMPO -> 2
-		boxOld = c.box;
-		try {
-			CtcFixPoint* fixpoint = dynamic_cast<CtcFixPoint*> (&ctc.list[2]);
-			CtcCompo* compo = dynamic_cast<CtcCompo*> (&fixpoint->ctc);
-			CtcPolytopeHull* poly = dynamic_cast<CtcPolytopeHull*> (&compo->list[0]);
-			poly->set_contracted_vars(contractors);
-			poly->contract(c.box);
-
-		}
-		catch(Exception& e) { // ibex exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (std::exception& e) { // other exceptions
-			cout << "Error " << 2 << endl;
-			throw e;
-		}
-		catch (...) {
-			ibex_error("contract: cannot handle exception");
-		}
+		cout << "|";
 		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
-			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
-			else  c.get<CellData>().COMPO.push_back(0);
-		}
-		if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
-		else  c.get<CellData>().COMPO.push_back(0);
-
-		/*
-		cout << "out: ";
-		for(int i=0; i < c.box.size(); i++) {
-			if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
+			if(c.box.is_empty()) cout << 0 << " ";
 			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
 			else  cout << 0 << " ";
 		}
-		cout << endl;
-		*/
-
-		//cout << "input size " << inputVals.size() <<  endl;
-		//cout << "output size " << targetVals.size() <<  endl;
+		if(c.box.is_empty())  cout << 1 << " ";
+		else  cout << 0 << " ";
 	}
 
-	/*
-
-	vector<double> inputVals, targetVals;
-
-	cout << endl << "in: ";
-	vector<int>::iterator it;
-	if(c.get<CellData>().ACID.size() > 0) {
-		for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
-			cout << *it << ".0 ";
-			inputVals.push_back(*it);
+	cout << "|";
+	// ACID -> 1
+	if(!c.box.is_empty()) {
+		boxOld = c.box;
+		if (c.box.is_empty()) return;
+		try {
+			ctc.list[1].contract(c.box);
 		}
+		catch(Exception& e) { // ibex exceptions
+			cout << "Error " << 1 << endl;
+			throw e;
+		}
+		catch (std::exception& e) { // other exceptions
+			cout << "Error " << 1 << endl;
+			throw e;
+		}
+		catch (...) {
+			ibex_error("contract: cannot handle exception");
+		}
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) c.get<CellData>().ACID.push_back(0);
+			else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().ACID.push_back(1);
+			else  c.get<CellData>().ACID.push_back(0);
+		}
+		if(c.box.is_empty())  c.get<CellData>().ACID.push_back(1);
+		else  c.get<CellData>().ACID.push_back(0);
+		/*
+		for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it)
+			cout << *it << ".0 ";
+		*/
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) cout << 0 << " ";
+			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+			else  cout << 0 << " ";
+		}
+		if(c.box.is_empty())  cout << 1 << " ";
+		else  cout << 0 << " ";
 	}
-	cout << endl;
 
-	cout << "out: ";
-	int aux = 0;
-	for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
-		aux += (int) *it;
-		cout << *it << ".0 ";
-		targetVals.push_back(*it);
+	cout << "|";
+	// COMPO -> 2
+	if(!c.box.is_empty()) {
+		// training ANN with COMPO
+		boxOld = c.box;
+		if(c.get<CellData>().id < trainingdata) {
+			if (c.box.is_empty()) return;
+			try {
+				ctc.list[2].contract(c.box);
+			}
+			catch(Exception& e) { // ibex exceptions
+				cout << "Error " << 2 << endl;
+				throw e;
+			}
+			catch (std::exception& e) { // other exceptions
+				cout << "Error " << 2 << endl;
+				throw e;
+			}
+			catch (...) {
+				ibex_error("contract: cannot handle exception");
+			}
+			for(int i=0; i < c.box.size(); i++) {
+				if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
+				else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
+				else  c.get<CellData>().COMPO.push_back(0);
+			}
+			if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
+			else  c.get<CellData>().COMPO.push_back(0);
+
+
+			vector<double> inputVals, targetVals;
+			//cout << endl << "in: ";
+			vector<int>::iterator it;
+			if(c.get<CellData>().ACID.size() > 0) {
+				for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
+					//cout << *it << ".0 ";
+					inputVals.push_back(*it);
+				}
+			}
+			//cout << endl;
+
+			//cout << "out: ";
+			int aux = 0;
+			for (it=c.get<CellData>().COMPO.begin(); it!=c.get<CellData>().COMPO.end(); ++it) {
+				aux += (int) *it;
+				//cout << *it << ".0 ";
+				targetVals.push_back(*it);
+			}
+			//cout << endl;
+
+			ann.trainingNeuron(inputVals, targetVals);
+
+			//cout << "input size " << inputVals.size() <<  endl;
+			//cout << "output size " << targetVals.size() <<  endl;
+
+		// testing ANN with COMPO
+		} else {
+			vector<double> inputVals, targetVals, resultsVals;
+
+			//cout << endl << "in: ";
+			vector<int>::iterator it;
+			if(c.get<CellData>().ACID.size() > 0) {
+				for (it=c.get<CellData>().ACID.begin(); it!=c.get<CellData>().ACID.end(); ++it) {
+					//cout << *it << ".0 ";
+					inputVals.push_back(*it);
+				}
+			}
+			//cout << endl;
+
+			resultsVals = ann.testingNeuron(inputVals, inputVals);
+			//cout << "out: ";
+			int aux = 0;
+			for (int i=0; i< resultsVals.size(); i++) {
+				//cout << resultsVals[i] << " ";
+				targetVals.push_back(*it);
+			}
+			//cout << endl;
+
+			BitSet contractors(resultsVals.size()-1);
+
+
+			// contrae los valores sobre threshold
+			int contract = 0;
+			for(int i=0; i<resultsVals.size()-1;i++) {
+				if(resultsVals[i] > threshold) {
+					contractors.add(i);
+					contract++;
+				}
+			}
+			// Si no contrae nada y el ultimo valor de resultsVals
+			// esta sobre threshold se contrae uno de forma aleatoria
+			if(contract==0 && resultsVals[resultsVals.size()-1] > threshold) contractors.add(resultsVals.size()-1);
+
+
+			/*
+			if(resultsVals[resultsVals.size()-1] > 0.3) {
+				for(int i=0; i<resultsVals.size()-1;i++) {
+					contractors.add(i);
+				}
+			} else {
+				for(int i=0; i<resultsVals.size()-1;i++) {
+					if(resultsVals[i] > 0.2) contractors.add(i);
+				}
+			}
+			*/
+
+			/*
+			if(resultsVals[resultsVals.size()-1] > 0.7) {
+				contractors.add(0);
+			} else {
+				for(int i=0; i<resultsVals.size()-1;i++) {
+					if(resultsVals[i] > 0.5) contractors.add(i);
+				}
+			}
+			*/
+
+
+
+			// contract all
+			/*
+			for(int i=0; i<resultsVals.size()-1;i++) {
+				contractors.add(i);
+			}
+			*/
+
+
+			// COMPO -> 2
+			boxOld = c.box;
+			try {
+				CtcFixPoint* fixpoint = dynamic_cast<CtcFixPoint*> (&ctc.list[2]);
+				CtcCompo* compo = dynamic_cast<CtcCompo*> (&fixpoint->ctc);
+				CtcPolytopeHull* poly = dynamic_cast<CtcPolytopeHull*> (&compo->list[0]);
+				poly->set_contracted_vars(contractors);
+				poly->contract(c.box);
+
+			}
+			catch(Exception& e) { // ibex exceptions
+				cout << "Error " << 2 << endl;
+				throw e;
+			}
+			catch (std::exception& e) { // other exceptions
+				cout << "Error " << 2 << endl;
+				throw e;
+			}
+			catch (...) {
+				ibex_error("contract: cannot handle exception");
+			}
+			for(int i=0; i < c.box.size(); i++) {
+				if(c.box.is_empty()) c.get<CellData>().COMPO.push_back(0);
+				else if(boxOld[i].diam() != c.box[i].diam()) c.get<CellData>().COMPO.push_back(1);
+				else  c.get<CellData>().COMPO.push_back(0);
+			}
+			if(c.box.is_empty())  c.get<CellData>().COMPO.push_back(1);
+			else  c.get<CellData>().COMPO.push_back(0);
+
+
+		}
+
+		for(int i=0; i < c.box.size(); i++) {
+			if(c.box.is_empty()) cout << 0 << " ";
+			else if(boxOld[i].diam() != c.box[i].diam()) cout << 1 << " ";
+			else  cout << 0 << " ";
+		}
+		if(c.box.is_empty())  cout << 1 << " ";
+		else  cout << 0 << " ";
 	}
-	cout << endl;
 
 
-	cout << "input size " << inputVals.size() <<  endl;
-	cout << "output size " << targetVals.size() <<  endl;
 
-	if(iter > 2000)
-		ann.testingNeuron(inputVals, targetVals);
-	else
-		ann.trainingNeuron(inputVals, targetVals);
 
-	*/
-
+	cout << "\"" << endl;
+	cout << "shape = \"record\"" << endl;
+	cout << "];" << endl;
 
 
 	if (c.box.is_empty()) return;
@@ -597,7 +596,6 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 	handle_cell(*root,init_box);
 	id++;
-	int father = id;
 
 	update_uplo();
 
@@ -614,11 +612,12 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 			try {
 
+				father = c->get<CellData>().id;
+
 				pair<IntervalVector,IntervalVector> boxes=bsc.bisect(*c);
 
 				pair<Cell*,Cell*> new_cells=c->bisect(boxes.first,boxes.second);
 
-				father = c->get<CellData>().id;
 
 				buffer.pop();
 				delete c; // deletes the cell.
@@ -627,21 +626,9 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 
 				new_cells.first->get<CellData>().id = id;
 				handle_cell(*new_cells.first, init_box);
-				if(!new_cells.first->box.is_empty()) {
-					cout << "\"" << father << "\":f0 -> \"" << new_cells.first->get<CellData>().id << "\":f0 [" << endl;
-					cout << "id = " << id << endl;
-					cout << "];" << endl;
-					id++;
-				}
 
 				new_cells.second->get<CellData>().id = id;
 				handle_cell(*new_cells.second, init_box);
-				if(!new_cells.second->box.is_empty()) {
-					cout << "\"" << father << "\":f0 -> \"" << new_cells.second->get<CellData>().id << "\":f0 [" << endl;
-					cout << "id = " << id << endl;
-					cout << "];" << endl;
-					id++;
-				}
 
 				if (uplo_of_epsboxes == NEG_INFINITY) {
 					cout << " possible infinite minimum " << endl;

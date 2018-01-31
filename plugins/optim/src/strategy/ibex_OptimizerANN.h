@@ -286,15 +286,16 @@ public:
 	ANN ann;
 
 	int iter = 0;
+	int father = 0;
 
 	/** return value. */
 	static const double default_threshold;
 
-	static const double default_trainingdata;
+	static const int default_trainingdata;
 
 	double threshold;
 
-	double trainingdata;
+	int trainingdata;
 
 
 protected:
