@@ -53,7 +53,8 @@ public:
 			double random_seed=default_random_seed,
     		double eps_x=OptimizerANN::default_eps_x,
     		double threshold=OptimizerANN::default_threshold,
-    		double trainingdata=OptimizerANN::default_trainingdata);
+    		double trainingdata=OptimizerANN::default_trainingdata,
+			bool quiet = false);
 
 	/** Default random seed: 1.0. */
 	static const double default_random_seed;

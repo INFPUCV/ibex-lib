@@ -36,25 +36,14 @@ void ANN::showVectorVals(string label, vector<double> &v)
 vector<double> ANN::trainingNeuron(vector<double> &inputVals, vector<double> &targetVals) {
 	vector<double> resultVals;
 
-	// if(trainingPass > 2000) return testingNeuron(inputVals, targetVals);
-
-	//cout << "Training" << endl;
-
 	++trainingPass;
-	//cout << "Pass " << trainingPass << " ";
-
-	// Get new input data and feed it forward:
-	// if(trainData.getNextInputs(inputVals) != topology[0])
-	// 	return resultVals;
 	if(inputVals.size() != topology[0])
 			return resultVals;
-	//showVectorVals(": Inputs :", inputVals);
+
 	myNet->feedForward(inputVals);
 
 	// Collect the net's actual results:
 	myNet->getResults(resultVals);
-	//cout << "results size " << resultVals.size() << endl;
-	//showVectorVals("Outputs:", resultVals);
 
 	// Train the net what the outputs should have been:
 	// trainData.getTargetOutputs(targetVals);
@@ -62,10 +51,6 @@ vector<double> ANN::trainingNeuron(vector<double> &inputVals, vector<double> &ta
 	assert(targetVals.size() == topology.back());
 
 	myNet->backProp(targetVals);
-
-	// Report how well the training is working, average over recnet
-	//cout << "Net recent average error: "
-	//	 << myNet->getRecentAverageError() << endl;
 
 	return resultVals;
 }
@@ -147,7 +132,7 @@ vector<double> ANN::testingNeuron(vector<double> &inputVals, vector<double> &tar
 }
 
 
-ANN::ANN(const string filename, int inputSize) : trainData(filename), trainingPass(0), totalTraining(10) {
+ANN::ANN(int inputSize) : trainingPass(0), totalTraining(10) {
 
 	// obtiene la topologia [cant inputs, cant nodo escondido, cant output, cantidad de datos]
 	unsigned arr[] = { (unsigned) inputSize+1, 5, (unsigned) inputSize+1};

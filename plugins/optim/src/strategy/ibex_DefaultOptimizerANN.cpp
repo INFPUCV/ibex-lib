@@ -60,7 +60,7 @@ ExtendedSystem& DefaultOptimizerANN::get_ext_sys(const System& sys, double eps_h
 
 DefaultOptimizerANN::DefaultOptimizerANN(const System& sys, double rel_eps_f, double abs_eps_f,
 		double eps_h, bool rigor, bool inHC4, double random_seed,
-		double eps_x, double threshold, double trainingdata) :
+		double eps_x, double threshold, double trainingdata, bool quiet) :
 		OptimizerANN(sys.nb_var,
 			  ctc(get_ext_sys(sys,eps_h)), // warning: we don't know which argument is evaluated first
 //			  rec(new SmearSumRelative(get_ext_sys(sys,eps_h),eps_x)),
@@ -75,7 +75,7 @@ DefaultOptimizerANN::DefaultOptimizerANN(const System& sys, double rel_eps_f, do
 			  get_ext_sys(sys,eps_h).goal_var(),
 			  eps_x,
 			  rel_eps_f,
-			  abs_eps_f, threshold, trainingdata) {
+			  abs_eps_f, threshold, trainingdata, quiet) {
   
 
 	RNG::srand(random_seed);

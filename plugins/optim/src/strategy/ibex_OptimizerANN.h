@@ -90,7 +90,8 @@ public:
 			double rel_eps_f=default_rel_eps_f,
 			double abs_eps_f=default_abs_eps_f,
 			double threshold=default_threshold,
-			double trainingdata=default_trainingdata);
+			double trainingdata=default_trainingdata,
+			bool quiet = false);
 
 	/**
 	 * \brief Delete *this.
@@ -301,6 +302,8 @@ public:
 protected:
 
 	int id=0;
+
+	bool quiet;
 	/**
 	 * \brief Main procedure for processing a box.
 	 *

@@ -293,7 +293,8 @@ int main(int argc, char** argv) {
 					random_seed? random_seed.Get() : DefaultOptimizerANN::default_random_seed,
 					eps_x ?    eps_x.Get() :     OptimizerANN::default_eps_x,
 					threshold ? threshold.Get() : OptimizerANN::default_threshold,
-					trainingdata ? trainingdata.Get() : OptimizerANN::default_trainingdata
+					trainingdata ? trainingdata.Get() : OptimizerANN::default_trainingdata,
+					quiet ? true : false
 					);
 
 
