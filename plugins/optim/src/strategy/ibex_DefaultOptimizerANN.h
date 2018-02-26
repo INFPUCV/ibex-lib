@@ -1,5 +1,5 @@
 //============================================================================
-//                                  I B E X                                   
+//                                  I B E X
 // File        : ibex_DefaultOptimizerANN.h
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : IMT Atlantique (France)
@@ -11,7 +11,7 @@
 #ifndef __IBEX_DEFAULT_OPTIMIZER_ANN_H__
 #define __IBEX_DEFAULT_OPTIMIZER_ANN_H__
 
-// #include "ibex_Optimizer.h"
+#include "ibex_Optimizer.h"
 #include "ibex_OptimizerANN.h"
 #include "ibex_CtcCompo.h"
 #include "ibex_Memory.h"
@@ -46,12 +46,12 @@ public:
 	 *                      (**deprecated**).
 	 */
     DefaultOptimizerANN(const System& sys,
-    		double rel_eps_f=OptimizerANN::default_rel_eps_f,
-			double abs_eps_f=OptimizerANN::default_abs_eps_f,
+    		double rel_eps_f=Optimizer::default_rel_eps_f,
+			double abs_eps_f=Optimizer::default_abs_eps_f,
 			double eps_h=NormalizedSystem::default_eps_h,
 			bool rigor=false, bool inHC4=true,
 			double random_seed=default_random_seed,
-    		double eps_x=OptimizerANN::default_eps_x,
+    		double eps_x=Optimizer::default_eps_x,
     		double threshold=OptimizerANN::default_threshold,
     		double trainingdata=OptimizerANN::default_trainingdata,
 			bool quiet = false);

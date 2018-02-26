@@ -1,4 +1,4 @@
-//                                  I B E X                                   
+//                                  I B E X
 // File        : ibex_OptimizerContract.cpp
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
@@ -30,9 +30,6 @@ using namespace std;
 
 namespace ibex {
 
-const double OptimizerContract::default_eps_x = 0;
-const double OptimizerContract::default_rel_eps_f = 1e-03;
-const double OptimizerContract::default_abs_eps_f = 1e-07;
 
 void OptimizerContract::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
 	int i2=0;
@@ -415,7 +412,7 @@ OptimizerContract::Status OptimizerContract::optimize(const IntervalVector& init
 
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
-			Cell *c = buffer.top(); 
+			Cell *c = buffer.top();
 			if (trace >= 2) cout << " current box " << c->box << endl;
 
 			try {
@@ -451,7 +448,7 @@ OptimizerContract::Status OptimizerContract::optimize(const IntervalVector& init
 					double ymax=compute_ymax();
 
 					buffer.contract(ymax);
-				
+
 					//cout << " now buffer is contracted and min=" << buffer.minimum() << endl;
 
 					// TODO: check if happens. What is the return code in this case?

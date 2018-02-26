@@ -1,4 +1,4 @@
-//                                  I B E X                                   
+//                                  I B E X
 // File        : ibex_Optimizer.cpp
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
@@ -23,7 +23,7 @@ using namespace std;
 namespace ibex {
 
 const double Optimizer::default_eps_x = 0;
-const double Optimizer::default_rel_eps_f = 1e-03;
+const double Optimizer::default_rel_eps_f = 1e-07;
 const double Optimizer::default_abs_eps_f = 1e-07;
 
 void Optimizer::write_ext_box(const IntervalVector& box, IntervalVector& ext_box) {
@@ -292,15 +292,15 @@ Optimizer::Status Optimizer::optimize(const IntervalVector& init_box, double obj
 	Timer timer;
 	timer.start();
 	handle_cell(*root,init_box);
-	
+
 	update_uplo();
 
 	try {
 	     while (!buffer.empty()) {
-		  
+
 			loup_changed=false;
 			// for double heap , choose randomly the buffer : top  has to be called before pop
-			Cell *c = buffer.top(); 
+			Cell *c = buffer.top();
 			if (trace >= 2) cout << " current box " << c->box << endl;
 
 			try {
@@ -313,7 +313,7 @@ Optimizer::Status Optimizer::optimize(const IntervalVector& init_box, double obj
 				delete c; // deletes the cell.
 
 				nb_cells+=2;  // counting the cells handled ( in previous versions nb_cells was the number of cells put into the buffer after being handled)
-                
+
 				handle_cell(*new_cells.first, init_box);
 				handle_cell(*new_cells.second, init_box);
 
@@ -331,7 +331,7 @@ Optimizer::Status Optimizer::optimize(const IntervalVector& init_box, double obj
 					double ymax=compute_ymax();
 
 					buffer.contract(ymax);
-				
+
 					//cout << " now buffer is contracted and min=" << buffer.minimum() << endl;
 
 					// TODO: check if happens. What is the return code in this case?

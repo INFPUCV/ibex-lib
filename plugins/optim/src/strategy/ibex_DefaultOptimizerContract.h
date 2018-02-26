@@ -1,5 +1,5 @@
 //============================================================================
-//                                  I B E X                                   
+//                                  I B E X
 // File        : ibex_DefaultOptimizerContract.h
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : IMT Atlantique (France)
@@ -12,7 +12,7 @@
 #define __IBEX_DEFAULT_OPTIMIZER_CONTRACT_H__
 
 #include "ibex_OptimizerContract.h"
-// #include "ibex_Optimizer.h"
+#include "ibex_Optimizer.h"
 #include "ibex_CtcCompo.h"
 #include "ibex_Memory.h"
 #include "ibex_NormalizedSystem.h"
@@ -44,12 +44,12 @@ public:
 	 *                      (**deprecated**).
 	 */
     DefaultOptimizerContract(const System& sys,
-    		double rel_eps_f=OptimizerContract::default_rel_eps_f,
-			double abs_eps_f=OptimizerContract::default_abs_eps_f,
+    		double rel_eps_f=Optimizer::default_rel_eps_f,
+			double abs_eps_f=Optimizer::default_abs_eps_f,
 			double eps_h=NormalizedSystem::default_eps_h,
 			bool rigor=false, bool inHC4=true,
 			double random_seed=default_random_seed,
-    		double eps_x=OptimizerContract::default_eps_x,
+    		double eps_x=Optimizer::default_eps_x,
 			bool quiet = false);
 
 	/** Default random seed: 1.0. */

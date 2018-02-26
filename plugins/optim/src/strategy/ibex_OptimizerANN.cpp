@@ -1,4 +1,4 @@
-//                                  I B E X                                   
+//                                  I B E X
 // File        : ibex_OptimizerANN.cpp
 // Author      : Gilles Chabert, Bertrand Neveu
 // Copyright   : Ecole des Mines de Nantes (France)
@@ -37,9 +37,6 @@ using namespace std;
 
 namespace ibex {
 
-const double OptimizerANN::default_eps_x = 0;
-const double OptimizerANN::default_rel_eps_f = 1e-03;
-const double OptimizerANN::default_abs_eps_f = 1e-07;
 const double OptimizerANN::default_threshold = 0.5;
 const int OptimizerANN::default_trainingdata = 2000;
 
@@ -571,7 +568,7 @@ OptimizerANN::Status OptimizerANN::optimize(const IntervalVector& init_box, doub
 					double ymax=compute_ymax();
 
 					buffer.contract(ymax);
-				
+
 					//cout << " now buffer is contracted and min=" << buffer.minimum() << endl;
 
 					// TODO: check if happens. What is the return code in this case?

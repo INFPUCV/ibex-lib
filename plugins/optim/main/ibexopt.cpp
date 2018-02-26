@@ -172,6 +172,7 @@ int main(int argc, char** argv) {
 
 		// Build the default optimizer
 		if(!ANN && !newcontract) {
+			cout << Optimizer::default_abs_eps_f << endl;
 			DefaultOptimizer o(*sys,
 					rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
 					abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
@@ -225,12 +226,12 @@ int main(int argc, char** argv) {
 		}else if(newcontract) {
 			if (!quiet) cout << "newcontract" << endl;
 			DefaultOptimizerContract o(*sys,
-					rel_eps_f? rel_eps_f.Get() : OptimizerContract::default_rel_eps_f,
-					abs_eps_f? abs_eps_f.Get() : OptimizerContract::default_abs_eps_f,
+					rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
+					abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
 					eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
 					rigor, inHC4,
 					random_seed? random_seed.Get() : DefaultOptimizerContract::default_random_seed,
-					eps_x ?    eps_x.Get() :     OptimizerContract::default_eps_x,
+					eps_x ?    eps_x.Get() :     Optimizer::default_eps_x,
 					quiet ? true : false
 					);
 
@@ -286,12 +287,12 @@ int main(int argc, char** argv) {
 				cout << endl;
 			}
 			DefaultOptimizerANN o(*sys,
-					rel_eps_f? rel_eps_f.Get() : OptimizerANN::default_rel_eps_f,
-					abs_eps_f? abs_eps_f.Get() : OptimizerANN::default_abs_eps_f,
+					rel_eps_f? rel_eps_f.Get() : Optimizer::default_rel_eps_f,
+					abs_eps_f? abs_eps_f.Get() : Optimizer::default_abs_eps_f,
 					eps_h ?    eps_h.Get() :     NormalizedSystem::default_eps_h,
 					rigor, inHC4,
 					random_seed? random_seed.Get() : DefaultOptimizerANN::default_random_seed,
-					eps_x ?    eps_x.Get() :     OptimizerANN::default_eps_x,
+					eps_x ?    eps_x.Get() :     Optimizer::default_eps_x,
 					threshold ? threshold.Get() : OptimizerANN::default_threshold,
 					trainingdata ? trainingdata.Get() : OptimizerANN::default_trainingdata,
 					quiet ? true : false

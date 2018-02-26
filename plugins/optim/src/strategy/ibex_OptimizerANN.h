@@ -86,9 +86,9 @@ public:
 	 */
 	OptimizerANN(int n, CtcCompo& ctc, Bsc& bsc, LoupFinder& finder, CellBufferOptim& buffer,
 			int goal_var,
-			double eps_x=default_eps_x,
-			double rel_eps_f=default_rel_eps_f,
-			double abs_eps_f=default_abs_eps_f,
+			double eps_x=Optimizer::default_eps_x,
+			double rel_eps_f=Optimizer::default_rel_eps_f,
+			double abs_eps_f=Optimizer::default_abs_eps_f,
 			double threshold=default_threshold,
 			double trainingdata=default_trainingdata,
 			bool quiet = false);
@@ -145,7 +145,7 @@ public:
 	 * </ul>
 	 */
 	void report(bool verbose=true);
-	
+
 	/**
 	 * \brief Get the status.
 	 *
@@ -249,20 +249,14 @@ public:
 	/** Precision (bisection control) */
 	const double eps_x;
 
-	/** Default bisection precision: 0. */
-	static const double default_eps_x;
 
 	/** Relative precision on the objective */
 	const double rel_eps_f;
 
-	/** Default goal relative precision: 1e-3. */
-	static const double default_rel_eps_f;
 
 	/** Absolute precision on the objective */
 	const double abs_eps_f;
 
-	/** Default goal absolute precision: 1e-7. */
-	static const double default_abs_eps_f;
 
 	/**
 	 * \brief Trace activation flag.
