@@ -491,6 +491,12 @@ protected:
 		error = 0.00003;
 		min_pendiente = 0.00003;
 		max_pendiente = 9999999.9;
+
+		// if derivate is empty remove this interval
+		if(derivate.is_empty()) {
+			cout << "derivate empty -> remove interval" << endl;
+			getchar();
+		}
 		// contract Newton from right
 		point_left = inter.lb();
 		point_right = pf.eval(inter.lb()).ub();
@@ -587,7 +593,6 @@ protected:
 			inter = Interval(inter.lb(), point_left);
 		}
 		cout << inter << endl;
-
 
 		getchar();
 
