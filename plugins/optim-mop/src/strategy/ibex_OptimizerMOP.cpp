@@ -120,9 +120,8 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 		return false;
 	}
 
-
-
 	dominated_segment(xa, xb);
+
 }
 
 bool OptimizerMOP::update_NDS(const IntervalVector& box) {

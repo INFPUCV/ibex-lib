@@ -22,6 +22,7 @@
 #include <set>
 #include <map>
 #include <list>
+#include <stack>
 //#include "ibex_DistanceSorted.h"
 
 using namespace std;
@@ -444,9 +445,102 @@ protected:
 		Interval yb1=OptimizerMOP::eval_goal(goal1,xb,n);
 		Interval yb2=OptimizerMOP::eval_goal(goal2,xb,n);
 
+		cout << "found two points" << endl;
+		cout << "xa: " << xa << endl;
+		cout << "xb: " << xb << endl;
+		cout << "ya1: " << ya1 << endl;
+		cout << "ya2: " << ya2 << endl;
+		cout << "yb1: " << yb1 << endl;
+		cout << "yb2: " << yb2 << endl;
 
 		Interval m = (yb1-ya1)/(yb2-ya2);
 		PFunction pf(goal1, goal2, m, xa, xb);
+
+		cout << "m: " << m << endl;
+		Interval derivate = pf.deriv(Interval(0,1));
+		cout << "derivate (min, max): " << derivate << endl;
+
+		double t1=0.0, t2=0.5, t3=1.0;
+		double epsilon = 0.0003;
+		cout << "c (t=" << t1 << "): " << pf.eval(t1) << endl;
+		cout << "c (t=" << t2 << "): " << pf.eval(t2) << endl;
+		cout << "c (t=" << t3 << "): " << pf.eval(t3) << endl;
+		double lb = max(max(pf.eval(t1), pf.eval(t2)), pf.eval(t3)).ub() + epsilon;
+
+		cout << "lb: " << lb << endl;
+
+		/*
+		IntervalVector box(0);
+		cout << "box size: " << box.size() << endl;
+		cout << "box: " << box << endl;
+		box.resize(box.size()+1);
+		box.put(box.size()-1, Interval(0, 1));
+		cout << "box size: " << box.size() << endl;
+		cout << "box: " << box << endl;
+		*/
+
+		stack<Interval> pila;
+		pila.push(Interval(0,1));
+		Interval inter;
+		inter = pila.top();
+		pila.pop();
+		cout << inter << endl;
+		// TODO: create while with bisect
+		double point_left, point_right, t_before, error, min_pendiente, max_pendiente;
+		// contract Newton from right
+		point_left = inter.lb();
+		point_right = pf.eval(inter.lb()).ub();
+		t_before = NEG_INFINITY;
+		error = 0.00003;
+		min_pendiente = 0.00003;
+		max_pendiente = 9999999.9;
+		cout << "pendiente: " << derivate.ub() << endl;
+		cout << "lb: " << lb << endl;
+		cout << "point: (" << point_left << ", " << point_right << ")" << endl;
+		cout << "while" << endl;
+		cout << "point_left: " << point_left << endl;
+		cout << "point_right: " << point_right << endl;
+		cout << "lb: " << lb << endl;
+		cout << "pendiente: " << derivate.ub() << endl;
+		//TODO: verificar como afecta los resultados cuando la pendiente es 0 o infinita
+		// si la pendiente cumple con los maximos y minimos permitidos
+		if(min_pendiente < derivate.ub() and derivate.ub() < max_pendiente) {
+			while(point_left - t_before > error and point_left < inter.ub()) {
+				t_before = point_left;
+				point_left = (lb - point_right)/derivate.ub() + t_before;
+				point_right = pf.eval(point_left).ub();
+				cout << "point_left: " << point_left << endl;
+				cout << "point_right: " << point_right << endl;
+				cout << "lb: " << lb << endl;
+				cout << "pendiente: " << derivate.ub() << endl;
+				// TODO: verificar si sucede este error en algun caso
+				if(point_right > lb) {
+					cout << "ERRROR: point right is greater than lb" << endl;
+				}
+			}
+		} else {
+			// si la pendiente no cumple con el minimo
+			if(min_pendiente < derivate.ub()) {
+				point_left = POS_INFINITY;
+			// si la pendiente no cumple con el maximo NO SE MODIFICA EL INTERVALO
+			} else if(derivate.ub() < max_pendiente) {
+				point_left = inter.lb();
+			}
+		}
+		cout << inter << endl;
+		// Se remueve
+		if(point_left >= inter.ub()) {
+			//TODO: remover y salir
+			cout << "remove and break" << endl;
+		} else {
+			inter = Interval(point_left, inter.ub());
+		}
+		cout << inter << endl;
+		// TODO: contract Newton from right
+
+
+
+		getchar();
 
 		double step=0.001;
 		double tinf=0.0;
