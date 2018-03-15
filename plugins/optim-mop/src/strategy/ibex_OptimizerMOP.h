@@ -469,132 +469,144 @@ protected:
 
 		cout << "lb: " << lb << endl;
 
-		/*
-		IntervalVector box(0);
-		cout << "box size: " << box.size() << endl;
-		cout << "box: " << box << endl;
-		box.resize(box.size()+1);
-		box.put(box.size()-1, Interval(0, 1));
-		cout << "box size: " << box.size() << endl;
-		cout << "box: " << box << endl;
-		*/
 
 		stack<Interval> pila;
 		pila.push(Interval(0,1));
-		Interval inter;
-		inter = pila.top();
-		pila.pop();
-		cout << inter << endl;
-		// TODO: create while with bisect
-		double point_left, point_right, t_before, error, min_pendiente, max_pendiente;
+		Interval inter, left, right;
+		double point_left, point_right, t_before, error, min_pendiente, max_pendiente, min_interval;
+		Interval lowerbound, middlebound, upperbound;
+		double lb_interval;
 		// global values
 		error = 0.00003;
 		min_pendiente = 0.00003;
 		max_pendiente = 9999999.9;
+		min_interval = 0.0000009;
 
-		// if derivate is empty remove this interval
-		if(derivate.is_empty()) {
-			cout << "derivate empty -> remove interval" << endl;
+		while(!pila.empty()) {
+			inter = pila.top();
+			pila.pop();
+			cout << inter << endl;
+			// update lb
+			lowerbound=pf.eval(inter.lb());
+			middlebound=pf.eval((inter.lb()+inter.ub())/2);
+			upperbound= pf.eval(inter.ub());
+			lb_interval = max(max(pf.eval(lowerbound), pf.eval(middlebound)), pf.eval(upperbound)).ub() + epsilon;
+			if(lb_interval > lb) lb = lb_interval;
+			// if derivate is empty remove this interval
+			if(derivate.is_empty()) {
+				cout << "derivate empty -> remove interval" << endl;
+				getchar();
+				break;
+			}
+			// contract Newton from right
+			point_left = inter.lb();
+			point_right = pf.eval(inter.lb()).ub();
+			t_before = NEG_INFINITY;
+			cout << "pendiente: " << derivate.ub() << endl;
+			cout << "lb: " << lb << endl;
+			cout << "point: (" << point_left << ", " << point_right << ")" << endl;
+			cout << "while" << endl;
+			cout << "point_left: " << point_left << endl;
+			cout << "point_right: " << point_right << endl;
+			cout << "lb: " << lb << endl;
+			cout << "pendiente: " << derivate.ub() << endl;
+			//TODO: verificar como afecta los resultados cuando la pendiente es 0 o infinita
+			// si la pendiente cumple con los maximos y minimos permitidos
+			if(min_pendiente < derivate.ub() and derivate.ub() < max_pendiente) {
+				while(point_left - t_before > error and point_left < inter.ub()) {
+					t_before = point_left;
+					point_left = (lb - point_right)/derivate.ub() + t_before;
+					point_right = pf.eval(point_left).ub();
+					cout << "point_left: " << point_left << endl;
+					cout << "point_right: " << point_right << endl;
+					cout << "lb: " << lb << endl;
+					cout << "pendiente: " << derivate.ub() << endl;
+					// TODO: verificar si sucede este error en algun caso
+					if(point_right > lb) {
+						cout << "ERRROR: point right is greater than lb" << endl;
+					}
+				}
+			} else {
+				// si la pendiente no cumple con el minimo
+				if(min_pendiente > derivate.ub()) {
+					point_left = POS_INFINITY;
+				// si la pendiente no cumple con el maximo NO SE MODIFICA EL INTERVALO
+				} else if(derivate.ub() > max_pendiente) {
+					point_left = inter.lb();
+				}
+			}
+			cout << inter << endl;
+			cout << "point_left: " << point_left << endl;
+			cout << "point_right: " << point_right << endl;
+			// Se remueve
+			if(point_left >= inter.ub()) {
+				//TODO: remover y salir
+				cout << "remove and break" << endl;
+				getchar();
+				break;
+			} else {
+				inter = Interval(point_left, inter.ub());
+			}
+			cout << inter << endl;
+			// TODO: contract Newton from right
+			point_left = inter.ub();
+			point_right = pf.eval(inter.ub()).ub();
+			t_before = NEG_INFINITY;
+			cout << "pendiente: " << derivate.lb() << endl;
+			cout << "lb: " << lb << endl;
+			cout << "point: (" << point_left << ", " << point_right << ")" << endl;
+			cout << "while" << endl;
+			cout << "point_left: " << point_left << endl;
+			cout << "point_right: " << point_right << endl;
+			cout << "lb: " << lb << endl;
+			cout << "pendiente: " << derivate.lb() << endl;
+			//TODO: verificar como afecta los resultados cuando la pendiente es 0 o infinita
+			// si la pendiente cumple con los maximos y minimos permitidos
+			if(min_pendiente > -derivate.lb() and -derivate.lb() > max_pendiente) {
+				while(t_before - point_left > error and point_left > inter.lb()) {
+					t_before = point_left;
+					point_left = t_before - (lb - point_right)/derivate.lb();
+					point_right = pf.eval(point_left).ub();
+					cout << "point_left: " << point_left << endl;
+					cout << "point_right: " << point_right << endl;
+					cout << "lb: " << lb << endl;
+					cout << "pendiente: " << derivate.lb() << endl;
+					// TODO: verificar si sucede este error en algun caso
+					if(point_right > lb) {
+						cout << "ERRROR: point right is greater than lb" << endl;
+					}
+				}
+			} else {
+				// si la pendiente no cumple con el minimo
+				if(min_pendiente > -derivate.lb()) {
+					point_left = NEG_INFINITY;
+				// si la pendiente no cumple con el maximo NO SE MODIFICA EL INTERVALO
+				} else if(-derivate.lb() > max_pendiente) {
+					point_left = inter.ub();
+				}
+			}
+			cout << inter << endl;
+			cout << "point_left: " << point_left << endl;
+			cout << "point_right: " << point_right << endl;
+			// Se remueve
+			if(point_left <= inter.lb()) {
+				//TODO: remover y salir
+				cout << "remove and break" << endl;
+				getchar();
+				break;
+			} else {
+				inter = Interval(inter.lb(), point_left);
+			}
+			cout << inter << endl;
+
+			// bisect interval and push in stack
+			if(inter.is_bisectable()) {
+				pair<Interval,Interval> bsc = inter.bisect();
+				pila.push(bsc.first);
+				pila.push(bsc.second);
+			}
 			getchar();
 		}
-		// contract Newton from right
-		point_left = inter.lb();
-		point_right = pf.eval(inter.lb()).ub();
-		t_before = NEG_INFINITY;
-		cout << "pendiente: " << derivate.ub() << endl;
-		cout << "lb: " << lb << endl;
-		cout << "point: (" << point_left << ", " << point_right << ")" << endl;
-		cout << "while" << endl;
-		cout << "point_left: " << point_left << endl;
-		cout << "point_right: " << point_right << endl;
-		cout << "lb: " << lb << endl;
-		cout << "pendiente: " << derivate.ub() << endl;
-		//TODO: verificar como afecta los resultados cuando la pendiente es 0 o infinita
-		// si la pendiente cumple con los maximos y minimos permitidos
-		if(min_pendiente < derivate.ub() and derivate.ub() < max_pendiente) {
-			while(point_left - t_before > error and point_left < inter.ub()) {
-				t_before = point_left;
-				point_left = (lb - point_right)/derivate.ub() + t_before;
-				point_right = pf.eval(point_left).ub();
-				cout << "point_left: " << point_left << endl;
-				cout << "point_right: " << point_right << endl;
-				cout << "lb: " << lb << endl;
-				cout << "pendiente: " << derivate.ub() << endl;
-				// TODO: verificar si sucede este error en algun caso
-				if(point_right > lb) {
-					cout << "ERRROR: point right is greater than lb" << endl;
-				}
-			}
-		} else {
-			// si la pendiente no cumple con el minimo
-			if(min_pendiente > derivate.ub()) {
-				point_left = POS_INFINITY;
-			// si la pendiente no cumple con el maximo NO SE MODIFICA EL INTERVALO
-			} else if(derivate.ub() > max_pendiente) {
-				point_left = inter.lb();
-			}
-		}
-		cout << inter << endl;
-		cout << "point_left: " << point_left << endl;
-		cout << "point_right: " << point_right << endl;
-		// Se remueve
-		if(point_left >= inter.ub()) {
-			//TODO: remover y salir
-			cout << "remove and break" << endl;
-		} else {
-			inter = Interval(point_left, inter.ub());
-		}
-		cout << inter << endl;
-		// TODO: contract Newton from right
-		point_left = inter.ub();
-		point_right = pf.eval(inter.ub()).ub();
-		t_before = NEG_INFINITY;
-		cout << "pendiente: " << derivate.lb() << endl;
-		cout << "lb: " << lb << endl;
-		cout << "point: (" << point_left << ", " << point_right << ")" << endl;
-		cout << "while" << endl;
-		cout << "point_left: " << point_left << endl;
-		cout << "point_right: " << point_right << endl;
-		cout << "lb: " << lb << endl;
-		cout << "pendiente: " << derivate.lb() << endl;
-		//TODO: verificar como afecta los resultados cuando la pendiente es 0 o infinita
-		// si la pendiente cumple con los maximos y minimos permitidos
-		if(min_pendiente > -derivate.lb() and -derivate.lb() > max_pendiente) {
-			while(t_before - point_left > error and point_left > inter.lb()) {
-				t_before = point_left;
-				point_left = t_before - (lb - point_right)/derivate.lb();
-				point_right = pf.eval(point_left).ub();
-				cout << "point_left: " << point_left << endl;
-				cout << "point_right: " << point_right << endl;
-				cout << "lb: " << lb << endl;
-				cout << "pendiente: " << derivate.lb() << endl;
-				// TODO: verificar si sucede este error en algun caso
-				if(point_right > lb) {
-					cout << "ERRROR: point right is greater than lb" << endl;
-				}
-			}
-		} else {
-			// si la pendiente no cumple con el minimo
-			if(min_pendiente > -derivate.lb()) {
-				point_left = NEG_INFINITY;
-			// si la pendiente no cumple con el maximo NO SE MODIFICA EL INTERVALO
-			} else if(-derivate.lb() > max_pendiente) {
-				point_left = inter.ub();
-			}
-		}
-		cout << inter << endl;
-		cout << "point_left: " << point_left << endl;
-		cout << "point_right: " << point_right << endl;
-		// Se remueve
-		if(point_left <= inter.lb()) {
-			//TODO: remover y salir
-			cout << "remove and break" << endl;
-		} else {
-			inter = Interval(inter.lb(), point_left);
-		}
-		cout << inter << endl;
-
-		getchar();
 
 		double step=0.001;
 		double tinf=0.0;
