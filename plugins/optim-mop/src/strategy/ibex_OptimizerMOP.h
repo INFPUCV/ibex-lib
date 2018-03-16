@@ -478,7 +478,7 @@ protected:
 		double lb_interval;
 		// global values
 		error = 1e-5;
-		min_interval = 0.0000009;
+		min_interval = 1e-6;
 
 		while(!pila.empty()) {
 			inter = pila.top();
@@ -498,7 +498,7 @@ protected:
 			// if derivate is empty the segment should not be created
 			if(derivate.is_empty()) {
 				cout << "derivate empty -> remove interval" << endl;
-				getchar();
+				// getchar();
 				break;
 			}
 			// contract Newton from left
@@ -542,7 +542,7 @@ protected:
 			if(point_t >= inter.ub()) {
 				//remover y salir
 				cout << "remove and continue" << endl;
-				getchar();
+				// getchar();
 				continue;
 			} else {
 				//se contracta el intervalo
@@ -593,7 +593,7 @@ protected:
 			if(point_t <= inter.lb()) {
 				//TODO: remover y salir
 				cout << "remove and break" << endl;
-				getchar();
+				// getchar();
 				continue;
 			} else {
 				inter = Interval(inter.lb(), point_t);
@@ -606,8 +606,10 @@ protected:
 				pila.push(bsc.first);
 				pila.push(bsc.second);
 			}
-			getchar();
+			// getchar();
 		}
+
+		cout << "optim Newton:" << lb <<  endl;
 
 		double step=1e-5;
 		double tinf=0.0;
@@ -640,7 +642,7 @@ protected:
 
 		cout << "optim:" << d.second <<  endl;
 
-
+		getchar();
 	}
 
 
