@@ -23,6 +23,7 @@
 #include <map>
 #include <list>
 #include <stack>
+#include <math.h>
 //#include "ibex_DistanceSorted.h"
 
 using namespace std;
@@ -520,8 +521,11 @@ protected:
 				if(0 == derivate.ub())
 					point_t = POS_INFINITY;
 				else{
-					//TODO: epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
-					point_t = (lb + epsilon - point_c)/derivate.ub() + t_before;
+					// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
+					if(fabs(lb) < 1)
+						point_t = (lb + epsilon - point_c)/derivate.ub() + t_before;
+					else
+						point_t = (lb + fabs(lb)*epsilon - point_c)/derivate.ub() + t_before;
 					point_c = pf.eval(point_t).ub();
 				}
 				cout << "point_t: " << point_t << endl;
@@ -572,7 +576,11 @@ protected:
 				if(0 == derivate.lb())
 					point_t = NEG_INFINITY;
 				else{
-					point_t = t_before - (lb + epsilon - point_c)/derivate.lb();
+					// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
+					if(fabs(lb) < 1)
+						point_t = t_before - (lb + epsilon - point_c)/derivate.lb();
+					else
+						point_t = t_before - (lb + fabs(lb)*epsilon - point_c)/derivate.lb();
 					point_c = pf.eval(point_t).ub();
 				}
 
