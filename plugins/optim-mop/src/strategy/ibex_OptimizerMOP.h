@@ -441,6 +441,8 @@ protected:
 	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
 	 */
 	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
+		// TODO: ver cuando es conveniente realizar esto
+
 		Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
 		Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
 		Interval yb1=OptimizerMOP::eval_goal(goal1,xb,n);
@@ -456,6 +458,10 @@ protected:
 
 		Interval m = (yb1-ya1)/(yb2-ya2);
 		PFunction pf(goal1, goal2, m, xa, xb);
+
+		// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
+		Interval max_c;
+		max_c = ya2 - m*yb1;
 
 		cout << "m: " << m << endl;
 		Interval derivate;
@@ -500,7 +506,7 @@ protected:
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
 
-			while(point_t - t_before > error and point_t < inter.ub()) {
+			while(point_t - t_before > error and point_t < inter.ub() and point_c < max_c.ub()) {
 				t_before = point_t;
 
 				if(0 == derivate.ub())
@@ -535,7 +541,7 @@ protected:
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
 
-			while(t_before - point_t > error and point_t > inter.lb()) {
+			while(t_before - point_t > error and point_t > inter.lb() and point_c < max_c.ub()) {
 				t_before = point_t;
 
 				if(0 == derivate.lb())
@@ -606,6 +612,12 @@ protected:
 		cout << "optim:" << d.second <<  endl;
 		*/
 
+		// TODO: obtener los dos puntos para generar la recta obtenida con el metodo de Newton
+		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
+		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
+		cout << "optim Newton: " << lb <<  endl;
+		cout << "m: " << m.ub() << endl;
+		cout << "max c: " << max_c.ub() << endl;
 
 
 		getchar();
