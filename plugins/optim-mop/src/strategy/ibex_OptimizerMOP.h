@@ -463,13 +463,7 @@ protected:
 
 		double t1=0.0, t2=0.5, t3=1.0;
 		double epsilon = 0.0003;
-		cout << "c (t=" << t1 << "): " << pf.eval(t1) << endl;
-		cout << "c (t=" << t2 << "): " << pf.eval(t2) << endl;
-		cout << "c (t=" << t3 << "): " << pf.eval(t3) << endl;
 		double lb = NEG_INFINITY;
-
-		cout << "lb: " << lb << endl;
-
 
 		stack<Interval> pila;
 		pila.push(Interval(0,1));
@@ -494,26 +488,17 @@ protected:
 			if(lb_interval > lb) lb = lb_interval;
 
 			derivate = pf.deriv(inter);
-			cout << "derivate (min, max): " << derivate << endl;
 
 			// if derivate is empty the segment should not be created
 			if(derivate.is_empty()) {
 				cout << "derivate empty -> remove interval" << endl;
-				// getchar();
+				getchar();
 				break;
 			}
 			// contract Newton from left
 			point_t = inter.lb();
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
-			cout << "pendiente: " << derivate.ub() << endl;
-			cout << "lb: " << lb << endl;
-			cout << "point: (" << point_t << ", " << point_c << ")" << endl;
-			cout << "while" << endl;
-			cout << "point_t: " << point_t << endl;
-			cout << "point_c: " << point_c << endl;
-			cout << "lb: " << lb << endl;
-			cout << "pendiente: " << derivate.ub() << endl;
 
 			while(point_t - t_before > error and point_t < inter.ub()) {
 				t_before = point_t;
@@ -528,47 +513,27 @@ protected:
 						point_t = (lb + fabs(lb)*epsilon - point_c)/derivate.ub() + t_before;
 					point_c = pf.eval(point_t).ub();
 				}
-				cout << "point_t: " << point_t << endl;
-				cout << "point_c: " << point_c << endl;
-				cout << "lb: " << lb << endl;
-				cout << "pendiente: " << derivate.ub() << endl;
-				// TODO: verificar si sucede este error en algun caso
-				if(point_c > lb+epsilon) {
-					cout << "ERRROR: point right is greater than lb" << endl;
+				// error en caso de que c sea mayor al lb+epsilon
+				if(point_t < inter.ub() and point_c > lb+epsilon) {
+					cout << "ERRROR LEFT: point right is greater than lb" << endl;
+					getchar();
+					exit(-1);
 				}
 			}
 
-			cout << inter << endl;
-			cout << "point_t: " << point_t << endl;
-			cout << "point_c: " << point_c << endl;
 
 			// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
 			if(point_t >= inter.ub()) {
-				//remover y salir
-				cout << "remove and continue" << endl;
-				// getchar();
 				continue;
 			} else {
 				//se contracta el intervalo
 				inter = Interval(point_t, inter.ub());
 			}
 
-			cout << inter << endl;
-
 			// contract Newton from right
 			point_t = inter.ub();
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
-			cout << "pendiente: " << derivate.lb() << endl;
-			cout << "lb: " << lb << endl;
-			cout << "point: (" << point_t << ", " << point_c << ")" << endl;
-			cout << "while" << endl;
-			cout << "point_t: " << point_t << endl;
-			cout << "point_c: " << point_c << endl;
-			cout << "lb: " << lb << endl;
-			cout << "pendiente: " << derivate.lb() << endl;
-			//TODO: verificar como afecta los resultados cuando la pendiente es 0 o infinita
-			// si la pendiente cumple con los maximos y minimos permitidos
 
 			while(t_before - point_t > error and point_t > inter.lb()) {
 				t_before = point_t;
@@ -584,29 +549,20 @@ protected:
 					point_c = pf.eval(point_t).ub();
 				}
 
-				cout << "point_t: " << point_t << endl;
-				cout << "point_c: " << point_c << endl;
-				cout << "lb: " << lb << endl;
-				cout << "pendiente: " << derivate.lb() << endl;
-				// TODO: verificar si sucede este error en algun caso
-				if(point_c > lb+epsilon) {
-					cout << "ERRROR: point right is greater than lb" << endl;
+				// error en caso de que c sea mayor al lb+epsilon
+				if(point_t > inter.lb() and point_c > lb+epsilon) {
+					cout << "ERRROR RIGHT: point right is greater than lb" << endl;
+					getchar();
+					exit(-1);
 				}
 			}
 
-			cout << inter << endl;
-			cout << "point_t: " << point_t << endl;
-			cout << "point_c: " << point_c << endl;
 			// Se remueve
 			if(point_t <= inter.lb()) {
-				//TODO: remover y salir
-				cout << "remove and break" << endl;
-				// getchar();
 				continue;
 			} else {
 				inter = Interval(inter.lb(), point_t);
 			}
-			cout << inter << endl;
 
 			// bisect interval and push in stack
 			if(inter.is_bisectable()) {
@@ -614,11 +570,12 @@ protected:
 				pila.push(bsc.first);
 				pila.push(bsc.second);
 			}
-			// getchar();
 		}
 
 		cout << "optim Newton:" << lb <<  endl;
 
+		/*
+		// step method
 		double step=1e-5;
 		double tinf=0.0;
 		double min = POS_INFINITY;
@@ -646,9 +603,10 @@ protected:
 
 		pair <double,double> d = optimize_pf(pf, false);
 
-
-
 		cout << "optim:" << d.second <<  endl;
+		*/
+
+
 
 		getchar();
 	}
