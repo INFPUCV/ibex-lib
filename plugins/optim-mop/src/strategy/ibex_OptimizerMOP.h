@@ -474,17 +474,23 @@ protected:
 		stack<Interval> pila;
 		pila.push(Interval(0,1));
 		Interval inter, left, right;
-		double point_t, point_c, t_before, error, min_interval;
+		double point_t, point_c, t_before, error, min_interval, max_diam;
 		Interval y_r, y_c, y_l;
 		double lb_interval;
 		// global values
-		error = 1e-5;
-		min_interval = 1e-6;
+		error = 1e-4;
+		min_interval = 1e-4;
+		max_diam = 1e-3;
 
-		while(!pila.empty()) {
+		// pila
+		int iter = 1;
+		while(!pila.empty() and lb < max_c.ub()) {
 			inter = pila.top();
 			pila.pop();
-			cout << inter << endl;
+
+			cout << "iteracion " << iter << " pila " << pila.size() << endl;
+			iter++;
+
 			// lowerbounding
 			y_r=pf.eval(inter.lb());
 			y_c=pf.eval(inter.mid());
@@ -506,7 +512,7 @@ protected:
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
 
-			while(point_t - t_before > error and point_t < inter.ub() and point_c < max_c.ub()) {
+			while(point_t - t_before > error and point_t < inter.ub()) {
 				t_before = point_t;
 
 				if(0 == derivate.ub())
@@ -541,7 +547,7 @@ protected:
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
 
-			while(t_before - point_t > error and point_t > inter.lb() and point_c < max_c.ub()) {
+			while(t_before - point_t > error and point_t > inter.lb()) {
 				t_before = point_t;
 
 				if(0 == derivate.lb())
@@ -571,7 +577,7 @@ protected:
 			}
 
 			// bisect interval and push in stack
-			if(inter.is_bisectable()) {
+			if(inter.is_bisectable() and inter.diam() > max_diam) {
 				pair<Interval,Interval> bsc = inter.bisect(0.5);
 				pila.push(bsc.first);
 				pila.push(bsc.second);
@@ -612,12 +618,33 @@ protected:
 		cout << "optim:" << d.second <<  endl;
 		*/
 
-		// TODO: obtener los dos puntos para generar la recta obtenida con el metodo de Newton
-		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
-		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
+		// obtiene los dos puntos para generar la recta obtenida con el metodo de Newton
+		cout << "ya1, ya2: " << ya2.ub() << "," << ya1.ub() << endl;
+		cout << "yb1, yb2: " << yb2.ub() << "," << yb1.ub() << endl;
 		cout << "optim Newton: " << lb <<  endl;
 		cout << "m: " << m.ub() << endl;
 		cout << "max c: " << max_c.ub() << endl;
+
+		Interval x1, y1, x2, y2;
+		// si lb es 0 la recta pasa por ya y yb
+		if(lb == 0) {
+			x1 = ya2;
+			y1 = ya1;
+			x2 = yb2;
+			y2 = yb1;
+			cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
+			cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
+		} else if(lb < max_c.ub()) { // si c < max_c existe una recta
+			// primer punto (x1, y1)
+			y1 = ya1;
+			x1 = (y1 - lb)/m;
+			// segundo punto (x2, y2)
+			x2 = yb2;
+			y2 = m*x2 + lb;
+			cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
+			cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
+
+		}
 
 
 		getchar();
