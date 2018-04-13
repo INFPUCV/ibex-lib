@@ -31,6 +31,7 @@ public:
 	 * \brief writes a file (output.txt) to be read by the python3 program plot.py
 	 */
 	static void offline_plot(Cell* current, map< pair <double, double>, IntervalVector >& NDS);
+	static void offline_plot(Cell* current, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS);
 
 	/**
 	* write line commands to be interpreted by the python3 program plot.py

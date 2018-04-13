@@ -33,6 +33,7 @@ bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
 
 map< pair <double, double>, IntervalVector > OptimizerMOP::NDS;
+map< pair <double, double>, IntervalVector, struct sorty2 > OptimizerMOP::NDS2;
 
 PFunction::PFunction(const Function& f1, const Function& f2, const Interval& m, const IntervalVector& xa, const IntervalVector& xb):
 		f1(f1),f2(f2), m(m), xa(xa), xb(xb) {}
@@ -547,8 +548,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			buffer.push(new_cells.second);
 
 			if(_plot) py_Plotter::plot_add_box(new_cells.second);
-
-
 
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
 			time = timer.get_time();

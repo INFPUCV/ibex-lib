@@ -38,6 +38,19 @@ struct sorty{
 	}
 };
 
+
+/**
+ * comparation function for sorting NDS2 by increasing x and decreasing by y
+ */
+struct sorty2{
+	bool operator()(const pair<double,double> p1, const pair<double,double> p2){
+		if(p1.first != p2.first)
+			return p1.first<p2.first;
+		return p1.second>p2.second;
+
+	}
+};
+
 /**
  * Parameterized function f(t) ← f1(xt) - m*f2(xt)
  * xt = xa + t*(xb-xa)
@@ -437,10 +450,166 @@ protected:
 
 	}
 
+	void addPointtoNDS(pair< double, double> eval) {
+		std::map<pair<double, double>, IntervalVector>::iterator it1 = --NDS2.lower_bound(eval);
+		// std::map<pair<double, double>, IntervalVector>::iterator it1 = NDS2.begin();
+		pair< double, double> point1, point2;
+		point1 = it1->first;
+		it1++;
+		point2 = it1->first;
+
+		cout << "punto (" << eval.first << "," << eval.second << ")" << endl;
+		// Se comprueba que no sea dominado por el anterior al lower_bound
+		if(it1->first == eval or (it1->first.first <= eval.first and it1->first.second <= eval.second) ) {
+			cout << "punto dominado ant_lower_bound por (" << it1->first.first
+					<< "," << it1->first.second << ")" << endl;
+			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+			getchar();
+			return;
+		}
+		// Se comprueba que no sea dominado por el lower_bound
+		it1++;
+		if(it1->first == eval or (it1->first.first <= eval.first and it1->first.second <= eval.second) ) {
+			cout << "punto dominado lower_bound por (" << it1->first.first
+					<< "," << it1->first.second << ")" << endl;
+			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+			getchar();
+			return;
+		}
+
+		// comprobar que no este dominado por la recta que forma los dos puntos anteriores
+		// solo se comprueba si Eval no domina a los puntos
+		if(!(eval.first <= it1->first.first and eval.second <= it1->first.second ) and
+				!(eval.first <= it1->first.first and eval.second <= it1->first.second)) {
+			//cout << "point 1: (" << point1.first << "," << point1.second << ")" << endl;
+			//cout << "point 2: (" << point2.first << "," << point2.second << ")" << endl;
+			//pendiente de los dos puntos
+			float m = (point2.second-point1.second)/(point2.first-point1.first);
+			//cout << "pendiente = " << m << endl;
+			// se obtiene el c de la funcion de los puntos
+			float c = point1.second - m*point1.first;
+			//cout << "c = " << c << endl;
+			// se obtiene el c del nuevo punto
+			float cEval = eval.second - m*eval.first;
+			//cout << "cEval = " << cEval << endl;
+			if(cEval > c) {
+				cout << "punto dominado recta por (" << point1.first
+						<< "," << point1.second << ") y (" << point2.first
+						<< "," << point2.second << ")" << endl;
+				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				getchar();
+				return;
+			}
+			cout << "eval no domina a los puntos (" << point1.first
+						<< "," << point1.second << ") y (" << point2.first
+						<< "," << point2.second << ")" << endl;
+		} else {
+			cout << "eval si domina a los puntos (" << point1.first
+						<< "," << point1.second << ") y (" << point2.first
+						<< "," << point2.second << ")" << endl;
+		}
+
+
+		IntervalVector vec(n);
+		//NDS2.insert(make_pair(eval, vec));
+		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		cout << "punto no dominado" << endl;
+
+		// insertar en NDS2
+		// Agregar a la lista del DS
+		//- se revisa si it1 es el comienzo, si no lo es se retrocede uno
+		//- se revisa si es dominado el it1, en el caso que lo sea se elimina y se guarda en el set
+		//- lo anterior se realiza hasta que el eje y del it1 sea menor que el eval
+
+		it1 = --NDS2.lower_bound(eval); // Se llega al nodo izquierdo del nodo eval
+		if(it1 != NDS2.begin()) it1--; // se retrocede 1 si no es el primero
+		// agrega todos los puntos dominados por el punto a DS2 y los elimina de NDS2
+		std::map<pair<double, double>, IntervalVector>::iterator aux;
+		static map< pair <double, double>, IntervalVector, sorty2 > DS2;
+		std::map<pair<double, double>, IntervalVector>::iterator beginit, endit;
+		std::map<pair<double, double>, IntervalVector>::iterator it2 = --NDS2.lower_bound(eval);
+		for(;it1 != NDS2.end();) {
+			// termina cuando it1 no este dentro de los rangos dominados del punto a agregar
+			if(it1->first.second < eval.second) break;
+			// comprueba si esta dominado el punto para agregarlo a DS2
+			if(eval.first <= it1->first.first and eval.second <= it1->first.second) {
+				cout << "punto (" << it1->first.first
+							<< "," << it1->first.second << ")" << endl;
+				aux = it1;
+				++aux;
+				DS2.insert(*it1);
+				NDS2.erase(it1);
+				it1 = aux;
+			} else ++it1;
+		}
+		cout << "Dominate points " << DS2.size() << endl;
+		if(DS2.size() > 0) {
+			for(it1 =DS2.begin();it1 != DS2.end();++it1) {
+					cout << "punto (" << it1->first.first
+								<< "," << it1->first.second << ")" << endl;
+				}
+			beginit = DS2.begin();
+			endit = --DS2.end();
+		} else {
+			endit = it2;
+			it2++;
+			beginit = it2;
+		}
+
+		cout << "(" << beginit->first.first << "," << beginit->first.second << ")" << endl;
+		cout << "(" << endit->first.first << "," << endit->first.second << ")" << endl;
+
+
+		getchar();
+	}
+
 	/**
 	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
 	 */
 	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
+		cout << "init test" << endl;
+		NDS2.clear();
+		//the first point
+		NDS2.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
+		//the middle point
+		// NDS2.insert(make_pair(make_pair(POS_INFINITY,POS_INFINITY), Vector(1)));
+		//the last point
+		// NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
+
+
+		NDS2.insert(make_pair(make_pair(2.0 ,POS_INFINITY), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(2.0 ,20), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(7.0 ,20), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(7.0 ,14.0), Vector(1)));
+
+		// NDS2.insert(make_pair(make_pair(14.0 ,14.0), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(14.0 ,7.0), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(20.0 ,7.0), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(20.0 ,2.0), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(POS_INFINITY ,2.0), Vector(1)));
+
+		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
+
+		pair< double, double> evalTst;
+		evalTst = make_pair(11.0 , 11.0);
+		addPointtoNDS(evalTst);
+		evalTst = make_pair(8.0 , 8.0);
+		addPointtoNDS(evalTst);
+		evalTst = make_pair(7.0 , 7.0);
+		addPointtoNDS(evalTst);
+		evalTst = make_pair(6.0 , 1.3);
+		addPointtoNDS(evalTst);
+
+		cout << "end test" << endl;
+		getchar();
+
 		// TODO: ver cuando es conveniente realizar esto
 
 		Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
@@ -529,8 +698,16 @@ protected:
 				if(point_t < inter.ub() and point_c > lb+epsilon) {
 					cout << "ERRROR LEFT: point right is greater than lb" << endl;
 					getchar();
-					exit(-1);
+					break;
+					//exit(-1);
 				}
+			}
+
+			if(point_t < inter.ub() and point_c > lb+epsilon) {
+				cout << "ERRROR LEFT: point right is greater than lb" << endl;
+				getchar();
+				break;
+				//exit(-1);
 			}
 
 
@@ -628,26 +805,147 @@ protected:
 		Interval x1, y1, x2, y2;
 		// si lb es 0 la recta pasa por ya y yb
 		if(lb == 0) {
-			x1 = ya2;
-			y1 = ya1;
-			x2 = yb2;
-			y2 = yb1;
-			cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
-			cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
+			y1 = ya2;
+			x1 = ya1;
+			y2 = yb2;
+			x2 = yb1;
+			// cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
+			// cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
 		} else if(lb < max_c.ub()) { // si c < max_c existe una recta
 			// primer punto (x1, y1)
-			y1 = ya1;
-			x1 = (y1 - lb)/m;
+			x1 = ya1;
+			y1 = (x1 - lb)/m;
 			// segundo punto (x2, y2)
-			x2 = yb2;
-			y2 = m*x2 + lb;
-			cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
-			cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
+			y2 = yb2;
+			x2 = m*y2 + lb;
 
 		}
 
-
+		if(_plot) py_Plotter::offline_plot(NULL, NDS);
+		cout << "Sin NDS2 plot NDS" << endl;
 		getchar();
+		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		cout << "Sin NDS2 plot NDS2" << endl;
+		getchar();
+
+		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
+		// guarda punto 1 en el set
+		IntervalVector vec(n);
+		bool new_ub=false;
+		pair< double, double> eval1 = make_pair(ya1.ub(), ya2.ub());
+		/**** end NDS correction ****/
+		bool domine=false;
+		std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval1);
+		if (!is_dominated(eval1)) {
+			for(; it2!=NDS.end(); ){
+
+				if(eval1.second > it2->first.second) break;
+				std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
+				++aux;
+				if(_plot)	py_Plotter::plot_del_ub(it2->first);
+
+				NDSy.erase(it2->first);
+				NDS.erase(it2);
+				it2 = aux;
+				domine=true;
+			}
+			cout << "domine " << domine << endl;
+
+			//the point is inserted in NDS only if its distance to the neighbor points is greater than (abs_eps/2.0)
+			if(domine || std::min(it2->first.first - eval1.first,  eval1.second - it2->first.second) >= _min_ub_dist*eps){
+				//it is not dominated and we remove the new dominated points
+
+				if(eval1.first < y1_ub.first) y1_ub=eval1;
+				if(eval1.second < y2_ub.second) y2_ub=eval1;
+
+				NDS.insert(make_pair(eval1, vec));
+				NDSy.insert(make_pair(eval1, vec));
+				cout << "passed if" << endl;
+				new_ub = true;
+			}else{
+				it2--;
+				if( std::min(eval1.first - it2->first.first,  it2->first.second - eval1.second) >= _min_ub_dist*eps ){
+					//it is not dominated and we remove the new dominated points
+
+					if(eval1.first < y1_ub.first) y1_ub=eval1;
+					if(eval1.second < y2_ub.second) y2_ub=eval1;
+
+					NDS.insert(make_pair(eval1, vec));
+					NDSy.insert(make_pair(eval1, vec));
+					cout << "passed else" << endl;
+					new_ub = true;
+				}
+			}
+			if(new_ub) cout << "agregado " << endl;
+		}
+
+
+
+		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
+
+		pair< double, double> eval2 = make_pair(yb1.ub(), yb2.ub());
+		/**** end NDS correction ****/
+		if (!is_dominated(eval2)) {
+			domine=false;
+			it2 = NDS.lower_bound(eval2);
+			for(; it2!=NDS.end(); ){
+
+				if(eval2.second > it2->first.second) break;
+				std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
+				++aux;
+				if(_plot)	py_Plotter::plot_del_ub(it2->first);
+
+				NDSy.erase(it2->first);
+				NDS.erase(it2);
+				it2 = aux;
+				domine=true;
+			}
+			//the point is inserted in NDS only if its distance to the neighbor points is greater than (abs_eps/2.0)
+			if(domine || std::min(it2->first.first - eval2.first,  eval2.second - it2->first.second) >= _min_ub_dist*eps){
+				//it is not dominated and we remove the new dominated points
+
+				if(eval2.first < y1_ub.first) y1_ub=eval2;
+				if(eval2.second < y2_ub.second) y2_ub=eval2;
+
+				NDS.insert(make_pair(eval2, vec));
+				NDSy.insert(make_pair(eval2, vec));
+				//cout << "passed" << endl;
+				new_ub = true;
+			}else{
+				it2--;
+				if( std::min(eval2.first - it2->first.first,  it2->first.second - eval2.second) >= _min_ub_dist*eps ){
+					//it is not dominated and we remove the new dominated points
+
+					if(eval2.first < y1_ub.first) y1_ub=eval2;
+					if(eval2.second < y2_ub.second) y2_ub=eval2;
+
+					NDS.insert(make_pair(eval2, vec));
+					NDSy.insert(make_pair(eval2, vec));
+					//cout << "passed" << endl;
+					new_ub = true;
+				}
+			}
+			if(new_ub) cout << "agregado " << endl;
+		}
+
+
+		cout << "Se agrega una recta o punta---" << endl;
+		if(lb == 0 or (lb != 0 and lb < max_c.ub()) ) {
+			if(x1.ub() == x2.ub() and  y1.ub() == y2.ub()) {
+				cout << "point: " << x1.ub() << "," << y1.ub() << endl;
+			}else {
+				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
+				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
+			}
+		}
+
+		if(_plot) py_Plotter::offline_plot(NULL, NDS);
+		cout << "Sin NDS2 plot NDS" << endl;
+		getchar();
+		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		cout << "Sin NDS2 plot NDS2" << endl;
+		getchar();
+
 	}
 
 
@@ -673,6 +971,8 @@ private:
 	/** The current non-dominated set sorted by decreasing y */
 	map< pair <double, double>, IntervalVector, sorty > NDSy;
 
+	/** The current non-dominated set sorted by increasing x */
+	static map< pair <double, double>, IntervalVector, sorty2 > NDS2;
 
 	/* CPU running time of the current optimization. */
 	double time;
