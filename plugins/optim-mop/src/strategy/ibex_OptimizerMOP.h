@@ -290,7 +290,6 @@ public:
 	static IntervalVector deriv_goal(const Function& goal, const IntervalVector& x, int n);
 
 protected:
-
 	/**
 	 * The contraction using y+cy
 	 */
@@ -464,7 +463,7 @@ protected:
 			cout << "punto dominado ant_lower_bound por (" << it1->first.first
 					<< "," << it1->first.second << ")" << endl;
 			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-			getchar();
+			//getchar();
 			return;
 		}
 		// Se comprueba que no sea dominado por el lower_bound
@@ -473,7 +472,7 @@ protected:
 			cout << "punto dominado lower_bound por (" << it1->first.first
 					<< "," << it1->first.second << ")" << endl;
 			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-			getchar();
+			//getchar();
 			return;
 		}
 
@@ -493,27 +492,24 @@ protected:
 			float cEval = eval.second - m*eval.first;
 			//cout << "cEval = " << cEval << endl;
 			if(cEval > c) {
-				cout << "punto dominado recta por (" << point1.first
+				cout << "eval dominado por recta (" << point1.first
 						<< "," << point1.second << ") y (" << point2.first
 						<< "," << point2.second << ")" << endl;
 				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-				getchar();
+				//getchar();
 				return;
 			}
-			cout << "eval no domina a los puntos (" << point1.first
+			cout << "eval no es dominado por recta (" << point1.first
 						<< "," << point1.second << ") y (" << point2.first
 						<< "," << point2.second << ")" << endl;
 		} else {
-			cout << "eval si domina a los puntos (" << point1.first
+			cout << "eval domina uno de los puntos (" << point1.first
 						<< "," << point1.second << ") y (" << point2.first
 						<< "," << point2.second << ")" << endl;
 		}
 
 
 		IntervalVector vec(n);
-		//NDS2.insert(make_pair(eval, vec));
-		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-		cout << "punto no dominado" << endl;
 
 		// insertar en NDS2
 		// Agregar a la lista del DS
@@ -525,7 +521,7 @@ protected:
 		if(it1 != NDS2.begin()) it1--; // se retrocede 1 si no es el primero
 		// agrega todos los puntos dominados por el punto a DS2 y los elimina de NDS2
 		std::map<pair<double, double>, IntervalVector>::iterator aux;
-		static map< pair <double, double>, IntervalVector, sorty2 > DS2;
+		std::map< pair <double, double>, IntervalVector, sorty2 > DS2;
 		std::map<pair<double, double>, IntervalVector>::iterator beginit, endit;
 		std::map<pair<double, double>, IntervalVector>::iterator it2 = --NDS2.lower_bound(eval);
 		for(;it1 != NDS2.end();) {
@@ -533,7 +529,7 @@ protected:
 			if(it1->first.second < eval.second) break;
 			// comprueba si esta dominado el punto para agregarlo a DS2
 			if(eval.first <= it1->first.first and eval.second <= it1->first.second) {
-				cout << "punto (" << it1->first.first
+				cout << "punto dominado (" << it1->first.first
 							<< "," << it1->first.second << ")" << endl;
 				aux = it1;
 				++aux;
@@ -542,10 +538,17 @@ protected:
 				it1 = aux;
 			} else ++it1;
 		}
-		cout << "Dominate points " << DS2.size() << endl;
+		cout << "Cantidad de puntos dominados " << DS2.size() << endl;
+
 		if(DS2.size() > 0) {
+
+			for(it1 =NDS2.begin();it1 != NDS2.end();++it1) {
+					cout << "puntos no dominados (" << it1->first.first
+								<< "," << it1->first.second << ")" << endl;
+				}
+
 			for(it1 =DS2.begin();it1 != DS2.end();++it1) {
-					cout << "punto (" << it1->first.first
+					cout << "puntos dominados (" << it1->first.first
 								<< "," << it1->first.second << ")" << endl;
 				}
 			beginit = DS2.begin();
@@ -556,17 +559,138 @@ protected:
 			beginit = it2;
 		}
 
-		cout << "(" << beginit->first.first << "," << beginit->first.second << ")" << endl;
-		cout << "(" << endit->first.first << "," << endit->first.second << ")" << endl;
+
+		// se obtienen los 2 nuevos puntos
+		it2 = --NDS2.lower_bound(eval);
+		it1 = it2++;
 
 
-		getchar();
+		cout << "recta superior " << endl;
+		cout << "it1 (" << it1->first.first << "," << it1->first.second << ")" << endl;
+		cout << "beginit (" << beginit->first.first << "," << beginit->first.second << ")" << endl;
+		cout << "recta inferior " << endl;
+		cout << "it2 (" << it2->first.first << "," << it2->first.second << ")" << endl;
+		cout << "endit (" << endit->first.first << "," << endit->first.second << ")" << endl;
+
+		pair<double, double> eval2;
+
+		// cout << "eval (" << eval.first << "," << eval.second << ")" << endl;
+		eval2 = make_pair(eval.first, POS_INFINITY);
+		pair<double, double> intersection1 = pointIntersection(it1->first, beginit->first, eval, eval2);
+		cout << "intersection1 (" << intersection1.first << "," << intersection1.second << ")" << endl;
+		eval2 = make_pair(POS_INFINITY, eval.second);
+		pair<double, double> intersection2 = pointIntersection(it2->first, endit->first, eval, eval2);
+		cout << "intersection2 (" << intersection2.first << "," << intersection2.second << ")" << endl;
+		// se agregan el punto y los dos obtenidos anteriormente
+		NDS2.insert(make_pair(eval, vec));
+		NDS2.insert(make_pair(intersection1, vec));
+		NDS2.insert(make_pair(intersection2, vec));
+
+		//NDS2.insert(make_pair(eval, vec));
+		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		cout << "addPointtoNDS puntos no dominados " << NDS2.size() << endl;
+		// getchar();
 	}
+	//******************************************************************************************************************
+	//Intersecciones y puntos
+	/**
+	 * @param v10 punto inicial del primer segmento
+	 * @param v11 punto final del primer segmento
+	 * @param v20 punto inicial del segnundo segmento
+	 * @param v21 punto final del segundo segmento
+	 * @return Punto o vector de interseccion entre los segmentos evaluados,
+	 *         retorna null si no hay interseccion entre los segmentos
+	 */
+	pair<double, double> pointIntersection(
+			pair<double, double> v10, pair<double, double> v11,
+			pair<double, double> v20, pair<double, double> v21){
+		pair<double, double> interseccion = make_pair(0.0 ,0.0);
+
+		double m = getSlopeSegment(v10 , v11);
+		cout << "m " << m << endl;
+		double n = getSlopeSegment(v20, v21);
+		double c = v10.second - v10.first * m;
+		double d = v20.second - v20.first * n;
+
+		/*
+		cout << "v10 (" << v10.first << "," << v10.second << ")" << endl;
+		cout << "v11 (" << v11.first << "," << v11.second << ")" << endl;
+		cout << "v20 (" << v20.first << "," << v20.second << ")" << endl;
+		cout << "v21 (" << v21.first << "," << v21.second << ")" << endl;
+		cout << v10.second << " " << v10.first << " " << m << endl;
+		cout << "c " << c << " d " << d << endl;
+		*/
+
+		//Cuando el segmento es vertical su pendiente es infinito
+		if(m == POS_INFINITY and n == 0) {
+			cout << "1111" << endl;
+			if((v20.first <= v10.first and v10.first <= v21.first) or
+					(v21.first <= v10.first and v10.first <= v20.first))
+				interseccion.first = v10.first;
+			if((v10.second <= v20.second and v20.second <= v11.second) or
+					(v11.second <= v20.second and v20.second <= v10.second))
+				interseccion.second = v20.second;
+		}
+		else if (m == 0 and n == POS_INFINITY){
+			cout << "22222" << endl;
+			if((v10.first <= v20.first and v20.first <= v11.first) or
+					(v11.first <= v20.first and v20.first <= v10.first))
+				interseccion.first = v20.first;
+			if((v20.second <= v10.second and v10.second <= v21.second) or
+					(v21.second <= v10.second and v10.second <= v20.second))
+				interseccion.second = v10.second;
+		}
+		else if (v11.first - v10.first == 0){
+			cout << "33333" << endl;
+			interseccion.first = v11.first;
+			interseccion.second = n*v11.first + d;
+		}
+		//Cuando el segmento es vertical su pendiente es infinito
+		else if (v21.first - v20.first == 0){
+			cout << "444" << endl;
+			cout << "m " << m << " v21.first " << v21.first << endl;
+			interseccion.first = v21.first;
+			interseccion.second = m*v21.first + c;
+		}
+		else{
+			cout << "5555" << endl;
+			interseccion.first = (d - c) / (m - n);
+			interseccion.second = m*interseccion.first + c;
+		}
+		return interseccion;
+	}
+
+    /**
+     * Obtiene la pendiente del segmento
+     * @param first  - Vector inicial del segmento
+     * @return              - Rectorna la pendiente del segmento
+     */
+    double getSlopeSegment(pair<double, double> first, pair<double, double> last){
+        double slope1, slope2, Ffirst, Fsecond, Lfirst, Lsecond;
+    	cout << "first " << first.first << " " << first.second << endl;
+    	cout << "last " << last.first << " " << last.second << endl;
+        if((last.second == NEG_INFINITY and first.second == NEG_INFINITY) or
+        		(last.second == POS_INFINITY and first.second == POS_INFINITY))
+        	return 0;
+        if((last.first == NEG_INFINITY and first.first == NEG_INFINITY) or
+        		(last.first == POS_INFINITY and first.first == POS_INFINITY))
+        	return POS_INFINITY;
+        cout << (last.first == first.first) << endl;
+        if(last.second == first.second) return 0;
+        if(last.first == first.first) return POS_INFINITY;
+        slope1 = last.second - first.second;
+        cout << slope1 << endl;
+        slope2 = last.first - first.first;
+        cout << slope2 << endl;
+        return slope1/slope2;
+
+    }
 
 	/**
 	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
 	 */
 	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
+		/*
 		cout << "init test" << endl;
 		NDS2.clear();
 		//the first point
@@ -597,6 +721,7 @@ protected:
 
 		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 
+
 		pair< double, double> evalTst;
 		evalTst = make_pair(11.0 , 11.0);
 		addPointtoNDS(evalTst);
@@ -609,6 +734,7 @@ protected:
 
 		cout << "end test" << endl;
 		getchar();
+		*/
 
 		// TODO: ver cuando es conveniente realizar esto
 
@@ -652,13 +778,19 @@ protected:
 		max_diam = 1e-3;
 
 		// pila
-		int iter = 1;
+		int iter = 0;
 		while(!pila.empty() and lb < max_c.ub()) {
 			inter = pila.top();
 			pila.pop();
 
-			cout << "iteracion " << iter << " pila " << pila.size() << endl;
 			iter++;
+			cout << "iteracion " << iter << " pila " << pila.size() << endl;
+			cout << "inter diam " << inter.diam() << " " << inter << endl;
+
+			derivate = pf.deriv(inter);
+			cout << "derivate " << derivate << endl;
+			if (derivate.is_empty()) break;
+			if (iter == 100000) getchar();
 
 			// lowerbounding
 			y_r=pf.eval(inter.lb());
@@ -668,12 +800,10 @@ protected:
 			lb_interval = max(max(y_r, y_c), y_l).ub();
 			if(lb_interval > lb) lb = lb_interval;
 
-			derivate = pf.deriv(inter);
-
 			// if derivate is empty the segment should not be created
 			if(derivate.is_empty()) {
 				cout << "derivate empty -> remove interval" << endl;
-				getchar();
+				//getchar();
 				break;
 			}
 			// contract Newton from left
@@ -681,13 +811,14 @@ protected:
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
 
-			while(point_t - t_before > error and point_t < inter.ub()) {
+			while(derivate.ub() > 0 and point_t - t_before > error and point_t < inter.ub()) {
 				t_before = point_t;
 
 				if(0 == derivate.ub())
 					point_t = POS_INFINITY;
 				else{
 					// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
+					cout << (fabs(lb) < 1) << endl;
 					if(fabs(lb) < 1)
 						point_t = (lb + epsilon - point_c)/derivate.ub() + t_before;
 					else
@@ -696,35 +827,41 @@ protected:
 				}
 				// error en caso de que c sea mayor al lb+epsilon
 				if(point_t < inter.ub() and point_c > lb+epsilon) {
-					cout << "ERRROR LEFT: point right is greater than lb" << endl;
-					getchar();
+					cout << "ERRROR LEFT: point right is greater than lb " << endl;
+					//getchar();
 					break;
 					//exit(-1);
 				}
+
+				cout << "point_t " << point_t << endl;
 			}
 
+			/*
 			if(point_t < inter.ub() and point_c > lb+epsilon) {
-				cout << "ERRROR LEFT: point right is greater than lb" << endl;
-				getchar();
+				cout << "ERRROR LEFT: point right is greater than lb " << endl;
+				//getchar();
 				break;
 				//exit(-1);
-			}
+			}*/
 
 
 			// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
 			if(point_t >= inter.ub()) {
 				continue;
 			} else {
-				//se contracta el intervalo
-				inter = Interval(point_t, inter.ub());
+				//se contracta el intervalo si point_t > 0
+				if(point_t > 0)
+					inter = Interval(point_t, inter.ub());
 			}
+
+			cout << "contract left inter diam " << inter.diam() << " " << inter << endl;
 
 			// contract Newton from right
 			point_t = inter.ub();
 			point_c = pf.eval(point_t).ub();
 			t_before = NEG_INFINITY;
 
-			while(t_before - point_t > error and point_t > inter.lb()) {
+			while(derivate.lb() < 0 and t_before - point_t > error and point_t > inter.lb()) {
 				t_before = point_t;
 
 				if(0 == derivate.lb())
@@ -741,8 +878,8 @@ protected:
 				// error en caso de que c sea mayor al lb+epsilon
 				if(point_t > inter.lb() and point_c > lb+epsilon) {
 					cout << "ERRROR RIGHT: point right is greater than lb" << endl;
-					getchar();
-					exit(-1);
+					//getchar();
+					break;
 				}
 			}
 
@@ -753,12 +890,17 @@ protected:
 				inter = Interval(inter.lb(), point_t);
 			}
 
+			cout << "contract right inter diam " << inter.diam() << " " << inter << endl;
+
 			// bisect interval and push in stack
 			if(inter.is_bisectable() and inter.diam() > max_diam) {
 				pair<Interval,Interval> bsc = inter.bisect(0.5);
+				cout << "bsc1 diam " << bsc.first.diam() << " " << bsc.first << endl;
+				cout << "bsc2 diam " << bsc.second.diam() << " " << bsc.second << endl;
 				pila.push(bsc.first);
 				pila.push(bsc.second);
 			}
+			cout << "iteracion " << iter << " pila " << pila.size() << endl;
 		}
 
 		cout << "optim Newton:" << lb <<  endl;
@@ -821,12 +963,12 @@ protected:
 
 		}
 
-		if(_plot) py_Plotter::offline_plot(NULL, NDS);
-		cout << "Sin NDS2 plot NDS" << endl;
-		getchar();
-		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-		cout << "Sin NDS2 plot NDS2" << endl;
-		getchar();
+		//if(_plot) py_Plotter::offline_plot(NULL, NDS);
+		//cout << "Sin NDS2 plot NDS" << endl;
+		//getchar();
+		//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		//cout << "Sin NDS2 plot NDS2" << endl;
+		//getchar();
 
 		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
 		// guarda punto 1 en el set
@@ -929,22 +1071,33 @@ protected:
 		}
 
 
+		cout << "Se agregan el punto la recta de X ---" << endl;
+		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
+		addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
+		//getchar();
+		cout << "Se agregan el punto la recta de X ---" << endl;
+		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
+		addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
+		//getchar();
+
 		cout << "Se agrega una recta o punta---" << endl;
 		if(lb == 0 or (lb != 0 and lb < max_c.ub()) ) {
 			if(x1.ub() == x2.ub() and  y1.ub() == y2.ub()) {
 				cout << "point: " << x1.ub() << "," << y1.ub() << endl;
+				addPointtoNDS(make_pair(x1.ub(), y1.ub()));
+				//getchar();
 			}else {
 				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
 			}
 		}
 
-		if(_plot) py_Plotter::offline_plot(NULL, NDS);
+		//if(_plot) py_Plotter::offline_plot(NULL, NDS);
 		cout << "Sin NDS2 plot NDS" << endl;
-		getchar();
-		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		//getchar();
+		//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 		cout << "Sin NDS2 plot NDS2" << endl;
-		getchar();
+		//getchar();
 
 	}
 

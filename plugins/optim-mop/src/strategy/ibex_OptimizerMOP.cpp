@@ -422,6 +422,15 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	//the last point
 	NDS.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 
+
+	NDS2.clear();
+	//the first point
+	NDS2.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
+	//the middle point
+	NDS2.insert(make_pair(make_pair(POS_INFINITY,POS_INFINITY), Vector(1)));
+	//the last point
+	NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
+
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
 
