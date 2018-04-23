@@ -298,6 +298,13 @@ protected:
 	void cy_contract2(Cell& c, list <pair <double,double> >& inpoints);
 
 	/**
+	 * \brief return a set of non-dominated segments of the box
+	 */
+	list<pair <double,double> > non_dominated_segments(IntervalVector& box);
+
+	double distance22(const Cell* c);
+
+	/**
 	 * \brief Contract and bound procedure for processing a box.
 	 *
 	 * <ul>
