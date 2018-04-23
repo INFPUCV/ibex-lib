@@ -315,6 +315,13 @@ protected:
 	 */
 	void dominance_peeler(IntervalVector& box);
 
+	/**
+	 * \brief The box is reduced using NDS2
+	 *
+	 * Adaptation of dominance_peeler to NDS2
+	 */
+	void dominance_peeler2(IntervalVector& box);
+
     /**
      *  \brief returns true if the facet orthogonal to the i direction of the box is feasible.
      *

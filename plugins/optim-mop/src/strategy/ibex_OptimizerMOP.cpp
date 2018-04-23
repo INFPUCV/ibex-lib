@@ -292,6 +292,49 @@ void OptimizerMOP::discard_generalized_monotonicty_test(IntervalVector& box, con
 }
 
 
+void OptimizerMOP::dominance_peeler2(IntervalVector& box){
+	/*=================Dominance peeler for NDS2 =========*/
+	double z1, z2;
+	pair <double, double> valueZ1;
+	pair <double, double> valueZ2;
+
+	valueZ1.first = NEG_INFINITY;
+	valueZ2.second = NEG_INFINITY;
+
+
+	map< pair <double, double>, IntervalVector >:: iterator ent1=NDS2.upper_bound(make_pair(box[n].lb(),NEG_INFINITY));
+	pair <double, double> v11 = ent1->first;
+    ent1--;
+    pair <double, double> v10 = ent1->first;
+
+	//TODO: interseccion conservativa: upperPointIntersection
+	valueZ1 = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
+	if(valueZ1.second <= box[n+1].lb() ){
+		box.set_empty();
+		return;
+	}
+
+	// contract c.box[n]
+	if(valueZ1.second < box[n+1].ub())
+		box[n+1] = Interval(box[n+1].lb(),valueZ1.second);
+
+
+	while(ent1->first.second > box[n+1].lb()) ent1++;
+	v11 = ent1->first;
+	ent1--;
+	v10 = ent1->first;
+
+	valueZ2 = pointIntersection( v10, v11, make_pair(v10.first,box[n+1].lb()),  make_pair(v11.first,box[n+1].lb()));
+
+	// contract c.box[n+1]
+	if(valueZ2.first < box[n].ub() ) {
+		box[n] = Interval(box[n].lb(), valueZ2.first);
+	}
+
+}
+
+
+
 void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	/*=================Dominance peeler ==================*/
 
