@@ -295,6 +295,8 @@ protected:
 	 */
 	void cy_contract(Cell& c);
 
+	void cy_contract2(Cell& c, list <pair <double,double> >& inpoints);
+
 	/**
 	 * \brief Contract and bound procedure for processing a box.
 	 *
@@ -319,8 +321,9 @@ protected:
 	 * \brief The box is reduced using NDS2
 	 *
 	 * Adaptation of dominance_peeler to NDS2
+	 * Returns the set of non-dominated segments in box
 	 */
-	void dominance_peeler2(IntervalVector& box);
+	void dominance_peeler2(IntervalVector &box, list <pair <double,double> >& inpoints);
 
     /**
      *  \brief returns true if the facet orthogonal to the i direction of the box is feasible.

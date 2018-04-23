@@ -292,47 +292,101 @@ void OptimizerMOP::discard_generalized_monotonicty_test(IntervalVector& box, con
 }
 
 
-void OptimizerMOP::dominance_peeler2(IntervalVector& box){
-	/*=================Dominance peeler for NDS2 =========*/
-	double z1, z2;
-	pair <double, double> valueZ1;
-	pair <double, double> valueZ2;
+void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints){
+	IntervalVector& box = c.box;
+	IntervalVector box3(box);
+	box3.resize(n+4);
 
-	valueZ1.first = NEG_INFINITY;
-	valueZ2.second = NEG_INFINITY;
+	pair <double, double> firstp=inpoints.front();
+	pair <double, double> lastp=inpoints.back();
 
+	//Pent of cy
+    if(firstp!=lastp)
+    	box3[n+3] = (lastp.first-firstp.first)/(firstp.second-lastp.second);
+    else
+		box3[n+3] = box[n].diam()/box[n+1].diam(); // a
 
+     //setting w_ub with the NDS points
+  	 double w_ub;
+
+      if(_cy_upper){
+		w_ub=NEG_INFINITY;
+		for(auto pmax:inpoints){
+			double ww;
+			if(_eps_contract)
+				ww = ( Interval(pmax.first)-eps + box3[n+3]*(Interval(pmax.second)-eps) ).ub();
+			else
+				ww = ( Interval(pmax.first) + box3[n+3]*(Interval(pmax.second)) ).ub();
+			if(w_ub < ww )  w_ub = ww;
+		}
+  	  }
+
+	box3[n+2] = Interval(NEG_INFINITY, w_ub); // w
+	//the contraction is performed
+	ctc.contract(box3);
+	c.get<CellMOP>().a = box3[n+3].mid();
+	c.get<CellMOP>().w_lb = box3[n+2].lb();
+
+	box=box3;
+	box.resize(n+2);
+}
+
+void OptimizerMOP::dominance_peeler2(IntervalVector& box, list <pair <double,double> >& inpoints){
+	/*=================Dominance peeler for NDS2 and cy =========*/
+
+	pair <double, double> firstp;
+	pair <double, double> lastp;
+
+	firstp.first = NEG_INFINITY;
+	lastp.second = NEG_INFINITY;
+
+	//first point in the box (v11)
 	map< pair <double, double>, IntervalVector >:: iterator ent1=NDS2.upper_bound(make_pair(box[n].lb(),NEG_INFINITY));
-	pair <double, double> v11 = ent1->first;
-    ent1--;
+	while(ent1->first.second > box[n].ub()) ent1++;
+	if(ent1->first.first > box[n].lb()) return; //no point in the box
+
+	pair <double, double> v11 = ent1->first; ent1--;
     pair <double, double> v10 = ent1->first;
 
 	//TODO: interseccion conservativa: upperPointIntersection
-	valueZ1 = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
-	if(valueZ1.second <= box[n+1].lb() ){
-		box.set_empty();
-		return;
-	}
+    firstp = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
+   	if(firstp.second <= box[n+1].lb() ){
+   		box.set_empty();
+   		return;
+   	}
 
 	// contract c.box[n]
-	if(valueZ1.second < box[n+1].ub())
-		box[n+1] = Interval(box[n+1].lb(),valueZ1.second);
+	if(firstp.second < box[n+1].ub())
+		box[n+1] = Interval(box[n+1].lb(),firstp.second);
+	else
+		firstp = pointIntersection( v10, v11, make_pair(v10.first,box[n+1].ub()),  make_pair(v11.first,box[n+1].ub()));
+
+	//valueZ1 is a point in the bounds lb(y1) or ub(y2) of the box delimiting the NDS in the box
+	inpoints.push_back(firstp);
+
+	//last point in the box (v21)
+	while(ent1->first.second > box[n+1].lb() || ent1->first.first > box[n].lb()){
+		inpoints.push_back(ent1->first);
+		ent1++;
+	}
+	pair <double, double> v21 = ent1->first;
+	ent1++;
+	pair <double, double> v20 = ent1->first;
 
 
-	while(ent1->first.second > box[n+1].lb()) ent1++;
-	v11 = ent1->first;
-	ent1--;
-	v10 = ent1->first;
+	lastp = pointIntersection( v20, v21, make_pair(v20.first,box[n+1].lb()),  make_pair(v21.first,box[n+1].lb()));
 
-	valueZ2 = pointIntersection( v10, v11, make_pair(v10.first,box[n+1].lb()),  make_pair(v11.first,box[n+1].lb()));
 
 	// contract c.box[n+1]
-	if(valueZ2.first < box[n].ub() ) {
-		box[n] = Interval(box[n].lb(), valueZ2.first);
-	}
+	if(lastp.first < box[n].ub() )
+		box[n] = Interval(box[n].lb(), lastp.first);
+	else
+		lastp = pointIntersection( v20, v21, make_pair(box[n].ub(),v21.second),  make_pair(box[n].ub(),v20.second));
+
+	//valueZ2 is a point in the bounds ub(y1) or lb(y2) of the box delimiting the NDS in the box
+	inpoints.push_back(lastp);
 
 }
-
 
 
 void OptimizerMOP::dominance_peeler(IntervalVector& box){
@@ -375,6 +429,7 @@ void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	}
 
 }
+
 
 void OptimizerMOP::cy_contract(Cell& c){
 	IntervalVector& box = c.box;
