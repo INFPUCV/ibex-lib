@@ -449,6 +449,73 @@ protected:
 
 	}
 
+	void addVectortoNDS(pair< double, double> eval1, pair< double, double> eval2) {
+		cout << "addVectortoNDS-------" << endl;
+		std::map<pair<double, double>, IntervalVector>::iterator aux, it1 = --NDS2.lower_bound(eval1);
+		pair< double, double> first, second, point, inter_last = make_pair(NEG_INFINITY, NEG_INFINITY);
+		std::map< pair <double, double>, IntervalVector, sorty2 > DS2;
+		std::map< pair <double, double>, IntervalVector, sorty2 > NDS_points;
+
+		DS2.insert(*it1);
+		it1++;
+
+		for(;it1 != NDS2.end();) {
+			if(it1->first.second < eval1.second and it1->first.second < eval2.second) break;
+			aux = it1;
+			++aux;
+			DS2.insert(*it1);
+			NDS2.erase(it1);
+			it1 = aux;
+		}
+
+		it1 = DS2.begin();
+		first = it1->first;
+		it1++;
+
+		// false cuando la recta pasa por fuera.
+		bool flag = false;
+
+		for(;it1 != DS2.end(); ++it1) {
+			second = it1->first;
+			cout << "(" << first.first << "," << first.second << ") ";
+			cout << "(" << second.first << "," << second.second << ")" << endl;
+			point = pointIntersection(first, second, eval1, eval2);
+
+			cout << "intersection (" << point.first << "," << point.second << ")" << endl;
+
+			// puntos muy cercanos son los mismos
+			if(fabs(inter_last.first - point.first) > 1e-7 && fabs(inter_last.second - point.second) > 1e-7
+					&& first.first <= point.first + 1e-4 && point.first - 1e-4 <= second.first  // por x
+					&& second.second <= point.second + 1e-4 && point.second - 1e-4 <= first.second) { // por y
+				cout << "intersection (" << point.first << "," << point.second << ")" << endl;
+				inter_last = point;
+
+				NDS_points.insert(make_pair(point,it1->second));
+
+				if(flag) flag = false;
+				else flag = true;
+			}else{
+				// si pasa por fuera se agregan los punto
+				if(!flag) {
+					NDS_points.insert(make_pair(second,it1->second));
+				}
+			}
+
+			first = second;
+		}
+
+		cout << "------------" << endl;
+
+		for(it1 = NDS_points.begin();it1 != NDS_points.end();++it1) {
+			cout << "newpoint (" << it1->first.first << "," << it1->first.second << ")" << endl;
+
+			if(it1->first.first != it1->first.first  || it1->first.second != it1->first.second ) getchar();
+			NDS2.insert(*it1);
+		}
+
+
+	}
+
 	void addPointtoNDS(pair< double, double> eval) {
 		std::map<pair<double, double>, IntervalVector>::iterator it1 = --NDS2.lower_bound(eval);
 		// std::map<pair<double, double>, IntervalVector>::iterator it1 = NDS2.begin();
@@ -459,18 +526,18 @@ protected:
 
 		cout << "punto (" << eval.first << "," << eval.second << ")" << endl;
 		// Se comprueba que no sea dominado por el anterior al lower_bound
-		if(it1->first == eval or (it1->first.first <= eval.first and it1->first.second <= eval.second) ) {
-			cout << "punto dominado ant_lower_bound por (" << it1->first.first
-					<< "," << it1->first.second << ")" << endl;
+		if(point1 == eval or (point1.first <= eval.first and point1.second <= eval.second) ) {
+			cout << "punto dominado ant_lower_bound por (" << point1.first
+					<< "," << point1.second << ")" << endl;
 			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 			//getchar();
 			return;
 		}
 		// Se comprueba que no sea dominado por el lower_bound
-		it1++;
-		if(it1->first == eval or (it1->first.first <= eval.first and it1->first.second <= eval.second) ) {
-			cout << "punto dominado lower_bound por (" << it1->first.first
-					<< "," << it1->first.second << ")" << endl;
+		//it1++;
+		if(point2 == eval or (point2.first <= eval.first and point2.second <= eval.second) ) {
+			cout << "punto dominado lower_bound por (" << point2.first
+					<< "," << point2.second << ")" << endl;
 			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 			//getchar();
 			return;
@@ -478,8 +545,8 @@ protected:
 
 		// comprobar que no este dominado por la recta que forma los dos puntos anteriores
 		// solo se comprueba si Eval no domina a los puntos
-		if(!(eval.first <= it1->first.first and eval.second <= it1->first.second ) and
-				!(eval.first <= it1->first.first and eval.second <= it1->first.second)) {
+		if(!(eval.first <= point1.first and eval.second <= point1.second ) and
+				!(eval.first <= point2.first and eval.second <= point2.second)) {
 			//cout << "point 1: (" << point1.first << "," << point1.second << ")" << endl;
 			//cout << "point 2: (" << point2.first << "," << point2.second << ")" << endl;
 			//pendiente de los dos puntos
@@ -607,7 +674,7 @@ protected:
 		pair<double, double> interseccion = make_pair(0.0 ,0.0);
 
 		double m = getSlopeSegment(v10 , v11);
-		cout << "m " << m << endl;
+		//cout << "m " << m << endl;
 		double n = getSlopeSegment(v20, v21);
 		double c = v10.second - v10.first * m;
 		double d = v20.second - v20.first * n;
@@ -623,7 +690,7 @@ protected:
 
 		//Cuando el segmento es vertical su pendiente es infinito
 		if(m == POS_INFINITY and n == 0) {
-			cout << "1111" << endl;
+			//cout << "1111" << endl;
 			if((v20.first <= v10.first and v10.first <= v21.first) or
 					(v21.first <= v10.first and v10.first <= v20.first))
 				interseccion.first = v10.first;
@@ -632,7 +699,7 @@ protected:
 				interseccion.second = v20.second;
 		}
 		else if (m == 0 and n == POS_INFINITY){
-			cout << "22222" << endl;
+			//cout << "22222" << endl;
 			if((v10.first <= v20.first and v20.first <= v11.first) or
 					(v11.first <= v20.first and v20.first <= v10.first))
 				interseccion.first = v20.first;
@@ -641,19 +708,19 @@ protected:
 				interseccion.second = v10.second;
 		}
 		else if (v11.first - v10.first == 0){
-			cout << "33333" << endl;
+			//cout << "33333" << endl;
 			interseccion.first = v11.first;
 			interseccion.second = n*v11.first + d;
 		}
 		//Cuando el segmento es vertical su pendiente es infinito
 		else if (v21.first - v20.first == 0){
-			cout << "444" << endl;
-			cout << "m " << m << " v21.first " << v21.first << endl;
+			//cout << "444" << endl;
+			//cout << "m " << m << " v21.first " << v21.first << endl;
 			interseccion.first = v21.first;
 			interseccion.second = m*v21.first + c;
 		}
 		else{
-			cout << "5555" << endl;
+			//cout << "5555" << endl;
 			interseccion.first = (d - c) / (m - n);
 			interseccion.second = m*interseccion.first + c;
 		}
@@ -667,21 +734,21 @@ protected:
      */
     double getSlopeSegment(pair<double, double> first, pair<double, double> last){
         double slope1, slope2, Ffirst, Fsecond, Lfirst, Lsecond;
-    	cout << "first " << first.first << " " << first.second << endl;
-    	cout << "last " << last.first << " " << last.second << endl;
+    	//cout << "first " << first.first << " " << first.second << endl;
+    	//cout << "last " << last.first << " " << last.second << endl;
         if((last.second == NEG_INFINITY and first.second == NEG_INFINITY) or
         		(last.second == POS_INFINITY and first.second == POS_INFINITY))
         	return 0;
         if((last.first == NEG_INFINITY and first.first == NEG_INFINITY) or
         		(last.first == POS_INFINITY and first.first == POS_INFINITY))
         	return POS_INFINITY;
-        cout << (last.first == first.first) << endl;
+        //cout << (last.first == first.first) << endl;
         if(last.second == first.second) return 0;
         if(last.first == first.first) return POS_INFINITY;
         slope1 = last.second - first.second;
-        cout << slope1 << endl;
+        //cout << slope1 << endl;
         slope2 = last.first - first.first;
-        cout << slope2 << endl;
+        //cout << slope2 << endl;
         return slope1/slope2;
 
     }
@@ -755,8 +822,12 @@ protected:
 		PFunction pf(goal1, goal2, m, xa, xb);
 
 		// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
-		Interval max_c;
+		Interval max_c, min_c;
 		max_c = ya2 - m*yb1;
+		min_c = ya2 - m*ya1;
+		cout << max_c << endl;
+		cout << min_c << endl;
+		getchar();
 
 		cout << "m: " << m << endl;
 		Interval derivate;
@@ -905,7 +976,7 @@ protected:
 
 		cout << "optim Newton:" << lb <<  endl;
 
-		/*
+
 		// step method
 		double step=1e-5;
 		double tinf=0.0;
@@ -923,19 +994,21 @@ protected:
 
 		}
 
-		cout << "-----" << endl;
+		//cout << "-----" << endl;
 		//cout << "(" << ya1 << "," << ya2 << ")" << endl;
 		//cout << "(" << yb1 << "," << yb2 << ")" << endl;
 		//cout << m << endl;
-		cout << pf.eval(Interval(0.0,1.0)) << endl;
-		cout <<  "(" << min << "," << max << ")" << endl;
-		cout << pf.eval(0.5) << endl;
-		cout << pf.deriv(Interval(0.0,1.0)) << endl;
+		//cout << pf.eval(Interval(0.0,1.0)) << endl;
+		//cout <<  "(" << min << "," << max << ")" << endl;
+		//cout << pf.eval(0.5) << endl;
+		//cout << pf.deriv(Interval(0.0,1.0)) << endl;
 
 		pair <double,double> d = optimize_pf(pf, false);
 
 		cout << "optim:" << d.second <<  endl;
-		*/
+
+		getchar();
+
 
 		// obtiene los dos puntos para generar la recta obtenida con el metodo de Newton
 		cout << "ya1, ya2: " << ya2.ub() << "," << ya1.ub() << endl;
@@ -953,7 +1026,7 @@ protected:
 			x2 = yb1;
 			// cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 			// cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
-		} else if(lb < max_c.ub()) { // si c < max_c existe una recta
+		} else if(lb >=0 && lb < max_c.ub()) { // si c < max_c existe una recta
 			// primer punto (x1, y1)
 			x1 = ya1;
 			y1 = (x1 - lb)/m;
@@ -1078,7 +1151,12 @@ protected:
 		cout << "Se agregan el punto la recta de X ---" << endl;
 		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
 		addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
-		//getchar();
+		cout << lb << " " << max_c.ub() << endl;
+		getchar();
+
+		// Si lb no esta entre los rangos permitidos no se agrega nada
+		if(lb < 0 || lb >= max_c.ub()) return;
+
 
 		cout << "Se agrega una recta o punta---" << endl;
 		if(lb == 0 or (lb != 0 and lb < max_c.ub()) ) {
@@ -1087,17 +1165,45 @@ protected:
 				addPointtoNDS(make_pair(x1.ub(), y1.ub()));
 				//getchar();
 			}else {
+				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				cout << "se va a gregar el vector "<< endl;
 				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
+				cout << NDS2.size() << endl;
+				for(it2=NDS2.begin(); it2!=NDS2.end(); ++it2){
+					cout << "point (" << it2->first.first << "," << it2->first.second << ")" << endl;
+				}
+				if(x1.ub() != x1.ub() || y1.ub() != y1.ub()) {
+					cout << "bad point 1" << endl;
+					getchar();
+				}
+				addPointtoNDS(make_pair(x1.ub(),y1.ub()));
+				if(x2.ub() != x2.ub() || y2.ub() != y2.ub()) {
+					cout << "bad point 2" << endl;
+					getchar();
+				}
+				addPointtoNDS(make_pair(x2.ub(), y2.ub())); //error
+				addVectortoNDS(make_pair(x1.ub(),y1.ub()), make_pair(x2.ub(), y2.ub()));
+				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
+				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
+				cout << NDS2.size() << endl;
+
+				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				/*
+				for(it2=NDS2.begin(); it2!=NDS2.end(); ++it2){
+					cout << "point (" << it2->first.first << "," << it2->first.second << ")" << endl;
+				}*/
+				getchar();
 			}
 		}
 
 		//if(_plot) py_Plotter::offline_plot(NULL, NDS);
 		cout << "Sin NDS2 plot NDS" << endl;
 		//getchar();
-		//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 		cout << "Sin NDS2 plot NDS2" << endl;
-		//getchar();
+		getchar();
 
 	}
 
