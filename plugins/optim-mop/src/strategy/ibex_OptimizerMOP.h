@@ -825,9 +825,6 @@ protected:
 		Interval max_c, min_c;
 		max_c = ya2 - m*yb1;
 		min_c = ya2 - m*ya1;
-		cout << max_c << endl;
-		cout << min_c << endl;
-		getchar();
 
 		cout << "m: " << m << endl;
 		Interval derivate;
@@ -861,7 +858,6 @@ protected:
 			derivate = pf.deriv(inter);
 			cout << "derivate " << derivate << endl;
 			if (derivate.is_empty()) break;
-			if (iter == 100000) getchar();
 
 			// lowerbounding
 			y_r=pf.eval(inter.lb());
@@ -1006,6 +1002,11 @@ protected:
 		pair <double,double> d = optimize_pf(pf, false);
 
 		cout << "optim:" << d.second <<  endl;
+		cout << "max c " << max_c << endl;
+		cout << "min c" << min_c << endl;
+
+		cout << "min " << pf.eval(0.0) << endl;
+		cout << "max " << pf.eval(1.0) << endl;
 
 		getchar();
 
@@ -1026,7 +1027,7 @@ protected:
 			x2 = yb1;
 			// cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 			// cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
-		} else if(lb >=0 && lb < max_c.ub()) { // si c < max_c existe una recta
+		} else if(lb < max_c.ub()) { // si c < max_c existe una recta
 			// primer punto (x1, y1)
 			x1 = ya1;
 			y1 = (x1 - lb)/m;
@@ -1155,7 +1156,7 @@ protected:
 		getchar();
 
 		// Si lb no esta entre los rangos permitidos no se agrega nada
-		if(lb < 0 || lb >= max_c.ub()) return;
+		// if(lb < 0 || lb >= max_c.ub()) return;
 
 
 		cout << "Se agrega una recta o punta---" << endl;
