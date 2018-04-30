@@ -841,7 +841,7 @@ protected:
 		// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
 		Interval max_c, min_c;
 		max_c = ya2 - m*yb1;
-		min_c = ya2 - m*ya1;
+		min_c = ya2 - m*ya1; // deberia ser lo mismo que pf.eval(1)
 
 		cout << "m: " << m << endl;
 		Interval derivate;
@@ -987,6 +987,7 @@ protected:
 			cout << "iteracion " << iter << " pila " << pila.size() << endl;
 		}
 
+		if(lb < pf.eval(0).ub()) lb = pf.eval(0).ub();
 		cout << "optim Newton:" << lb <<  endl;
 
 
@@ -1022,7 +1023,7 @@ protected:
 		cout << "max c " << max_c << endl;
 		cout << "min c" << min_c << endl;
 
-		cout << "min " << pf.eval(0.0) << endl;
+		cout << "min " << pf.eval(Interval(0,1)) << endl;
 		cout << "max " << pf.eval(1.0) << endl;
 
 		getchar();
@@ -1192,11 +1193,23 @@ protected:
 					cout << "point (" << it2->first.first << "," << it2->first.second << ")" << endl;
 				}
 				if(x1.ub() != x1.ub() || y1.ub() != y1.ub()) {
+					cout << "optim:" << d.second <<  endl;
+					cout << "max c " << max_c << endl;
+					cout << "min c" << min_c << endl;
+
+					cout << "min " << pf.eval(Interval(0,1)) << endl;
+					cout << "max " << pf.eval(1.0) << endl;
 					cout << "bad point 1" << endl;
 					getchar();
 				}
 				addPointtoNDS(make_pair(x1.ub(),y1.ub()));
 				if(x2.ub() != x2.ub() || y2.ub() != y2.ub()) {
+					cout << "optim:" << d.second <<  endl;
+					cout << "max c " << max_c << endl;
+					cout << "min c" << min_c << endl;
+
+					cout << "min " << pf.eval(Interval(0,1)) << endl;
+					cout << "max " << pf.eval(1.0) << endl;
 					cout << "bad point 2" << endl;
 					getchar();
 				}
