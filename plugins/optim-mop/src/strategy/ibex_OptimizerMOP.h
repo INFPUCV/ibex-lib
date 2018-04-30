@@ -295,6 +295,15 @@ protected:
 	 */
 	void cy_contract(Cell& c);
 
+	void cy_contract2(Cell& c, list <pair <double,double> >& inpoints);
+
+	/**
+	 * \brief return a set of non-dominated segments of the box
+	 */
+	list<pair <double,double> > non_dominated_segments(IntervalVector& box);
+
+	double distance22(const Cell* c);
+
 	/**
 	 * \brief Contract and bound procedure for processing a box.
 	 *
@@ -314,6 +323,14 @@ protected:
 	 * Branch & Bound for nonlinear biobjective optimization (2017)]
 	 */
 	void dominance_peeler(IntervalVector& box);
+
+	/**
+	 * \brief The box is reduced using NDS2
+	 *
+	 * Adaptation of dominance_peeler to NDS2
+	 * Returns the set of non-dominated segments in box
+	 */
+	void dominance_peeler2(IntervalVector &box, list <pair <double,double> >& inpoints);
 
     /**
      *  \brief returns true if the facet orthogonal to the i direction of the box is feasible.

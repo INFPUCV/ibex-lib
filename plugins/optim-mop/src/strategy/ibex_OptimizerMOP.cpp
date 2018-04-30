@@ -291,6 +291,141 @@ void OptimizerMOP::discard_generalized_monotonicty_test(IntervalVector& box, con
 
 }
 
+list<pair <double,double> > OptimizerMOP::non_dominated_segments(IntervalVector& box){
+	list <pair <double,double> > inpoints;
+
+	pair <double, double> firstp;
+	pair <double, double> lastp;
+
+	//first point in the box (v11)
+	map< pair <double, double>, IntervalVector >:: iterator ent1=NDS2.upper_bound(make_pair(box[n].lb(),NEG_INFINITY));
+	while(ent1->first.second > box[n].ub()) ent1++;
+	if(ent1->first.first > box[n].lb()) return inpoints; //no point in the box
+
+	pair <double, double> v11 = ent1->first; ent1--;
+    pair <double, double> v10 = ent1->first;
+
+	//TODO: interseccion conservativa: upperPointIntersection
+    firstp = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
+   	if(firstp.second <= box[n+1].lb() ){
+   		box.set_empty();
+   		return inpoints;
+   	}
+
+	if(firstp.second > box[n+1].ub())
+		firstp = pointIntersection( v10, v11, make_pair(v10.first,box[n+1].ub()),  make_pair(v11.first,box[n+1].ub()));
+
+	//valueZ1 is a point in the bounds lb(y1) or ub(y2) of the box delimiting the NDS in the box
+	inpoints.push_back(firstp);
+
+	//last point in the box (v21)
+	while(ent1->first.second > box[n+1].lb() || ent1->first.first > box[n].lb()){
+		inpoints.push_back(ent1->first);
+		ent1++;
+	}
+	pair <double, double> v21 = ent1->first;
+	ent1++;
+	pair <double, double> v20 = ent1->first;
+
+
+	lastp = pointIntersection( v20, v21, make_pair(v20.first,box[n+1].lb()),  make_pair(v21.first,box[n+1].lb()));
+
+	if(lastp.first > box[n].ub() )
+		lastp = pointIntersection( v20, v21, make_pair(box[n].ub(),v21.second),  make_pair(box[n].ub(),v20.second));
+
+	//valueZ2 is a point in the bounds ub(y1) or lb(y2) of the box delimiting the NDS in the box
+	inpoints.push_back(lastp);
+
+	return inpoints;
+}
+
+void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints){
+	IntervalVector& box = c.box;
+	IntervalVector box3(box);
+	box3.resize(n+4);
+
+	pair <double, double> firstp=inpoints.front();
+	pair <double, double> lastp=inpoints.back();
+
+	//Pent of cy
+    if(firstp!=lastp)
+    	box3[n+3] = (lastp.first-firstp.first)/(firstp.second-lastp.second);
+    else
+		box3[n+3] = box[n].diam()/box[n+1].diam(); // a
+
+     //setting w_ub with the NDS points
+  	 double w_ub;
+
+      if(_cy_upper){
+		w_ub=NEG_INFINITY;
+		for(auto pmax:inpoints){
+			double ww;
+			if(_eps_contract)
+				ww = ( Interval(pmax.first)-eps + box3[n+3]*(Interval(pmax.second)-eps) ).ub();
+			else
+				ww = ( Interval(pmax.first) + box3[n+3]*(Interval(pmax.second)) ).ub();
+			if(w_ub < ww )  w_ub = ww;
+		}
+  	  }
+
+	box3[n+2] = Interval(NEG_INFINITY, w_ub); // w
+	//the contraction is performed
+	ctc.contract(box3);
+	c.get<CellMOP>().a = box3[n+3].mid();
+	c.get<CellMOP>().w_lb = box3[n+2].lb();
+
+	box=box3;
+	box.resize(n+2);
+}
+
+void OptimizerMOP::dominance_peeler2(IntervalVector& box, list <pair <double,double> >& inpoints){
+	/*=================Dominance peeler for NDS2 and cy =========*/
+
+	pair <double, double> firstp=inpoints.front();
+	pair <double, double> lastp=inpoints.back();
+
+	// contract c.box[n]
+	if(firstp.second < box[n+1].ub())
+		box[n+1] = Interval(box[n+1].lb(),firstp.second);
+
+	// contract c.box[n+1]
+	if(lastp.first < box[n].ub() )
+		box[n] = Interval(box[n].lb(), lastp.first);
+
+}
+
+double OptimizerMOP::distance22(const Cell* c){
+	double max_dist=NEG_INFINITY;
+
+	int n=c->box.size();
+
+	Interval z1 = c->box[n-2];
+	Interval z2 = c->box[n-1];
+
+	double a = c->get<CellMOP>().a;
+	double w_lb = c->get<CellMOP>().w_lb;
+
+	map< pair <double, double>, IntervalVector >::iterator it = NDS2.lower_bound(make_pair(z1.lb(),-NEG_INFINITY)); //NDS.begin();
+	it--;
+
+	for(;it!=NDS2.end(); ){
+		pair <double, double> pmax= it->first;
+		if(pmax.first==POS_INFINITY) pmax.first=CellMOP::y1_init.ub();
+		if(pmax.second==POS_INFINITY) pmax.second=CellMOP::y2_init.ub();
+
+		//el punto esta dentro de la zona de interes
+		if(pmax.first >= z1.lb() && pmax.second >= z2.lb()){
+			double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
+			//Damir's distance
+			if(cy_contract_var && w_lb!=POS_INFINITY)
+			  dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
+
+			if(dist > max_dist) max_dist=dist;
+		}else break;
+	}
+
+	return max_dist;
+}
 
 void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	/*=================Dominance peeler ==================*/
@@ -332,6 +467,7 @@ void OptimizerMOP::dominance_peeler(IntervalVector& box){
 	}
 
 }
+
 
 void OptimizerMOP::cy_contract(Cell& c){
 	IntervalVector& box = c.box;
@@ -390,6 +526,10 @@ void OptimizerMOP::cy_contract(Cell& c){
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
+
+	//list<pair <double,double> > inner_segments= non_dominated_segments(init_box);
+	//dominance_peeler(c.box,inner_segments);
+	//cy_contract(c,inner_segments);
 
 
 	dominance_peeler(c.box);
@@ -646,8 +786,6 @@ double OptimizerMOP::distance2(const Cell* c){
 			if(dist > max_dist) max_dist=dist;
 		}else break;
 	}
-
-
 
 	return max_dist;
 }
