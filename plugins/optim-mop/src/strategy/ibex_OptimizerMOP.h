@@ -774,53 +774,8 @@ protected:
 	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
 	 */
 	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
-		/*
-		cout << "init test" << endl;
-		NDS2.clear();
-		//the first point
-		NDS2.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
-		//the middle point
-		// NDS2.insert(make_pair(make_pair(POS_INFINITY,POS_INFINITY), Vector(1)));
-		//the last point
-		// NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 
-
-		NDS2.insert(make_pair(make_pair(2.0 ,POS_INFINITY), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(2.0 ,20), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(7.0 ,20), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(7.0 ,14.0), Vector(1)));
-
-		// NDS2.insert(make_pair(make_pair(14.0 ,14.0), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(14.0 ,7.0), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(20.0 ,7.0), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(20.0 ,2.0), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(POS_INFINITY ,2.0), Vector(1)));
-
-		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
-
-
-		pair< double, double> evalTst;
-		evalTst = make_pair(11.0 , 11.0);
-		addPointtoNDS(evalTst);
-		evalTst = make_pair(8.0 , 8.0);
-		addPointtoNDS(evalTst);
-		evalTst = make_pair(7.0 , 7.0);
-		addPointtoNDS(evalTst);
-		evalTst = make_pair(6.0 , 1.3);
-		addPointtoNDS(evalTst);
-
-		cout << "end test" << endl;
-		getchar();
-		*/
-
-		// TODO: ver cuando es conveniente realizar esto
+		// TODO: ver cuando es conveniente realizar Newton
 
 		Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
 		Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
@@ -882,7 +837,13 @@ protected:
 			y_l= pf.eval(inter.ub());
 
 			lb_interval = max(max(y_r, y_c), y_l).ub();
-			if(lb_interval > lb) lb = lb_interval;
+			//if(lb_interval > lb) lb = lb_interval;
+			// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
+			if(fabs(lb_interval) < 1 && lb_interval + epsilon > lb)
+				lb = lb_interval+epsilon;
+			else if(fabs(lb_interval) >= 1 && lb_interval + fabs(lb_interval)*epsilon > lb)
+				lb = lb_interval + fabs(lb_interval)*epsilon;
+
 
 			// if derivate is empty the segment should not be created
 			if(derivate.is_empty()) {
@@ -901,12 +862,8 @@ protected:
 				if(0 == derivate.ub())
 					point_t = POS_INFINITY;
 				else{
-					// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
 					cout << (fabs(lb) < 1) << endl;
-					if(fabs(lb) < 1)
-						point_t = (lb + epsilon - point_c)/derivate.ub() + t_before;
-					else
-						point_t = (lb + fabs(lb)*epsilon - point_c)/derivate.ub() + t_before;
+					point_t = (lb - point_c)/derivate.ub() + t_before;
 					point_c = pf.eval(point_t).ub();
 				}
 				// error en caso de que c sea mayor al lb+epsilon
@@ -919,15 +876,6 @@ protected:
 
 				cout << "point_t " << point_t << endl;
 			}
-
-			/*
-			if(point_t < inter.ub() and point_c > lb+epsilon) {
-				cout << "ERRROR LEFT: point right is greater than lb " << endl;
-				//getchar();
-				break;
-				//exit(-1);
-			}*/
-
 
 			// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
 			if(point_t >= inter.ub()) {
@@ -951,11 +899,7 @@ protected:
 				if(0 == derivate.lb())
 					point_t = NEG_INFINITY;
 				else{
-					// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
-					if(fabs(lb) < 1)
-						point_t = t_before - (lb + epsilon - point_c)/derivate.lb();
-					else
-						point_t = t_before - (lb + fabs(lb)*epsilon - point_c)/derivate.lb();
+					point_t = t_before - (lb - point_c)/derivate.lb();
 					point_c = pf.eval(point_t).ub();
 				}
 
@@ -987,10 +931,6 @@ protected:
 			cout << "iteracion " << iter << " pila " << pila.size() << endl;
 		}
 
-		if(lb < pf.eval(0).ub()) lb = pf.eval(0).ub();
-		cout << "optim Newton:" << lb <<  endl;
-
-
 		// step method
 		double step=1e-5;
 		double tinf=0.0;
@@ -1008,25 +948,38 @@ protected:
 
 		}
 
-		//cout << "-----" << endl;
-		//cout << "(" << ya1 << "," << ya2 << ")" << endl;
-		//cout << "(" << yb1 << "," << yb2 << ")" << endl;
-		//cout << m << endl;
-		//cout << pf.eval(Interval(0.0,1.0)) << endl;
-		//cout <<  "(" << min << "," << max << ")" << endl;
-		//cout << pf.eval(0.5) << endl;
-		//cout << pf.deriv(Interval(0.0,1.0)) << endl;
-
 		pair <double,double> d = optimize_pf(pf, false);
 
+		// TODO: Que hacer cuando no existaderivada o sea muy grande
+		if(derivate.is_empty()) {
+			cout << "derivate empty -> remove interval" << endl;
+			cout << "Que hacer cuando no existaderivada o sea muy grande" << endl;
+			// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
+			if(fabs(pf.eval(1.0).ub()) < 1)
+				lb = pf.eval(1.0).ub()+epsilon;
+			else if(fabs(pf.eval(1.0).ub()) >= 1)
+				lb = pf.eval(1.0).ub() + fabs(pf.eval(1.0).ub())*epsilon;
+			getchar();
+		}
+
+		cout << "optim Newton:" << lb <<  endl;
+
 		cout << "optim:" << d.second <<  endl;
+
+		//TODO: como obtener los maximosy minimos de c?
+		cout << "como obtener los maximosy minimos de c?" << endl;
 		cout << "max c " << max_c << endl;
 		cout << "min c" << min_c << endl;
 
-		cout << "min " << pf.eval(Interval(0,1)) << endl;
-		cout << "max " << pf.eval(1.0) << endl;
+		cout << "min y max " << pf.eval(Interval(0,1)) << endl;
+		cout << "min " << pf.eval(1.0) << endl;
 
-		getchar();
+		if(fabs(d.second-lb) > 1) {
+			cout << "Diferencia  entre optim newton y optim" << endl;
+			getchar();
+		}
+		//getchar();
+
 
 
 		// obtiene los dos puntos para generar la recta obtenida con el metodo de Newton
@@ -1052,15 +1005,8 @@ protected:
 			// segundo punto (x2, y2)
 			y2 = yb2;
 			x2 = m*y2 + lb;
-
 		}
 
-		//if(_plot) py_Plotter::offline_plot(NULL, NDS);
-		//cout << "Sin NDS2 plot NDS" << endl;
-		//getchar();
-		//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-		//cout << "Sin NDS2 plot NDS2" << endl;
-		//getchar();
 
 		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
 		// guarda punto 1 en el set
