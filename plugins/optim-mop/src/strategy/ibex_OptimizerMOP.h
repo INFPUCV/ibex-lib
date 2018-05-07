@@ -64,6 +64,8 @@ public:
 
 	Interval deriv(const Interval& t) const;
 
+	IntervalVector get_point(const Interval& t) const;
+
 private:
 
 	const Function& f1;
@@ -300,7 +302,7 @@ protected:
 	/**
 	 * \brief return a set of non-dominated segments of the box
 	 */
-	list<pair <double,double> > non_dominated_segments(IntervalVector& box);
+	list<pair <double,double> > non_dominated_segments(const IntervalVector& box);
 
 	double distance22(const Cell* c);
 
@@ -776,6 +778,12 @@ protected:
 	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
 
 		// TODO: ver cuando es conveniente realizar Newton
+		// 1. Revisar que cuando la derivada sea vacia no se contracte
+		// 2. Revisar que cunado la derivada sea muy alta no haga nada
+		// 3. Revisar que newton si supera el max c no siga buscando y no se contracte
+		// 4. Distancia minima entre puntos ya e yb
+
+		// TODO: Graficar resultados del algoritmo (segmento y curva)
 
 		Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
 		Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
@@ -790,13 +798,15 @@ protected:
 		cout << "yb1: " << yb1 << endl;
 		cout << "yb2: " << yb2 << endl;
 
-		Interval m = (yb1-ya1)/(yb2-ya2);
+		Interval m = (yb2-ya2)/(yb1-ya1);
+		//Interval m = (yb1-ya1)/(yb2-ya2);
 		PFunction pf(goal1, goal2, m, xa, xb);
 
 		// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
-		Interval max_c, min_c;
-		max_c = ya2 - m*yb1;
-		min_c = ya2 - m*ya1; // deberia ser lo mismo que pf.eval(1)
+		Interval max_c, min_c, min_c2;
+		max_c = ya2 - (m*yb1);
+		min_c = ya2 - (m*ya1); // deberia ser lo mismo que pf.eval(1)
+		min_c2 = yb2 - (m*yb1); // deberia ser lo mismo que pf.eval(1)
 
 		cout << "m: " << m << endl;
 		Interval derivate;
@@ -969,7 +979,8 @@ protected:
 		//TODO: como obtener los maximosy minimos de c?
 		cout << "como obtener los maximosy minimos de c?" << endl;
 		cout << "max c " << max_c << endl;
-		cout << "min c" << min_c << endl;
+		cout << "min c " << min_c << endl;
+		cout << "min c2 " << min_c2 << endl;
 
 		cout << "min y max " << pf.eval(Interval(0,1)) << endl;
 		cout << "min " << pf.eval(1.0) << endl;

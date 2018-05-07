@@ -40,7 +40,7 @@ PFunction::PFunction(const Function& f1, const Function& f2, const Interval& m, 
 
 Interval PFunction::eval(const Interval& t) const{
 	IntervalVector xt = xa+t*(xb-xa);
-	return OptimizerMOP::eval_goal(f1,xt, xt.size()) - m*OptimizerMOP::eval_goal(f2,xt,  xt.size());
+	return OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1,xt,  xt.size());
 }
 
 Interval PFunction::deriv(const Interval& t) const{
@@ -48,7 +48,15 @@ Interval PFunction::deriv(const Interval& t) const{
 	IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
 	IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
 
-	return (g1-m*g2)*(xb-xa);
+	return (g2-m*g1)*(xb-xa);
+}
+
+IntervalVector PFunction::get_point(const Interval& t) const{
+	IntervalVector y(2);
+	IntervalVector xt = xa+t*(xb-xa);
+	y[0]=OptimizerMOP::eval_goal(f1,xt,  xt.size());
+	y[1]=OptimizerMOP::eval_goal(f2,xt,  xt.size());
+	return y;
 }
 
 OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
