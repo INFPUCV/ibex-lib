@@ -60,10 +60,10 @@ IntervalVector PFunction::get_point(const Interval& t) const{
 }
 
 OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,double eps) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode, double eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0), eps(eps)
+                				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode)
 								 {
 
 	py_Plotter::n=n;
@@ -535,19 +535,23 @@ void OptimizerMOP::cy_contract(Cell& c){
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
-	//list<pair <double,double> > inner_segments= non_dominated_segments(init_box);
-	//dominance_peeler(c.box,inner_segments);
-	//cy_contract(c,inner_segments);
+	if(nds_mode==SEGMENTS){
+		list<pair <double,double> > inner_segments= non_dominated_segments(c.box);
+		dominance_peeler2(c.box,inner_segments);
+		if(cy_contract_var){
+			cy_contract2(c,inner_segments);
+		}else
+			ctc.contract(c.box);
 
+	}else if(nds_mode==POINTS){
+		dominance_peeler(c.box);
+		discard_generalized_monotonicty_test(c.box, init_box);
 
-	dominance_peeler(c.box);
-	discard_generalized_monotonicty_test(c.box, init_box);
-
-	if(cy_contract_var){
-		cy_contract(c);
-	}else
-		ctc.contract(c.box);
-
+		if(cy_contract_var){
+			cy_contract(c);
+		}else
+			ctc.contract(c.box);
+	}
 
 	if (c.box.is_empty()) return;
 
@@ -564,20 +568,23 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	buffer.flush();
 
-	NDS.clear();
-	//the first point
-	NDS.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
-	//the last point
-	NDS.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
+	if(nds_mode == POINTS){
+		NDS.clear();
+		//the first point
+		NDS.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
+		//the last point
+		NDS.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
+	}
 
-
-	NDS2.clear();
-	//the first point
-	NDS2.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
-	//the middle point
-	NDS2.insert(make_pair(make_pair(POS_INFINITY,POS_INFINITY), Vector(1)));
-	//the last point
-	NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
+	if(nds_mode == SEGMENTS){
+		NDS2.clear();
+		//the first point
+		NDS2.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
+		//the middle point
+		NDS2.insert(make_pair(make_pair(POS_INFINITY,POS_INFINITY), Vector(1)));
+		//the last point
+		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
+	}
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
@@ -626,8 +633,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 			}
 
-			bool loup_ch=update_NDS(c->box);
-			update_NDS2(c->box);
+			if(nds_mode==POINTS)
+				update_NDS(c->box);
+			else if(nds_mode==SEGMENTS)
+				update_NDS2(c->box);
 
 
 
@@ -643,7 +652,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
         	double dist=0.0;
-        	if(!atomic_box /*&& eps>0.0*/) dist=distance2(c);
+        	if(!atomic_box) dist= (nds_mode==POINTS)? distance2(c) : distance22(c);
 
 
         	if(dist < eps || atomic_box){
@@ -654,11 +663,15 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
         		if(_plot) py_Plotter::plot_add_lb(c);
 
-        		map< pair <double, double>, IntervalVector >:: iterator ent1=NDS.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
-        		ent1--;
-        		if(ent1->first.second <= c->box[n+1].lb()){
-        			delete c;
-        			continue;
+        		//TODO: Para que es esto?? Es necesario??
+
+        		if(nds_mode==POINTS){
+        			map< pair <double, double>, IntervalVector >:: iterator ent1=NDS.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
+        			ent1--;
+        			if(ent1->first.second <= c->box[n+1].lb()){
+        				delete c;
+        				continue;
+        			}
         		}
 
 
@@ -724,7 +737,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	time = timer.get_time();
 
 
-	if(_plot) py_Plotter::offline_plot(NULL, NDS);
+	if(_plot) (nds_mode==POINTS)? py_Plotter::offline_plot(NULL, NDS) : py_Plotter::offline_plot(NULL, NDS2);
 	return status;
 }
 
@@ -732,7 +745,7 @@ void OptimizerMOP::report(bool verbose) {
 
 	if (!verbose) {
         cout << endl 	<< "time 	#nodes 		|Y|" << endl;
-		cout << get_time() << " " << get_nb_cells() << " " << NDS.size() <<  endl;
+		cout << get_time() << " " << get_nb_cells() << " " << ((nds_mode==POINTS)? NDS.size():NDS2.size()) <<  endl;
 		return;
 	}
 
@@ -754,11 +767,16 @@ void OptimizerMOP::report(bool verbose) {
 
 	cout << " cpu time used: " << get_time() << "s." << endl;
 	cout << " number of cells: " << get_nb_cells() << endl;
-	cout << " number of solutions: "  << NDS.size() << endl;
-
-	for(auto ub : NDS){
-		cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
+	if(nds_mode==SEGMENTS){
+		cout << " number of solutions: "  << NDS2.size() << endl;
+		for(auto ub : NDS2)
+			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
+	}else{
+		cout << " number of solutions: "  << NDS.size() << endl;
+		for(auto ub : NDS)
+			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
 	}
+
 }
 
 double OptimizerMOP::distance2(const Cell* c){

@@ -108,6 +108,8 @@ public:
 	 */
 	typedef enum {SUCCESS, INFEASIBLE, NO_FEASIBLE_FOUND, UNBOUNDED_OBJ, TIME_OUT, UNREACHED_PREC} Status;
 
+	typedef enum {POINTS, SEGMENTS} Mode;
+
 	/**
 	 *  \brief Create an optimizer.
 	 *
@@ -131,7 +133,7 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,  double eps=default_eps);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode=POINTS, double eps=default_eps);
 
 	/**
 	 * \brief Delete *this.
@@ -281,6 +283,9 @@ public:
 	//True: the solver reduces the search spaces by reducing the NDS vectors in (eps, eps)
 	static bool _eps_contract;
 
+	//NDS mode: POINTS or SEGMENTS
+	Mode nds_mode;
+
 	/**
 	 * \brief Evaluate the goal in the point x
 	 */
@@ -302,7 +307,7 @@ protected:
 	/**
 	 * \brief return a set of non-dominated segments of the box
 	 */
-	list<pair <double,double> > non_dominated_segments(const IntervalVector& box);
+	list<pair <double,double> > non_dominated_segments(IntervalVector& box);
 
 	double distance22(const Cell* c);
 
