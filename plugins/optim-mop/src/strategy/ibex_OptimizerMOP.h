@@ -1013,6 +1013,7 @@ protected:
 		cout << "max c: " << max_c.ub() << endl;
 
 		Interval x1, y1, x2, y2;
+		/*
 		// si lb es 0 la recta pasa por ya y yb
 		if(lb == 0) {
 			y1 = ya2;
@@ -1029,7 +1030,14 @@ protected:
 			y2 = yb2;
 			x2 = m*y2 + lb;
 		}
+		*/
 
+		cout << "punto1 (" << ya1.ub() << "," << (ya1*m) + lb << ")" << endl;
+		cout << "punto2 (" << yb1.ub() << "," << (yb1*m) + lb << ")" << endl;
+		x1 = ya1;
+		y1 = (x1*m) + lb;
+		x2 = yb1;
+		y2 = (x2*m) + lb;
 
 		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
 		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
@@ -1114,10 +1122,25 @@ protected:
 		// cout << "Sin NDS2 plot NDS" << endl;
 		//getchar();
 
+
 		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 		cout << "Sin NDS2 plot NDS2" << endl;
 		// NDS2, recta, funcion
+		cout << "optim Newton:" << lb <<  endl;
+		cout << "max c " << max_c.ub() << endl;
+		cout << "min c " << min_c.ub() << endl;
+
+		cout << "pendiente " << m.ub() << endl;
+
+		cout << "punto1  (" << ya1.ub() << "," << ya2.ub() << ")" << endl;
+		cout << "punto2 (" << yb1.ub() << "," << yb2.ub() << ")" << endl;
+
 		// NDS2 listo
+		cout << "NDS2 " << endl;
+		map< pair <double, double>, IntervalVector > :: iterator ub=NDS2.begin();
+		for(;ub!=NDS2.end();ub++){
+			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
+		}
 		// recta listo
 		cout << "recta " << endl;
 		for (int i=0;i<rectaUB.size();i++) {
