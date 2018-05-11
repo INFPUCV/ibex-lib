@@ -391,6 +391,7 @@ protected:
 	 * returning the best solution found t and its the lb/ub of its evaluation
 	 */
 	pair<double, double> optimize_pf(PFunction& pf, bool minimize=false){
+
 		if(minimize){
 			cout << "minimize f1(t)+w*f2(t) is not implemented yet!" << endl;
 			exit(0);
@@ -447,6 +448,7 @@ protected:
 			}
 
 			while(true){
+				cout << "hola mundo este e un comentario para realizar pruebas " << nodes.size() << endl;
 				Interval y0 = pf.eval(n.t.ub());
 				if(y0.is_empty()) break;
 				if(y0.ub() > LB) {LB=y0.ub(); best_t=n.t.ub(); break;}
@@ -946,8 +948,9 @@ protected:
 			cout << "iteracion " << iter << " pila " << pila.size() << endl;
 		}
 
+		/*
 		// step method
-		double step=1e-5;
+		double step=1e-2;
 		double tinf=0.0;
 		double min = POS_INFINITY;
 		double max = NEG_INFINITY;
@@ -962,8 +965,10 @@ protected:
 			tinf=tsup;
 
 		}
+		*/
 
-		pair <double,double> d = optimize_pf(pf, false);
+
+		// pair <double,double> d = optimize_pf(pf, false);
 
 		// TODO: Que hacer cuando no existaderivada o sea muy grande
 		if(derivate.is_empty()) {
@@ -974,12 +979,13 @@ protected:
 				lb = pf.eval(1.0).ub()+epsilon;
 			else if(fabs(pf.eval(1.0).ub()) >= 1)
 				lb = pf.eval(1.0).ub() + fabs(pf.eval(1.0).ub())*epsilon;
-			getchar();
+			// getchar();
 		}
 
 		cout << "optim Newton:" << lb <<  endl;
 
-		cout << "optim:" << d.second <<  endl;
+
+		// cout << "optim:" << d.second <<  endl;
 
 		//TODO: como obtener los maximosy minimos de c?
 		cout << "como obtener los maximosy minimos de c?" << endl;
@@ -990,11 +996,12 @@ protected:
 		cout << "min y max " << pf.eval(Interval(0,1)) << endl;
 		cout << "min " << pf.eval(1.0) << endl;
 
+		/*
 		if(fabs(d.second-lb) > 1) {
 			cout << "Diferencia  entre optim newton y optim" << endl;
-			getchar();
+			// getchar();
 		}
-		//getchar();
+		*/
 
 
 
@@ -1025,104 +1032,7 @@ protected:
 
 
 		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
-		// guarda punto 1 en el set
-		IntervalVector vec(n);
-		bool new_ub=false;
-		pair< double, double> eval1 = make_pair(ya1.ub(), ya2.ub());
-		/**** end NDS correction ****/
-		bool domine=false;
-		std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval1);
-		if (!is_dominated(eval1)) {
-			for(; it2!=NDS.end(); ){
-
-				if(eval1.second > it2->first.second) break;
-				std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
-				++aux;
-				if(_plot)	py_Plotter::plot_del_ub(it2->first);
-
-				NDSy.erase(it2->first);
-				NDS.erase(it2);
-				it2 = aux;
-				domine=true;
-			}
-			cout << "domine " << domine << endl;
-
-			//the point is inserted in NDS only if its distance to the neighbor points is greater than (abs_eps/2.0)
-			if(domine || std::min(it2->first.first - eval1.first,  eval1.second - it2->first.second) >= _min_ub_dist*eps){
-				//it is not dominated and we remove the new dominated points
-
-				if(eval1.first < y1_ub.first) y1_ub=eval1;
-				if(eval1.second < y2_ub.second) y2_ub=eval1;
-
-				NDS.insert(make_pair(eval1, vec));
-				NDSy.insert(make_pair(eval1, vec));
-				cout << "passed if" << endl;
-				new_ub = true;
-			}else{
-				it2--;
-				if( std::min(eval1.first - it2->first.first,  it2->first.second - eval1.second) >= _min_ub_dist*eps ){
-					//it is not dominated and we remove the new dominated points
-
-					if(eval1.first < y1_ub.first) y1_ub=eval1;
-					if(eval1.second < y2_ub.second) y2_ub=eval1;
-
-					NDS.insert(make_pair(eval1, vec));
-					NDSy.insert(make_pair(eval1, vec));
-					cout << "passed else" << endl;
-					new_ub = true;
-				}
-			}
-			if(new_ub) cout << "agregado " << endl;
-		}
-
-
-
 		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
-
-		pair< double, double> eval2 = make_pair(yb1.ub(), yb2.ub());
-		/**** end NDS correction ****/
-		if (!is_dominated(eval2)) {
-			domine=false;
-			it2 = NDS.lower_bound(eval2);
-			for(; it2!=NDS.end(); ){
-
-				if(eval2.second > it2->first.second) break;
-				std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
-				++aux;
-				if(_plot)	py_Plotter::plot_del_ub(it2->first);
-
-				NDSy.erase(it2->first);
-				NDS.erase(it2);
-				it2 = aux;
-				domine=true;
-			}
-			//the point is inserted in NDS only if its distance to the neighbor points is greater than (abs_eps/2.0)
-			if(domine || std::min(it2->first.first - eval2.first,  eval2.second - it2->first.second) >= _min_ub_dist*eps){
-				//it is not dominated and we remove the new dominated points
-
-				if(eval2.first < y1_ub.first) y1_ub=eval2;
-				if(eval2.second < y2_ub.second) y2_ub=eval2;
-
-				NDS.insert(make_pair(eval2, vec));
-				NDSy.insert(make_pair(eval2, vec));
-				//cout << "passed" << endl;
-				new_ub = true;
-			}else{
-				it2--;
-				if( std::min(eval2.first - it2->first.first,  it2->first.second - eval2.second) >= _min_ub_dist*eps ){
-					//it is not dominated and we remove the new dominated points
-
-					if(eval2.first < y1_ub.first) y1_ub=eval2;
-					if(eval2.second < y2_ub.second) y2_ub=eval2;
-
-					NDS.insert(make_pair(eval2, vec));
-					NDSy.insert(make_pair(eval2, vec));
-					//cout << "passed" << endl;
-					new_ub = true;
-				}
-			}
-			if(new_ub) cout << "agregado " << endl;
-		}
 
 
 		cout << "Se agregan el punto la recta de X ---" << endl;
@@ -1133,17 +1043,20 @@ protected:
 		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
 		addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
 		cout << lb << " " << max_c.ub() << endl;
-		getchar();
+		// getchar();
 
 		// Si lb no esta entre los rangos permitidos no se agrega nada
 		// if(lb < 0 || lb >= max_c.ub()) return;
 
 
 		cout << "Se agrega una recta o punta---" << endl;
+		std::vector< pair <double, double> > rectaUB;
 		if(lb == 0 or (lb != 0 and lb < max_c.ub()) ) {
 			if(x1.ub() == x2.ub() and  y1.ub() == y2.ub()) {
 				cout << "point: " << x1.ub() << "," << y1.ub() << endl;
 				addPointtoNDS(make_pair(x1.ub(), y1.ub()));
+				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
+				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
 				//getchar();
 			}else {
 				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
@@ -1151,29 +1064,30 @@ protected:
 				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
 				cout << NDS2.size() << endl;
+				std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS2.begin();
 				for(it2=NDS2.begin(); it2!=NDS2.end(); ++it2){
 					cout << "point (" << it2->first.first << "," << it2->first.second << ")" << endl;
 				}
 				if(x1.ub() != x1.ub() || y1.ub() != y1.ub()) {
-					cout << "optim:" << d.second <<  endl;
+					//cout << "optim:" << d.second <<  endl;
 					cout << "max c " << max_c << endl;
 					cout << "min c" << min_c << endl;
 
 					cout << "min " << pf.eval(Interval(0,1)) << endl;
 					cout << "max " << pf.eval(1.0) << endl;
 					cout << "bad point 1" << endl;
-					getchar();
+					// getchar();
 				}
 				addPointtoNDS(make_pair(x1.ub(),y1.ub()));
 				if(x2.ub() != x2.ub() || y2.ub() != y2.ub()) {
-					cout << "optim:" << d.second <<  endl;
+					//cout << "optim:" << d.second <<  endl;
 					cout << "max c " << max_c << endl;
 					cout << "min c" << min_c << endl;
 
 					cout << "min " << pf.eval(Interval(0,1)) << endl;
 					cout << "max " << pf.eval(1.0) << endl;
 					cout << "bad point 2" << endl;
-					getchar();
+					// getchar();
 				}
 				addPointtoNDS(make_pair(x2.ub(), y2.ub())); //error
 				addVectortoNDS(make_pair(x1.ub(),y1.ub()), make_pair(x2.ub(), y2.ub()));
@@ -1181,21 +1095,53 @@ protected:
 				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
 				cout << NDS2.size() << endl;
+				rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
+				rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
 
-				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				// if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 				/*
 				for(it2=NDS2.begin(); it2!=NDS2.end(); ++it2){
 					cout << "point (" << it2->first.first << "," << it2->first.second << ")" << endl;
 				}*/
-				getchar();
+				// getchar();
 			}
+		} else {
+			rectaUB.push_back(make_pair(0,0));
+			rectaUB.push_back(make_pair(0,0));
 		}
 
 		//if(_plot) py_Plotter::offline_plot(NULL, NDS);
-		cout << "Sin NDS2 plot NDS" << endl;
+		// cout << "Sin NDS2 plot NDS" << endl;
 		//getchar();
+
 		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 		cout << "Sin NDS2 plot NDS2" << endl;
+		// NDS2, recta, funcion
+		// NDS2 listo
+		// recta listo
+		cout << "recta " << endl;
+		for (int i=0;i<rectaUB.size();i++) {
+			cout << rectaUB[i].first << " " << rectaUB[i].second << endl;
+		}
+		// funcion listo
+		cout << "funcion " << endl;
+		std::vector< pair <double, double> > functionPoly;
+		Interval a;
+		IntervalVector interVector = IntervalVector(2);
+		double value;
+		int max_iterations = 10;
+		for(int i=0;i <= max_iterations; i++) {
+			a = Interval((double) i/max_iterations);
+			//cout << a << endl;
+			interVector = pf.get_point(a);
+			//cout << interVector[0].ub() << "," <<  interVector[1].ub() << endl;
+			functionPoly.push_back(make_pair(interVector[0].ub(), interVector[1].ub()));
+		}
+
+		for (int i=0;i<functionPoly.size();i++) {
+			cout << functionPoly[i].first << " " << functionPoly[i].second << endl;
+		}
+		if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
 		getchar();
 
 	}

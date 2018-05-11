@@ -32,7 +32,9 @@ public:
 	 */
 	static void offline_plot(Cell* current, map< pair <double, double>, IntervalVector >& NDS);
 	static void offline_plot(Cell* current, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS);
-
+	static void offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
+			std::vector< pair <double, double> > rectaUB,
+			std::vector< pair <double, double> > functionPoly);
 	/**
 	* write line commands to be interpreted by the python3 program plot.py
 	*/

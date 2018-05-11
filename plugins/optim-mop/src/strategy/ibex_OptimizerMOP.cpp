@@ -576,7 +576,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		NDS.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 	}
 
-	if(nds_mode == SEGMENTS){
+	//if(nds_mode == SEGMENTS){
 		NDS2.clear();
 		//the first point
 		NDS2.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
@@ -584,7 +584,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		NDS2.insert(make_pair(make_pair(POS_INFINITY,POS_INFINITY), Vector(1)));
 		//the last point
 		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
-	}
+	//}
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
@@ -633,9 +633,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 			}
 
-			if(nds_mode==POINTS)
+			//if(nds_mode==POINTS)
 				update_NDS(c->box);
-			else if(nds_mode==SEGMENTS)
+			//else if(nds_mode==SEGMENTS)
 				update_NDS2(c->box);
 
 
@@ -663,7 +663,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
         		if(_plot) py_Plotter::plot_add_lb(c);
 
-        		//TODO: Para que es esto?? Es necesario??
+        		//TODO: Puede que sea lo mismo que la linea 659 (if(dist <0.0))
 
         		if(nds_mode==POINTS){
         			map< pair <double, double>, IntervalVector >:: iterator ent1=NDS.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
@@ -737,7 +737,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	time = timer.get_time();
 
 
-	if(_plot) (nds_mode==POINTS)? py_Plotter::offline_plot(NULL, NDS) : py_Plotter::offline_plot(NULL, NDS2);
+	// if(_plot) (nds_mode==POINTS)? py_Plotter::offline_plot(NULL, NDS) : py_Plotter::offline_plot(NULL, NDS2);
 	return status;
 }
 

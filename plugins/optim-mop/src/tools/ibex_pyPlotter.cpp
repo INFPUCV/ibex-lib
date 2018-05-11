@@ -120,4 +120,35 @@ output << "]" << endl;
 	// system("python3 plot.py");
 }
 
+void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
+		std::vector< pair <double, double> > rectaUB,
+		std::vector< pair <double, double> > functionPoly
+		){
+	cout << "print plot:" << NDS.size() << endl;
+	ofstream output;
+	output.open("output.txt");
+	output << "[";
+
+	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
+	for(;ub!=NDS.end();ub++){
+		output << "(" << ub->first.first << "," << ub->first.second << "),";
+	}
+output << "]" << endl;
+
+		output << "[";
+		for (int i=0;i<rectaUB.size();i++) {
+			output << "(" << rectaUB[i].first << "," << rectaUB[i].second << "),";
+		}
+		output << "]" << endl;
+
+		output << "[";
+		for (int i=0;i<functionPoly.size();i++) {
+			output << "(" << functionPoly[i].first << "," << functionPoly[i].second << "),";
+		}
+		output << "]" << endl;
+
+	output.close();
+	// system("python3 plot.py");
+}
+
 } /* namespace ibex */

@@ -139,6 +139,7 @@ int main(int argc, char** argv){
 	//cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
 	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
 	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
+	cout << "ub segment?: " << ((_ub_segment)? "yes":"no") << endl;
 
 
 	SystemFactory fac;
@@ -277,6 +278,7 @@ int main(int argc, char** argv){
 	// the allowed time for search
 	o.timeout=timelimit;
 
+	cout << "problem?" << endl;
 	// the search itself
 	o.optimize(ext_sys.box);
 
