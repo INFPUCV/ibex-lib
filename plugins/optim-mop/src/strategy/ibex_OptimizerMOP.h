@@ -485,20 +485,29 @@ protected:
 		DS2.insert(*it1);
 		it1++;
 
+		bool flagDS2 = false;
 		for(;it1 != NDS2.end();) {
-			if(it1->first.second < eval1.second and it1->first.second < eval2.second) break;
+			if(it1->first.second < eval1.second and it1->first.second < eval2.second) flagDS2= true;
 			aux = it1;
 			++aux;
 			DS2.insert(*it1);
 			NDS2.erase(it1);
 			it1 = aux;
+			if(flagDS2) break;
 		}
+
+		cout << "DS2" << endl;
+		for(it1 = DS2.begin();it1!=DS2.end();++it1) {
+			cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
+		}
+		cout << "end DS2" << endl;
 
 		it1 = DS2.begin();
 		first = it1->first;
 		it1++;
 
 		// false cuando la recta pasa por fuera.
+		/*
 		bool flag = false;
 
 		for(;it1 != DS2.end(); ++it1) {
@@ -529,6 +538,51 @@ protected:
 
 			first = second;
 		}
+		*/
+		bool flag = false;
+		for(;it1 != DS2.end(); ++it1) {
+			second = it1->first;
+			cout << "(" << first.first << "," << first.second << ") ";
+			cout << "(" << second.first << "," << second.second << ")" << endl;
+			point = pointIntersection(first, second, eval1, eval2);
+
+			cout << "intersection (" << point.first << "," << point.second << ")" << endl;
+
+			// puntos muy cercanos son los mismos
+			if(fabs(inter_last.first - point.first) > 1e-7 && fabs(inter_last.second - point.second) > 1e-7) {
+
+				if( ((first.first <= second.first && first.first <= point.first && point.first <= second.first) ||
+						(second.first <= first.first  && second.first <= point.first && point.first <= first.first)) &&
+						((first.second <= second.second && first.second <= point.second && point.second <= second.second) ||
+						(second.second <= first.second  && second.second <= point.second && point.second <= first.second))) {
+
+					cout << (first.first <= second.first && first.first <= point.first && point.first <= second.first) <<
+							" " << (second.first <= first.first  && second.first <= point.first && point.first <= first.first) <<
+							" " << (first.second <= second.second && first.second <= point.second && point.second <= second.second) <<
+							" " << (second.second <= first.second  && second.second <= point.second && point.second <= first.second) << endl;
+
+					cout << "intersection (" << point.first << "," << point.second << ")" << endl;
+					inter_last = point;
+
+					NDS_points.insert(make_pair(point,it1->second));
+				} else {
+					cout << "intersection error" << endl;
+				}
+
+				//if(flag) flag = false;
+				//else flag = true;
+
+			//}else{
+				// si pasa por fuera se agregan los punto
+				//if(!flag) {
+				//	NDS_points.insert(make_pair(second,it1->second));
+				//}
+			} else {
+				cout << "point very close to the after point" << endl;
+			}
+
+			first = second;
+		}
 
 		cout << "------------" << endl;
 
@@ -538,6 +592,30 @@ protected:
 			if(it1->first.first != it1->first.first  || it1->first.second != it1->first.second ) getchar();
 			NDS2.insert(*it1);
 		}
+
+		cout << "insert points" << endl;
+
+		for(it1 = DS2.begin();it1!=DS2.end();++it1) {
+			if( ((it1->first.first <= eval1.first && it1->first.first <= eval2.first) &&
+					(it1->first.second >= eval1.second && it1->first.second >= eval2.second)) ||
+				((it1->first.second <= eval1.second && it1->first.second <= eval2.second) &&
+						(it1->first.first >= eval1.first && it1->first.first >= eval2.first)) ) {
+				cout << "fuera" << endl;
+				cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
+				addPointtoNDS(make_pair(it1->first.first,it1->first.second));
+			} else {
+				double m = (eval1.second - eval2.second)/(eval1.first - eval2.first);
+				if( (eval1.second - m*eval1.first) >= (it1->first.second - m*it1->first.first)) {
+					cout << "dentro" << endl;
+					cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
+					addPointtoNDS(make_pair(it1->first.first,it1->first.second));
+				} else {
+					cout << "eliminado" << endl;
+					cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
+				}
+			}
+		}
+
 
 
 	}
@@ -1034,8 +1112,10 @@ protected:
 
 		cout << "punto1 (" << ya1.ub() << "," << (ya1*m) + lb << ")" << endl;
 		cout << "punto2 (" << yb1.ub() << "," << (yb1*m) + lb << ")" << endl;
-		x1 = ya1;
-		y1 = (x1*m) + lb;
+		// corte horizontal
+		y1 = ya2;
+		x1 = (y1-lb)/m;
+		// corte vertical
 		x2 = yb1;
 		y2 = (x2*m) + lb;
 
@@ -1056,18 +1136,41 @@ protected:
 		// Si lb no esta entre los rangos permitidos no se agrega nada
 		// if(lb < 0 || lb >= max_c.ub()) return;
 
+		// obtiene funcion
+		std::vector< pair <double, double> > functionPoly;
+		Interval a;
+		IntervalVector interVector = IntervalVector(2);
+		double value;
+		int max_iterations = 10;
+		for(int i=0;i <= max_iterations; i++) {
+			a = Interval((double) i/max_iterations);
+			//cout << a << endl;
+			interVector = pf.get_point(a);
+			//cout << interVector[0].ub() << "," <<  interVector[1].ub() << endl;
+			functionPoly.push_back(make_pair(interVector[0].ub(), interVector[1].ub()));
+		}
+
 
 		cout << "Se agrega una recta o punta---" << endl;
 		std::vector< pair <double, double> > rectaUB;
 		if(lb == 0 or (lb != 0 and lb < max_c.ub()) ) {
 			if(x1.ub() == x2.ub() and  y1.ub() == y2.ub()) {
 				cout << "point: " << x1.ub() << "," << y1.ub() << endl;
+				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
+				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
+				cout << "antes" << endl;
+				if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
+				getchar();
 				addPointtoNDS(make_pair(x1.ub(), y1.ub()));
-				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
-				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
 				//getchar();
 			}else {
-				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
+				rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
+				cout << "antes" << endl;
+				if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
+				getchar();
+
+				//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 				cout << "se va a gregar el vector "<< endl;
 				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
@@ -1099,12 +1202,10 @@ protected:
 				}
 				addPointtoNDS(make_pair(x2.ub(), y2.ub())); //error
 				addVectortoNDS(make_pair(x1.ub(),y1.ub()), make_pair(x2.ub(), y2.ub()));
-				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
 				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
 				cout << NDS2.size() << endl;
-				rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
-				rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
 
 				// if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 				/*
@@ -1148,19 +1249,6 @@ protected:
 		}
 		// funcion listo
 		cout << "funcion " << endl;
-		std::vector< pair <double, double> > functionPoly;
-		Interval a;
-		IntervalVector interVector = IntervalVector(2);
-		double value;
-		int max_iterations = 10;
-		for(int i=0;i <= max_iterations; i++) {
-			a = Interval((double) i/max_iterations);
-			//cout << a << endl;
-			interVector = pf.get_point(a);
-			//cout << interVector[0].ub() << "," <<  interVector[1].ub() << endl;
-			functionPoly.push_back(make_pair(interVector[0].ub(), interVector[1].ub()));
-		}
-
 		for (int i=0;i<functionPoly.size();i++) {
 			cout << functionPoly[i].first << " " << functionPoly[i].second << endl;
 		}
