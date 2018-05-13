@@ -602,7 +602,8 @@ protected:
 						(it1->first.first >= eval1.first && it1->first.first >= eval2.first)) ) {
 				cout << "fuera" << endl;
 				cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
-				addPointtoNDS(make_pair(it1->first.first,it1->first.second));
+				NDS2.insert(*it1);
+				// addPointtoNDS(make_pair(it1->first.first,it1->first.second));
 			} else {
 				double m = (eval1.second - eval2.second)/(eval1.first - eval2.first);
 				if( (eval1.second - m*eval1.first) >= (it1->first.second - m*it1->first.first)) {
