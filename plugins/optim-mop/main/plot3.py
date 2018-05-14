@@ -113,7 +113,7 @@ def updateplot(q):
             		ax1.add_line(line)
             """
             ax1.plot()
-            plt.plot(UBx, UBy, 'r.', markersize=3)
+            plt.plot(UBx, UBy, 'r-', markersize=3)
             # plt.plot(LBx, LBy, '-b', lw=0.5)
             plt.pause(1)
             updateplot(q)

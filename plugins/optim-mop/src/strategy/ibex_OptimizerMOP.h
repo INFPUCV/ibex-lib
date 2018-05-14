@@ -609,7 +609,7 @@ protected:
 				if( (eval1.second - m*eval1.first) >= (it1->first.second - m*it1->first.first)) {
 					cout << "dentro" << endl;
 					cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
-					addPointtoNDS(make_pair(it1->first.first,it1->first.second));
+					NDS2.insert(*it1);
 				} else {
 					cout << "eliminado" << endl;
 					cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
@@ -634,7 +634,7 @@ protected:
 		if(point1 == eval or (point1.first <= eval.first and point1.second <= eval.second) ) {
 			cout << "punto dominado ant_lower_bound por (" << point1.first
 					<< "," << point1.second << ")" << endl;
-			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+			//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 			//getchar();
 			return;
 		}
@@ -643,7 +643,7 @@ protected:
 		if(point2 == eval or (point2.first <= eval.first and point2.second <= eval.second) ) {
 			cout << "punto dominado lower_bound por (" << point2.first
 					<< "," << point2.second << ")" << endl;
-			if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+			//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 			//getchar();
 			return;
 		}
@@ -667,7 +667,7 @@ protected:
 				cout << "eval dominado por recta (" << point1.first
 						<< "," << point1.second << ") y (" << point2.first
 						<< "," << point2.second << ")" << endl;
-				if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+				//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 				//getchar();
 				return;
 			}
@@ -759,7 +759,7 @@ protected:
 		NDS2.insert(make_pair(intersection2, vec));
 
 		//NDS2.insert(make_pair(eval, vec));
-		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 		cout << "addPointtoNDS puntos no dominados " << NDS2.size() << endl;
 		// getchar();
 	}
@@ -1159,7 +1159,7 @@ protected:
 				cout << "point: " << x1.ub() << "," << y1.ub() << endl;
 				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
 				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
-				cout << "antes" << endl;
+				cout << "SE AGREGAN PUNTOS ya1, ya2 Y yb1, yb2" << endl;
 				if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
 				getchar();
 				addPointtoNDS(make_pair(x1.ub(), y1.ub()));
@@ -1167,7 +1167,7 @@ protected:
 			}else {
 				rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
 				rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
-				cout << "antes" << endl;
+				cout << "SE AGREGAN PUNTOS ya1, ya2 Y yb1, yb2" << endl;
 				if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
 				getchar();
 
@@ -1225,7 +1225,7 @@ protected:
 		//getchar();
 
 
-		if(_plot) py_Plotter::offline_plot(NULL, NDS2);
+		// if(_plot) py_Plotter::offline_plot(NULL, NDS2);
 		cout << "Sin NDS2 plot NDS2" << endl;
 		// NDS2, recta, funcion
 		cout << "optim Newton:" << lb <<  endl;
