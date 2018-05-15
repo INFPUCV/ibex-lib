@@ -540,6 +540,7 @@ protected:
 		}
 		*/
 		bool flag = false;
+		double epsilonRaro = 1e-7;
 		for(;it1 != DS2.end(); ++it1) {
 			second = it1->first;
 			cout << "(" << first.first << "," << first.second << ") ";
@@ -549,12 +550,16 @@ protected:
 			cout << "intersection (" << point.first << "," << point.second << ")" << endl;
 
 			// puntos muy cercanos son los mismos
-			if(fabs(inter_last.first - point.first) > 1e-7 && fabs(inter_last.second - point.second) > 1e-7) {
+			if(fabs(inter_last.first - point.first) > epsilonRaro && fabs(inter_last.second - point.second) > epsilonRaro) {
 
-				if( ((first.first <= second.first && first.first <= point.first && point.first <= second.first) ||
-						(second.first <= first.first  && second.first <= point.first && point.first <= first.first)) &&
-						((first.second <= second.second && first.second <= point.second && point.second <= second.second) ||
-						(second.second <= first.second  && second.second <= point.second && point.second <= first.second))) {
+				if( ((first.first <= second.first && first.first - epsilonRaro <= point.first && point.first <= second.first + epsilonRaro) ||
+						(second.first <= first.first  && second.first - epsilonRaro <= point.first && point.first <= first.first + epsilonRaro)) &&
+						((first.second <= second.second && first.second - epsilonRaro <= point.second && point.second <= second.second + epsilonRaro) ||
+						(second.second <= first.second  && second.second - epsilonRaro <= point.second && point.second <= first.second + epsilonRaro)) &&
+						((eval1.first <= eval2.first && eval1.first - epsilonRaro <= point.first && point.first <= eval2.first + epsilonRaro) ||
+						(eval2.first <= eval1.first  && eval2.first - epsilonRaro <= point.first && point.first <= eval1.first + epsilonRaro)) &&
+						((eval1.second <= eval2.second && eval1.second - epsilonRaro <= point.second && point.second <= eval2.second + epsilonRaro) ||
+						(eval2.second <= eval1.second  && eval2.second - epsilonRaro <= point.second && point.second <= eval1.second + epsilonRaro))) {
 
 					cout << (first.first <= second.first && first.first <= point.first && point.first <= second.first) <<
 							" " << (second.first <= first.first  && second.first <= point.first && point.first <= first.first) <<
@@ -861,7 +866,7 @@ protected:
 	/**
 	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
 	 */
-	void dominated_segment(const IntervalVector& xa, const IntervalVector& xb){
+	void dominated_segment(const IntervalVector& aIV, const IntervalVector& bIV){
 
 		// TODO: ver cuando es conveniente realizar Newton
 		// 1. Revisar que cuando la derivada sea vacia no se contracte
@@ -871,10 +876,14 @@ protected:
 
 		// TODO: Graficar resultados del algoritmo (segmento y curva)
 
+		IntervalVector xa=aIV;
+		IntervalVector xb=bIV;
+
 		Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
 		Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
 		Interval yb1=OptimizerMOP::eval_goal(goal1,xb,n);
 		Interval yb2=OptimizerMOP::eval_goal(goal2,xb,n);
+
 
 		cout << "found two points" << endl;
 		cout << "xa: " << xa << endl;
@@ -884,9 +893,44 @@ protected:
 		cout << "yb1: " << yb1 << endl;
 		cout << "yb2: " << yb2 << endl;
 
+		// if ya is dominated by yb or yb is dominated by ya
+		if(ya1.ub() <= yb1.ub() && ya2.ub() <= yb2.ub()) {
+			addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
+			return;
+		}
+		if(yb1.ub() <= ya1.ub() && yb2.ub() <= ya2.ub()) {
+			addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
+			return;
+		}
+
+		// if yb is lower than ya
+		if(yb1.ub() < ya1.ub()) {
+			Interval aux = ya1;
+			ya1 = yb1;
+			yb1 = aux;
+			aux = ya2;
+			ya2 = yb2;
+			yb2 = aux;
+			IntervalVector auxIV = xa;
+			xa = xb;
+			xb = auxIV;
+		}
+
+
+
 		Interval m = (yb2-ya2)/(yb1-ya1);
 		//Interval m = (yb1-ya1)/(yb2-ya2);
 		PFunction pf(goal1, goal2, m, xa, xb);
+
+
+		// if derivate is empty add two points
+		Interval derivate = pf.deriv(Interval(0,1));
+		cout << "derivate check " << derivate << endl;
+		if (derivate.is_empty()) {
+			addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
+			addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
+			return;
+		}
 
 		// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
 		Interval max_c, min_c, min_c2;
@@ -895,7 +939,6 @@ protected:
 		min_c2 = yb2 - (m*yb1); // deberia ser lo mismo que pf.eval(1)
 
 		cout << "m: " << m << endl;
-		Interval derivate;
 		//cout << "derivate (min, max): " << derivate << endl;
 
 		double t1=0.0, t2=0.5, t3=1.0;
@@ -1027,6 +1070,15 @@ protected:
 			cout << "iteracion " << iter << " pila " << pila.size() << endl;
 		}
 
+
+		cout << "derivate check2 " << derivate << endl;
+		if (derivate.is_empty()) {
+			addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
+			addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
+			return;
+		}
+
+
 		/*
 		// step method
 		double step=1e-2;
@@ -1049,17 +1101,6 @@ protected:
 
 		// pair <double,double> d = optimize_pf(pf, false);
 
-		// TODO: Que hacer cuando no existaderivada o sea muy grande
-		if(derivate.is_empty()) {
-			cout << "derivate empty -> remove interval" << endl;
-			cout << "Que hacer cuando no existaderivada o sea muy grande" << endl;
-			// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
-			if(fabs(pf.eval(1.0).ub()) < 1)
-				lb = pf.eval(1.0).ub()+epsilon;
-			else if(fabs(pf.eval(1.0).ub()) >= 1)
-				lb = pf.eval(1.0).ub() + fabs(pf.eval(1.0).ub())*epsilon;
-			// getchar();
-		}
 
 		cout << "optim Newton:" << lb <<  endl;
 
@@ -1142,7 +1183,7 @@ protected:
 		Interval a;
 		IntervalVector interVector = IntervalVector(2);
 		double value;
-		int max_iterations = 10;
+		int max_iterations = 100;
 		for(int i=0;i <= max_iterations; i++) {
 			a = Interval((double) i/max_iterations);
 			//cout << a << endl;
