@@ -133,6 +133,15 @@ For plotting the non-dominated vectors returned by the solver:
 ```
 ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract-full --eps-contract --plot
 python3 plugins/optim-mop/main/plot.py 
+
+
+## Upper Envelope examples (LEGO2018):
+
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/ctp6-3.txt --eps-contract --ub_segment --nb_ub_sols=2  --plot --min_ub_dist=0.0 | grep -e "iter:"
+
+python3 plugins/optim-mop/main/plot.py
+
+python3 plugins/optim-mop/main/plot3.py
 ```
 
 
@@ -148,7 +157,9 @@ Constraints
 ```
 You can see some examples in [benchs](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs).
 
+ 
 ## Authors:
  - Ignacio Araya - <ignacio.araya@pucv.cl>
  - Damir Aliquintui - <damir.aliquintui.p@mail.ucv.cl>
  - Jose Campusano - <jose.campusano.c@mail.ucv.cl>
+ 
