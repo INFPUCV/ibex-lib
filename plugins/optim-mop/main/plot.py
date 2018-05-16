@@ -34,6 +34,7 @@ def plot():
     global line,ax1,canvas
     fig = plt.figure()
     ax1 = fig.add_subplot(1,1,1)
+
     # plt.ion()
     # canvas = FigureCanvasTkAgg(fig, master=window)
     # canvas.show()
@@ -84,8 +85,10 @@ def updateplot(q):
             		line = plt.Line2D((lb['pA'][0], lb['pB'][0]),(lb['pA'][1], lb['pB'][1]),lw=0.5,markeredgecolor='black')
             		ax1.add_line(line)
             ax1.plot()
-            plt.plot(UBx, UBy, 'r.', markersize=1)
+            plt.step(UBx, UBy, 'g.',  where='post', markersize=0)
             plt.plot(LBx, LBy, '-b', lw=0.5)
+            #ax1.set_xlim([0.0,0.35])
+            #ax1.set_ylim([0.7,1.0])
             plt.pause(1)
             updateplot(q)
              # print(result)

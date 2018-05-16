@@ -116,20 +116,99 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 	//and the middle point between them
 	IntervalVector box2(box); box2.resize(n);
 	IntervalVector xa(n), xb(n);
+  finder.clear();
 
 	try{
 		xa = finder.find(box2,box2,POS_INFINITY).first;
+		update_NDS_pt(xa);
+
 	}catch (LoupFinder::NotFound& ) {
 		return false;
 	}
 
 	try{
 		xb = finder.find(box2,box2,POS_INFINITY).first;
+		update_NDS_pt(xb);
 	}catch (LoupFinder::NotFound& ) {
-		return false;
+		dominated_segment(xa, xa);
+		return true;
+	}
+  cout << "nb2" << endl;
+	py_Plotter::offline_plot(NULL, NDS);
+	dominated_segment(xa, xb);
+
+	return true;
+
+}
+
+bool OptimizerMOP::update_NDS_pt(IntervalVector& vec) {
+		bool new_ub=false;
+	//3. Se evalua el punto usando funciones objetivo (goal1 y goal2)
+	pair< double, double> eval = make_pair(eval_goal(goal1,vec,n).ub(), eval_goal(goal2,vec,n).ub());
+
+	//cout << eval.first << "," << eval.second << endl;
+	//4. Insertar en mapa NDS (si es no dominada) y actualizar eliminar soluciones dominadas de NDS
+
+	if (is_dominated(eval)) return false;
+
+	/**** NDS correction ****/
+	/*
+	if(finder.ub_correction(vec.mid(), vec)){
+		eval = make_pair(eval_goal(goal1,vec,n).ub(), eval_goal(goal2,vec,n).ub());
+	}
+	else  return false;;
+
+	if (is_dominated(eval))  return false;;
+*/
+
+	/**** end NDS correction ****/
+
+	bool domine=false;
+	std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval);
+
+
+	for(; it2!=NDS.end(); ){
+
+		if(eval.second > it2->first.second) break;
+		std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
+		++aux;
+		if(_plot)	py_Plotter::plot_del_ub(it2->first);
+
+		NDSy.erase(it2->first);
+		NDS.erase(it2);
+		it2 = aux;
+		domine=true;
 	}
 
-	dominated_segment(xa, xb);
+
+	//the point is inserted in NDS only if its distance to the neighbor points is greater than (abs_eps/2.0)
+	if(domine || std::min(it2->first.first - eval.first,  eval.second - it2->first.second) >= _min_ub_dist*eps){
+		//it is not dominated and we remove the new dominated points
+
+		if(eval.first < y1_ub.first) y1_ub=eval;
+		if(eval.second < y2_ub.second) y2_ub=eval;
+
+		NDS.insert(make_pair(eval, vec));
+		NDSy.insert(make_pair(eval, vec));
+		//cout << "passed" << endl;
+		new_ub = true;
+	}else{
+		it2--;
+		if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) >= _min_ub_dist*eps ){
+			//it is not dominated and we remove the new dominated points
+
+			if(eval.first < y1_ub.first) y1_ub=eval;
+			if(eval.second < y2_ub.second) y2_ub=eval;
+
+			NDS.insert(make_pair(eval, vec));
+			NDSy.insert(make_pair(eval, vec));
+			//cout << "passed" << endl;
+			new_ub = true;
+		}
+	}
+
+	if(_plot && new_ub) py_Plotter::plot_add_ub(eval);
+	if(trace) {cout << eval.first  <<"," << eval.second << "(" << NDS.size() << ")" << endl;}
 
 }
 
@@ -140,89 +219,30 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box) {
 	//We attempt to find two feasible points which minimize both objectives
 	//and the middle point between them
 	IntervalVector box2(box); box2.resize(n);
-
+  finder.clear();
 
 	bool new_ub=false;
 	bool flag=true;
 
 
 	int i=0;
+
 	while(flag){
 		i++;
+
 		IntervalVector vec(n);
 
 		try{
 			vec = finder.find(box2,box2,POS_INFINITY).first;
 		}catch (LoupFinder::NotFound& ) {
+			break;
 			vec = box2.mid();
 			if(!finder.norm_sys.is_inner(vec)) break;
 			flag=false;
 		}
 
-		//3. Se evalua el punto usando funciones objetivo (goal1 y goal2)
-		pair< double, double> eval = make_pair(eval_goal(goal1,vec,n).ub(), eval_goal(goal2,vec,n).ub());
-
-		//cout << eval.first << "," << eval.second << endl;
-		//4. Insertar en mapa NDS (si es no dominada) y actualizar eliminar soluciones dominadas de NDS
-
-		if (is_dominated(eval)) continue;
-
-		/**** NDS correction ****/
-		if(finder.ub_correction(vec.mid(), vec)){
-			eval = make_pair(eval_goal(goal1,vec,n).ub(), eval_goal(goal2,vec,n).ub());
-		}
-		else continue;
-
-		if (is_dominated(eval)) continue;
-
-
-		/**** end NDS correction ****/
-
-		bool domine=false;
-		std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS.lower_bound(eval);
-
-		for(; it2!=NDS.end(); ){
-
-			if(eval.second > it2->first.second) break;
-			std::map<pair<double, double>, IntervalVector>::iterator aux = it2;
-			++aux;
-			if(_plot)	py_Plotter::plot_del_ub(it2->first);
-
-			NDSy.erase(it2->first);
-			NDS.erase(it2);
-			it2 = aux;
-			domine=true;
-		}
-
-
-		//the point is inserted in NDS only if its distance to the neighbor points is greater than (abs_eps/2.0)
-		if(domine || std::min(it2->first.first - eval.first,  eval.second - it2->first.second) >= _min_ub_dist*eps){
-			//it is not dominated and we remove the new dominated points
-
-			if(eval.first < y1_ub.first) y1_ub=eval;
-			if(eval.second < y2_ub.second) y2_ub=eval;
-
-			NDS.insert(make_pair(eval, vec));
-			NDSy.insert(make_pair(eval, vec));
-			//cout << "passed" << endl;
-			new_ub = true;
-		}else{
-			it2--;
-			if( std::min(eval.first - it2->first.first,  it2->first.second - eval.second) >= _min_ub_dist*eps ){
-				//it is not dominated and we remove the new dominated points
-
-				if(eval.first < y1_ub.first) y1_ub=eval;
-				if(eval.second < y2_ub.second) y2_ub=eval;
-
-				NDS.insert(make_pair(eval, vec));
-				NDSy.insert(make_pair(eval, vec));
-				//cout << "passed" << endl;
-				new_ub = true;
-			}
-		}
-
-		if(_plot && new_ub) py_Plotter::plot_add_ub(eval);
-		if(trace) {cout << eval.first  <<"," << eval.second << "(" << NDS.size() << ")" << endl;}
+		cout << "nb:"  << i << endl;
+		new_ub= update_NDS_pt(vec);
 
 	}
 
@@ -298,6 +318,48 @@ void OptimizerMOP::discard_generalized_monotonicty_test(IntervalVector& box, con
 		box=new_box;
 
 }
+
+//TODO: Juntar con non_dominated_segments
+list<pair <double,double> > OptimizerMOP::extremal_non_dominated(const IntervalVector& box){
+	int n=box.size()-2;
+	list <pair <double,double> > inpoints;
+
+	pair <double, double> firstp;
+	pair <double, double> lastp;
+
+	//first point in the box (v11)
+	map< pair <double, double>, IntervalVector >:: iterator ent1=NDS2.upper_bound(make_pair(box[n].lb(),NEG_INFINITY));
+	while(ent1->first.second > box[n].ub()) ent1++;
+	if(ent1->first.first > box[n].lb()) return inpoints; //no point in the box
+
+	pair <double, double> v11 = ent1->first; ent1--;
+    pair <double, double> v10 = ent1->first;
+
+	//TODO: interseccion conservativa: upperPointIntersection
+    firstp = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
+   	if(firstp.second <= box[n+1].lb() ){
+   		cout << "error: the box is dominated" << endl;
+   		exit(0);
+   	}
+
+	inpoints.push_back(firstp);
+
+	//last point in the box (v21)
+	while(ent1->first.second > box[n+1].lb() || ent1->first.first > box[n].lb())
+		ent1++;
+
+	pair <double, double> v21 = ent1->first;
+	ent1++;
+	pair <double, double> v20 = ent1->first;
+
+
+	lastp = pointIntersection( v20, v21, make_pair(v20.first,box[n+1].lb()),  make_pair(v21.first,box[n+1].lb()));
+
+	inpoints.push_back(lastp);
+
+	return inpoints;
+}
+
 
 list<pair <double,double> > OptimizerMOP::non_dominated_segments(IntervalVector& box){
 	list <pair <double,double> > inpoints;
@@ -402,7 +464,9 @@ void OptimizerMOP::dominance_peeler2(IntervalVector& box, list <pair <double,dou
 
 }
 
+
 double OptimizerMOP::distance22(const Cell* c){
+	cout << 1 << endl;
 	double max_dist=NEG_INFINITY;
 
 	int n=c->box.size();
@@ -413,13 +477,39 @@ double OptimizerMOP::distance22(const Cell* c){
 	double a = c->get<CellMOP>().a;
 	double w_lb = c->get<CellMOP>().w_lb;
 
-	map< pair <double, double>, IntervalVector >::iterator it = NDS2.lower_bound(make_pair(z1.lb(),-NEG_INFINITY)); //NDS.begin();
-	it--;
+	map< pair <double, double>, IntervalVector >::iterator it = NDS2.lower_bound(make_pair(z1.lb(),POS_INFINITY)); //NDS.begin();
+	//it--;
 
-	for(;it!=NDS2.end(); ){
+
+	list<pair <double,double> > inner_segments= extremal_non_dominated(c->box);
+
+	if(inner_segments.size()>=2){
+		pair <double,double> p1 = inner_segments.front();
+		double dist = std::min (p1.first - z1.lb(), p1.second - z2.lb());
+		//Damir's distance
+		if(cy_contract_var && w_lb!=POS_INFINITY)
+		  dist = std::min(dist, (Interval(p1.second)-(Interval(w_lb) - (Interval(p1.first) - Interval(p1.second)))/(Interval(a)+1.0)).ub());
+
+		if(dist > max_dist) max_dist=dist;
+
+		p1 = inner_segments.back();
+		dist = std::min (p1.first - z1.lb(), p1.second - z2.lb());
+		//Damir's distance
+		if(cy_contract_var && w_lb!=POS_INFINITY)
+		  dist = std::min(dist, (Interval(p1.second)-(Interval(w_lb) - (Interval(p1.first) - Interval(p1.second)))/(Interval(a)+1.0)).ub());
+
+		if(dist > max_dist) max_dist=dist;
+	}
+
+	for(;it!=NDS2.end(); it++){
 		pair <double, double> pmax= it->first;
+
+
 		if(pmax.first==POS_INFINITY) pmax.first=CellMOP::y1_init.ub();
 		if(pmax.second==POS_INFINITY) pmax.second=CellMOP::y2_init.ub();
+
+		//cout << "z:" << z1.lb() << "," << z2.lb() << "  -->  ";
+		//cout << "pmax:" << pmax.first << "," << pmax.second << endl;
 
 		//el punto esta dentro de la zona de interes
 		if(pmax.first >= z1.lb() && pmax.second >= z2.lb()){
@@ -432,6 +522,7 @@ double OptimizerMOP::distance22(const Cell* c){
 		}else break;
 	}
 
+	cout << "z:" << z1.lb() << "," << z2.lb() << "  -->  " << max_dist << endl;
 	return max_dist;
 }
 
@@ -535,15 +626,21 @@ void OptimizerMOP::cy_contract(Cell& c){
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
-	if(nds_mode==SEGMENTS){
-		list<pair <double,double> > inner_segments= non_dominated_segments(c.box);
-		dominance_peeler2(c.box,inner_segments);
-		if(cy_contract_var){
+	if(false){
+		cout << 1 << endl;
+		list<pair <double,double> > inner_segments; //= non_dominated_segments(c.box);
+
+		cout << 2 << endl;
+		//if(inner_segments.size()>=2) dominance_peeler2(c.box,inner_segments);
+
+
+		if(cy_contract_var && inner_segments.size()>=2){
 			cy_contract2(c,inner_segments);
 		}else
 			ctc.contract(c.box);
+		cout << 4 << endl;
 
-	}else if(nds_mode==POINTS){
+	}else if(nds_mode==POINTS || nds_mode==SEGMENTS){
 		dominance_peeler(c.box);
 		discard_generalized_monotonicty_test(c.box, init_box);
 
@@ -568,7 +665,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	buffer.flush();
 
-	if(nds_mode == POINTS){
+	if(nds_mode == POINTS || nds_mode == SEGMENTS){
 		NDS.clear();
 		//the first point
 		NDS.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
@@ -576,7 +673,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		NDS.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 	}
 
-	//if(nds_mode == SEGMENTS){
+	if( nds_mode == SEGMENTS){
 		NDS2.clear();
 		//the first point
 		NDS2.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
@@ -584,7 +681,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		NDS2.insert(make_pair(make_pair(POS_INFINITY,POS_INFINITY), Vector(1)));
 		//the last point
 		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
-	//}
+	}
+
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
@@ -608,19 +706,33 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	Timer timer;
 	timer.start();
 
+
+
 	//handle_cell(*root,init_box);
 	buffer.push(root);
 	if(_plot) py_Plotter::plot_add_box(root);
 
+	int iter=0;
+
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
+		  if(_plot) {
+			  cout << "iter:" << iter << endl;
+			  cout << "buffer_size:" << buffer.size() << endl;
+		  }
+		  iter++;
+
+
+		  //if((nds_mode == POINTS || nds_mode==SEGMENTS) && _plot) {py_Plotter::offline_plot(NULL, NDS);}
 
 		  if (trace >= 2) cout << buffer;
 
 
+
 			Cell *c = buffer.pop();
 			if(_plot) py_Plotter::plot_del_box(c);
+
 
 
 			nb_cells++;
@@ -633,11 +745,14 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 			}
 
-			//if(nds_mode==POINTS)
-				update_NDS(c->box);
-			//else if(nds_mode==SEGMENTS)
-				update_NDS2(c->box);
+			cout << "updateNDS" << endl;
 
+			//if(nds_mode==POINTS)
+			//	update_NDS(c->box);
+
+			if(nds_mode==SEGMENTS)
+				update_NDS2(c->box);
+			cout << "end" << endl;
 
 
 
@@ -652,8 +767,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
         	double dist=0.0;
-        	if(!atomic_box) dist= (nds_mode==POINTS)? distance2(c) : distance22(c);
-
+        	if(!atomic_box) dist= (nds_mode==POINTS || nds_mode==SEGMENTS)? distance2(c) : distance22(c);
+        	cout << "dist:"  << dist << endl;
 
         	if(dist < eps || atomic_box){
         		if(dist <0.0){
@@ -665,7 +780,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
         		//TODO: Puede que sea lo mismo que la linea 659 (if(dist <0.0))
 
-        		if(nds_mode==POINTS){
+        		if(nds_mode==POINTS || nds_mode==SEGMENTS){
         			map< pair <double, double>, IntervalVector >:: iterator ent1=NDS.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
         			ent1--;
         			if(ent1->first.second <= c->box[n+1].lb()){
@@ -683,7 +798,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
-		  IntervalVector left(c->box);
+		 IntervalVector left(c->box);
 		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
 				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
 

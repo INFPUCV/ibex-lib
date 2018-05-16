@@ -78,6 +78,11 @@ public:
 		return false;
 	}
 
+	virtual void clear() {
+		lp_solver.clean_ctrs();
+		phase=0;
+	}
+
 	/**
 	 * \brief Delete this.
 	 */

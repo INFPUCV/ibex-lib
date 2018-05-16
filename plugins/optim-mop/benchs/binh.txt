@@ -1,7 +1,7 @@
 constants
 
 variables
-x1 in [ 0,3];
+x1 in [ 0,5];
 x2 in [ 0,3];
 z1 in [-1e8, 1e8];
 z2 in [-1e8, 1e8];

@@ -93,7 +93,7 @@ def updateplot(q):
             #p = [(-100, 100), (100, -100)]
             lines.append(LB)
             lc = mc.LineCollection(lines, colors='blue', linewidths=0.5)
-            ax1.add_collection(lc)
+            #ax1.add_collection(lc)
 
             # add lines function
             lines = []
@@ -104,7 +104,7 @@ def updateplot(q):
                 arr1.append(LB2[i])
                 lines.append(arr1)
             lc = mc.LineCollection(lines, colors='green', linewidths=0.5)
-            ax1.add_collection(lc)
+            #ax1.add_collection(lc)
 
             """
             for lb in LB:
@@ -115,6 +115,8 @@ def updateplot(q):
             ax1.plot()
             plt.plot(UBx, UBy, 'r-', markersize=3)
             # plt.plot(LBx, LBy, '-b', lw=0.5)
+            #ax1.set_xlim([0.0,0.35])
+            #ax1.set_ylim([0.7,1.0])
             plt.pause(1)
             updateplot(q)
              # print(result)
@@ -137,14 +139,14 @@ def simulation(q):
     global filedate
     # print(filedate)
     while True:
-        st = os.stat('output.txt')
+        st = os.stat('output2.txt')
         # print(st[ST_MTIME])
         if(st[ST_MTIME] == filedate):
             time.sleep(1)
             pass
         else:
             filedate = st[ST_MTIME]
-            f = open("output.txt")
+            f = open("output2.txt")
             reader = f.read()
             reader = reader.replace('inf', "math.inf")
             reader = reader.replace('nan', "0")

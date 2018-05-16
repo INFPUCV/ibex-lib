@@ -296,6 +296,13 @@ public:
 	 */
 	static IntervalVector deriv_goal(const Function& goal, const IntervalVector& x, int n);
 
+	static double distance22(const Cell* c);
+
+	static double distance(const Cell* c){
+		if(!NDS.empty()) return distance2(c);
+		else return distance22(c);
+	}
+
 protected:
 	/**
 	 * The contraction using y+cy
@@ -305,11 +312,16 @@ protected:
 	void cy_contract2(Cell& c, list <pair <double,double> >& inpoints);
 
 	/**
-	 * \brief return a set of non-dominated segments of the box
+	 * \brief return a set of non-dominated segments in the box
 	 */
 	list<pair <double,double> > non_dominated_segments(IntervalVector& box);
 
-	double distance22(const Cell* c);
+	/**
+	 * \brief return the first and last points dominating the lb of the box
+	 */
+	static list<pair <double,double> > extremal_non_dominated(const IntervalVector& box);
+
+
 
 	/**
 	 * \brief Contract and bound procedure for processing a box.
@@ -374,6 +386,7 @@ protected:
 	 */
 	bool update_NDS(const IntervalVector& box);
 
+  bool update_NDS_pt(IntervalVector& vec);
 
 	/**
 	 * \brief Main procedure for updating the NDS.
@@ -778,7 +791,7 @@ protected:
 	 * @return Punto o vector de interseccion entre los segmentos evaluados,
 	 *         retorna null si no hay interseccion entre los segmentos
 	 */
-	pair<double, double> pointIntersection(
+	static pair<double, double> pointIntersection(
 			pair<double, double> v10, pair<double, double> v11,
 			pair<double, double> v20, pair<double, double> v21){
 		pair<double, double> interseccion = make_pair(0.0 ,0.0);
@@ -842,7 +855,7 @@ protected:
      * @param first  - Vector inicial del segmento
      * @return              - Rectorna la pendiente del segmento
      */
-    double getSlopeSegment(pair<double, double> first, pair<double, double> last){
+    static double getSlopeSegment(pair<double, double> first, pair<double, double> last){
         double slope1, slope2, Ffirst, Fsecond, Lfirst, Lsecond;
     	//cout << "first " << first.first << " " << first.second << endl;
     	//cout << "last " << last.first << " " << last.second << endl;

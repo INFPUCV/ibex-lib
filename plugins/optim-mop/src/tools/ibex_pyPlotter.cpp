@@ -85,7 +85,7 @@ output << "]" << endl;
 void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS){
 	cout << "print plot:" << NDS.size() << endl;
 	ofstream output;
-	output.open("output.txt");
+	output.open("output2.txt");
 	//set<  Cell* > :: iterator cell=buffer_cells.begin();
 /*
 	output << "(";
@@ -126,7 +126,7 @@ void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVecto
 		){
 	cout << "print plot:" << NDS.size() << endl;
 	ofstream output;
-	output.open("output.txt");
+	output.open("output2.txt");
 	output << "[";
 
 	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
