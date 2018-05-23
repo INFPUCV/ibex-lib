@@ -35,29 +35,6 @@ bool OptimizerMOP::_eps_contract = false;
 map< pair <double, double>, IntervalVector > OptimizerMOP::NDS;
 map< pair <double, double>, IntervalVector, struct sorty2 > OptimizerMOP::NDS2;
 
-PFunction::PFunction(const Function& f1, const Function& f2, const Interval& m, const IntervalVector& xa, const IntervalVector& xb):
-		f1(f1),f2(f2), m(m), xa(xa), xb(xb) {}
-
-Interval PFunction::eval(const Interval& t) const{
-	IntervalVector xt = xa+t*(xb-xa);
-	return OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1,xt,  xt.size());
-}
-
-Interval PFunction::deriv(const Interval& t) const{
-	IntervalVector xt = xa+t*(xb-xa);
-	IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
-	IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
-
-	return (g2-m*g1)*(xb-xa);
-}
-
-IntervalVector PFunction::get_point(const Interval& t) const{
-	IntervalVector y(2);
-	IntervalVector xt = xa+t*(xb-xa);
-	y[0]=OptimizerMOP::eval_goal(f1,xt,  xt.size());
-	y[1]=OptimizerMOP::eval_goal(f2,xt,  xt.size());
-	return y;
-}
 
 OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode, double eps) : n(n),
@@ -116,7 +93,10 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 	//and the middle point between them
 	IntervalVector box2(box); box2.resize(n);
 	IntervalVector xa(n), xb(n);
-  finder.clear();
+	finder.clear();
+
+	list< pair <double, double> > points;
+	list< pair< pair< double, double> , pair< double, double> > > segments;
 
 	try{
 		xa = finder.find(box2,box2,POS_INFINITY).first;
@@ -130,12 +110,13 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 		xb = finder.find(box2,box2,POS_INFINITY).first;
 		update_NDS_pt(xb);
 	}catch (LoupFinder::NotFound& ) {
-		dominated_segment(xa, xa);
+		addPointtoNDS(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
 		return true;
 	}
-  cout << "nb2" << endl;
+	cout << "nb2" << endl;
 	py_Plotter::offline_plot(NULL, NDS);
-	dominated_segment(xa, xb);
+	add_upper_segment(xa, xb);
+
 
 	return true;
 

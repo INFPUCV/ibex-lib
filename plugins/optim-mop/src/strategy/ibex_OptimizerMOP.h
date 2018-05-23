@@ -18,6 +18,7 @@
 #include "ibex_CtcKhunTucker.h"
 #include "ibex_DistanceSortedCellBufferMOP.h"
 #include "ibex_pyPlotter.h"
+#include "ibex_PFunction.h"
 
 #include <set>
 #include <map>
@@ -51,29 +52,7 @@ struct sorty2{
 	}
 };
 
-/**
- * Parameterized function f(t) ← f1(xt) - m*f2(xt)
- * xt = xa + t*(xb-xa)
- */
-class PFunction{
 
-public:
-	PFunction(const Function& f1, const Function& f2, const Interval& m, const IntervalVector& xa, const IntervalVector& xb);
-
-	Interval eval(const Interval& t) const;
-
-	Interval deriv(const Interval& t) const;
-
-	IntervalVector get_point(const Interval& t) const;
-
-private:
-
-	const Function& f1;
-	const Function& f2;
-	Interval m;
-	IntervalVector xa;
-	IntervalVector xb;
-};
 
 class Node_t{
 public:
@@ -399,96 +378,15 @@ protected:
 	bool update_NDS2(const IntervalVector& box);
 
 
-	/**
-	 * \brief minimize/maximize the function pf: f1(t)+w*f2(t)
-	 * returning the best solution found t and its the lb/ub of its evaluation
-	 */
-	pair<double, double> optimize_pf(PFunction& pf, bool minimize=false){
-
-		if(minimize){
-			cout << "minimize f1(t)+w*f2(t) is not implemented yet!" << endl;
-			exit(0);
-		}
-		//deep-first search
-		stack<Node_t> nodes;
-		//std::priority_queue<Interval, std::vector<Interval> > nodes;
-
-		double LB=NEG_INFINITY, eps=0.01;
-		double UB=NEG_INFINITY;
-		double best_t=0.0;
-
-		Interval t=Interval(0.0,1.0);
-
-		nodes.push(Node_t(t,pf.eval(t)));
-
-		int i=0;
-		while(!nodes.empty()){
-			i++;
-			Node_t n= nodes.top(); nodes.pop();
-
-			//the nodes is removed if its ub is lower than LB+eps
-			if(n.ft.ub() < LB+eps) {UB=std::max(UB, n.ft.ub()); continue;}
-
-			//the size of the node is too small, then the UB is updated
-			if(n.t.diam() < 0.01) {
-				if(n.ft.ub() > UB) UB=n.ft.ub();
-				continue;
-			}
-
-			//we search for a better solution in the midpoint
-			double probing = pf.eval(n.t.mid()).ub();
-			if(probing > LB) {
-				best_t=n.t.mid();
-				LB=probing;
-			}
-
-
-			//newton step
-			Interval d(pf.deriv(n.t));
-
-			while(true){
-				Interval y0 = pf.eval(n.t.lb());
-				if(y0.is_empty()) break;
-				if(y0.ub() > LB) {LB=y0.ub(); best_t=n.t.lb(); break;}
-
-				if(d.ub()==0.0) break;
-				Interval x= (Interval(LB) - y0)/Interval(d.ub());
-
-				//contract t
-				if(x.lb()>eps)
-					n.t=Interval((n.t.lb()+x).lb(),n.t.ub());
-				else break;
-			}
-
-			while(true){
-				cout << "hola mundo este e un comentario para realizar pruebas " << nodes.size() << endl;
-				Interval y0 = pf.eval(n.t.ub());
-				if(y0.is_empty()) break;
-				if(y0.ub() > LB) {LB=y0.ub(); best_t=n.t.ub(); break;}
-
-				if(d.lb()==0.0) break;
-				Interval x= (Interval(LB) - y0)/Interval(-d.lb());
-
-				//contract t
-				if(x.ub()>eps)
-					n.t=Interval(n.t.lb(),(n.t.ub()-x).ub());
-				else break;
-			}
-
-			//bisection
-			Interval tl = Interval(n.t.lb(), n.t.mid());
-			Interval tr = Interval(n.t.mid(), n.t.ub());
-
-			nodes.push(Node_t(Interval(tl),pf.eval(tl)));
-			nodes.push(Node_t(Interval(tr),pf.eval(tr)));
-		}
-
-		cout << i << endl;
-		return make_pair(best_t, UB);
-
-	}
-
 	void addVectortoNDS(pair< double, double> eval1, pair< double, double> eval2) {
+
+		if(eval1.first == eval2.first  &&  eval1.second == eval2.second ){
+			addPointtoNDS(eval1);
+			return;
+		}
+
+
+
 		cout << "addVectortoNDS-------" << endl;
 		std::map<pair<double, double>, IntervalVector>::iterator aux, it1 = --NDS2.lower_bound(eval1);
 		pair< double, double> first, second, point, inter_last = make_pair(NEG_INFINITY, NEG_INFINITY);
@@ -876,18 +774,17 @@ protected:
 
     }
 
+
+    /**
+     * \brief optimize
+     */
+
 	/**
 	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
+	 *
+	 * returns a list of points and segments to be included in the NDS
 	 */
-	void dominated_segment(const IntervalVector& aIV, const IntervalVector& bIV){
-
-		// TODO: ver cuando es conveniente realizar Newton
-		// 1. Revisar que cuando la derivada sea vacia no se contracte
-		// 2. Revisar que cunado la derivada sea muy alta no haga nada
-		// 3. Revisar que newton si supera el max c no siga buscando y no se contracte
-		// 4. Distancia minima entre puntos ya e yb
-
-		// TODO: Graficar resultados del algoritmo (segmento y curva)
+	void add_upper_segment(const IntervalVector& aIV, const IntervalVector& bIV){
 
 		IntervalVector xa=aIV;
 		IntervalVector xb=bIV;
@@ -897,20 +794,12 @@ protected:
 		Interval yb1=OptimizerMOP::eval_goal(goal1,xb,n);
 		Interval yb2=OptimizerMOP::eval_goal(goal2,xb,n);
 
-
-		cout << "found two points" << endl;
-		cout << "xa: " << xa << endl;
-		cout << "xb: " << xb << endl;
-		cout << "ya1: " << ya1 << endl;
-		cout << "ya2: " << ya2 << endl;
-		cout << "yb1: " << yb1 << endl;
-		cout << "yb2: " << yb2 << endl;
-
 		// if ya is dominated by yb or yb is dominated by ya
 		if(ya1.ub() <= yb1.ub() && ya2.ub() <= yb2.ub()) {
 			addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
 			return;
 		}
+
 		if(yb1.ub() <= ya1.ub() && yb2.ub() <= ya2.ub()) {
 			addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
 			return;
@@ -918,32 +807,16 @@ protected:
 
 		// if yb is lower than ya
 		if(yb1.ub() < ya1.ub()) {
-			Interval aux = ya1;
-			ya1 = yb1;
-			yb1 = aux;
-			aux = ya2;
-			ya2 = yb2;
-			yb2 = aux;
-			IntervalVector auxIV = xa;
-			xa = xb;
-			xb = auxIV;
+			std::swap(ya1,yb1);
+			std::swap(ya2,yb2);
+			std::swap(xa,xb);
 		}
 
-
+		addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
+		addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
 
 		Interval m = (yb2-ya2)/(yb1-ya1);
-		//Interval m = (yb1-ya1)/(yb2-ya2);
 		PFunction pf(goal1, goal2, m, xa, xb);
-
-
-		// if derivate is empty add two points
-		Interval derivate = pf.deriv(Interval(0,1));
-		cout << "derivate check " << derivate << endl;
-		if (derivate.is_empty()) {
-			addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
-			addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
-			return;
-		}
 
 		// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
 		Interval max_c, min_c, min_c2;
@@ -951,365 +824,35 @@ protected:
 		min_c = ya2 - (m*ya1); // deberia ser lo mismo que pf.eval(1)
 		min_c2 = yb2 - (m*yb1); // deberia ser lo mismo que pf.eval(1)
 
-		cout << "m: " << m << endl;
-		//cout << "derivate (min, max): " << derivate << endl;
+		double c=pf.optimize(max_c);
+		if (c==NEG_INFINITY || c>max_c.ub() ) return;
 
-		double t1=0.0, t2=0.5, t3=1.0;
-		double epsilon = 0.0003;
-		double lb = NEG_INFINITY;
-
-		stack<Interval> pila;
-		pila.push(Interval(0,1));
-		Interval inter, left, right;
-		double point_t, point_c, t_before, error, min_interval, max_diam;
-		Interval y_r, y_c, y_l;
-		double lb_interval;
-		// global values
-		error = 1e-4;
-		min_interval = 1e-4;
-		max_diam = 1e-3;
-
-		// pila
-		int iter = 0;
-		while(!pila.empty() and lb < max_c.ub()) {
-			inter = pila.top();
-			pila.pop();
-
-			iter++;
-			cout << "iteracion " << iter << " pila " << pila.size() << endl;
-			cout << "inter diam " << inter.diam() << " " << inter << endl;
-
-			derivate = pf.deriv(inter);
-			cout << "derivate " << derivate << endl;
-			if (derivate.is_empty()) break;
-
-			// lowerbounding
-			y_r=pf.eval(inter.lb());
-			y_c=pf.eval(inter.mid());
-			y_l= pf.eval(inter.ub());
-
-			lb_interval = max(max(y_r, y_c), y_l).ub();
-			//if(lb_interval > lb) lb = lb_interval;
-			// epsilon relativo: if |lb|<1: lb+eps, otherwise lb + |lb|*eps
-			if(fabs(lb_interval) < 1 && lb_interval + epsilon > lb)
-				lb = lb_interval+epsilon;
-			else if(fabs(lb_interval) >= 1 && lb_interval + fabs(lb_interval)*epsilon > lb)
-				lb = lb_interval + fabs(lb_interval)*epsilon;
-
-
-			// if derivate is empty the segment should not be created
-			if(derivate.is_empty()) {
-				cout << "derivate empty -> remove interval" << endl;
-				//getchar();
-				break;
-			}
-			// contract Newton from left
-			point_t = inter.lb();
-			point_c = pf.eval(point_t).ub();
-			t_before = NEG_INFINITY;
-
-			while(derivate.ub() > 0 and point_t - t_before > error and point_t < inter.ub()) {
-				t_before = point_t;
-
-				if(0 == derivate.ub())
-					point_t = POS_INFINITY;
-				else{
-					cout << (fabs(lb) < 1) << endl;
-					point_t = (lb - point_c)/derivate.ub() + t_before;
-					point_c = pf.eval(point_t).ub();
-				}
-				// error en caso de que c sea mayor al lb+epsilon
-				if(point_t < inter.ub() and point_c > lb+epsilon) {
-					cout << "ERRROR LEFT: point right is greater than lb " << endl;
-					//getchar();
-					break;
-					//exit(-1);
-				}
-
-				cout << "point_t " << point_t << endl;
-			}
-
-			// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
-			if(point_t >= inter.ub()) {
-				continue;
-			} else {
-				//se contracta el intervalo si point_t > 0
-				if(point_t > 0)
-					inter = Interval(point_t, inter.ub());
-			}
-
-			cout << "contract left inter diam " << inter.diam() << " " << inter << endl;
-
-			// contract Newton from right
-			point_t = inter.ub();
-			point_c = pf.eval(point_t).ub();
-			t_before = NEG_INFINITY;
-
-			while(derivate.lb() < 0 and t_before - point_t > error and point_t > inter.lb()) {
-				t_before = point_t;
-
-				if(0 == derivate.lb())
-					point_t = NEG_INFINITY;
-				else{
-					point_t = t_before - (lb - point_c)/derivate.lb();
-					point_c = pf.eval(point_t).ub();
-				}
-
-				// error en caso de que c sea mayor al lb+epsilon
-				if(point_t > inter.lb() and point_c > lb+epsilon) {
-					cout << "ERRROR RIGHT: point right is greater than lb" << endl;
-					//getchar();
-					break;
-				}
-			}
-
-			// Se remueve
-			if(point_t <= inter.lb()) {
-				continue;
-			} else {
-				inter = Interval(inter.lb(), point_t);
-			}
-
-			cout << "contract right inter diam " << inter.diam() << " " << inter << endl;
-
-			// bisect interval and push in stack
-			if(inter.is_bisectable() and inter.diam() > max_diam) {
-				pair<Interval,Interval> bsc = inter.bisect(0.5);
-				cout << "bsc1 diam " << bsc.first.diam() << " " << bsc.first << endl;
-				cout << "bsc2 diam " << bsc.second.diam() << " " << bsc.second << endl;
-				pila.push(bsc.first);
-				pila.push(bsc.second);
-			}
-			cout << "iteracion " << iter << " pila " << pila.size() << endl;
-		}
-
-
-		cout << "derivate check2 " << derivate << endl;
-		if (derivate.is_empty()) {
-			addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
-			addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
-			return;
-		}
-
-
-		/*
-		// step method
-		double step=1e-2;
-		double tinf=0.0;
-		double min = POS_INFINITY;
-		double max = NEG_INFINITY;
-		Interval maxinterval(0);
-		while(tinf<1.0){
-			double tsup=tinf+step;
-			if(tsup>1.0) tsup=1.0;
-			double ub = pf.eval(Interval(tinf,tsup)).ub();
-			double lb = pf.eval(Interval(tinf,tsup)).lb();
-			if(ub > max){maxinterval=Interval(tinf,tsup); max=ub;}
-			if(lb < min) min=lb;
-			tinf=tsup;
-
-		}
-		*/
-
-
-		// pair <double,double> d = optimize_pf(pf, false);
-
-
-		cout << "optim Newton:" << lb <<  endl;
-
-
-		// cout << "optim:" << d.second <<  endl;
-
-		//TODO: como obtener los maximosy minimos de c?
-		cout << "como obtener los maximosy minimos de c?" << endl;
-		cout << "max c " << max_c << endl;
-		cout << "min c " << min_c << endl;
-		cout << "min c2 " << min_c2 << endl;
-
-		cout << "min y max " << pf.eval(Interval(0,1)) << endl;
-		cout << "min " << pf.eval(1.0) << endl;
-
-		/*
-		if(fabs(d.second-lb) > 1) {
-			cout << "Diferencia  entre optim newton y optim" << endl;
-			// getchar();
-		}
-		*/
-
-
-
-		// obtiene los dos puntos para generar la recta obtenida con el metodo de Newton
-		cout << "ya1, ya2: " << ya2.ub() << "," << ya1.ub() << endl;
-		cout << "yb1, yb2: " << yb2.ub() << "," << yb1.ub() << endl;
-		cout << "optim Newton: " << lb <<  endl;
-		cout << "m: " << m.ub() << endl;
-		cout << "max c: " << max_c.ub() << endl;
-
+		//we obtaine the upper line
 		Interval x1, y1, x2, y2;
-		/*
-		// si lb es 0 la recta pasa por ya y yb
-		if(lb == 0) {
-			y1 = ya2;
-			x1 = ya1;
-			y2 = yb2;
-			x2 = yb1;
-			// cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
-			// cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
-		} else if(lb < max_c.ub()) { // si c < max_c existe una recta
-			// primer punto (x1, y1)
-			x1 = ya1;
-			y1 = (x1 - lb)/m;
-			// segundo punto (x2, y2)
-			y2 = yb2;
-			x2 = m*y2 + lb;
-		}
-		*/
-
-		cout << "punto1 (" << ya1.ub() << "," << (ya1*m) + lb << ")" << endl;
-		cout << "punto2 (" << yb1.ub() << "," << (yb1*m) + lb << ")" << endl;
 		// corte horizontal
-		y1 = ya2;
-		x1 = (y1-lb)/m;
+		y1 = ya2; x1 = (y1-c)/m;
 		// corte vertical
-		x2 = yb1;
-		y2 = (x2*m) + lb;
-
-		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
-		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
-
-
-		cout << "Se agregan el punto la recta de X ---" << endl;
-		cout << "ya1, ya2: " << ya1.ub() << "," << ya2.ub() << endl;
-		addPointtoNDS(make_pair(ya1.ub(), ya2.ub()));
-		//getchar();
-		cout << "Se agregan el punto la recta de X ---" << endl;
-		cout << "yb1, yb2: " << yb1.ub() << "," << yb2.ub() << endl;
-		addPointtoNDS(make_pair(yb1.ub(), yb2.ub()));
-		cout << lb << " " << max_c.ub() << endl;
-		// getchar();
-
-		// Si lb no esta entre los rangos permitidos no se agrega nada
-		// if(lb < 0 || lb >= max_c.ub()) return;
+		x2 = yb1; y2 = (x2*m) + c;
 
 		// obtiene funcion
-		std::vector< pair <double, double> > functionPoly;
-		Interval a;
-		IntervalVector interVector = IntervalVector(2);
-		double value;
-		int max_iterations = 100;
-		for(int i=0;i <= max_iterations; i++) {
-			a = Interval((double) i/max_iterations);
-			//cout << a << endl;
-			interVector = pf.get_point(a);
-			//cout << interVector[0].ub() << "," <<  interVector[1].ub() << endl;
-			functionPoly.push_back(make_pair(interVector[0].ub(), interVector[1].ub()));
-		}
-
-
-		cout << "Se agrega una recta o punta---" << endl;
+		std::vector< pair <double, double> > curve_y;
 		std::vector< pair <double, double> > rectaUB;
-		if(lb == 0 or (lb != 0 and lb < max_c.ub()) ) {
-			if(x1.ub() == x2.ub() and  y1.ub() == y2.ub()) {
-				cout << "point: " << x1.ub() << "," << y1.ub() << endl;
-				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
-				rectaUB.push_back(make_pair(x1.ub(), y1.ub()));
-				cout << "SE AGREGAN PUNTOS ya1, ya2 Y yb1, yb2" << endl;
-				if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
-				getchar();
-				addPointtoNDS(make_pair(x1.ub(), y1.ub()));
-				//getchar();
-			}else {
-				rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
-				rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
-				cout << "SE AGREGAN PUNTOS ya1, ya2 Y yb1, yb2" << endl;
-				if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
-				getchar();
 
-				//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-				cout << "se va a gregar el vector "<< endl;
-				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
-				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
-				cout << NDS2.size() << endl;
-				std::map<pair<double, double>, IntervalVector>::iterator it2 = NDS2.begin();
-				for(it2=NDS2.begin(); it2!=NDS2.end(); ++it2){
-					cout << "point (" << it2->first.first << "," << it2->first.second << ")" << endl;
-				}
-				if(x1.ub() != x1.ub() || y1.ub() != y1.ub()) {
-					//cout << "optim:" << d.second <<  endl;
-					cout << "max c " << max_c << endl;
-					cout << "min c" << min_c << endl;
-
-					cout << "min " << pf.eval(Interval(0,1)) << endl;
-					cout << "max " << pf.eval(1.0) << endl;
-					cout << "bad point 1" << endl;
-					// getchar();
-				}
-				addPointtoNDS(make_pair(x1.ub(),y1.ub()));
-				if(x2.ub() != x2.ub() || y2.ub() != y2.ub()) {
-					//cout << "optim:" << d.second <<  endl;
-					cout << "max c " << max_c << endl;
-					cout << "min c" << min_c << endl;
-
-					cout << "min " << pf.eval(Interval(0,1)) << endl;
-					cout << "max " << pf.eval(1.0) << endl;
-					cout << "bad point 2" << endl;
-					// getchar();
-				}
-				addPointtoNDS(make_pair(x2.ub(), y2.ub())); //error
-				addVectortoNDS(make_pair(x1.ub(),y1.ub()), make_pair(x2.ub(), y2.ub()));
-				//if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-				cout << "point1: " << x1.ub() << "," << y1.ub() << endl;
-				cout << "point2: " << x2.ub() << "," << y2.ub() << endl;
-				cout << NDS2.size() << endl;
-
-				// if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-				/*
-				for(it2=NDS2.begin(); it2!=NDS2.end(); ++it2){
-					cout << "point (" << it2->first.first << "," << it2->first.second << ")" << endl;
-				}*/
-				// getchar();
-			}
-		} else {
-			rectaUB.push_back(make_pair(0,0));
-			rectaUB.push_back(make_pair(0,0));
+		if(_plot){
+			pf.get_curve_y( curve_y );
+			rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
+			rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
+			py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
+			getchar();
 		}
 
-		//if(_plot) py_Plotter::offline_plot(NULL, NDS);
-		// cout << "Sin NDS2 plot NDS" << endl;
-		//getchar();
+		//se agrega el segmento
+		addVectortoNDS(make_pair(x1.ub(),y1.ub()), make_pair(x2.ub(), y2.ub()));
 
-
-		// if(_plot) py_Plotter::offline_plot(NULL, NDS2);
-		cout << "Sin NDS2 plot NDS2" << endl;
-		// NDS2, recta, funcion
-		cout << "optim Newton:" << lb <<  endl;
-		cout << "max c " << max_c.ub() << endl;
-		cout << "min c " << min_c.ub() << endl;
-
-		cout << "pendiente " << m.ub() << endl;
-
-		cout << "punto1  (" << ya1.ub() << "," << ya2.ub() << ")" << endl;
-		cout << "punto2 (" << yb1.ub() << "," << yb2.ub() << ")" << endl;
-
-		// NDS2 listo
-		cout << "NDS2 " << endl;
-		map< pair <double, double>, IntervalVector > :: iterator ub=NDS2.begin();
-		for(;ub!=NDS2.end();ub++){
-			cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
+		if(_plot){
+			py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
+			getchar();
 		}
-		// recta listo
-		cout << "recta " << endl;
-		for (int i=0;i<rectaUB.size();i++) {
-			cout << rectaUB[i].first << " " << rectaUB[i].second << endl;
-		}
-		// funcion listo
-		cout << "funcion " << endl;
-		for (int i=0;i<functionPoly.size();i++) {
-			cout << functionPoly[i].first << " " << functionPoly[i].second << endl;
-		}
-		if(_plot) py_Plotter::offline_plot(NULL, NDS2, rectaUB, functionPoly);
-		getchar();
-
 	}
 
 

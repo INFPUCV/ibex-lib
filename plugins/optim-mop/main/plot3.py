@@ -93,7 +93,7 @@ def updateplot(q):
             #p = [(-100, 100), (100, -100)]
             lines.append(LB)
             lc = mc.LineCollection(lines, colors='blue', linewidths=0.5)
-            #ax1.add_collection(lc)
+            ax1.add_collection(lc)
 
             # add lines function
             lines = []
@@ -104,7 +104,7 @@ def updateplot(q):
                 arr1.append(LB2[i])
                 lines.append(arr1)
             lc = mc.LineCollection(lines, colors='green', linewidths=0.5)
-            #ax1.add_collection(lc)
+            ax1.add_collection(lc)
 
             """
             for lb in LB:
