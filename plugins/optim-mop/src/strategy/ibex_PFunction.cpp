@@ -85,11 +85,11 @@ double PFunction::optimize(Interval max_c, bool minimize){
 		pila.pop();
 
 		iter++;
-		cout << "iteracion " << iter << " pila " << pila.size() << endl;
-		cout << "inter diam " << inter.diam() << " " << inter << endl;
+	//	cout << "iteracion " << iter << " pila " << pila.size() << endl;
+	//	cout << "inter diam " << inter.diam() << " " << inter << endl;
 
 		derivate = deriv(inter);
-		cout << "derivate " << derivate << endl;
+	//	cout << "derivate " << derivate << endl;
 		if (derivate.is_empty()) break;
 
 		// lowerbounding
@@ -108,7 +108,7 @@ double PFunction::optimize(Interval max_c, bool minimize){
 
 		// if derivate is empty the segment should not be created
 		if(derivate.is_empty()) {
-			cout << "derivate empty -> remove interval" << endl;
+			//cout << "derivate empty -> remove interval" << endl;
 			//getchar();
 			break;
 		}
@@ -129,13 +129,13 @@ double PFunction::optimize(Interval max_c, bool minimize){
 			}
 			// error en caso de que c sea mayor al lb+epsilon
 			if(point_t < inter.ub() and point_c > lb+epsilon) {
-				cout << "ERRROR LEFT: point right is greater than lb " << endl;
+				//cout << "ERRROR LEFT: point right is greater than lb " << endl;
 				//getchar();
 				break;
 				//exit(-1);
 			}
 
-			cout << "point_t " << point_t << endl;
+			//cout << "point_t " << point_t << endl;
 		}
 
 		// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
@@ -147,7 +147,7 @@ double PFunction::optimize(Interval max_c, bool minimize){
 				inter = Interval(point_t, inter.ub());
 		}
 
-		cout << "contract left inter diam " << inter.diam() << " " << inter << endl;
+		//cout << "contract left inter diam " << inter.diam() << " " << inter << endl;
 
 		// contract Newton from right
 		point_t = inter.ub();
@@ -166,7 +166,7 @@ double PFunction::optimize(Interval max_c, bool minimize){
 
 			// error en caso de que c sea mayor al lb+epsilon
 			if(point_t > inter.lb() and point_c > lb+epsilon) {
-				cout << "ERRROR RIGHT: point right is greater than lb" << endl;
+				//cout << "ERRROR RIGHT: point right is greater than lb" << endl;
 				//getchar();
 				break;
 			}
@@ -179,19 +179,19 @@ double PFunction::optimize(Interval max_c, bool minimize){
 			inter = Interval(inter.lb(), point_t);
 		}
 
-		cout << "contract right inter diam " << inter.diam() << " " << inter << endl;
+		//cout << "contract right inter diam " << inter.diam() << " " << inter << endl;
 
 		// bisect interval and push in stack
 		if(inter.is_bisectable() and inter.diam() > max_diam) {
 			pair<Interval,Interval> bsc = inter.bisect(0.5);
-			cout << "bsc1 diam " << bsc.first.diam() << " " << bsc.first << endl;
-			cout << "bsc2 diam " << bsc.second.diam() << " " << bsc.second << endl;
+			//cout << "bsc1 diam " << bsc.first.diam() << " " << bsc.first << endl;
+			//cout << "bsc2 diam " << bsc.second.diam() << " " << bsc.second << endl;
 			pila.push(bsc.first);
 			pila.push(bsc.second);
 		}
-		cout << "iteracion " << iter << " pila " << pila.size() << endl;
+		//cout << "iteracion " << iter << " pila " << pila.size() << endl;
 	}
-	cout << "derivate check2 " << derivate << endl;
+	//cout << "derivate check2 " << derivate << endl;
 
 
 
