@@ -58,129 +58,96 @@ public:
 		return NDS2.size();
 	}
 
+	/**
+	 * \brief return true if new_p is dominated by the NDS
+	 */
+	bool is_dominated(vector<double>& new_p);
+
 
 	void addPoint(pair< double, double> eval);
 
-	void addSegment(pair< double, double> eval1, pair< double, double> eval2) {
+	void addSegment(pair< double, double> p1, pair< double, double> p2) {
 
-		if(eval1.first == eval2.first  &&  eval1.second == eval2.second ){
-			addPoint(eval1);
+		if(p1.first == p2.first  &&  p1.second == p2.second ){
+			addPoint(p1);
 			return;
 		}
 
 
-
+		//se insertan en DS2 todos los puntos que se ubican entre p1 y p2 incluyendo en anterior en y1 y el siguiente en y2
 		cout << "addVectortoNDS-------" << endl;
-		std::map<pair<double, double>, IntervalVector>::iterator aux, it1 = --NDS2.lower_bound(eval1);
-		pair< double, double> first, second, point, inter_last = make_pair(NEG_INFINITY, NEG_INFINITY);
-		std::map< pair <double, double>, IntervalVector, sorty2 > DS2;
+		std::map<pair<double, double>, IntervalVector>::iterator aux, it1 = --NDS2.lower_bound(p1);
+		pair< double, double> second, point, inter_last = make_pair(NEG_INFINITY, NEG_INFINITY);
+		list< pair <double, double>> DS2;
 		std::map< pair <double, double>, IntervalVector, sorty2 > NDS_points;
 
-		DS2.insert(*it1);
+		DS2.push_back(it1->first);
 		it1++;
 
 		bool flagDS2 = false;
 		for(;it1 != NDS2.end();) {
-			if(it1->first.second < eval1.second and it1->first.second < eval2.second) flagDS2= true;
+			if(it1->first.second < p1.second and it1->first.second < p2.second) flagDS2= true;
 			aux = it1;
 			++aux;
-			DS2.insert(*it1);
+			DS2.push_back(it1->first);
 			NDS2.erase(it1);
 			it1 = aux;
 			if(flagDS2) break;
 		}
 
-		cout << "DS2" << endl;
-		for(it1 = DS2.begin();it1!=DS2.end();++it1) {
-			cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
-		}
-		cout << "end DS2" << endl;
 
-		it1 = DS2.begin();
-		first = it1->first;
-		it1++;
 
-		// false cuando la recta pasa por fuera.
-		/*
-		bool flag = false;
-
-		for(;it1 != DS2.end(); ++it1) {
-			second = it1->first;
-			cout << "(" << first.first << "," << first.second << ") ";
-			cout << "(" << second.first << "," << second.second << ")" << endl;
-			point = pointIntersection(first, second, eval1, eval2);
-
-			cout << "intersection (" << point.first << "," << point.second << ")" << endl;
-
-			// puntos muy cercanos son los mismos
-			if(fabs(inter_last.first - point.first) > 1e-7 && fabs(inter_last.second - point.second) > 1e-7
-					&& first.first <= point.first + 1e-4 && point.first - 1e-4 <= second.first  // por x
-					&& second.second <= point.second + 1e-4 && point.second - 1e-4 <= first.second) { // por y
-				cout << "intersection (" << point.first << "," << point.second << ")" << endl;
-				inter_last = point;
-
-				NDS_points.insert(make_pair(point,it1->second));
-
-				if(flag) flag = false;
-				else flag = true;
-			}else{
-				// si pasa por fuera se agregan los punto
-				if(!flag) {
-					NDS_points.insert(make_pair(second,it1->second));
-				}
-			}
-
-			first = second;
-		}
-		*/
 		bool flag = false;
 		double epsilonRaro = 1e-7;
-		for(;it1 != DS2.end(); ++it1) {
-			second = it1->first;
-			cout << "(" << first.first << "," << first.second << ") ";
+
+		pair< double, double> prev = DS2.front();
+		for(auto second:DS2){
+			if(prev==second) continue;
+
+			cout << "(" << prev.first << "," << prev.second << ") ";
 			cout << "(" << second.first << "," << second.second << ")" << endl;
-			point = pointIntersection(first, second, eval1, eval2);
+
+			//deberia retornan algo para indicar si existe la interseccion
+			try{
+				point = pointIntersection(prev, second, p1, p2);
+			}catch(NoIntersectionException& e) {
+				continue;
+			}
+
+			//luego el punto se agrega si hay interseccion
+			//NDS_points.insert(make_pair(point,IntervalVector(1)));
 
 			cout << "intersection (" << point.first << "," << point.second << ")" << endl;
 
-			// puntos muy cercanos son los mismos
+
 			if(fabs(inter_last.first - point.first) > epsilonRaro && fabs(inter_last.second - point.second) > epsilonRaro) {
 
-				if( ((first.first <= second.first && first.first - epsilonRaro <= point.first && point.first <= second.first + epsilonRaro) ||
-						(second.first <= first.first  && second.first - epsilonRaro <= point.first && point.first <= first.first + epsilonRaro)) &&
-						((first.second <= second.second && first.second - epsilonRaro <= point.second && point.second <= second.second + epsilonRaro) ||
-						(second.second <= first.second  && second.second - epsilonRaro <= point.second && point.second <= first.second + epsilonRaro)) &&
-						((eval1.first <= eval2.first && eval1.first - epsilonRaro <= point.first && point.first <= eval2.first + epsilonRaro) ||
-						(eval2.first <= eval1.first  && eval2.first - epsilonRaro <= point.first && point.first <= eval1.first + epsilonRaro)) &&
-						((eval1.second <= eval2.second && eval1.second - epsilonRaro <= point.second && point.second <= eval2.second + epsilonRaro) ||
-						(eval2.second <= eval1.second  && eval2.second - epsilonRaro <= point.second && point.second <= eval1.second + epsilonRaro))) {
+				if( ((prev.first <= second.first && prev.first - epsilonRaro <= point.first && point.first <= second.first + epsilonRaro) ||
+						(second.first <= prev.first  && second.first - epsilonRaro <= point.first && point.first <= prev.first + epsilonRaro)) &&
+						((prev.second <= second.second && prev.second - epsilonRaro <= point.second && point.second <= second.second + epsilonRaro) ||
+						(second.second <= prev.second  && second.second - epsilonRaro <= point.second && point.second <= prev.second + epsilonRaro)) &&
+						((p1.first <= p2.first && p1.first - epsilonRaro <= point.first && point.first <= p2.first + epsilonRaro) ||
+						(p2.first <= p1.first  && p2.first - epsilonRaro <= point.first && point.first <= p1.first + epsilonRaro)) &&
+						((p1.second <= p2.second && p1.second - epsilonRaro <= point.second && point.second <= p2.second + epsilonRaro) ||
+						(p2.second <= p1.second  && p2.second - epsilonRaro <= point.second && point.second <= p1.second + epsilonRaro))) {
 
-					cout << (first.first <= second.first && first.first <= point.first && point.first <= second.first) <<
-							" " << (second.first <= first.first  && second.first <= point.first && point.first <= first.first) <<
-							" " << (first.second <= second.second && first.second <= point.second && point.second <= second.second) <<
-							" " << (second.second <= first.second  && second.second <= point.second && point.second <= first.second) << endl;
+					cout << (prev.first <= second.first && prev.first <= point.first && point.first <= second.first) <<
+							" " << (second.first <= prev.first  && second.first <= point.first && point.first <= prev.first) <<
+							" " << (prev.second <= second.second && prev.second <= point.second && point.second <= second.second) <<
+							" " << (second.second <= prev.second  && second.second <= point.second && point.second <= prev.second) << endl;
 
 					cout << "intersection (" << point.first << "," << point.second << ")" << endl;
 					inter_last = point;
 
-					NDS_points.insert(make_pair(point,it1->second));
+					NDS_points.insert(make_pair(point,IntervalVector(1)));
 				} else {
 					cout << "intersection error" << endl;
 				}
-
-				//if(flag) flag = false;
-				//else flag = true;
-
-			//}else{
-				// si pasa por fuera se agregan los punto
-				//if(!flag) {
-				//	NDS_points.insert(make_pair(second,it1->second));
-				//}
 			} else {
 				cout << "point very close to the after point" << endl;
 			}
 
-			first = second;
+			prev = second;
 		}
 
 		cout << "------------" << endl;
@@ -194,24 +161,25 @@ public:
 
 		cout << "insert points" << endl;
 
-		for(it1 = DS2.begin();it1!=DS2.end();++it1) {
-			if( ((it1->first.first <= eval1.first && it1->first.first <= eval2.first) &&
-					(it1->first.second >= eval1.second && it1->first.second >= eval2.second)) ||
-				((it1->first.second <= eval1.second && it1->first.second <= eval2.second) &&
-						(it1->first.first >= eval1.first && it1->first.first >= eval2.first)) ) {
+
+		for(auto aux_p:DS2){
+			if( ((aux_p.first <= p1.first && aux_p.first <= p2.first) &&
+					(aux_p.second >= p1.second && aux_p.second >= p2.second)) ||
+				((aux_p.second <= p1.second && aux_p.second <= p2.second) &&
+						(it1->first.first >= p1.first && aux_p.first >= p2.first)) ) {
 				cout << "fuera" << endl;
-				cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
-				NDS2.insert(*it1);
+				cout << "(" << aux_p.first << "," << aux_p.second << ") " << endl;
+				NDS2.insert(make_pair(aux_p,IntervalVector(1)));
 				// addPointtoNDS(make_pair(it1->first.first,it1->first.second));
 			} else {
-				double m = (eval1.second - eval2.second)/(eval1.first - eval2.first);
-				if( (eval1.second - m*eval1.first) >= (it1->first.second - m*it1->first.first)) {
+				double m = (p1.second - p2.second)/(p1.first - p2.first);
+				if( (p1.second - m*p1.first) >= (aux_p.second - m*aux_p.first)) {
 					cout << "dentro" << endl;
-					cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
-					NDS2.insert(*it1);
+					cout << "(" << aux_p.first << "," << aux_p.second << ") " << endl;
+					NDS2.insert(make_pair(aux_p,IntervalVector(1)));
 				} else {
 					cout << "eliminado" << endl;
-					cout << "(" << it1->first.first << "," << it1->first.second << ") " << endl;
+					cout << "(" << aux_p.first << "," << aux_p.second << ") " << endl;
 				}
 			}
 		}
@@ -254,6 +222,7 @@ public:
 	 * @return Punto o vector de interseccion entre los segmentos evaluados,
 	 *         retorna null si no hay interseccion entre los segmentos
 	 */
+
 	static pair<double, double> pointIntersection(
 			pair<double, double> v10, pair<double, double> v11,
 			pair<double, double> v20, pair<double, double> v21){
@@ -265,14 +234,7 @@ public:
 		double c = v10.second - v10.first * m;
 		double d = v20.second - v20.first * n;
 
-		/*
-		cout << "v10 (" << v10.first << "," << v10.second << ")" << endl;
-		cout << "v11 (" << v11.first << "," << v11.second << ")" << endl;
-		cout << "v20 (" << v20.first << "," << v20.second << ")" << endl;
-		cout << "v21 (" << v21.first << "," << v21.second << ")" << endl;
-		cout << v10.second << " " << v10.first << " " << m << endl;
-		cout << "c " << c << " d " << d << endl;
-		*/
+
 
 		//Cuando el segmento es vertical su pendiente es infinito
 		if(m == POS_INFINITY and n == 0) {
@@ -314,6 +276,14 @@ public:
 	}
 
 
+    struct NoIntersectionException : public exception {
+       const char * what () const throw () {
+          return "NoIntersectionException";
+       }
+    };
+
+
+
 	//TODO: Juntar con non_dominated_segments
 	static list<pair <double,double> > extremal_non_dominated(const IntervalVector& box){
 		int n=box.size()-2;
@@ -331,7 +301,9 @@ public:
 	    pair <double, double> v10 = ent1->first;
 
 		//TODO: interseccion conservativa: upperPointIntersection
+	    cout << 1 << endl;
 	    firstp = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
+	    cout << 2 << endl;
 	   	if(firstp.second <= box[n+1].lb() ){
 	   		cout << "error: the box is dominated" << endl;
 	   		exit(0);
@@ -347,14 +319,17 @@ public:
 		ent1++;
 		pair <double, double> v20 = ent1->first;
 
-
+	    cout << 3 << endl;
 		lastp = pointIntersection( v20, v21, make_pair(v20.first,box[n+1].lb()),  make_pair(v21.first,box[n+1].lb()));
+	    cout << 4 << endl;
 
 		inpoints.push_back(lastp);
 
 		return inpoints;
 	}
 
+	static pair<double, double> pointIntersection2(pair<double, double> p0, pair<double, double> p1,
+			pair<double, double> p2, pair<double, double> p3);
 
 	static list<pair <double,double> > non_dominated_segments(IntervalVector& box, int n){
 
@@ -372,14 +347,21 @@ public:
 	    pair <double, double> v10 = ent1->first;
 
 		//TODO: interseccion conservativa: upperPointIntersection
-	    firstp = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
+	    try{
+	    	firstp = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
+	    }catch(NoIntersectionException& e){
+	    	return inpoints;
+	    }
+
 	   	if(firstp.second <= box[n+1].lb() ){
 	   		box.set_empty();
 	   		return inpoints;
 	   	}
 
+	    cout << 1 << endl;
 		if(firstp.second > box[n+1].ub())
 			firstp = pointIntersection( v10, v11, make_pair(v10.first,box[n+1].ub()),  make_pair(v11.first,box[n+1].ub()));
+	    cout << 2 << endl;
 
 		//valueZ1 is a point in the bounds lb(y1) or ub(y2) of the box delimiting the NDS in the box
 		inpoints.push_back(firstp);
@@ -394,10 +376,15 @@ public:
 		pair <double, double> v20 = ent1->first;
 
 
-		lastp = pointIntersection( v20, v21, make_pair(v20.first,box[n+1].lb()),  make_pair(v21.first,box[n+1].lb()));
+		try{
+			lastp = pointIntersection( v20, v21, make_pair(v20.first,box[n+1].lb()),  make_pair(v21.first,box[n+1].lb()));
+			if(lastp.first > box[n].ub() )
+				lastp = pointIntersection( v20, v21, make_pair(box[n].ub(),v21.second),  make_pair(box[n].ub(),v20.second));
+	    }catch(NoIntersectionException& e){
 
-		if(lastp.first > box[n].ub() )
-			lastp = pointIntersection( v20, v21, make_pair(box[n].ub(),v21.second),  make_pair(box[n].ub(),v20.second));
+	    }
+
+
 
 		//valueZ2 is a point in the bounds ub(y1) or lb(y2) of the box delimiting the NDS in the box
 		inpoints.push_back(lastp);

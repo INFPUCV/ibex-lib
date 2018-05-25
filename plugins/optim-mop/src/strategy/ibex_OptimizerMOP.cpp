@@ -746,7 +746,7 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	}
 
 	//se agrega el segmento
-	//nds.addSegment(make_pair(x1.ub(),y1.ub()), make_pair(x2.ub(), y2.ub()));
+	nds.addSegment(make_pair(x1.ub(),y1.ub()), make_pair(x2.ub(), y2.ub()));
 
 	if(_plot){
 		py_Plotter::offline_plot(NULL, nds.NDS2, rectaUB, curve_y);
