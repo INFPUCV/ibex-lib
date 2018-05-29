@@ -57,61 +57,32 @@ def updateplot(q):
 
             ax1.clear()
 
-            """
-            if len(LB) > 0:
-                ax1.add_patch(patches.Rectangle(
-                    (LB[0]['pts'][0], LB[0]['pts'][1]),
-                    LB[0]['diam_x'], LB[0]['diam_y'],
-                    fill=False,
-                    edgecolor='red',
-                    linestyle='solid',
-                    lw=0.1
-                    ))
-
-            for p in [patches.Rectangle(
-                        (lb['pts'][0], lb['pts'][1]),
-                        lb['diam_x'], lb['diam_y'],
-                        fill=False,
-                        edgecolor='black',
-                        linestyle='solid',
-                        lw=0.1
-                        ) for lb in islice(LB, 1, len(LB))]:
-                ax1.add_patch(p)
-        """
             for ub in UB:
                 UBx.append(ub[0])
                 UBy.append(ub[1])
 
-            """
-            for lb in LB2:
-                LBx.append(lb[0])
-                LBy.append(lb[1])
-            """
-
             # add line upperbound
             lines = []
             #p = [(-100, 100), (100, -100)]
-            lines.append(LB)
-            lc = mc.LineCollection(lines, colors='blue', linewidths=0.5)
-            ax1.add_collection(lc)
+
+            if len(LB)>0:
+                lines.append(LB)
+                lc = mc.LineCollection(lines, colors='blue', linewidths=0.5)
+                ax1.add_collection(lc)
 
             # add lines function
             lines = []
             # p = [(100,100),(20,60),(-100,-100)]
-            for i in range(1,len(LB2)):
-                arr1 = []
-                arr1.append(LB2[i-1])
-                arr1.append(LB2[i])
-                lines.append(arr1)
-            lc = mc.LineCollection(lines, colors='green', linewidths=0.5)
-            ax1.add_collection(lc)
+            if len(LB2)>0:
+                for i in range(1,len(LB2)):
+                    arr1 = []
+                    arr1.append(LB2[i-1])
+                    arr1.append(LB2[i])
+                    lines.append(arr1)
+                lc = mc.LineCollection(lines, colors='green', linewidths=0.5)
+                ax1.add_collection(lc)
 
-            """
-            for lb in LB:
-            	if (lb['pA'][0] < lb['pB'][0]) and (lb['pA'][1] > lb['pB'][1]):
-            		line = plt.Line2D((lb['pA'][0], lb['pB'][0]),(lb['pA'][1], lb['pB'][1]),lw=0.5,markeredgecolor='black')
-            		ax1.add_line(line)
-            """
+
             ax1.plot()
             plt.plot(UBx, UBy, 'r-', markersize=3)
             # plt.plot(LBx, LBy, '-b', lw=0.5)
@@ -153,6 +124,7 @@ def simulation(q):
             UB = eval(reader.split("\n")[0])
             LB = eval(reader.split("\n")[1])
             LB2 = eval(reader.split("\n")[2])
+
             # LB2 = eval(reader.split("\n")[2])
             q.put((LB, UB, LB2))
 

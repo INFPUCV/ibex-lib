@@ -1,35 +1,35 @@
 # ibexMop
 
-This plugin implements *ibexMop*, an 
-interval branch & bound solver for **Nonlinear BiObjective Optimization** problems 
+This plugin implements *ibexMop*, an
+interval branch & bound solver for **Nonlinear BiObjective Optimization** problems
 in the [Ibex library](https://github.com/ibex-team/ibex-lib).
 
 *ibexMop* returns a set of solutions X and its images Y
 guaranteeing a maximal distance *eps* between
-any *non-dominated* feasible vector and the returned set Y. 
+any *non-dominated* feasible vector and the returned set Y.
 
 *ibexMop* constructs an **envelope** for the non-dominated set
-by following a branch & bound strategy starting with an initial *box* (containing the variable domains) 
-and building a search tree. In each iteration of the algorithm, 
-a node is selected and treated by classical *filtering*, *upper-bounding* 
-and *splitting* techniques. 
+by following a branch & bound strategy starting with an initial *box* (containing the variable domains)
+and building a search tree. In each iteration of the algorithm,
+a node is selected and treated by classical *filtering*, *upper-bounding*
+and *splitting* techniques.
 
-*ibexMop* includes some methods to take into account the upper bound of the 
+*ibexMop* includes some methods to take into account the upper bound of the
 *envelope* for filtering dominated solutions (e.g., well-known discarding tests).
 
 *ibexMop* also offers several improvements related to other NLBOO algorithms:
 
-* Uses a termination criteria directly related with the 
+* Uses a termination criteria directly related with the
 precision of the *envelope*.
 
-* Includes an *additional dynamic constraint* **cy** for better defining the feasible 
-objective region related to each box. This constraint is used 
+* Includes an *additional dynamic constraint* **cy** for better defining the feasible
+objective region related to each box. This constraint is used
 by the filtering procedures improving the perfomance of the solver.
 
 ![Cy Comparison](https://i.imgur.com/yLIxyUV.png)
-The *envelope* for the instance *kim* with *eps*=1. 
-In the left side the strategy without the additional constraint **cy**. 
-In the right side the strategy using **cy** which allows 
+The *envelope* for the instance *kim* with *eps*=1.
+In the left side the strategy without the additional constraint **cy**.
+In the right side the strategy using **cy** which allows
 to approximate better the *envelope* of non-dominated solutions.
 Red points corresponds to the set of feasible vectors found by the strategies.
 Remark that no feasible vector can be found under or left the lower envelope (blue segments).
@@ -42,34 +42,34 @@ even if it is interrupted before it ends. See the figure below:
 
 ![Cy Comparison](https://i.imgur.com/uyZq6gB.png)
 Comparison of the anytime behavior of the search strategies.
-Figures show the envelope of the non-dominated set for the instances 
-[*osy*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/osy.txt) 
-after 100 iterations (top) and [*tan*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/tan.txt) 
-after 50 iterations (down), 
-using the [OC search strategy](http://www.sciencedirect.com/science/article/pii/S0377221716303824) (left) 
+Figures show the envelope of the non-dominated set for the instances
+[*osy*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/osy.txt)
+after 100 iterations (top) and [*tan*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/tan.txt)
+after 50 iterations (down),
+using the [OC search strategy](http://www.sciencedirect.com/science/article/pii/S0377221716303824) (left)
 and the *NDSdist* search strategy (right).
 
-* Includes a [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf) 
-for finding feasible solutions. 
-The algorithm constructs a feasible and convex polytope and then it finds 
-two feasible vectors inside this polytope by minimizing a linearization of each one of the 
-objective functions. 
-Then it finds a set of $n-2$ equidistant feasible solutions 
+* Includes a [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf)
+for finding feasible solutions.
+The algorithm constructs a feasible and convex polytope and then it finds
+two feasible vectors inside this polytope by minimizing a linearization of each one of the
+objective functions.
+Then it finds a set of $n-2$ equidistant feasible solutions
 between this two vectors.
 
 ## Installation
 
 ### Requirements
 
-*ibexMop* is a plugin of the Ibex Library, so if you already have the library, 
-you only have to add this folder 
+*ibexMop* is a plugin of the Ibex Library, so if you already have the library,
+you only have to add this folder
 ([optim-mop.zip](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/optim-mop-20180110.zip)) in the plugin
-folder of Ibex. 
+folder of Ibex.
 Otherwise you can download the entire library (including ibexMop) from [here](https://github.com/INFPUCV/ibex-lib).
 
 ### Configure
 
-Once you have the plugin in the plugins' folder, you should go to the root folder of the  Ibex library 
+Once you have the plugin in the plugins' folder, you should go to the root folder of the  Ibex library
 and run the following line in your terminal.
 
 ```
@@ -132,12 +132,12 @@ To run an example you can just write this line in your terminal in the root dire
 For plotting the non-dominated vectors returned by the solver:
 ```
 ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract-full --eps-contract --plot
-python3 plugins/optim-mop/main/plot.py 
+python3 plugins/optim-mop/main/plot.py
 
 
 ## Upper Envelope examples (LEGO2018):
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt --eps-contract --nb_ub_sols=2 --plot --ub_segment  | grep -e "iter:\|inter:\|p0\|p1\|p2\|p3\|add_point\|add_segment\|is_dom\|nointer:"
 
-./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/ctp6-3.txt --eps-contract --ub_segment --nb_ub_sols=2  --plot --min_ub_dist=0.0 | grep -e "iter:"
 
 python3 plugins/optim-mop/main/plot.py
 
@@ -147,7 +147,7 @@ python3 plugins/optim-mop/main/plot3.py
 
 ## Format of the instances (Minibex):
 
-Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html), 
+Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html),
 considering that the objectives *must correspond* to the first two constraints with the following syntax:
 ```
 Constraints
@@ -157,9 +157,8 @@ Constraints
 ```
 You can see some examples in [benchs](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs).
 
- 
+
 ## Authors:
  - Ignacio Araya - <ignacio.araya@pucv.cl>
  - Damir Aliquintui - <damir.aliquintui.p@mail.ucv.cl>
  - Jose Campusano - <jose.campusano.c@mail.ucv.cl>
- 

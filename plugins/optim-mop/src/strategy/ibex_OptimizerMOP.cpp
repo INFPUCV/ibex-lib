@@ -459,12 +459,8 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 	if(false){
-		cout << 1 << endl;
 		list<pair <double,double> > inner_segments; //= non_dominated_segments(c.box);
-
-		cout << 2 << endl;
 		//if(inner_segments.size()>=2) dominance_peeler2(c.box,inner_segments);
-
 
 		if(cy_contract_var && inner_segments.size()>=2){
 			cy_contract2(c,inner_segments);
@@ -554,16 +550,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 		  if (trace >= 2) cout << buffer;
 
-
-
 			Cell *c = buffer.pop();
 			if(_plot) py_Plotter::plot_del_box(c);
 
-
-
 			nb_cells++;
-
-
 			contract_and_bound(*c, init_box);
 
 			if (c->box.is_empty()) {
@@ -579,8 +569,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			if(nds_mode==SEGMENTS)
 				update_NDS2(c->box);
 			cout << "end" << endl;
-
-
 
 			pair<IntervalVector,IntervalVector>* boxes=NULL;
 			bool atomic_box=false;
@@ -720,9 +708,8 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
 	Interval max_c, min_c, min_c2;
 	max_c = ya2 - (m*yb1);
-	min_c = ya2 - (m*ya1); // deberia ser lo mismo que pf.eval(1)
-	min_c2 = yb2 - (m*yb1); // deberia ser lo mismo que pf.eval(1)
 
+  // newton retorna un upperbound para c en la funcion pf
 	double c=pf.optimize(max_c);
 	if (c==NEG_INFINITY || c>max_c.ub() ) return;
 
