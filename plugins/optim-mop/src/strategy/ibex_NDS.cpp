@@ -113,7 +113,7 @@ namespace ibex {
 			prev = second;
 		}
 
-		getchar();
+		// getchar();
 		std::vector< pair <double, double> > curve_y;
 		std::vector< pair <double, double> > rectaUB;
 		py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
@@ -178,7 +178,7 @@ namespace ibex {
 		std::vector< pair <double, double> > curve_y;
 		std::vector< pair <double, double> > rectaUB;
 		py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
-		getchar();
+		// getchar();
 
 
 	}

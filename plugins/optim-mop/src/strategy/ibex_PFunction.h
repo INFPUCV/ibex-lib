@@ -25,9 +25,9 @@ class PFunction{
 public:
 	PFunction(const Function& f1, const Function& f2, const Interval& m, const IntervalVector& xa, const IntervalVector& xb);
 
-	Interval eval(const Interval& t) const;
+	Interval eval(const Interval& t, bool minimize=false) const;
 
-	Interval deriv(const Interval& t) const;
+	Interval deriv(const Interval& t, bool minimize=false) const;
 
 	IntervalVector get_point(const Interval& t) const;
 
@@ -40,7 +40,7 @@ public:
 	 * \brief minimize/maximize the function pf: f1(t)+w*f2(t)
 	 * returning the best solution found t and its the lb/ub of its evaluation
 	 */
-	double optimize(Interval max_c, bool minimize=false);
+	double optimize(double max_c, bool minimize=false);
 
 private:
 
