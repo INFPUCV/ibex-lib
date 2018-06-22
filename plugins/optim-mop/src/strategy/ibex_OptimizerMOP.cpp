@@ -703,14 +703,14 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	nds.addPoint(make_pair(yb1.ub(), yb2.ub()));
 
 	Interval m = (yb2-ya2)/(yb1-ya1);
-	m = -5;
+	m = Interval(POS_INFINITY);
 	PFunction pf(goal1, goal2, xa, xb);
 
 
 	// hamburger
 	Interval max_c, min_c, min_c2;
 	// max_c = ya2 - (m*yb1);
-	bool miminize = false;
+	bool miminize = true;
 	std::vector< pair <double, double> > curve_y;
 	std::vector< pair <double, double> > rectaUB;
 	map< pair <double, double>, IntervalVector, struct sorty2 > minimum;
@@ -718,17 +718,36 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	pf.get_curve_y( curve_y );
 	minimum.insert(make_pair(make_pair(ya1.ub(), ya2.ub()), Vector(1)));
 	minimum.insert(make_pair(make_pair(yb1.ub(), yb2.ub()), Vector(1)));
-	// rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
-	rectaUB.push_back(make_pair(ya1.ub(),m.ub()*ya1.ub() + optim1.first));
-	// rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
-	rectaUB.push_back(make_pair(yb1.ub(), m.ub()*yb1.ub() + optim1.first));
+	if(fabs(m.ub()) < 10) {
+		rectaUB.push_back(make_pair(ya1.ub(),m.ub()*ya1.ub() + optim1.first));
+		rectaUB.push_back(make_pair(yb1.ub(), m.ub()*yb1.ub() + optim1.first));
+	}else {
+		if(m.is_empty()) {
+			rectaUB.push_back(make_pair( -optim1.first, ya2.ub() ));
+			rectaUB.push_back(make_pair( -optim1.first, yb2.ub() ));
+		} else {
+			rectaUB.push_back(make_pair( (ya2.ub()-optim1.first)/m.ub(), ya2.ub() ));
+			rectaUB.push_back(make_pair( (yb2.ub()-optim1.first)/m.ub(), yb2.ub() ));
+		}
+	}
 	py_Plotter::offline_plot(NULL, minimum, rectaUB, curve_y);
 	cout << "Grafico check 10 enter" << endl;
 	cout << miminize << endl;
+	cout << "m " << m << endl;
 	cout << "point x1: " << ya1.ub() << " " << ya2.ub() << endl;
 	cout << "point x2: " << yb1.ub() << " " << yb2.ub() << endl;
-	cout << "point ub1: " << ya1.ub() << " " << m.ub()*ya1.ub() + optim1.first << endl;
-	cout << "point ub2: " << yb1.ub() << " " << m.ub()*yb1.ub() + optim1.first << endl;
+	if(fabs(m.ub()) < 10) {
+		cout << "point ub1: " << ya1.ub() << " " << m.ub()*ya1.ub() + optim1.first << endl;
+		cout << "point ub2: " << yb1.ub() << " " << m.ub()*yb1.ub() + optim1.first << endl;
+	}else {
+		if(m.is_empty()) {
+			cout << "point ub1: " << -optim1.first << " " << ya2.ub() << endl;
+			cout << "point ub2: " << -optim1.first << " " << yb2.ub() << endl;
+		} else {
+			cout << "point ub1: " << (ya2.ub()-optim1.first)/m.ub() << " " << ya2.ub() << endl;
+			cout << "point ub2: " << (yb2.ub()-optim1.first)/m.ub() << " " << yb2.ub() << endl;
+		}
+	}
 	cout << "optim c " << optim1.first << endl;
 	cout << "optim t " << optim1.second << endl;
 	cout << "point_y " << pf.get_point(optim1.second) << endl;

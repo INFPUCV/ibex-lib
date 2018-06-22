@@ -15,22 +15,22 @@ PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVecto
 
 Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize) const{
 	IntervalVector xt = xa+t*(xb-xa);
-	Interval result = OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1,xt,  xt.size());
-	if(!result.is_empty() && minimize) {
-		result = eval(0, m, false) + (eval(0, m, false) - result);
-	}
-	return result;
+	Interval result;
+	if(m.is_empty()) {
+		result = -OptimizerMOP::eval_goal(f1,xt,  xt.size());
+	} else result = OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1,xt,  xt.size());
+	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (!minimize && m.is_empty()) ) return Interval(-result.ub(), -result.lb());
+	else return result;
 }
 
 Interval PFunction::deriv(const Interval& t, const Interval& m, bool minimize) const{
 	IntervalVector xt = xa+t*(xb-xa);
 	IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
 	IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
-	Interval result = (g2-m*g1)*(xb-xa);
-	if(!result.is_empty() && minimize) {
-		result = Interval(-result.ub(), -result.lb());
-	}
-	return result;
+	Interval result;
+	if(m.is_empty()) {
+		return (-g1)*(xb-xa);
+	} else return (g2-m*g1)*(xb-xa);
 }
 
 IntervalVector PFunction::get_point(const Interval& t) const{
@@ -223,9 +223,10 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 	//		return max(eval(0, m, minimize), eval(1, m, minimize)).ub();
 	//}
 
-	if(minimize) lb = max(eval(0, m, minimize), eval(1, m, minimize)).lb() - (lb - max(eval(0, m, minimize), eval(1, m, minimize)).lb());
+	// if(minimize) lb = max(eval(0, m, minimize), eval(1, m, minimize)).lb() - (lb - max(eval(0, m, minimize), eval(1, m, minimize)).lb());
 
-	return make_pair(lb, t_final);
+	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (!minimize && m.is_empty()) ) return make_pair(-lb, t_final);
+	else return make_pair(lb, t_final);
 }
 
 } /* namespace ibex */

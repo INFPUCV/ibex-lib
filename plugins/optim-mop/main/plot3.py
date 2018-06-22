@@ -88,6 +88,8 @@ def updateplot(q):
             # plt.plot(LBx, LBy, '-b', lw=0.5)
             #ax1.set_xlim([0.0,0.35])
             #ax1.set_ylim([0.7,1.0])
+            #plt.gca().set_aspect('equal', adjustable='box')
+            plt.axis('scaled')
             plt.pause(1)
             updateplot(q)
              # print(result)
