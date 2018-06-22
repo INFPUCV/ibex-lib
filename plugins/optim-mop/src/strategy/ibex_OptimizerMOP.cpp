@@ -703,31 +703,35 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	nds.addPoint(make_pair(yb1.ub(), yb2.ub()));
 
 	Interval m = (yb2-ya2)/(yb1-ya1);
-	PFunction pf(goal1, goal2, m, xa, xb);
+	m = -5;
+	PFunction pf(goal1, goal2, xa, xb);
 
 
 	// hamburger
 	Interval max_c, min_c, min_c2;
-	max_c = ya2 - (m*yb1);
+	// max_c = ya2 - (m*yb1);
+	bool miminize = false;
 	std::vector< pair <double, double> > curve_y;
 	std::vector< pair <double, double> > rectaUB;
 	map< pair <double, double>, IntervalVector, struct sorty2 > minimum;
-	double optim1 = pf.optimize(NEG_INFINITY, true);
+	pair<double, double> optim1 = pf.optimize(m, miminize);
 	pf.get_curve_y( curve_y );
 	minimum.insert(make_pair(make_pair(ya1.ub(), ya2.ub()), Vector(1)));
 	minimum.insert(make_pair(make_pair(yb1.ub(), yb2.ub()), Vector(1)));
 	// rectaUB.push_back(make_pair(x1.ub(),y1.ub()));
-	rectaUB.push_back(make_pair(ya1.ub(),m.ub()*ya1.ub() + optim1));
+	rectaUB.push_back(make_pair(ya1.ub(),m.ub()*ya1.ub() + optim1.first));
 	// rectaUB.push_back(make_pair(x2.ub(), y2.ub()));
-	rectaUB.push_back(make_pair(yb1.ub(), m.ub()*yb1.ub() + optim1));
+	rectaUB.push_back(make_pair(yb1.ub(), m.ub()*yb1.ub() + optim1.first));
 	py_Plotter::offline_plot(NULL, minimum, rectaUB, curve_y);
-	cout << "Grafico " << endl;
+	cout << "Grafico check 10 enter" << endl;
+	cout << miminize << endl;
 	cout << "point x1: " << ya1.ub() << " " << ya2.ub() << endl;
 	cout << "point x2: " << yb1.ub() << " " << yb2.ub() << endl;
-	cout << "point ub1: " << ya1.ub() << " " << m.ub()*ya1.ub() + optim1 << endl;
-	cout << "point ub2: " << yb1.ub() << " " << m.ub()*yb1.ub() + optim1 << endl;
-	cout << "optim " << optim1 << endl;
-	cout << "max " << max_c << endl;
+	cout << "point ub1: " << ya1.ub() << " " << m.ub()*ya1.ub() + optim1.first << endl;
+	cout << "point ub2: " << yb1.ub() << " " << m.ub()*yb1.ub() + optim1.first << endl;
+	cout << "optim c " << optim1.first << endl;
+	cout << "optim t " << optim1.second << endl;
+	cout << "point_y " << pf.get_point(optim1.second) << endl;
 	getchar();
 
 
@@ -736,7 +740,8 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	max_c = ya2 - (m*yb1);
 
   // newton retorna un upperbound para c en la funcion pf
-	double c=pf.optimize(max_c.ub());
+	pair<double,double> c_pair=pf.optimize(m, false, max_c.ub());
+	double c = c_pair.first;
 	if (c==NEG_INFINITY || c>max_c.ub() ) return;
 
 	//we obtaine the upper line
