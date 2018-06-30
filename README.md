@@ -17,6 +17,14 @@ tar -zxvf filename.tgz
 
 sudo apt-get install libz-dev zlib1g-dev
 
+requirements for plot3.py
+-------------------------
+sudo apt-get install python3 python3-tk
+sudo apt-get install python3-virtualenv virtualenv
+virtualenv env --python=python3
+source env/bin/activate
+pip install -r requirements.txt
+
 ./waf configure --with-optim --with-optim-mop  --with-ampl --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
 
 ./waf install

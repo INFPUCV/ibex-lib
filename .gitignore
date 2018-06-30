@@ -52,3 +52,6 @@ output.txt
 
 .ftpconfig
 .ftpignore
+
+# python env
+env
