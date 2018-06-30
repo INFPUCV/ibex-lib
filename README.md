@@ -9,6 +9,14 @@ http://www.ibex-lib.org
 Instalation
 -----------
 
+sudo apt install python2.7 flex bison gcc g++ make pkg-config
+cp /usr/bin/python2.7 /usr/bin/python
+
+download soplex version 1.7.2 from http://soplex.zib.de/
+tar -zxvf filename.tgz
+
+sudo apt-get install libz-dev zlib1g-dev
+
 ./waf configure --with-optim --with-optim-mop  --with-ampl --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
 
 ./waf install
