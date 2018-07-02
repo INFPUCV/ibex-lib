@@ -691,7 +691,8 @@ void OptimizerMOP::hamburger(PFunction pf) {
 	double epsilon = 0.01;
 	stack<Interval> n;
 	n.push(t_init);
-
+	int i = 0;
+	cout << "INIT HAMBURGER" << endl;
 	while(n.size() > 0) {
 		Interval t = n.top();
 		n.pop();
@@ -700,12 +701,19 @@ void OptimizerMOP::hamburger(PFunction pf) {
 		if(error1 < epsilon) continue;
 
 		vector<Interval> intervals = process_node(pf, t);
+		cout << i << endl;
+		i++;
 
 		for(int i=0; i < intervals.size(); i++) {
 			n.push(intervals[i]);
 		}
-	}
 
+//		cout << "n " << n.size() << endl;
+
+	}
+	cout << "END HAMBURGER" << endl;
+
+	getchar();
 }
 
 vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
@@ -734,62 +742,185 @@ vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
 	  create_line_segment(m,c4,c1,c2)
 	 *
 	 */
+	pf.contract_curve(inter);
 
-	IntervalVector ya = pf.get_point(inter.lb());
-	IntervalVector yb = pf.get_point(inter.ub());
+	/**
+	 * convert pf.t to t in inter
+	 * t = inter.lb() + pf.t*(inter.ub() - inter.lb());
+	 */
 
+	double error = 1.0;
+
+	// get extreme points
+	IntervalVector ya = pf.get_point(0);
+	IntervalVector yb = pf.get_point(1);
 	Interval ya1=ya[0];
 	Interval ya2=ya[1];
 	Interval yb1=yb[0];
 	Interval yb2=yb[1];
 
-	Interval max_c, min_c, min_c2;
-	// max_c = ya2 - (m*yb1);
-	bool miminize = true;
+	// get m
 	Interval m = (yb2-ya2)/(yb1-ya1);
-	std::vector< pair <double, double> > curve_y;
-	std::vector< pair <double, double> > rectaUB;
-	map< pair <double, double>, IntervalVector, struct sorty2 > minimum;
-	pair<double, double> optim1 = pf.optimize(m, miminize);
-	pf.get_curve_y( curve_y );
-	minimum.insert(make_pair(make_pair(ya1.ub(), ya2.ub()), Vector(1)));
-	minimum.insert(make_pair(make_pair(yb1.ub(), yb2.ub()), Vector(1)));
-	if(fabs(m.ub()) < 10) {
-		rectaUB.push_back(make_pair(ya1.ub(),m.ub()*ya1.ub() + optim1.first));
-		rectaUB.push_back(make_pair(yb1.ub(), m.ub()*yb1.ub() + optim1.first));
-	}else {
-		if(m.is_empty()) {
-			rectaUB.push_back(make_pair( -optim1.first, ya2.ub() ));
-			rectaUB.push_back(make_pair( -optim1.first, yb2.ub() ));
-		} else {
-			rectaUB.push_back(make_pair( (ya2.ub()-optim1.first)/m.ub(), ya2.ub() ));
-			rectaUB.push_back(make_pair( (yb2.ub()-optim1.first)/m.ub(), yb2.ub() ));
-		}
+	Interval m_horizontal = Interval(0);
+	Interval m_vetical = Interval(POS_INFINITY);
+//	cout << "m " << m << endl;
+//	cout << "m_horizontal " << m_horizontal << endl;
+//	cout << "m_vetical " << m_vetical << endl;
+
+	bool miminize = true;
+
+	// get minimum m_horizontal and m_vertical (c, t)
+	pair<double, double> optim_ver = pf.optimize(m_vetical, miminize);
+	pair<double, double> optim_hor = pf.optimize(m_horizontal, miminize);
+
+	// set bisection of inter
+	vector<double> v;
+
+	pair<Interval,Interval> bscAux;
+	// get error, min( (optim-t0), (optim-t1) )
+	Interval error_ver = min(
+			(pf.get_point(0)[0]-pf.get_point(optim_ver.second)[0]),
+			(pf.get_point(1)[0]-pf.get_point(optim_ver.second)[0])
+			);
+	Interval error_hor = min(
+			(pf.get_point(0)[1]-pf.get_point(optim_hor.second)[1]),
+			(pf.get_point(1)[1]-pf.get_point(optim_hor.second)[1])
+			);
+	Interval error_curve = Interval(0);
+//	cout << "vertical" << endl;
+//	cout << pf.get_point(optim_ver.second) << endl;
+//	cout << pf.get_point(0) << endl;
+//	cout << pf.get_point(1) << endl;
+//	cout << "t " << optim_ver.second << endl;
+	bscAux = inter.bisect((float) optim_ver.second);
+//	cout << bscAux.first << " " << bscAux.second << endl;
+//	cout << "t_real " <<  inter.lb() + optim_ver.second*(inter.ub() - inter.lb()) << endl;
+	v.push_back(inter.lb() + optim_ver.second*(inter.ub() - inter.lb()));
+//	cout << error_ver << endl;
+//	cout << "horizontal" << endl;
+//	cout << pf.get_point(optim_hor.second) << endl;
+//	cout << pf.get_point(0) << endl;
+//	cout << pf.get_point(1) << endl;
+//	cout << "t " << optim_hor.second << endl;
+	bscAux = inter.bisect((float) optim_hor.second);
+//	cout << bscAux.first << " " << bscAux.second << endl;
+//	cout << "t_real " <<  inter.lb() + optim_hor.second*(inter.ub() - inter.lb()) << endl;
+	v.push_back(inter.lb() + optim_hor.second*(inter.ub() - inter.lb()));
+//	cout << error_hor << endl;
+	if(m.ub() < 0) {
+		pair<double, double> optim_max = pf.optimize(m, !miminize);
+		pair<double, double> optim_min = pf.optimize(m, miminize);
+		error_curve = optim_max.first - optim_min.first;
+//		cout << "curve" << endl;
+//		cout << optim_max.first << endl;
+//		cout << optim_min.first << endl;
+//		cout << ya2-m*ya1 << endl;
+//		cout << "t " << optim_max.second << endl;
+		bscAux = inter.bisect((float) optim_max.second);
+//		cout << bscAux.first << " " << bscAux.second << endl;
+//		cout << "t_real " <<  inter.lb() + optim_max.second*(inter.ub() - inter.lb()) << endl;
+		v.push_back(inter.lb() + optim_max.second*(inter.ub() - inter.lb()));
+//		cout << "t " << optim_min.second << endl;
+		bscAux = inter.bisect((float) optim_min.second);
+//		cout << bscAux.first << " " << bscAux.second << endl;
+//		cout << "t_real " <<  inter.lb() + optim_min.second*(inter.ub() - inter.lb()) << endl;
+		v.push_back(inter.lb() + optim_min.second*(inter.ub() - inter.lb()));
+//		cout << error_curve << endl;
 	}
-	py_Plotter::offline_plot(NULL, minimum, rectaUB, curve_y);
-	cout << "Grafico check 10 enter" << endl;
-	cout << miminize << endl;
-	cout << "m " << m << endl;
-	cout << "point x1: " << ya1.ub() << " " << ya2.ub() << endl;
-	cout << "point x2: " << yb1.ub() << " " << yb2.ub() << endl;
-	if(fabs(m.ub()) < 10) {
-		cout << "point ub1: " << ya1.ub() << " " << m.ub()*ya1.ub() + optim1.first << endl;
-		cout << "point ub2: " << yb1.ub() << " " << m.ub()*yb1.ub() + optim1.first << endl;
-	}else {
-		if(m.is_empty()) {
-			cout << "point ub1: " << -optim1.first << " " << ya2.ub() << endl;
-			cout << "point ub2: " << -optim1.first << " " << yb2.ub() << endl;
-		} else {
-			cout << "point ub1: " << (ya2.ub()-optim1.first)/m.ub() << " " << ya2.ub() << endl;
-			cout << "point ub2: " << (yb2.ub()-optim1.first)/m.ub() << " " << yb2.ub() << endl;
-		}
-	}
-	cout << "optim c " << optim1.first << endl;
-	cout << "optim t " << optim1.second << endl;
-	cout << "point_y " << pf.get_point(optim1.second) << endl;
-	getchar();
+
+	// order by smaller to bigger
+	std::sort(v.begin(), v.end(), sort_using_smaller_than);
 
 	vector<Interval> test;
+
+	if(error_ver.ub() < error && error_hor.ub() < error && error_curve.ub() < error) {
+		// TODO: Agregar recta superior
+		if(m.ub() < 0)
+			cout << "AGREGAR RECTA SUPERIOR" << endl;
+		else
+			cout << "AGREGAR PUNTO " << endl;
+	} else {
+		double first = inter.lb();
+		Interval aux;
+		for(std::vector<double>::size_type index = 0; index < v.size(); ++index) {
+			  std::cout << v[index] << std::endl;
+			  aux = Interval(first, v[index]);
+			  if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
+				  test.push_back(aux);
+			  } else {
+				  cout << "AGREGAR PUNTO " << endl;
+			  }
+			  first = v[index];
+		}
+		aux = Interval(first, inter.ub());
+		if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
+		  test.push_back(aux);
+		} else {
+		  cout << "AGREGAR PUNTO " << endl;
+		}
+
+//		cout << "Intervals" << endl;
+//		for(int i=0; i < test.size(); i++) {
+//			cout << test[i] << endl;
+//		}
+	}
+
+
+//	getchar();
+
+
+//	Interval max_c, min_c, min_c2;
+//
+//	std::vector< pair <double, double> > curve_y;
+//	std::vector< pair <double, double> > rectaUB;
+//	map< pair <double, double>, IntervalVector, struct sorty2 > minimum;
+//	pair<double, double> optim1 = pf.optimize(m, miminize);
+//	pf.get_curve_y( curve_y );
+//
+//	minimum.insert(make_pair(make_pair(ya1.ub(), ya2.ub()), Vector(1)));
+//	minimum.insert(make_pair(make_pair(yb1.ub(), yb2.ub()), Vector(1)));
+//
+//	if(fabs(m.ub()) < 10) {
+//		rectaUB.push_back(make_pair(ya1.ub(),m.ub()*ya1.ub() + optim1.first));
+//		rectaUB.push_back(make_pair(yb1.ub(), m.ub()*yb1.ub() + optim1.first));
+//	}else {
+//		if(m.is_empty()) {
+//			rectaUB.push_back(make_pair( -optim1.first, ya2.ub() ));
+//			rectaUB.push_back(make_pair( -optim1.first, yb2.ub() ));
+//		} else {
+//			rectaUB.push_back(make_pair( (ya2.ub()-optim1.first)/m.ub(), ya2.ub() ));
+//			rectaUB.push_back(make_pair( (yb2.ub()-optim1.first)/m.ub(), yb2.ub() ));
+//		}
+//	}
+//	py_Plotter::offline_plot(NULL, minimum, rectaUB, curve_y);
+//	cout << "Grafico check 10 enter" << endl;
+//	cout << miminize << endl;
+//	cout << "m " << m << endl;
+//	cout << "point x1: " << ya1.ub() << " " << ya2.ub() << endl;
+//	cout << "point x2: " << yb1.ub() << " " << yb2.ub() << endl;
+//	if(fabs(m.ub()) < 10) {
+//		cout << "point ub1: " << ya1.ub() << " " << m.ub()*ya1.ub() + optim1.first << endl;
+//		cout << "point ub2: " << yb1.ub() << " " << m.ub()*yb1.ub() + optim1.first << endl;
+//	}else {
+//		if(m.is_empty()) {
+//			cout << "point ub1: " << -optim1.first << " " << ya2.ub() << endl;
+//			cout << "point ub2: " << -optim1.first << " " << yb2.ub() << endl;
+//		} else {
+//			cout << "point ub1: " << (ya2.ub()-optim1.first)/m.ub() << " " << ya2.ub() << endl;
+//			cout << "point ub2: " << (yb2.ub()-optim1.first)/m.ub() << " " << yb2.ub() << endl;
+//		}
+//	}
+//	cout << "optim c " << optim1.first << endl;
+//	cout << "optim t " << optim1.second << endl;
+//	cout << "point_y " << pf.get_point(optim1.second) << endl;
+//
+//
+//	cout << "point x1: " << ya1.ub() << " " << ya2.ub() << endl;
+//	cout << "point x2: " << yb1.ub() << " " << yb2.ub() << endl;
+//	cout << "optim c " << optim1.first << endl;
+//	cout << "optim t " << optim1.second << endl;
+//	cout << "point_y " << pf.get_point(optim1.second) << endl;
+
 	return test;
 }
 

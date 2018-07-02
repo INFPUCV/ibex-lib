@@ -40,7 +40,10 @@ struct sorty{
 	}
 };
 
-
+static bool sort_using_smaller_than(double u, double v)
+{
+  return u < v;
+}
 
 
 

@@ -13,6 +13,16 @@ namespace ibex {
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
 		f1(f1),f2(f2), xa(xa), xb(xb) {}
 
+void PFunction::contract_curve(const Interval& t) {
+	if(t.is_empty() || t.lb() < 0 || t. ub() > 1) return;
+
+	IntervalVector a = xa+t.lb()*(xb-xa);
+	IntervalVector b = xa+t.ub()*(xb-xa);
+
+	xa = a;
+	xb = b;
+}
+
 Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize) const{
 	IntervalVector xt = xa+t*(xb-xa);
 	Interval result;
@@ -96,7 +106,7 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 
 
 	while(!pila.empty() and lb < max_c) {
-		cout << pila.size() <<endl;
+		// cout << pila.size() <<endl;
 
 		inter = pila.top();
 		pila.pop();
@@ -142,7 +152,7 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 				if(0 == derivate.ub())
 					point_t = POS_INFINITY;
 				else{
-					cout << (fabs(lb) < 1) << endl;
+					// cout << (fabs(lb) < 1) << endl;
 					point_t = (lb - point_c)/derivate.ub() + t_before;
 					point_c = eval(point_t, m, minimize).ub();
 				}

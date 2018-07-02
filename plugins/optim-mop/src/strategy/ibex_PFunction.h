@@ -25,6 +25,8 @@ class PFunction{
 public:
 	PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb);
 
+	void contract_curve(const Interval& t);
+
 	Interval eval(const Interval& t, const Interval& m, bool minimize) const;
 
 	Interval deriv(const Interval& t, const Interval& m, bool minimize) const;
