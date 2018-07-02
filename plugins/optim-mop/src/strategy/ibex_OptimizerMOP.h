@@ -277,6 +277,13 @@ protected:
 	 */
 	void cy_contract(Cell& c);
 
+	/**
+	 * Hamburger Algorithm
+	 */
+	void hamburger(PFunction pf);
+
+	vector<Interval> process_node(PFunction pf, Interval inter);
+
 	void cy_contract2(Cell& c, list <pair <double,double> >& inpoints);
 
 	/**

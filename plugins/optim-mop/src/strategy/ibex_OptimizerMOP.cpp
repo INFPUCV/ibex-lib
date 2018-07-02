@@ -671,46 +671,82 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 }
 
 
-void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVector& bIV){
-	IntervalVector xa=aIV;
-	IntervalVector xb=bIV;
+void OptimizerMOP::hamburger(PFunction pf) {
+	/**
+	 *
+	n ← (t=[0,1])
+	process_node(n)
+	push(Q,n)
 
-	Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
-	Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
-	Interval yb1=OptimizerMOP::eval_goal(goal1,xb,n);
-	Interval yb2=OptimizerMOP::eval_goal(goal2,xb,n);
+	while size(Q) > 0
+		n ← select from Q the node n maximizing n.err
+	if n.err < eps: continue
+	(n1,n2) ← bisect(n,n.tb)
+	for n in (n1,n2)
+		process_node(n)
+		push(Q, n)
+	 *
+	 */
+	Interval t_init = Interval(0,1);
+	double epsilon = 0.01;
+	stack<Interval> n;
+	n.push(t_init);
 
-	// if ya is dominated by yb or yb is dominated by ya
-	if(ya1.ub() <= yb1.ub() && ya2.ub() <= yb2.ub()) {
-		nds.addPoint(make_pair(ya1.ub(), ya2.ub()));
-		return;
+	while(n.size() > 0) {
+		Interval t = n.top();
+		n.pop();
+
+		double error1 = 0.1;
+		if(error1 < epsilon) continue;
+
+		vector<Interval> intervals = process_node(pf, t);
+
+		for(int i=0; i < intervals.size(); i++) {
+			n.push(intervals[i]);
+		}
 	}
 
-	if(yb1.ub() <= ya1.ub() && yb2.ub() <= ya2.ub()) {
-		nds.addPoint(make_pair(yb1.ub(), yb2.ub()));
-		return;
-	}
+}
 
-	// if yb is lower than ya
-	if(yb1.ub() < ya1.ub()) {
-		std::swap(ya1,yb1);
-		std::swap(ya2,yb2);
-		std::swap(xa,xb);
-	}
+vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
+	/**
+	 *
+	m ← getSlope(n.t)
+	(c1,t1) ← min(c=f1(t), t in n.t)
+	(c2,t2) ← min(c=f2(t), t in n.t)
 
+	if m > 0
+	  n.err ← min(f1(lb(n.t)),f1(ub(n.t))) - c1
+	  err2 ← min(f2(lb(n.t)),f2(ub(n.t))) - c2
+	  n.tb ← t1
 
-	nds.addPoint(make_pair(ya1.ub(), ya2.ub()));
-	nds.addPoint(make_pair(yb1.ub(), yb2.ub()));
+	  if err2 > n.err
+		n.err ← err2
+		n.tb ← t2
+	else
+	  (c3,n.tb ) ← min(c=f2(t) - m*f1(t), t in t)
+	  (c4,t4)   ← max(c=f2(t) - m*f1(t), t in t)
 
-	Interval m = (yb2-ya2)/(yb1-ya1);
-	m = Interval(POS_INFINITY);
-	PFunction pf(goal1, goal2, xa, xb);
+	  n.err ← c4-c3
+	  if |t4-mid(t)| < |n.tb -mid(t)|
+		n.tb ← t4 //point closest to the mid of t
 
+	  create_line_segment(m,c4,c1,c2)
+	 *
+	 */
 
-	// hamburger
+	IntervalVector ya = pf.get_point(inter.lb());
+	IntervalVector yb = pf.get_point(inter.ub());
+
+	Interval ya1=ya[0];
+	Interval ya2=ya[1];
+	Interval yb1=yb[0];
+	Interval yb2=yb[1];
+
 	Interval max_c, min_c, min_c2;
 	// max_c = ya2 - (m*yb1);
 	bool miminize = true;
+	Interval m = (yb2-ya2)/(yb1-ya1);
 	std::vector< pair <double, double> > curve_y;
 	std::vector< pair <double, double> > rectaUB;
 	map< pair <double, double>, IntervalVector, struct sorty2 > minimum;
@@ -753,7 +789,54 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	cout << "point_y " << pf.get_point(optim1.second) << endl;
 	getchar();
 
+	vector<Interval> test;
+	return test;
+}
 
+
+
+void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVector& bIV){
+	IntervalVector xa=aIV;
+	IntervalVector xb=bIV;
+
+	Interval ya1=OptimizerMOP::eval_goal(goal1,xa,n);
+	Interval ya2=OptimizerMOP::eval_goal(goal2,xa,n);
+	Interval yb1=OptimizerMOP::eval_goal(goal1,xb,n);
+	Interval yb2=OptimizerMOP::eval_goal(goal2,xb,n);
+
+	// if ya is dominated by yb or yb is dominated by ya
+	if(ya1.ub() <= yb1.ub() && ya2.ub() <= yb2.ub()) {
+		nds.addPoint(make_pair(ya1.ub(), ya2.ub()));
+		return;
+	}
+
+	if(yb1.ub() <= ya1.ub() && yb2.ub() <= ya2.ub()) {
+		nds.addPoint(make_pair(yb1.ub(), yb2.ub()));
+		return;
+	}
+
+	// if yb is lower than ya
+	if(yb1.ub() < ya1.ub()) {
+		std::swap(ya1,yb1);
+		std::swap(ya2,yb2);
+		std::swap(xa,xb);
+	}
+
+
+	nds.addPoint(make_pair(ya1.ub(), ya2.ub()));
+	nds.addPoint(make_pair(yb1.ub(), yb2.ub()));
+
+	Interval m = (yb2-ya2)/(yb1-ya1);
+	PFunction pf(goal1, goal2, xa, xb);
+
+	std::vector< pair <double, double> > curve_y;
+	std::vector< pair <double, double> > rectaUB;
+
+	// hamburger
+	hamburger(pf);
+
+
+	Interval max_c, min_c, min_c2;
 	// maximo valor de c con el punto (yb1, ya2)  de la funcion f2 = m*f1 + c
 	// Interval max_c, min_c, min_c2;
 	max_c = ya2 - (m*yb1);
