@@ -46,6 +46,11 @@ static bool sort_using_smaller_than(double u, double v)
 }
 
 
+static bool sort_using_middle_than(double u, double v)
+{
+  return fabs(u-0.5) < fabs(v-0.5);
+}
+
 
 
 class Node_t{
@@ -407,6 +412,9 @@ private:
 	map< pair <double, double>, IntervalVector, sorty > NDSy;
 
 	NDS_seg nds;
+
+	// Hamburger
+	NDS_seg ndsH;
 
 	/** The current non-dominated set sorted by increasing x */
 	//static map< pair <double, double>, IntervalVector, sorty2 > NDS2;

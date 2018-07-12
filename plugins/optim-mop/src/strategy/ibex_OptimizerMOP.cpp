@@ -706,6 +706,7 @@ void OptimizerMOP::hamburger(PFunction pf) {
 
 		for(int i=0; i < intervals.size(); i++) {
 			n.push(intervals[i]);
+			cout << intervals[i] << endl;
 		}
 
 //		cout << "n " << n.size() << endl;
@@ -742,14 +743,18 @@ vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
 	  create_line_segment(m,c4,c1,c2)
 	 *
 	 */
-	pf.contract_curve(inter);
 
 	/**
 	 * convert pf.t to t in inter
 	 * t = inter.lb() + pf.t*(inter.ub() - inter.lb());
 	 */
+	PFunction pf_origin = pf;
 
-	double error = 1.0;
+	pf.contract_curve(inter);
+
+
+
+	double error = 1e-3;
 
 	// get extreme points
 	IntervalVector ya = pf.get_point(0);
@@ -773,6 +778,32 @@ vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
 	pair<double, double> optim_ver = pf.optimize(m_vetical, miminize);
 	pair<double, double> optim_hor = pf.optimize(m_horizontal, miminize);
 
+	// get maximum
+	pair<double, double> optim_max_ver = pf.optimize(m_vetical, !miminize);
+	pair<double, double> optim_max_hor = pf.optimize(m_horizontal, !miminize);
+
+	// get the minimum point that dominate the curve
+	cout << "point dominate curve (" << optim_ver.first << "," << optim_hor.first << ")" << endl;
+
+	cout << "point dominated by curve (" << optim_max_ver.first << "," << optim_max_hor.first << ")" << endl;
+
+	// plot curve
+	map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
+	std::vector< pair <double, double> > curve_y;
+	pf.get_curve_y( curve_y );
+	std::vector< pair <double, double> > curve_y_origin;
+	pf_origin.get_curve_y( curve_y_origin );
+	std::vector< pair <double, double> > rectaUB;
+
+
+	py_Plotter::offline_plot(NULL, hamubergerNDS, rectaUB, curve_y_origin, curve_y);
+	getchar();
+
+
+
+
+	vector<Interval> test;
+
 	// set bisection of inter
 	vector<double> v;
 
@@ -795,7 +826,8 @@ vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
 	bscAux = inter.bisect((float) optim_ver.second);
 //	cout << bscAux.first << " " << bscAux.second << endl;
 //	cout << "t_real " <<  inter.lb() + optim_ver.second*(inter.ub() - inter.lb()) << endl;
-	v.push_back(inter.lb() + optim_ver.second*(inter.ub() - inter.lb()));
+	// v.push_back(inter.lb() + optim_ver.second*(inter.ub() - inter.lb()));
+	v.push_back(optim_ver.second);
 //	cout << error_ver << endl;
 //	cout << "horizontal" << endl;
 //	cout << pf.get_point(optim_hor.second) << endl;
@@ -805,12 +837,16 @@ vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
 	bscAux = inter.bisect((float) optim_hor.second);
 //	cout << bscAux.first << " " << bscAux.second << endl;
 //	cout << "t_real " <<  inter.lb() + optim_hor.second*(inter.ub() - inter.lb()) << endl;
-	v.push_back(inter.lb() + optim_hor.second*(inter.ub() - inter.lb()));
+	// v.push_back(inter.lb() + optim_hor.second*(inter.ub() - inter.lb()));
+	v.push_back(optim_hor.second);
 //	cout << error_hor << endl;
+
+
+
 	if(m.ub() < 0) {
 		pair<double, double> optim_max = pf.optimize(m, !miminize);
 		pair<double, double> optim_min = pf.optimize(m, miminize);
-		error_curve = optim_max.first - optim_min.first;
+		error_curve = (optim_max.first - optim_min.first);
 //		cout << "curve" << endl;
 //		cout << optim_max.first << endl;
 //		cout << optim_min.first << endl;
@@ -819,51 +855,69 @@ vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
 		bscAux = inter.bisect((float) optim_max.second);
 //		cout << bscAux.first << " " << bscAux.second << endl;
 //		cout << "t_real " <<  inter.lb() + optim_max.second*(inter.ub() - inter.lb()) << endl;
-		v.push_back(inter.lb() + optim_max.second*(inter.ub() - inter.lb()));
+		// v.push_back(inter.lb() + optim_max.second*(inter.ub() - inter.lb()));
+		// v.push_back(optim_max.second);
 //		cout << "t " << optim_min.second << endl;
 		bscAux = inter.bisect((float) optim_min.second);
 //		cout << bscAux.first << " " << bscAux.second << endl;
 //		cout << "t_real " <<  inter.lb() + optim_min.second*(inter.ub() - inter.lb()) << endl;
-		v.push_back(inter.lb() + optim_min.second*(inter.ub() - inter.lb()));
+		// v.push_back(inter.lb() + optim_min.second*(inter.ub() - inter.lb()));
+		v.push_back(optim_min.second);
 //		cout << error_curve << endl;
+
+	} 
+	
+	// compare error and add point
+	Interval error_maximum = max(error_hor, error_ver);
+	error_maximum = max(error_maximum, error_curve);
+	cout << "error_maximum " << error_maximum << endl;
+	if(error_maximum.ub() < error) {
+		if(ya[0].ub() < yb[0].ub() || ya[1].ub() < yb[1].ub()) {
+			cout << "add point " << ya[0] << "," << ya[1] << endl;
+		}
+		if(yb[0].ub() < ya[0].ub() || yb[1].ub() < ya[1].ub()) {
+			cout << "add point " << yb[0] << "," << yb[1] << endl;
+		}
+		return test;
 	}
+	getchar();
 
 	// order by smaller to bigger
-	std::sort(v.begin(), v.end(), sort_using_smaller_than);
+	std::sort(v.begin(), v.end(), sort_using_middle_than);
 
-	vector<Interval> test;
+	cout << v[0] << endl;
 
-	if(error_ver.ub() < error && error_hor.ub() < error && error_curve.ub() < error) {
-		// TODO: Agregar recta superior
-		if(m.ub() < 0)
-			cout << "AGREGAR RECTA SUPERIOR" << endl;
-		else
-			cout << "AGREGAR PUNTO " << endl;
-	} else {
-		double first = inter.lb();
-		Interval aux;
-		for(std::vector<double>::size_type index = 0; index < v.size(); ++index) {
-			  std::cout << v[index] << std::endl;
-			  aux = Interval(first, v[index]);
-			  if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
-				  test.push_back(aux);
-			  } else {
-				  cout << "AGREGAR PUNTO " << endl;
-			  }
-			  first = v[index];
-		}
-		aux = Interval(first, inter.ub());
-		if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
-		  test.push_back(aux);
-		} else {
-		  cout << "AGREGAR PUNTO " << endl;
-		}
+	Interval aux = Interval(inter.lb(),inter.lb() +  v[0]*(inter.ub() - inter.lb()));
+	test.push_back(aux);
+	aux = Interval(inter.lb() +  v[0]*(inter.ub() - inter.lb()), inter.ub());
+	test.push_back(aux);
 
-//		cout << "Intervals" << endl;
-//		for(int i=0; i < test.size(); i++) {
-//			cout << test[i] << endl;
-//		}
-	}
+	// if(error_ver.ub() < error && error_hor.ub() < error && error_curve.ub() < error) {
+	// 	if(m.ub() < 0)
+	// 		cout << "AGREGAR RECTA SUPERIOR" << endl;
+	// 	else
+	// 		cout << "AGREGAR PUNTO " << endl;
+	// } else {
+	// 	double first = inter.lb();
+	// 	Interval aux;
+	// 	for(std::vector<double>::size_type index = 0; index < v.size(); ++index) {
+	// 		  std::cout << v[index] << std::endl;
+	// 		  aux = Interval(first, v[index]);
+	// 		  if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
+	// 			  test.push_back(aux);
+	// 		  } else {
+	// 			  cout << "AGREGAR PUNTO " << endl;
+	// 		  }
+	// 		  first = v[index];
+	// 		  break;
+	// 	}
+	// 	aux = Interval(first, inter.ub());
+	// 	if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
+	// 	  test.push_back(aux);
+	// 	} else {
+	// 	  cout << "AGREGAR PUNTO " << endl;
+	// 	}
+	// }
 
 
 //	getchar();

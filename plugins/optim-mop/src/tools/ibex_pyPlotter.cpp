@@ -83,7 +83,7 @@ output << "]" << endl;
 }
 
 void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS){
-	cout << "print plot:" << NDS.size() << endl;
+	cout << "print plotX2:" << NDS.size() << endl;
 	ofstream output;
 	output.open("output2.txt");
 	//set<  Cell* > :: iterator cell=buffer_cells.begin();
@@ -124,7 +124,7 @@ void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVecto
 		std::vector< pair <double, double> > rectaUB,
 		std::vector< pair <double, double> > functionPoly
 		){
-	cout << "print plot:" << NDS.size() << endl;
+	cout << "print plotX1:" << NDS.size() << endl;
 	ofstream output;
 	output.open("output2.txt");
 	output << "[";
@@ -138,6 +138,49 @@ output << "]" << endl;
 		output << "[";
 		for (int i=0;i<rectaUB.size();i++) {
 			output << "(" << rectaUB[i].first << "," << rectaUB[i].second << "),";
+		}
+		output << "]" << endl;
+
+		output << "[";
+		for (int i=0;i<functionPoly.size();i++) {
+			output << "(" << functionPoly[i].first << "," << functionPoly[i].second << "),";
+		}
+		output << "]" << endl;
+
+	output.close();
+	// system("python3 plot.py");
+}
+
+/**
+ * Hamburger plot
+ * 
+ */
+
+void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
+		std::vector< pair <double, double> > rectaUB,
+		std::vector< pair <double, double> > functionPoly_origin,
+		std::vector< pair <double, double> > functionPoly
+		){
+	cout << "print plot Hamburger:" << NDS.size() << endl;
+	ofstream output;
+	output.open("outputH.txt");
+	output << "[";
+
+	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
+	for(;ub!=NDS.end();ub++){
+		output << "(" << ub->first.first << "," << ub->first.second << "),";
+	}
+output << "]" << endl;
+
+		output << "[";
+		for (int i=0;i<rectaUB.size();i++) {
+			output << "(" << rectaUB[i].first << "," << rectaUB[i].second << "),";
+		}
+		output << "]" << endl;
+
+		output << "[";
+		for (int i=0;i<functionPoly_origin.size();i++) {
+			output << "(" << functionPoly_origin[i].first << "," << functionPoly_origin[i].second << "),";
 		}
 		output << "]" << endl;
 

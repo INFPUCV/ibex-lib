@@ -13,6 +13,10 @@ namespace ibex {
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
 		f1(f1),f2(f2), xa(xa), xb(xb) {}
 
+/**
+ * convert pf.t to t in inter
+ * t = inter.lb() + pf.t*(inter.ub() - inter.lb());
+ */
 void PFunction::contract_curve(const Interval& t) {
 	if(t.is_empty() || t.lb() < 0 || t. ub() > 1) return;
 
@@ -234,8 +238,10 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 	//}
 
 	// if(minimize) lb = max(eval(0, m, minimize), eval(1, m, minimize)).lb() - (lb - max(eval(0, m, minimize), eval(1, m, minimize)).lb());
-
-	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (!minimize && m.is_empty()) ) return make_pair(-lb, t_final);
+	cout << "OPTIMIZE" << endl;
+	cout << "minimize " << minimize << endl;
+	cout << "m " << m << endl;
+	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (minimize && m.is_empty()) ) return make_pair(-lb, t_final);
 	else return make_pair(lb, t_final);
 }
 
