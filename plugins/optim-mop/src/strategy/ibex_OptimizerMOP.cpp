@@ -717,180 +717,113 @@ void OptimizerMOP::hamburger(PFunction pf) {
 	getchar();
 }
 
-vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
-	/**
-	 *
-	m ← getSlope(n.t)
-	(c1,t1) ← min(c=f1(t), t in n.t)
-	(c2,t2) ← min(c=f2(t), t in n.t)
-
-	if m > 0
-	  n.err ← min(f1(lb(n.t)),f1(ub(n.t))) - c1
-	  err2 ← min(f2(lb(n.t)),f2(ub(n.t))) - c2
-	  n.tb ← t1
-
-	  if err2 > n.err
-		n.err ← err2
-		n.tb ← t2
-	else
-	  (c3,n.tb ) ← min(c=f2(t) - m*f1(t), t in t)
-	  (c4,t4)   ← max(c=f2(t) - m*f1(t), t in t)
-
-	  n.err ← c4-c3
-	  if |t4-mid(t)| < |n.tb -mid(t)|
-		n.tb ← t4 //point closest to the mid of t
-
-	  create_line_segment(m,c4,c1,c2)
-	 *
-	 */
+vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
+    // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
 
 	/**
 	 * convert pf.t to t in inter
 	 * t = inter.lb() + pf.t*(inter.ub() - inter.lb());
 	 */
-	PFunction pf_origin = pf;
-
-	pf.contract_curve(inter);
 
 
+	PFunction pf_ctc = pf;
+	//TODO: el optimizador deberia recibir el intervalo t y esto deberia estar dentro
+	pf_ctc.contract_curve(t);
 
-	double error = 1e-3;
+	double eps = 1e-3;
 
 	// get extreme points
-	IntervalVector ya = pf.get_point(0);
-	IntervalVector yb = pf.get_point(1);
-	Interval ya1=ya[0];
-	Interval ya2=ya[1];
-	Interval yb1=yb[0];
-	Interval yb2=yb[1];
+	IntervalVector ft_lb = pf.get_point(t.lb());
+	IntervalVector ft_ub = pf.get_point(t.ub());
+	Interval ya1=ft_lb[0];
+	Interval ya2=ft_lb[1];
+	Interval yb1=ft_ub[0];
+	Interval yb2=ft_ub[1];
 
-	// get m
+	// m ← getSlope(n.t)
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
 	Interval m_vetical = Interval(POS_INFINITY);
-//	cout << "m " << m << endl;
-//	cout << "m_horizontal " << m_horizontal << endl;
-//	cout << "m_vetical " << m_vetical << endl;
 
-	bool miminize = true;
-
-	// get minimum m_horizontal and m_vertical (c, t)
-	pair<double, double> optim_ver = pf.optimize(m_vetical, miminize);
-	pair<double, double> optim_hor = pf.optimize(m_horizontal, miminize);
+	// get minimum m_horizontal and m_vertical (c_lb, t_ub)
+	pair<double, double> c1_t1 = pf_ctc.optimize(m_vetical, PFunction::MIN);
+	pair<double, double> c2_t2 = pf_ctc.optimize(m_horizontal, PFunction::MIN);
 
 	// get maximum
-	pair<double, double> optim_max_ver = pf.optimize(m_vetical, !miminize);
-	pair<double, double> optim_max_hor = pf.optimize(m_horizontal, !miminize);
+	//pair<double, double> optim_max_ver = pf.optimize(m_vetical, PFunction::MAX);
+	//pair<double, double> optim_max_hor = pf.optimize(m_horizontal, PFunction::MAX);
 
 	// get the minimum point that dominate the curve
-	cout << "point dominate curve (" << optim_ver.first << "," << optim_hor.first << ")" << endl;
+	cout << "point dominate curve (" << c1_t1.first << "," << c2_t2.first << ")" << endl;
 
-	cout << "point dominated by curve (" << optim_max_ver.first << "," << optim_max_hor.first << ")" << endl;
+	//cout << "point dominated by curve (" << optim_max_ver.first << "," << optim_max_hor.first << ")" << endl;
 
 	// plot curve
 	map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
 	std::vector< pair <double, double> > curve_y;
-	pf.get_curve_y( curve_y );
+	pf_ctc.get_curve_y( curve_y );
 	std::vector< pair <double, double> > curve_y_origin;
-	pf_origin.get_curve_y( curve_y_origin );
+	pf.get_curve_y( curve_y_origin );
 	std::vector< pair <double, double> > rectaUB;
-
-
 	py_Plotter::offline_plot(NULL, hamubergerNDS, rectaUB, curve_y_origin, curve_y);
 	getchar();
 
 
-
-
-	vector<Interval> test;
+	vector<Interval> segments;
 
 	// set bisection of inter
 	vector<double> v;
 
 	pair<Interval,Interval> bscAux;
 	// get error, min( (optim-t0), (optim-t1) )
-	Interval error_ver = min(
-			(pf.get_point(0)[0]-pf.get_point(optim_ver.second)[0]),
-			(pf.get_point(1)[0]-pf.get_point(optim_ver.second)[0])
-			);
-	Interval error_hor = min(
-			(pf.get_point(0)[1]-pf.get_point(optim_hor.second)[1]),
-			(pf.get_point(1)[1]-pf.get_point(optim_hor.second)[1])
-			);
-	Interval error_curve = Interval(0);
-//	cout << "vertical" << endl;
-//	cout << pf.get_point(optim_ver.second) << endl;
-//	cout << pf.get_point(0) << endl;
-//	cout << pf.get_point(1) << endl;
-//	cout << "t " << optim_ver.second << endl;
-	bscAux = inter.bisect((float) optim_ver.second);
-//	cout << bscAux.first << " " << bscAux.second << endl;
-//	cout << "t_real " <<  inter.lb() + optim_ver.second*(inter.ub() - inter.lb()) << endl;
-	// v.push_back(inter.lb() + optim_ver.second*(inter.ub() - inter.lb()));
-	v.push_back(optim_ver.second);
-//	cout << error_ver << endl;
-//	cout << "horizontal" << endl;
-//	cout << pf.get_point(optim_hor.second) << endl;
-//	cout << pf.get_point(0) << endl;
-//	cout << pf.get_point(1) << endl;
-//	cout << "t " << optim_hor.second << endl;
-	bscAux = inter.bisect((float) optim_hor.second);
-//	cout << bscAux.first << " " << bscAux.second << endl;
-//	cout << "t_real " <<  inter.lb() + optim_hor.second*(inter.ub() - inter.lb()) << endl;
-	// v.push_back(inter.lb() + optim_hor.second*(inter.ub() - inter.lb()));
-	v.push_back(optim_hor.second);
-//	cout << error_hor << endl;
+	// err1 ← min(f1(lb(n.t)),f1(ub(n.t))) - c1
+	double err1 = std::min(ft_lb[0].ub(), ft_ub[0].ub()) - c1_t1.first;
+	double err2 = std::min(ft_lb[1].ub(), ft_ub[1].ub()) - c2_t2.first;
 
+	if(m.ub()>0 && std::max(err1,err2) < eps) {
+		if(ft_lb[0].lb() < ft_ub[0].ub() || ft_lb[1].lb() < ft_ub[1].lb())
+			cout << "add point " << ft_lb[0] << "," << ft_lb[1] << endl;
+
+		if(ft_ub[0].lb() < ft_lb[0].ub() || ft_ub[1].lb() < ft_lb[1].ub())
+			cout << "add point " << ft_ub[0] << "," << ft_ub[1] << endl;
+		return segments;
+	}
+
+	//we save candidate points for bisection (t1 and t2)
+	v.push_back(c1_t1.second);
+	v.push_back(c2_t2.second);
 
 
 	if(m.ub() < 0) {
-		pair<double, double> optim_max = pf.optimize(m, !miminize);
-		pair<double, double> optim_min = pf.optimize(m, miminize);
-		error_curve = (optim_max.first - optim_min.first);
-//		cout << "curve" << endl;
-//		cout << optim_max.first << endl;
-//		cout << optim_min.first << endl;
-//		cout << ya2-m*ya1 << endl;
-//		cout << "t " << optim_max.second << endl;
-		bscAux = inter.bisect((float) optim_max.second);
-//		cout << bscAux.first << " " << bscAux.second << endl;
-//		cout << "t_real " <<  inter.lb() + optim_max.second*(inter.ub() - inter.lb()) << endl;
-		// v.push_back(inter.lb() + optim_max.second*(inter.ub() - inter.lb()));
-		// v.push_back(optim_max.second);
-//		cout << "t " << optim_min.second << endl;
-		bscAux = inter.bisect((float) optim_min.second);
-//		cout << bscAux.first << " " << bscAux.second << endl;
-//		cout << "t_real " <<  inter.lb() + optim_min.second*(inter.ub() - inter.lb()) << endl;
-		// v.push_back(inter.lb() + optim_min.second*(inter.ub() - inter.lb()));
-		v.push_back(optim_min.second);
-//		cout << error_curve << endl;
+		pair<double, double> c3_t3 = pf_ctc.optimize(m, PFunction::MAX);
+		pair<double, double> c4_t4 = pf_ctc.optimize(m, PFunction::MIN);
+		double err3 = std::abs(c4_t4.first - c3_t3.first);
+		if(std::abs(m.mid())>1) err3/=std::abs(m.mid());
+		v.push_back(c3_t3.second);
+		// compare error and add point
+		double err = std::max((err1, err2),err3);
+		cout << "error: " << err << endl;
+		getchar();
 
-	} 
-	
-	// compare error and add point
-	Interval error_maximum = max(error_hor, error_ver);
-	error_maximum = max(error_maximum, error_curve);
-	cout << "error_maximum " << error_maximum << endl;
-	if(error_maximum.ub() < error) {
-		if(ya[0].ub() < yb[0].ub() || ya[1].ub() < yb[1].ub()) {
-			cout << "add point " << ya[0] << "," << ya[1] << endl;
+		if(err < eps) {
+			cout << "add_segment. c4:" << c4_t4.first << "m:" << m << endl;
+			return segments;
 		}
-		if(yb[0].ub() < ya[0].ub() || yb[1].ub() < ya[1].ub()) {
-			cout << "add point " << yb[0] << "," << yb[1] << endl;
-		}
-		return test;
+
 	}
-	getchar();
 
 	// order by smaller to bigger
 	std::sort(v.begin(), v.end(), sort_using_middle_than);
 
-	cout << v[0] << endl;
+	//cout << v[0] << endl;
 
-	Interval aux = Interval(inter.lb(),inter.lb() +  v[0]*(inter.ub() - inter.lb()));
-	test.push_back(aux);
-	aux = Interval(inter.lb() +  v[0]*(inter.ub() - inter.lb()), inter.ub());
-	test.push_back(aux);
+	Interval aux = Interval(t.lb(),v[0]);
+	segments.push_back(aux);
+	aux = Interval(v[0], t.ub());
+	segments.push_back(aux);
+
+
+	return segments;
 
 	// if(error_ver.ub() < error && error_hor.ub() < error && error_curve.ub() < error) {
 	// 	if(m.ub() < 0)
@@ -975,7 +908,7 @@ vector<Interval> OptimizerMOP::process_node(PFunction pf, Interval inter) {
 //	cout << "optim t " << optim1.second << endl;
 //	cout << "point_y " << pf.get_point(optim1.second) << endl;
 
-	return test;
+
 }
 
 

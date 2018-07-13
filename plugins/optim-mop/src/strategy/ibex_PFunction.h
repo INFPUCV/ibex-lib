@@ -30,6 +30,9 @@ public:
 	 * t = inter.lb() + pf.t*(inter.ub() - inter.lb());
 	 */
 
+	static bool MIN;
+	static bool MAX;
+
 	void contract_curve(const Interval& t);
 
 	Interval eval(const Interval& t, const Interval& m, bool minimize) const;
@@ -45,7 +48,7 @@ public:
 
 	/**
 	 * \brief minimize/maximize the function pf: f1(t)+w*f2(t)
-	 * returning the best solution found t and its the lb/ub of its evaluation
+	 * returning the lb/ub of its evaluation (c) and the best solution found t and its
 	 * input m, minimize, max_c=max_value
 	 */
 	pair<double,double> optimize(const Interval& m, bool minimize, double max_c=POS_INFINITY);

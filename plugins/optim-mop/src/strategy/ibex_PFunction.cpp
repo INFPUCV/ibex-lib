@@ -10,6 +10,9 @@
 
 namespace ibex {
 
+bool PFunction::MIN=true;
+bool PFunction::MAX=false;
+
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
 		f1(f1),f2(f2), xa(xa), xb(xb) {}
 
