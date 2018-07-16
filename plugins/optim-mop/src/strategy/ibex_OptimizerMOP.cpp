@@ -504,6 +504,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	if( nds_mode == SEGMENTS)
 		nds.clear();
 
+	ndsH.clear();
 
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
@@ -691,18 +692,12 @@ void OptimizerMOP::hamburger(PFunction pf) {
 	double epsilon = 0.01;
 	stack<Interval> n;
 	n.push(t_init);
-	int i = 0;
 	cout << "INIT HAMBURGER" << endl;
 	while(n.size() > 0) {
 		Interval t = n.top();
 		n.pop();
 
-		double error1 = 0.1;
-		if(error1 < epsilon) continue;
-
 		vector<Interval> intervals = process_node(pf, t);
-		cout << i << endl;
-		i++;
 
 		for(int i=0; i < intervals.size(); i++) {
 			n.push(intervals[i]);
@@ -725,12 +720,16 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 	 * t = inter.lb() + pf.t*(inter.ub() - inter.lb());
 	 */
 
-
+	cout << endl << endl << ">>>>PROCESS_NODE<<<<<<" << endl;
+	cout << "t " << t << endl;
+	vector<Interval> segments;
 	PFunction pf_ctc = pf;
 	//TODO: el optimizador deberia recibir el intervalo t y esto deberia estar dentro
 	pf_ctc.contract_curve(t);
+	cout << "Contract curve" << endl;
 
-	double eps = 1e-3;
+	double eps = 1e-2;
+	double penalty_segment = 100;
 
 	// get extreme points
 	IntervalVector ft_lb = pf.get_point(t.lb());
@@ -739,56 +738,80 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 	Interval ya2=ft_lb[1];
 	Interval yb1=ft_ub[0];
 	Interval yb2=ft_ub[1];
+	cout << "ya " << ya1.ub() << "," << ya2.ub() << endl;
+	cout << "yb " << yb1.ub() << "," << yb2.ub() << endl;
+
+	cout << "y1 " << fabs(ya1.ub() - yb1.ub()) << endl;
+	cout << "y2 " << fabs(ya2.ub() - yb2.ub()) << endl;
+
+	if( fabs(ya1.ub() - yb1.ub()) < eps && fabs(ya2.ub() - yb2.ub()) < eps ) {
+		std::vector< pair <double, double> > curve_y;
+		pf_ctc.get_curve_y( curve_y );
+		std::vector< pair <double, double> > curve_y_origin;
+		pf.get_curve_y( curve_y_origin );
+		std::vector< pair <double, double> > rectaUB;
+		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
+		cout << "y1 and y2 <<< eps" << endl;
+		getchar();
+		return segments;
+	}
 
 	// m ← getSlope(n.t)
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
-	Interval m_vetical = Interval(POS_INFINITY);
+	Interval m_vertical = Interval(POS_INFINITY);
+	cout << "m " << m << endl;
+	cout << "m_horizontal " << m_horizontal << endl;
+	cout << "m_vertical " << m_vertical << endl;
 
 	// get minimum m_horizontal and m_vertical (c_lb, t_ub)
-	pair<double, double> c1_t1 = pf_ctc.optimize(m_vetical, PFunction::MIN);
+	pair<double, double> c1_t1 = pf_ctc.optimize(m_vertical, PFunction::MIN);
 	pair<double, double> c2_t2 = pf_ctc.optimize(m_horizontal, PFunction::MIN);
+	cout << "point lb box (" << c1_t1.first << "," << c2_t2.first << ")" << endl;
 
-	// get maximum
-	//pair<double, double> optim_max_ver = pf.optimize(m_vetical, PFunction::MAX);
-	//pair<double, double> optim_max_hor = pf.optimize(m_horizontal, PFunction::MAX);
+	// check if point dominate curve is dominated by ndsH
+	if(ndsH.is_dominated(pair<double,double>(c1_t1.first, c2_t2.first))) {
+			std::vector< pair <double, double> > curve_y;
+			pf_ctc.get_curve_y( curve_y );
+			std::vector< pair <double, double> > curve_y_origin;
+			pf.get_curve_y( curve_y_origin );
+			std::vector< pair <double, double> > rectaUB;
+			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
+			cout << "lb box dominated" << endl;
+			getchar();
+			return segments;
+	}
 
-	// get the minimum point that dominate the curve
-	cout << "point dominate curve (" << c1_t1.first << "," << c2_t2.first << ")" << endl;
-
-	//cout << "point dominated by curve (" << optim_max_ver.first << "," << optim_max_hor.first << ")" << endl;
-
-	// plot curve
-	map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
-	std::vector< pair <double, double> > curve_y;
-	pf_ctc.get_curve_y( curve_y );
-	std::vector< pair <double, double> > curve_y_origin;
-	pf.get_curve_y( curve_y_origin );
-	std::vector< pair <double, double> > rectaUB;
-	py_Plotter::offline_plot(NULL, hamubergerNDS, rectaUB, curve_y_origin, curve_y);
-	getchar();
-
-
-	vector<Interval> segments;
-
-	// set bisection of inter
-	vector<double> v;
-
-	pair<Interval,Interval> bscAux;
-	// get error, min( (optim-t0), (optim-t1) )
-	// err1 ← min(f1(lb(n.t)),f1(ub(n.t))) - c1
 	double err1 = std::min(ft_lb[0].ub(), ft_ub[0].ub()) - c1_t1.first;
 	double err2 = std::min(ft_lb[1].ub(), ft_ub[1].ub()) - c2_t2.first;
 
-	if(m.ub()>0 && std::max(err1,err2) < eps) {
-		if(ft_lb[0].lb() < ft_ub[0].ub() || ft_lb[1].lb() < ft_ub[1].lb())
-			cout << "add point " << ft_lb[0] << "," << ft_lb[1] << endl;
+	// add extreme point non dominated
+	if(ft_lb[0].lb() < ft_ub[0].ub() || ft_lb[1].lb() < ft_ub[1].lb()) {
+		cout << "add point " << ft_lb[0] << "," << ft_lb[1] << endl;
+		ndsH.addPoint(pair<double,double>(ft_lb[0].ub(), ft_lb[1].ub()));
+	}
 
-		if(ft_ub[0].lb() < ft_lb[0].ub() || ft_ub[1].lb() < ft_lb[1].ub())
-			cout << "add point " << ft_ub[0] << "," << ft_ub[1] << endl;
+	if(ft_ub[0].lb() < ft_lb[0].ub() || ft_ub[1].lb() < ft_lb[1].ub()) {
+		cout << "add point " << ft_ub[0] << "," << ft_ub[1] << endl;
+			ndsH.addPoint(pair<double,double>(ft_ub[0].ub(),ft_ub[1].ub()));
+	}
+
+	if(m.ub()>0 && std::max(err1,err2) < eps) {
+		// plot curve
+		// map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
+		std::vector< pair <double, double> > curve_y;
+		pf_ctc.get_curve_y( curve_y );
+		std::vector< pair <double, double> > curve_y_origin;
+		pf.get_curve_y( curve_y_origin );
+		std::vector< pair <double, double> > rectaUB;
+		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
+		cout << "m > 0 and error <<<" << endl;
+		getchar();
 		return segments;
 	}
 
+	// set bisection of inter
+	vector<double> v;
 	//we save candidate points for bisection (t1 and t2)
 	v.push_back(c1_t1.second);
 	v.push_back(c2_t2.second);
@@ -797,16 +820,25 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 	if(m.ub() < 0) {
 		pair<double, double> c3_t3 = pf_ctc.optimize(m, PFunction::MAX);
 		pair<double, double> c4_t4 = pf_ctc.optimize(m, PFunction::MIN);
-		double err3 = std::abs(c4_t4.first - c3_t3.first);
+		double err3 = std::abs(c4_t4.first - c3_t3.first)/penalty_segment;
 		if(std::abs(m.mid())>1) err3/=std::abs(m.mid());
-		v.push_back(c3_t3.second);
+		v.push_back(c4_t4.second);
 		// compare error and add point
 		double err = std::max((err1, err2),err3);
 		cout << "error: " << err << endl;
-		getchar();
 
 		if(err < eps) {
 			cout << "add_segment. c4:" << c4_t4.first << "m:" << m << endl;
+			// plot curve
+			// map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
+			std::vector< pair <double, double> > curve_y;
+			pf_ctc.get_curve_y( curve_y );
+			std::vector< pair <double, double> > curve_y_origin;
+			pf.get_curve_y( curve_y_origin );
+			std::vector< pair <double, double> > rectaUB;
+			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
+			cout << "m < 0" << endl;
+			getchar();
 			return segments;
 		}
 
@@ -815,100 +847,47 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 	// order by smaller to bigger
 	std::sort(v.begin(), v.end(), sort_using_middle_than);
 
-	//cout << v[0] << endl;
+	cout << v[0] << endl;
 
-	Interval aux = Interval(t.lb(),v[0]);
-	segments.push_back(aux);
-	aux = Interval(v[0], t.ub());
-	segments.push_back(aux);
+	cout << "bisect" << endl;
+	pair<Interval,Interval> bscAux;
+	Interval aux1 = Interval(t.lb(),t.lb() +  v[0]*(t.ub() - t.lb()));
+	Interval aux2 = Interval(t.lb() +  v[0]*(t.ub() - t.lb()), t.ub());
+	if(!aux1.is_bisectable()) {
+		if(aux2.is_bisectable()) {
+			pair<Interval,Interval> bscAux = aux2.bisect();
+			cout << "aux1 " << bscAux.first << endl;
+			cout << "aux2 " << bscAux.second << endl;
+			segments.push_back(bscAux.first);
+			segments.push_back(bscAux.second);
+		}
+	}else if(!aux2.is_bisectable()) {
+		if(aux1.is_bisectable()) {
+			pair<Interval,Interval> bscAux = aux1.bisect();
+			cout << "aux1 " << bscAux.first << endl;
+			cout << "aux2 " << bscAux.second << endl;
+			segments.push_back(bscAux.first);
+			segments.push_back(bscAux.second);
+		}
+	} else {
+		cout << "aux1 " << aux1 << endl;
+		cout << "aux2 " << aux2 << endl;
+		segments.push_back(aux1);
+		segments.push_back(aux2);
+	}
 
+
+	// plot curve
+	std::vector< pair <double, double> > curve_y;
+	pf_ctc.get_curve_y( curve_y );
+	std::vector< pair <double, double> > curve_y_origin;
+	pf.get_curve_y( curve_y_origin );
+	std::vector< pair <double, double> > rectaUB;
+	py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
+	cout << "v" << endl;
+	getchar();
 
 	return segments;
-
-	// if(error_ver.ub() < error && error_hor.ub() < error && error_curve.ub() < error) {
-	// 	if(m.ub() < 0)
-	// 		cout << "AGREGAR RECTA SUPERIOR" << endl;
-	// 	else
-	// 		cout << "AGREGAR PUNTO " << endl;
-	// } else {
-	// 	double first = inter.lb();
-	// 	Interval aux;
-	// 	for(std::vector<double>::size_type index = 0; index < v.size(); ++index) {
-	// 		  std::cout << v[index] << std::endl;
-	// 		  aux = Interval(first, v[index]);
-	// 		  if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
-	// 			  test.push_back(aux);
-	// 		  } else {
-	// 			  cout << "AGREGAR PUNTO " << endl;
-	// 		  }
-	// 		  first = v[index];
-	// 		  break;
-	// 	}
-	// 	aux = Interval(first, inter.ub());
-	// 	if(!aux.is_empty() && aux.ub() - aux.lb() > 1.0e-2) {
-	// 	  test.push_back(aux);
-	// 	} else {
-	// 	  cout << "AGREGAR PUNTO " << endl;
-	// 	}
-	// }
-
-
-//	getchar();
-
-
-//	Interval max_c, min_c, min_c2;
-//
-//	std::vector< pair <double, double> > curve_y;
-//	std::vector< pair <double, double> > rectaUB;
-//	map< pair <double, double>, IntervalVector, struct sorty2 > minimum;
-//	pair<double, double> optim1 = pf.optimize(m, miminize);
-//	pf.get_curve_y( curve_y );
-//
-//	minimum.insert(make_pair(make_pair(ya1.ub(), ya2.ub()), Vector(1)));
-//	minimum.insert(make_pair(make_pair(yb1.ub(), yb2.ub()), Vector(1)));
-//
-//	if(fabs(m.ub()) < 10) {
-//		rectaUB.push_back(make_pair(ya1.ub(),m.ub()*ya1.ub() + optim1.first));
-//		rectaUB.push_back(make_pair(yb1.ub(), m.ub()*yb1.ub() + optim1.first));
-//	}else {
-//		if(m.is_empty()) {
-//			rectaUB.push_back(make_pair( -optim1.first, ya2.ub() ));
-//			rectaUB.push_back(make_pair( -optim1.first, yb2.ub() ));
-//		} else {
-//			rectaUB.push_back(make_pair( (ya2.ub()-optim1.first)/m.ub(), ya2.ub() ));
-//			rectaUB.push_back(make_pair( (yb2.ub()-optim1.first)/m.ub(), yb2.ub() ));
-//		}
-//	}
-//	py_Plotter::offline_plot(NULL, minimum, rectaUB, curve_y);
-//	cout << "Grafico check 10 enter" << endl;
-//	cout << miminize << endl;
-//	cout << "m " << m << endl;
-//	cout << "point x1: " << ya1.ub() << " " << ya2.ub() << endl;
-//	cout << "point x2: " << yb1.ub() << " " << yb2.ub() << endl;
-//	if(fabs(m.ub()) < 10) {
-//		cout << "point ub1: " << ya1.ub() << " " << m.ub()*ya1.ub() + optim1.first << endl;
-//		cout << "point ub2: " << yb1.ub() << " " << m.ub()*yb1.ub() + optim1.first << endl;
-//	}else {
-//		if(m.is_empty()) {
-//			cout << "point ub1: " << -optim1.first << " " << ya2.ub() << endl;
-//			cout << "point ub2: " << -optim1.first << " " << yb2.ub() << endl;
-//		} else {
-//			cout << "point ub1: " << (ya2.ub()-optim1.first)/m.ub() << " " << ya2.ub() << endl;
-//			cout << "point ub2: " << (yb2.ub()-optim1.first)/m.ub() << " " << yb2.ub() << endl;
-//		}
-//	}
-//	cout << "optim c " << optim1.first << endl;
-//	cout << "optim t " << optim1.second << endl;
-//	cout << "point_y " << pf.get_point(optim1.second) << endl;
-//
-//
-//	cout << "point x1: " << ya1.ub() << " " << ya2.ub() << endl;
-//	cout << "point x2: " << yb1.ub() << " " << yb2.ub() << endl;
-//	cout << "optim c " << optim1.first << endl;
-//	cout << "optim t " << optim1.second << endl;
-//	cout << "point_y " << pf.get_point(optim1.second) << endl;
-
-
 }
 
 

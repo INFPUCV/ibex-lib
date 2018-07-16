@@ -155,22 +155,24 @@ output << "]" << endl;
  * Hamburger plot
  * 
  */
-
-void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
+void py_Plotter::offline_plot(Cell* c, 
+		map< pair <double, double>, IntervalVector, struct sorty2 > NDS,
 		std::vector< pair <double, double> > rectaUB,
 		std::vector< pair <double, double> > functionPoly_origin,
 		std::vector< pair <double, double> > functionPoly
 		){
+
 	cout << "print plot Hamburger:" << NDS.size() << endl;
 	ofstream output;
 	output.open("outputH.txt");
 	output << "[";
-
-	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
+	map< pair <double, double>, IntervalVector, sorty2 >::iterator ub=NDS.begin();
+	// NDS_seg::iterator ub=NDS.begin();
 	for(;ub!=NDS.end();ub++){
 		output << "(" << ub->first.first << "," << ub->first.second << "),";
 	}
 output << "]" << endl;
+
 
 		output << "[";
 		for (int i=0;i<rectaUB.size();i++) {

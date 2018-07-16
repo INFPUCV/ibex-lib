@@ -63,6 +63,7 @@ public:
 	 * \brief return true if new_p is dominated by the NDS
 	 */
 	bool is_dominated(vector<double>& new_p);
+	 bool is_dominated(pair< double, double> new_p);
 
   /**
 	* Add a point in the NDS structure

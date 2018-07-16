@@ -11,8 +11,7 @@ namespace ibex {
 
 	 map< pair <double, double>, IntervalVector, sorty2 > NDS_seg::NDS2;
 
-	bool NDS_seg::is_dominated(vector<double>& p){
-		pair< double, double> new_p=make_pair(p[0],p[1]);
+	bool NDS_seg::is_dominated(pair< double, double> new_p){
 
 		std::map<pair<double, double>, IntervalVector>::iterator it1 = --NDS2.lower_bound(new_p);
 		// std::map<pair<double, double>, IntervalVector>::iterator it1 = NDS2.begin();
@@ -62,6 +61,13 @@ namespace ibex {
 		return false;
 
 	}
+
+
+	bool NDS_seg::is_dominated(vector<double>& p){
+			pair< double, double> new_p=make_pair(p[0],p[1]);
+			return NDS_seg::is_dominated(new_p);
+	}
+
 
 
 	void NDS_seg::addSegment(pair< double, double> p1, pair< double, double> p2) {
