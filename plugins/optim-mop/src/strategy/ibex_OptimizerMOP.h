@@ -298,7 +298,7 @@ protected:
 	/**
 	 * \brief return a set of non-dominated segments in the box
 	 */
-	list<pair <double,double> > non_dominated_segments(IntervalVector& box);
+	//list<pair <double,double> > non_dominated_segments(IntervalVector& box);
 
 	/**
 	 * \brief return the first and last points dominating the lb of the box

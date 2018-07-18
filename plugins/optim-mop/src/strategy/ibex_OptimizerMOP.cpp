@@ -311,20 +311,24 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
 	IntervalVector& box = c.box;
 	IntervalVector box3(box);
 	box3.resize(n+4);
+	box3[n+3] = 1.0;
 
-	pair <double, double> firstp=inpoints.front();
-	pair <double, double> lastp=inpoints.back();
+	if(inpoints.size()>=2){
+		pair <double, double> firstp=inpoints.front();
+		pair <double, double> lastp=inpoints.back();
 
-	//Pent of cy
-    if(firstp!=lastp)
-    	box3[n+3] = (lastp.first-firstp.first)/(firstp.second-lastp.second);
-    else
-		box3[n+3] = box[n].diam()/box[n+1].diam(); // a
+		//Pent of cy
+		if(firstp!=lastp)
+			box3[n+3] = (lastp.first-firstp.first)/(firstp.second-lastp.second);
+		else
+			box3[n+3] = box[n].diam()/box[n+1].diam(); // a
+	}
+
 
      //setting w_ub with the NDS points
-  	 double w_ub;
+  	 double w_ub=POS_INFINITY;
 
-      if(_cy_upper){
+      if(_cy_upper && inpoints.size()>=2){
 		w_ub=NEG_INFINITY;
 		for(auto pmax:inpoints){
 			double ww;
@@ -465,17 +469,21 @@ void OptimizerMOP::cy_contract(Cell& c){
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
-	if(false){
-		list<pair <double,double> > inner_segments; //= non_dominated_segments(c.box);
-		//if(inner_segments.size()>=2) dominance_peeler2(c.box,inner_segments);
+	if(nds_mode == HAMBURGER){
 
-		if(cy_contract_var && inner_segments.size()>=2){
+		list<pair <double,double> > inner_segments = ndsH.non_dominated_segments(c.box, n);
+		cout << "size:" << inner_segments.size() << endl;
+		if(inner_segments.size()>=2) dominance_peeler2(c.box,inner_segments);
+
+		cout << "cy_contract" << endl;
+		if(cy_contract_var)
 			cy_contract2(c,inner_segments);
-		}else
+		else
 			ctc.contract(c.box);
+
 		cout << 4 << endl;
 
-	}else if(nds_mode==POINTS || nds_mode==SEGMENTS || nds_mode == HAMBURGER){
+	}else if(nds_mode==POINTS || nds_mode==SEGMENTS){
 		dominance_peeler(c.box);
 		discard_generalized_monotonicty_test(c.box, init_box);
 
@@ -691,7 +699,6 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
   // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
 
 	Node_t n_init (Interval(0,1), 0.0, POS_INFINITY);
-	double epsilon = 0.01;
 	std::priority_queue<Node_t, vector<Node_t> > n;
 	if(process_node(pf, n_init)) n.push(n_init);
 
@@ -699,6 +706,9 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 	while(n.size() > 0) {
 		Node_t nt = n.top();
 		n.pop();
+		if(nt.dist < eps) continue;
+
+		cout << "dist:" << nt.dist << endl;
 		Node_t n1( Interval(nt.t.lb(), nt.b), 0.0, POS_INFINITY);
 		if(process_node(pf, n1)){ n.push(n1);}
 
@@ -740,6 +750,9 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval ya2=ft_lb[1];
 	Interval yb1=ft_ub[0];
 	Interval yb2=ft_ub[1];
+
+
+
 	cout << "ya " << ya1.ub() << "," << ya2.ub() << endl;
 	cout << "yb " << yb1.ub() << "," << yb2.ub() << endl;
 
@@ -769,6 +782,11 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	// get minimum m_horizontal and m_vertical (c_lb, t_ub)
 	pair<double, double> c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY, t);
 	pair<double, double> c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, POS_INFINITY, t);
+
+	IntervalVector box(2);
+	box[0]=Interval(c1_t1.first, POS_INFINITY);
+	box[1]=Interval(c2_t2.first, POS_INFINITY);
+
 	cout << "point lb box (" << c1_t1.first << "," << c2_t2.first << ")" << endl;
 
 	// check if point dominate curve is dominated by ndsH
@@ -828,8 +846,11 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 		cout<< "addSegment " << ((ya2-c3_t3.first)/m).ub() <<"," << ya2.ub() << "  -  "
 		 << yb1.ub()<<"," << (yb1*m+c3_t3.first).ub() << endl;
+
+		//n_t.dist = ndsH.distance(box,m.mid(),c3_t3.first);
+
 		 //TODO: verificar que ya este sobre yb
-    ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
+        ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
 
 		double err3 = std::abs(c4_t4.first - c3_t3.first); /*/penalty_segment;*/
@@ -873,16 +894,14 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		 }
 	}
 
+	//if the bisection point is too close of a bound we bisect in the middle
 	if( std::min(vv-t.lb(),t.ub()-vv)/t.diam() < 0.1 ) vv=t.mid();
-
 	cout << "bis:" << vv  << endl;
 
 	n_t.b=vv;
-	IntervalVector box(2);
-	box[0]=Interval(c1_t1.first, std::max(ya1.ub(), yb1.ub()));
-	box[1]=Interval(c2_t2.first, std::max(ya2.ub(), yb2.ub()));
 
-	n_t.dist=ndsH.distance(box);
+
+	n_t.dist=std::min(ndsH.distance(box),n_t.dist);
 	cout << "distance:" << n_t.dist << endl;
 
 
