@@ -700,7 +700,7 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 		Node_t nt = n.top();
 		n.pop();
 		Node_t n1( Interval(nt.t.lb(), nt.b), 0.0, POS_INFINITY);
-		if(process_node(pf, n1)) n.push(n1);
+		if(process_node(pf, n1)){ n.push(n1);}
 
 		Node_t n2( Interval(nt.b, nt.t.ub()), 0.0, POS_INFINITY);
 		if(process_node(pf, n2)) n.push(n2);
@@ -873,7 +873,9 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		 }
 	}
 
-	cout << vv << " "<< min_dist << endl;
+	if( std::min(vv-t.lb(),t.ub()-vv)/t.diam() < 0.1 ) vv=t.mid();
+
+	cout << "bis:" << vv  << endl;
 
 	n_t.b=vv;
 	IntervalVector box(2);
