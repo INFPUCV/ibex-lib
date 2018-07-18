@@ -673,21 +673,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
 void OptimizerMOP::hamburger(PFunction pf) {
-	/**
-	 *
-	n ← (t=[0,1])
-	process_node(n)
-	push(Q,n)
-
-	while size(Q) > 0
-		n ← select from Q the node n maximizing n.err
-	if n.err < eps: continue
-	(n1,n2) ← bisect(n,n.tb)
-	for n in (n1,n2)
-		process_node(n)
-		push(Q, n)
-	 *
-	 */
+  // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
+	
 	Interval t_init = Interval(0,1);
 	double epsilon = 0.01;
 	stack<Interval> n;
@@ -715,14 +702,15 @@ void OptimizerMOP::hamburger(PFunction pf) {
 vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
     // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
 
-	/**
-	 * convert pf.t to t in inter
-	 * t = inter.lb() + pf.t*(inter.ub() - inter.lb());
-	 */
+	//TODO: this should be a List
+  vector<Interval> segments;
+  if(!t.is_bisectable())
+		 return segments;
 
-	cout << endl << endl << ">>>>PROCESS_NODE<<<<<<" << endl;
+
+	cout << endl << endl << ">>>>PROCESS_NODE :  " ;
 	cout << "t " << t << endl;
-	vector<Interval> segments;
+
 	PFunction pf_ctc = pf;
 	//TODO: el optimizador deberia recibir el intervalo t y esto deberia estar dentro
 	pf_ctc.contract_curve(t);
@@ -765,8 +753,8 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 	cout << "m_vertical " << m_vertical << endl;
 
 	// get minimum m_horizontal and m_vertical (c_lb, t_ub)
-	pair<double, double> c1_t1 = pf_ctc.optimize(m_vertical, PFunction::MIN);
-	pair<double, double> c2_t2 = pf_ctc.optimize(m_horizontal, PFunction::MIN);
+	pair<double, double> c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY, t);
+	pair<double, double> c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, POS_INFINITY, t);
 	cout << "point lb box (" << c1_t1.first << "," << c2_t2.first << ")" << endl;
 
 	// check if point dominate curve is dominated by ndsH
@@ -796,7 +784,10 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 			ndsH.addPoint(pair<double,double>(ft_ub[0].ub(),ft_ub[1].ub()));
 	}
 
-	if(m.ub()>0 && std::max(err1,err2) < eps) {
+  double err = std::max(err1,err2);
+
+	if(m.ub()>0 && (std::max(err1,err2) < eps)) {
+		cout << "error: " << err << endl;
 		// plot curve
 		// map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
 		std::vector< pair <double, double> > curve_y;
@@ -818,16 +809,25 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 
 
 	if(m.ub() < 0) {
-		pair<double, double> c3_t3 = pf_ctc.optimize(m, PFunction::MAX);
-		pair<double, double> c4_t4 = pf_ctc.optimize(m, PFunction::MIN);
-		double err3 = std::abs(c4_t4.first - c3_t3.first)/penalty_segment;
+		pair<double, double> c3_t3 = pf.optimize(m, PFunction::MAX, POS_INFINITY, t);
+		pair<double, double> c4_t4 = pf.optimize(m, PFunction::MIN, POS_INFINITY, t);
+
+		cout<< "addSegment " << ((ya2-c3_t3.first)/m).ub() <<"," << ya2.ub() << "  -  "
+		 << yb1.ub()<<"," << (yb1*m+c3_t3.first).ub() << endl;
+		 \\TODO: verificar que ya este sobre yb
+    ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
+										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
+
+		double err3 = std::abs(c4_t4.first - c3_t3.first); /*/penalty_segment;*/
 		if(std::abs(m.mid())>1) err3/=std::abs(m.mid());
 		v.push_back(c4_t4.second);
 		// compare error and add point
-		double err = std::max((err1, err2),err3);
-		cout << "error: " << err << endl;
+		err = std::max((err1, err2),err3);
+
+
 
 		if(err < eps) {
+			cout << "error: " << err << endl;
 			cout << "add_segment. c4:" << c4_t4.first << "m:" << m << endl;
 			// plot curve
 			// map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
@@ -844,38 +844,32 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 
 	}
 
-	// order by smaller to bigger
-	std::sort(v.begin(), v.end(), sort_using_middle_than);
+	cout << "error: " << err << endl;
 
-	cout << v[0] << endl;
+	double ini=t.lb();
+	double end=t.ub();
+	double min_dist=2.0;
 
-	cout << "bisect" << endl;
-	pair<Interval,Interval> bscAux;
-	Interval aux1 = Interval(t.lb(),t.lb() +  v[0]*(t.ub() - t.lb()));
-	Interval aux2 = Interval(t.lb() +  v[0]*(t.ub() - t.lb()), t.ub());
-	if(!aux1.is_bisectable()) {
-		if(aux2.is_bisectable()) {
-			pair<Interval,Interval> bscAux = aux2.bisect();
-			cout << "aux1 " << bscAux.first << endl;
-			cout << "aux2 " << bscAux.second << endl;
-			segments.push_back(bscAux.first);
-			segments.push_back(bscAux.second);
-		}
-	}else if(!aux2.is_bisectable()) {
-		if(aux1.is_bisectable()) {
-			pair<Interval,Interval> bscAux = aux1.bisect();
-			cout << "aux1 " << bscAux.first << endl;
-			cout << "aux2 " << bscAux.second << endl;
-			segments.push_back(bscAux.first);
-			segments.push_back(bscAux.second);
-		}
-	} else {
-		cout << "aux1 " << aux1 << endl;
-		cout << "aux2 " << aux2 << endl;
-		segments.push_back(aux1);
-		segments.push_back(aux2);
+	double vv;
+	for(auto point:v){
+		 double dist=std::abs(point-t.mid());
+		 if(dist<min_dist){
+			 min_dist=dist;
+			 vv=point;
+		 }
 	}
 
+	cout << vv << " "<< min_dist << endl;
+
+	cout << "bisect" << endl;
+	Interval aux1 =  Interval(t.lb(),vv); //Interval(t.lb(),t.lb() +  v[0]*(t.ub() - t.lb()));
+	Interval aux2 =  Interval(vv, t.ub()); //Interval(t.lb() +  v[0]*(t.ub() - t.lb()), t.ub());
+
+	cout << "aux1 " << aux1 << endl;
+	segments.push_back(aux1);
+
+	cout << "aux2 " << aux2 << endl;
+	segments.push_back(aux2);
 
 	// plot curve
 	std::vector< pair <double, double> > curve_y;

@@ -80,7 +80,8 @@ void PFunction::get_curve_y(std::vector< pair <double, double> >& curve_y ){
  * returning the best solution found t and its the lb/ub of its evaluation
  * input m, minimize, max_c=max_value
  */
-pair<double, double> PFunction::optimize(const Interval& m, bool minimize, double max_c){
+pair<double, double> PFunction::optimize(const Interval& m, bool minimize, double max_c, Interval init){
+	if(init.is_empty()) init=Interval(0,1);
 	//TODO: we are assuming minimize=false;
 
 	// TODO: ver cuando es conveniente realizar Newton
@@ -89,15 +90,15 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 	// 3. Revisar que newton si supera el max c no siga buscando y no se contracte
 	// 4. Distancia minima entre puntos ya e yb
 
-	if(minimize && max_c != POS_INFINITY) max_c = -max_c;
+	//if(minimize && max_c != POS_INFINITY) max_c = -max_c;
 
-	Interval derivate = deriv(Interval(0,1), m, minimize);
+	Interval derivate = deriv(init, m, minimize);
 
 	double t_final;
 	double epsilon = 0.0003;
 	double lb = NEG_INFINITY;
 	stack<Interval> pila;
-	pila.push(Interval(0,1));
+	pila.push(init);
 	Interval inter, left, right;
 	double point_t, point_c, t_before, error, min_interval, max_diam;
 	Interval y_r, y_c, y_l;

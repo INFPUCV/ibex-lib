@@ -51,7 +51,7 @@ public:
 	 * returning the lb/ub of its evaluation (c) and the best solution found t and its
 	 * input m, minimize, max_c=max_value
 	 */
-	pair<double,double> optimize(const Interval& m, bool minimize, double max_c=POS_INFINITY);
+	pair<double,double> optimize(const Interval& m, bool minimize, double max_c=POS_INFINITY, Interval init=Interval::EMPTY_SET);
 
 private:
 
