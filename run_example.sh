@@ -7,4 +7,4 @@
 ./waf install
 
 # run example
-__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/kim.txt --cy-contract --eps 1 -b largestfirst --nb_ub_sols 10 --plot --w2 0.01 --hamburger
+__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract --eps 0.05 -b largestfirst --nb_ub_sols 10 --plot --w2 0.01 --hamb | grep -e "aux\|PROCESS_NODE\|error\|dist\|bis\|point lb"
