@@ -201,26 +201,33 @@ public:
 		return inpoints;
 	}
 
-
 	static double distance(const Cell* c){
+
+
+		double a = c->get<CellMOP>().a;
+		double w_lb = c->get<CellMOP>().w_lb;
+
+		distance(c->box,a,w_lb);
+	}
+
+
+	static double distance(const IntervalVector& box, double a=POS_INFINITY, double w_lb=POS_INFINITY){
 		//TODO: esto deberia ser parametro
 		bool cy_contract_var=false;
 
 		double max_dist=NEG_INFINITY;
 
-		int n=c->box.size();
+		int n=box.size();
 
-		Interval z1 = c->box[n-2];
-		Interval z2 = c->box[n-1];
+		Interval z1 = box[n-2];
+		Interval z2 = box[n-1];
 
-		double a = c->get<CellMOP>().a;
-		double w_lb = c->get<CellMOP>().w_lb;
 
 		map< pair <double, double>, IntervalVector >::iterator it = NDS2.lower_bound(make_pair(z1.lb(),POS_INFINITY)); //NDS.begin();
 		//it--;
 
 
-		list<pair <double,double> > inner_segments= extremal_non_dominated(c->box);
+		list<pair <double,double> > inner_segments= extremal_non_dominated(box);
 
 		if(inner_segments.size()>=2){
 			pair <double,double> p1 = inner_segments.front();

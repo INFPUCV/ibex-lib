@@ -55,14 +55,15 @@ static bool sort_using_middle_than(double u, double v)
 
 class Node_t{
 public:
-	Node_t(Interval t, Interval ft) : t(t), ft(ft) { }
+	Node_t(Interval t, double b, double dist) : t(t), b(b), dist(dist) { }
 
-	friend bool operator>(Node_t& n1, Node_t& n2){
-		return n1.ft.ub() > n2.ft.ub();
+	friend bool operator<(const Node_t& n1, const Node_t& n2){
+		return n1.dist < n2.dist;
 	}
 
 	Interval t;
-	Interval ft;
+	double b;
+	double dist;
 };
 
 
@@ -290,7 +291,7 @@ protected:
 	 */
 	void hamburger(PFunction pf);
 
-	vector<Interval> process_node(PFunction& pf, Interval inter);
+   bool process_node(PFunction& pf, Node_t& n_t);
 
 	void cy_contract2(Cell& c, list <pair <double,double> >& inpoints);
 

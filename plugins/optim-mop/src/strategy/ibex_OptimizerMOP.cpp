@@ -674,22 +674,21 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 void OptimizerMOP::hamburger(PFunction pf) {
   // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
-	
-	Interval t_init = Interval(0,1);
+
+	Node_t n_init (Interval(0,1), 0.0, POS_INFINITY);
 	double epsilon = 0.01;
-	stack<Interval> n;
-	n.push(t_init);
+	std::priority_queue<Node_t, vector<Node_t> > n;
+	if(process_node(pf, n_init)) n.push(n_init);
+
 	cout << "INIT HAMBURGER" << endl;
 	while(n.size() > 0) {
-		Interval t = n.top();
+		Node_t nt = n.top();
 		n.pop();
+		Node_t n1( Interval(nt.t.lb(), nt.b), 0.0, POS_INFINITY);
+		if(process_node(pf, n1)) n.push(n1);
 
-		vector<Interval> intervals = process_node(pf, t);
-
-		for(int i=0; i < intervals.size(); i++) {
-			n.push(intervals[i]);
-			cout << intervals[i] << endl;
-		}
+		Node_t n2( Interval(nt.b, nt.t.ub()), 0.0, POS_INFINITY);
+		if(process_node(pf, n2)) n.push(n2);
 
 //		cout << "n " << n.size() << endl;
 
@@ -699,13 +698,13 @@ void OptimizerMOP::hamburger(PFunction pf) {
 	getchar();
 }
 
-vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
+bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
     // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
 
-	//TODO: this should be a List
-  vector<Interval> segments;
+	Interval t=n_t.t;
+
   if(!t.is_bisectable())
-		 return segments;
+		 return false;
 
 
 	cout << endl << endl << ">>>>PROCESS_NODE :  " ;
@@ -741,7 +740,7 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
 		cout << "y1 and y2 <<< eps" << endl;
 		getchar();
-		return segments;
+		return false;
 	}
 
 	// m ← getSlope(n.t)
@@ -767,7 +766,7 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
 			cout << "lb box dominated" << endl;
 			getchar();
-			return segments;
+			return false;
 	}
 
 	double err1 = std::min(ft_lb[0].ub(), ft_ub[0].ub()) - c1_t1.first;
@@ -798,7 +797,7 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
 		cout << "m > 0 and error <<<" << endl;
 		getchar();
-		return segments;
+		return false;
 	}
 
 	// set bisection of inter
@@ -814,7 +813,7 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 
 		cout<< "addSegment " << ((ya2-c3_t3.first)/m).ub() <<"," << ya2.ub() << "  -  "
 		 << yb1.ub()<<"," << (yb1*m+c3_t3.first).ub() << endl;
-		 \\TODO: verificar que ya este sobre yb
+		 //TODO: verificar que ya este sobre yb
     ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
 
@@ -839,7 +838,7 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
 			cout << "m < 0" << endl;
 			getchar();
-			return segments;
+			return false;
 		}
 
 	}
@@ -861,15 +860,14 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 
 	cout << vv << " "<< min_dist << endl;
 
-	cout << "bisect" << endl;
-	Interval aux1 =  Interval(t.lb(),vv); //Interval(t.lb(),t.lb() +  v[0]*(t.ub() - t.lb()));
-	Interval aux2 =  Interval(vv, t.ub()); //Interval(t.lb() +  v[0]*(t.ub() - t.lb()), t.ub());
+	n_t.b=vv;
+	IntervalVector box(2);
+	box[0]=Interval(c1_t1.first, std::max(ya1.ub(), yb1.ub()));
+	box[1]=Interval(c2_t2.first, std::max(ya2.ub(), yb2.ub()));
 
-	cout << "aux1 " << aux1 << endl;
-	segments.push_back(aux1);
+	n_t.dist=ndsH.distance(box);
+	cout << "distance:" << n_t.dist << endl;
 
-	cout << "aux2 " << aux2 << endl;
-	segments.push_back(aux2);
 
 	// plot curve
 	std::vector< pair <double, double> > curve_y;
@@ -881,7 +879,7 @@ vector<Interval> OptimizerMOP::process_node(PFunction& pf, Interval t) {
 	cout << "v" << endl;
 	getchar();
 
-	return segments;
+	return true;
 }
 
 
