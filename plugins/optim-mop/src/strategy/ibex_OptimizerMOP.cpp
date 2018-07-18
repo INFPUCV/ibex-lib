@@ -114,8 +114,15 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 		return true;
 	}
 	cout << "nb2" << endl;
-	py_Plotter::offline_plot(NULL, NDS);
-	add_upper_segment(xa, xb);
+
+	if (nds_mode == SEGMENTS){
+		py_Plotter::offline_plot(NULL, NDS);
+		add_upper_segment(xa, xb);
+	}
+
+	if (nds_mode == HAMBURGER){
+		hamburger(xa, xb);
+	}
 
 
 	return true;
@@ -468,7 +475,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 			ctc.contract(c.box);
 		cout << 4 << endl;
 
-	}else if(nds_mode==POINTS || nds_mode==SEGMENTS){
+	}else if(nds_mode==POINTS || nds_mode==SEGMENTS || nds_mode == HAMBURGER){
 		dominance_peeler(c.box);
 		discard_generalized_monotonicty_test(c.box, init_box);
 
@@ -493,7 +500,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	buffer.flush();
 
-	if(nds_mode == POINTS || nds_mode == SEGMENTS){
+	if(nds_mode == POINTS || nds_mode == SEGMENTS || nds_mode == HAMBURGER){
 		NDS.clear();
 		//the first point
 		NDS.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
@@ -504,7 +511,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	if( nds_mode == SEGMENTS)
 		nds.clear();
 
-	ndsH.clear();
+	if(nds_mode == HAMBURGER)
+		ndsH.clear();
 
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
@@ -567,8 +575,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//if(nds_mode==POINTS)
 			//	update_NDS(c->box);
 
-			if(nds_mode==SEGMENTS)
+			if(nds_mode==SEGMENTS || nds_mode == HAMBURGER)
 				update_NDS2(c->box);
+
 			cout << "end" << endl;
 
 			pair<IntervalVector,IntervalVector>* boxes=NULL;
@@ -582,7 +591,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
         	double dist=0.0;
-        	if(!atomic_box) dist= (nds_mode==POINTS || nds_mode==SEGMENTS)? distance2(c) : NDS_seg::distance(c);
+        	if(!atomic_box) dist= (nds_mode==POINTS || nds_mode==SEGMENTS || nds_mode == HAMBURGER)? distance2(c) : NDS_seg::distance(c);
         	cout << "dist:"  << dist << endl;
 
         	if(dist < eps || atomic_box){
@@ -595,7 +604,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
         		//TODO: Puede que sea lo mismo que la linea 659 (if(dist <0.0))
 
-        		if(nds_mode==POINTS || nds_mode==SEGMENTS){
+        		if(nds_mode==POINTS || nds_mode==SEGMENTS || nds_mode == HAMBURGER){
         			map< pair <double, double>, IntervalVector >:: iterator ent1=NDS.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
         			ent1--;
         			if(ent1->first.second <= c->box[n+1].lb()){
@@ -672,7 +681,13 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 }
 
 
-void OptimizerMOP::hamburger(PFunction pf) {
+void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bIV) {
+
+	IntervalVector xa=aIV;
+	IntervalVector xb=bIV;
+
+	PFunction pf(goal1, goal2, xa, xb);
+
   // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
 
 	Node_t n_init (Interval(0,1), 0.0, POS_INFINITY);
@@ -922,7 +937,7 @@ void OptimizerMOP::add_upper_segment(const IntervalVector& aIV, const IntervalVe
 	std::vector< pair <double, double> > rectaUB;
 
 	// hamburger
-	hamburger(pf);
+	//hamburger(pf);
 
 
 	Interval max_c, min_c, min_c2;
@@ -994,7 +1009,12 @@ void OptimizerMOP::report(bool verbose) {
 		cout << " number of solutions: "  << nds.size() << endl;
 		for(auto ub : nds.NDS2)
 			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
+	}if(nds_mode==HAMBURGER){
+		cout << " number of solutions: "  << ndsH.size() << endl;
+		for(auto ub : ndsH.NDS2)
+			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
 	}else{
+
 		cout << " number of solutions: "  << NDS.size() << endl;
 		for(auto ub : NDS)
 			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;

@@ -87,7 +87,7 @@ public:
 	 */
 	typedef enum {SUCCESS, INFEASIBLE, NO_FEASIBLE_FOUND, UNBOUNDED_OBJ, TIME_OUT, UNREACHED_PREC} Status;
 
-	typedef enum {POINTS, SEGMENTS} Mode;
+	typedef enum {POINTS, SEGMENTS, HAMBURGER} Mode;
 
 	/**
 	 *  \brief Create an optimizer.
@@ -289,7 +289,7 @@ protected:
 	/**
 	 * Hamburger Algorithm
 	 */
-	void hamburger(PFunction pf);
+	void hamburger(const IntervalVector& aIV, const IntervalVector& bIV);
 
    bool process_node(PFunction& pf, Node_t& n_t);
 
