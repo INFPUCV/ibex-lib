@@ -771,6 +771,15 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		return false;
 	}
 
+	if(ya1.ub() > yb1.ub() || ya2.ub() < yb2.ub()) {
+		Interval aux = ya1;
+		ya1 = yb1;
+		yb1 = aux;
+		aux = ya2;
+		ya2 = yb2;
+		yb2 = aux;
+	}
+
 	// m ← getSlope(n.t)
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
@@ -849,7 +858,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 		//n_t.dist = ndsH.distance(box,m.mid(),c3_t3.first);
 
-		 //TODO: verificar que ya este sobre yb
         ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
 
@@ -903,7 +911,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 	n_t.dist=std::min(ndsH.distance(box),n_t.dist);
 	cout << "distance:" << n_t.dist << endl;
-
 
 	// plot curve
 	std::vector< pair <double, double> > curve_y;
