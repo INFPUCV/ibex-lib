@@ -313,34 +313,40 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
 	box3.resize(n+4);
 	box3[n+3] = 1.0;
 
-	if(inpoints.size()>=2){
-		pair <double, double> firstp=inpoints.front();
-		pair <double, double> lastp=inpoints.back();
+	pair <double, double> firstp=inpoints.front();
+	pair <double, double> lastp=inpoints.back();
 
-		//Pent of cy
-		if(firstp!=lastp)
-			box3[n+3] = (lastp.first-firstp.first)/(firstp.second-lastp.second);
-		else
-			box3[n+3] = box[n].diam()/box[n+1].diam(); // a
-	}
+	//Pent of cy
 
+	if(firstp!=lastp)
+		box3[n+3] = (lastp.first-firstp.first)/(firstp.second-lastp.second);
+	if(box3[n+3]==0.0 || box3[n+3]==1.0 || box3[n+3].is_empty())
+		box3[n+3] = box[n].diam()/box[n+1].diam(); // a
 
-     //setting w_ub with the NDS points
-  	 double w_ub=POS_INFINITY;
+   cout <<box3[n+3]  << endl;
 
-      if(_cy_upper && inpoints.size()>=2){
-		w_ub=NEG_INFINITY;
-		for(auto pmax:inpoints){
-			double ww;
-			if(_eps_contract)
-				ww = ( Interval(pmax.first)-eps + box3[n+3]*(Interval(pmax.second)-eps) ).ub();
-			else
-				ww = ( Interval(pmax.first) + box3[n+3]*(Interval(pmax.second)) ).ub();
-			if(w_ub < ww )  w_ub = ww;
-		}
-  	  }
+   //setting w_ub with the NDS points
+	 double w_ub=POS_INFINITY;
+
+   if(_cy_upper){
+			w_ub=NEG_INFINITY;
+			for(auto pmax:inpoints){
+				  if(pmax.first == POS_INFINITY || pmax.second == POS_INFINITY) {
+						w_ub=POS_INFINITY;
+						break;
+					}
+					
+					double ww;
+					if(_eps_contract)
+						ww = ( Interval(pmax.first)-eps + box3[n+3]*(Interval(pmax.second)-eps) ).ub();
+					else
+						ww = ( Interval(pmax.first) + box3[n+3]*(Interval(pmax.second)) ).ub();
+				  if(w_ub < ww )  w_ub = ww;
+			}
+	 }
 
 	box3[n+2] = Interval(NEG_INFINITY, w_ub); // w
+  cout << 	box3[n+2] <<endl;
 	//the contraction is performed
 	ctc.contract(box3);
 	c.get<CellMOP>().a = box3[n+3].mid();
@@ -471,9 +477,11 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	if(nds_mode == HAMBURGER){
 
-		list<pair <double,double> > inner_segments = ndsH.non_dominated_segments(c.box, n);
-		cout << "size:" << inner_segments.size() << endl;
-		if(inner_segments.size()>=2) dominance_peeler2(c.box,inner_segments);
+		list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
+		cout << "dist.size:" << inner_segments.size() << endl;
+		cout << c.box << endl;
+		dominance_peeler2(c.box,inner_segments);
+		cout << c.box << endl;
 
 		cout << "cy_contract" << endl;
 		if(cy_contract_var)
@@ -481,6 +489,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 		else
 			ctc.contract(c.box);
 
+		cout << c.box << endl;
 		cout << 4 << endl;
 
 	}else if(nds_mode==POINTS || nds_mode==SEGMENTS){
@@ -731,7 +740,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
   if(!t.is_bisectable())
 		 return false;
 
-
 	cout << endl << endl << ">>>>PROCESS_NODE :  " ;
 	cout << "t " << t << endl;
 
@@ -739,9 +747,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	//TODO: el optimizador deberia recibir el intervalo t y esto deberia estar dentro
 	pf_ctc.contract_curve(t);
 	cout << "Contract curve" << endl;
-
-	double eps = 1e-2;
-	double penalty_segment = 100;
 
 	// get extreme points
 	IntervalVector ft_lb = pf.get_point(t.lb());
@@ -751,14 +756,13 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval yb1=ft_ub[0];
 	Interval yb2=ft_ub[1];
 
-
-
 	cout << "ya " << ya1.ub() << "," << ya2.ub() << endl;
 	cout << "yb " << yb1.ub() << "," << yb2.ub() << endl;
 
 	cout << "y1 " << fabs(ya1.ub() - yb1.ub()) << endl;
 	cout << "y2 " << fabs(ya2.ub() - yb2.ub()) << endl;
 
+  //too-close points
 	if( fabs(ya1.ub() - yb1.ub()) < eps && fabs(ya2.ub() - yb2.ub()) < eps ) {
 		std::vector< pair <double, double> > curve_y;
 		pf_ctc.get_curve_y( curve_y );
@@ -792,10 +796,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	pair<double, double> c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY, t);
 	pair<double, double> c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, POS_INFINITY, t);
 
-	IntervalVector box(2);
-	box[0]=Interval(c1_t1.first, POS_INFINITY);
-	box[1]=Interval(c2_t2.first, POS_INFINITY);
-
 	cout << "point lb box (" << c1_t1.first << "," << c2_t2.first << ")" << endl;
 
 	// check if point dominate curve is dominated by ndsH
@@ -811,8 +811,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 			return false;
 	}
 
-	double err1 = std::min(ft_lb[0].ub(), ft_ub[0].ub()) - c1_t1.first;
-	double err2 = std::min(ft_lb[1].ub(), ft_ub[1].ub()) - c2_t2.first;
 
 	// add extreme point non dominated
 	if(ft_lb[0].lb() < ft_ub[0].ub() || ft_lb[1].lb() < ft_ub[1].lb()) {
@@ -823,23 +821,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	if(ft_ub[0].lb() < ft_lb[0].ub() || ft_ub[1].lb() < ft_lb[1].ub()) {
 		cout << "add point " << ft_ub[0] << "," << ft_ub[1] << endl;
 			ndsH.addPoint(pair<double,double>(ft_ub[0].ub(),ft_ub[1].ub()));
-	}
-
-  double err = std::max(err1,err2);
-
-	if(m.ub()>0 && (std::max(err1,err2) < eps)) {
-		cout << "error: " << err << endl;
-		// plot curve
-		// map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
-		std::vector< pair <double, double> > curve_y;
-		pf_ctc.get_curve_y( curve_y );
-		std::vector< pair <double, double> > curve_y_origin;
-		pf.get_curve_y( curve_y_origin );
-		std::vector< pair <double, double> > rectaUB;
-		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
-		cout << "m > 0 and error <<<" << endl;
-		getchar();
-		return false;
 	}
 
 	// set bisection of inter
@@ -856,43 +837,17 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		cout<< "addSegment " << ((ya2-c3_t3.first)/m).ub() <<"," << ya2.ub() << "  -  "
 		 << yb1.ub()<<"," << (yb1*m+c3_t3.first).ub() << endl;
 
-		//n_t.dist = ndsH.distance(box,m.mid(),c3_t3.first);
-
-        ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
+    ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
+		n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
+		cout << "distance1:" << n_t.dist << endl;
 
-		double err3 = std::abs(c4_t4.first - c3_t3.first); /*/penalty_segment;*/
-		if(std::abs(m.mid())>1) err3/=std::abs(m.mid());
 		v.push_back(c4_t4.second);
-		// compare error and add point
-		err = std::max((err1, err2),err3);
 
+	}else
+		n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first);
 
-
-		if(err < eps) {
-			cout << "error: " << err << endl;
-			cout << "add_segment. c4:" << c4_t4.first << "m:" << m << endl;
-			// plot curve
-			// map< pair <double, double>, IntervalVector, struct sorty2 > hamubergerNDS;
-			std::vector< pair <double, double> > curve_y;
-			pf_ctc.get_curve_y( curve_y );
-			std::vector< pair <double, double> > curve_y_origin;
-			pf.get_curve_y( curve_y_origin );
-			std::vector< pair <double, double> > rectaUB;
-			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
-			cout << "m < 0" << endl;
-			getchar();
-			return false;
-		}
-
-	}
-
-	cout << "error: " << err << endl;
-
-	double ini=t.lb();
-	double end=t.ub();
 	double min_dist=2.0;
-
 	double vv;
 	for(auto point:v){
 		 double dist=std::abs(point-t.mid());
@@ -909,8 +864,8 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	n_t.b=vv;
 
 
-	n_t.dist=std::min(ndsH.distance(box),n_t.dist);
-	cout << "distance:" << n_t.dist << endl;
+
+	cout << "distance2:" << n_t.dist << endl;
 
 	// plot curve
 	std::vector< pair <double, double> > curve_y;

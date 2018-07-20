@@ -81,44 +81,45 @@ public:
        }
     };
 
-	//TODO: Juntar con non_dominated_segments
-	static list<pair <double,double> > extremal_non_dominated(const IntervalVector& box){
-		int n=box.size()-2;
+	//returns a list of points non-dominated by lb
+	static list<pair <double,double> > non_dominated_points(double lbx, double lby){
 		list <pair <double,double> > inpoints;
 
 		pair <double, double> firstp;
 		pair <double, double> lastp;
 
-		//first point in the box (v11)
-		map< pair <double, double>, IntervalVector >:: iterator ent1=NDS2.upper_bound(make_pair(box[n].lb(),NEG_INFINITY));
-		while(ent1->first.second > box[n].ub()) ent1++;
-		if(ent1->first.first > box[n].lb()) return inpoints; //no point in the box
-
+		//first potential dominated point
+		map< pair <double, double>, IntervalVector >:: iterator ent1=NDS2.upper_bound(make_pair(lbx,NEG_INFINITY));
 		pair <double, double> v11 = ent1->first; ent1--;
+
+		//last point before x=lbx
 	    pair <double, double> v10 = ent1->first;
 
-		//TODO: interseccion conservativa: upperPointIntersection
-	    cout << 1 << endl;
-	    firstp = pointIntersection( v10, v11, make_pair(box[n].lb(),v11.second),  make_pair(box[n].lb(),v10.second));
-	    cout << 2 << endl;
-	   	if(firstp.second <= box[n+1].lb() ){
-	   		cout << "error: the box is dominated" << endl;
+		//x-point cutting lbx
+	    firstp = pointIntersection( v10, v11, make_pair(lbx,v11.second),  make_pair(lbx,v10.second));
+	   	if(firstp.second <= lby ){
+	   		cout << "error?: the box is dominated" << endl;
 	   		exit(0);
 	   	}
 
 		inpoints.push_back(firstp);
 
-		//last point in the box (v21)
-		while(ent1->first.second > box[n+1].lb() || ent1->first.first > box[n].lb())
+    ent1++;
+		//points dominated by lb
+		while(ent1->first.second > lby){
+			inpoints.push_back(ent1->first);
 			ent1++;
+		}
 
+		//last potential dominated point
+		ent1--;
 		pair <double, double> v21 = ent1->first;
+		//first point after y=lby
 		ent1++;
 		pair <double, double> v20 = ent1->first;
 
-	    cout << 3 << endl;
-		lastp = pointIntersection( v20, v21, make_pair(v20.first,box[n+1].lb()),  make_pair(v21.first,box[n+1].lb()));
-	    cout << 4 << endl;
+		//x-point cutting lby
+		lastp = pointIntersection( v20, v21, make_pair(v20.first,lby),  make_pair(v21.first,lby));
 
 		inpoints.push_back(lastp);
 
@@ -202,73 +203,86 @@ public:
 	}
 
 	static double distance(const Cell* c){
-
+		int n=c->box.size();
 
 		double a = c->get<CellMOP>().a;
 		double w_lb = c->get<CellMOP>().w_lb;
 
-		distance(c->box,a,w_lb);
+		return distance(c->box[n-2].lb(),c->box[n-1].lb(),-1/a, -w_lb/a);
+
 	}
 
-
-	static double distance(const IntervalVector& box, double a=POS_INFINITY, double w_lb=POS_INFINITY){
-		//TODO: esto deberia ser parametro
-		bool cy_contract_var=false;
-
+	// m in [-oo, 0]
+	static double distance(double lbx, double lby, double m=POS_INFINITY, double c=POS_INFINITY){
 		double max_dist=NEG_INFINITY;
 
-		int n=box.size();
+		Interval Ay=lby;
+		Interval Bx=lbx;
 
-		Interval z1 = box[n-2];
-		Interval z2 = box[n-1];
-
-
-		map< pair <double, double>, IntervalVector >::iterator it = NDS2.lower_bound(make_pair(z1.lb(),POS_INFINITY)); //NDS.begin();
-		//it--;
-
-
-		list<pair <double,double> > inner_segments= extremal_non_dominated(box);
-
-		if(inner_segments.size()>=2){
-			pair <double,double> p1 = inner_segments.front();
-			double dist = std::min (p1.first - z1.lb(), p1.second - z2.lb());
-			//Damir's distance
-			if(cy_contract_var && w_lb!=POS_INFINITY)
-			  dist = std::min(dist, (Interval(p1.second)-(Interval(w_lb) - (Interval(p1.first) - Interval(p1.second)))/(Interval(a)+1.0)).ub());
-
-			if(dist > max_dist) max_dist=dist;
-
-			p1 = inner_segments.back();
-			dist = std::min (p1.first - z1.lb(), p1.second - z2.lb());
-			//Damir's distance
-			if(cy_contract_var && w_lb!=POS_INFINITY)
-			  dist = std::min(dist, (Interval(p1.second)-(Interval(w_lb) - (Interval(p1.first) - Interval(p1.second)))/(Interval(a)+1.0)).ub());
-
-			if(dist > max_dist) max_dist=dist;
+		if(m!=POS_INFINITY){
+			Ay = Interval(m)*lbx+c;  // Ax=lbx
+			Bx = (Interval(lby)-c)/m; // By=lby
 		}
 
-		for(;it!=NDS2.end(); it++){
-			pair <double, double> pmax= it->first;
+		cout << "dist A:" << lbx << "," << Ay.mid() << endl;
+		cout << "dist B:" << Bx.mid() << "," << lby << endl;
+
+		list<pair <double,double> > inner_segments= non_dominated_points(lbx, lby);
+		pair <double,double>* p0=NULL;
+
+		bool Adist=false;
+		bool Bdist=false;
+
+		cout << "dist inner-size:" << inner_segments.size() << endl;
+
+		for(auto p : inner_segments){
+			Interval dist;
+			//up-left point
+			if(p.first-lbx < (p.second-Ay).ub() || p.second==POS_INFINITY){
+				dist=p.first-Interval(lbx);
+				cout << "dist-UL:" << p.first  << "," << p.second << "-->" <<  dist.ub() << endl;
+			}
+			//bottom-right point
+			else if(p.second-lby < (p.first-Bx).ub() || p.first==POS_INFINITY){
+				dist=p.second-Interval(lby);
+				cout << "dist-BR:" << p.first  << "," << p.second << "-->" <<  dist.ub() << endl;
+				if(!Bdist && p0){
+					Interval mm= (Interval(p.second)-p0->second)/(Interval(p.first)-p0->first);
+					cout << "dist-B (m):" << mm << endl;
+					if(mm.lb() > -1 && mm.lb() < 0.0 ){
+						Interval cc= p.second - mm*p.first;
+						cout << "dist-B:" << (mm*lbx - Ay + cc)/(1.0-mm) << endl;
+						dist=std::max(dist.ub(), ((mm*lbx - Ay + cc)/(1.0-mm)).lb());
+						Bdist=true;
+					}
+				}
+			}
+			//cy-45-degree zone
+			else{
+				dist= -(m*p.first - p.second+c)/(1.0-m);
+				cout << "dist-IN:" << p.first  << "," << p.second << "-->" <<  dist.ub() << endl;
+				if(!Adist && p0){
+					Interval mm= (Interval(p.second)-p0->second)/(Interval(p.first)-p0->first);
+					if(mm.lb() <-1 && mm.lb()>NEG_INFINITY){
+						Interval cc= p.second - mm*p.first;
+						cout << "dist-A:" << (mm*Bx - lby + cc)/(1.0-mm) << endl;
+						dist=std::max(dist.ub(), ((mm*Bx - lby + cc)/(1.0-mm)).lb());
+						Adist=true;
+					}
+				}
+			}
 
 
-			if(pmax.first==POS_INFINITY) pmax.first=CellMOP::y1_init.ub();
-			if(pmax.second==POS_INFINITY) pmax.second=CellMOP::y2_init.ub();
+			if(dist.ub()>max_dist){
 
-			//cout << "z:" << z1.lb() << "," << z2.lb() << "  -->  ";
-			//cout << "pmax:" << pmax.first << "," << pmax.second << endl;
+				max_dist=dist.ub();
+			}
 
-			//el punto esta dentro de la zona de interes
-			if(pmax.first >= z1.lb() && pmax.second >= z2.lb()){
-				double dist = std::min (pmax.first - z1.lb(), pmax.second - z2.lb());
-				//Damir's distance
-				if(cy_contract_var && w_lb!=POS_INFINITY)
-				  dist = std::min(dist, (Interval(pmax.second)-(Interval(w_lb) - (Interval(pmax.first) - Interval(pmax.second)))/(Interval(a)+1.0)).ub());
+			if(p0) delete p0;
+			p0=new pair <double,double>(p);
 
-				if(dist > max_dist) max_dist=dist;
-			}else break;
 		}
-
-		cout << "z:" << z1.lb() << "," << z2.lb() << "  -->  " << max_dist << endl;
+		if(p0) delete p0;
 		return max_dist;
 	}
 
