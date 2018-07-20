@@ -98,8 +98,7 @@ public:
 		//x-point cutting lbx
 	    firstp = pointIntersection( v10, v11, make_pair(lbx,v11.second),  make_pair(lbx,v10.second));
 	   	if(firstp.second <= lby ){
-	   		cout << "error?: the box is dominated" << endl;
-	   		exit(0);
+	   		return inpoints; //empty list
 	   	}
 
 		inpoints.push_back(firstp);
@@ -208,6 +207,8 @@ public:
 		double a = c->get<CellMOP>().a;
 		double w_lb = c->get<CellMOP>().w_lb;
 
+   cout << a << endl;
+	 cout << w_lb << endl;
 		return distance(c->box[n-2].lb(),c->box[n-1].lb(),-1/a, -w_lb/a);
 
 	}
@@ -236,6 +237,8 @@ public:
 		cout << "dist inner-size:" << inner_segments.size() << endl;
 
 		for(auto p : inner_segments){
+			if(p.first==POS_INFINITY && p.second==POS_INFINITY) return POS_INFINITY;
+
 			Interval dist;
 			//up-left point
 			if(p.first-lbx < (p.second-Ay).ub() || p.second==POS_INFINITY){

@@ -335,7 +335,7 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
 						w_ub=POS_INFINITY;
 						break;
 					}
-					
+
 					double ww;
 					if(_eps_contract)
 						ww = ( Interval(pmax.first)-eps + box3[n+3]*(Interval(pmax.second)-eps) ).ub();
@@ -608,7 +608,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
         	double dist=0.0;
-        	if(!atomic_box) dist= (nds_mode==POINTS || nds_mode==SEGMENTS || nds_mode == HAMBURGER)? distance2(c) : NDS_seg::distance(c);
+        	if(!atomic_box) dist= (nds_mode==POINTS || nds_mode==SEGMENTS )? distance2(c) : NDS_seg::distance(c);
         	cout << "dist:"  << dist << endl;
 
         	if(dist < eps || atomic_box){
