@@ -21,7 +21,7 @@ download soplex version 1.7.2 from http://soplex.zib.de/
 requirements for plot3.py
 -------------------------
 
-´´´´
+````
   sudo apt-get install python3 python3-tk
   sudo apt-get install python3-virtualenv virtualenv
   virtualenv env --python=python3
@@ -31,7 +31,7 @@ requirements for plot3.py
   ./waf configure --with-optim --with-optim-mop  --with-ampl --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
 
   ./waf install
-´´´´
+````
 
 Luego resolver un problema de ejemplo:
 
