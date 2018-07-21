@@ -10,8 +10,10 @@
 namespace ibex {
 
 	 map< pair <double, double>, IntervalVector, sorty2 > NDS_seg::NDS2;
+	 bool NDS_seg::_trace;
 
 	bool NDS_seg::is_dominated(pair< double, double> new_p){
+		if(new_p.first == POS_INFINITY && new_p.second == POS_INFINITY) return false;
 
 		std::map<pair<double, double>, IntervalVector>::iterator it1 = --NDS2.lower_bound(new_p);
 		// std::map<pair<double, double>, IntervalVector>::iterator it1 = NDS2.begin();
@@ -22,13 +24,13 @@ namespace ibex {
 
 		// Se comprueba que no sea dominado por el anterior al lower_bound (puede ocurrir)
 		if(point1.first <= new_p.first && point1.second <= new_p.second){
-			cout << "is_dom: prev_dom" << endl;
+			//cout << "is_dom: prev_dom" << endl;
 			return true;
 		}
 
 		// Se comprueba que no sea dominado por el lower_bound
 		if(point2.first <= new_p.first && point2.second <= new_p.second ){
-			cout << "is_dom: lb_dom" << endl;
+			//cout << "is_dom: lb_dom" << endl;
 			return true;
 		}
 
@@ -49,9 +51,6 @@ namespace ibex {
 
 
 			if(cEval.lb() > c.ub()){
-				cout << "is_dom: p1: "<< point1.first << "," << point1.second << endl;
-				cout << "is_dom: p2: "<< point2.first << "," <<point2.second << endl;
-				cout << "is_dom: c-dominated. p(c):" << cEval.ub() << "   c:" << c.lb() << endl;
 				return true;
 			}
 
@@ -71,7 +70,7 @@ namespace ibex {
 
 
 	void NDS_seg::addSegment(pair< double, double> p1, pair< double, double> p2) {
-		cout << "add_segment:" << p1.first << "," << p1.second << " -- "	<< p2.first << "," << p2.second  <<endl;
+		//cout << "add_segment:" << p1.first << "," << p1.second << " -- "	<< p2.first << "," << p2.second  <<endl;
 
 		if(p1.first == p2.first  &&  p1.second == p2.second ){
 			addPoint(p1);
@@ -120,9 +119,9 @@ namespace ibex {
 		}
 
 		// getchar();
-		std::vector< pair <double, double> > curve_y;
-		std::vector< pair <double, double> > rectaUB;
-		py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
+		//std::vector< pair <double, double> > curve_y;
+		//std::vector< pair <double, double> > rectaUB;
+		//py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
 	}
 
 	//TODO: think about how to associate the solutions to segments and points in the NDS
@@ -131,11 +130,11 @@ namespace ibex {
 		p[0]=new_p.first;
 		p[1]=new_p.second;
 
-		cout << "add_point:" << p[0] << "," << p[1] << endl;
-    cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
+		//cout << "add_point:" << p[0] << "," << p[1] << endl;
+        //cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
 
 		if (is_dominated(p)) return;
-		cout << "add_point: non_dominated" << endl;
+		//cout << "add_point: non_dominated" << endl;
 
 		// Removes from NDS the points dominated by p
 		// Then, adds the new point between the corresponding NDS points and adds new ones
@@ -175,15 +174,16 @@ namespace ibex {
 		pair<double, double> intersection1 = pointIntersection(it1->first, first_dom, new_p, aux_p);
 		aux_p = make_pair(POS_INFINITY, p[1]);
 		pair<double, double> intersection2 = pointIntersection(last_dom, it2->first, new_p, aux_p);
-		cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
+		//cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
 		// se agregan el punto y los dos obtenidos anteriormente
 		NDS2.insert(make_pair(new_p, IntervalVector(1)));
 		NDS2.insert(make_pair(intersection1, IntervalVector(1)));
 		NDS2.insert(make_pair(intersection2, IntervalVector(1)));
 
-		std::vector< pair <double, double> > curve_y;
-		std::vector< pair <double, double> > rectaUB;
-		py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
+
+		//std::vector< pair <double, double> > curve_y;
+		//std::vector< pair <double, double> > rectaUB;
+		//py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
 		// getchar();
 
 
@@ -225,11 +225,6 @@ namespace ibex {
 
 		Interval i_x, i_y;
 		pair<double,double> i ;
-
-		cout << "p0:" << p0.first << "," << p0.second << endl;
-		cout << "p1:" << p1.first << "," << p1.second << endl;
-		cout << "p2:" << p2.first << "," << p2.second << endl;
-		cout << "p3:" << p3.first << "," << p3.second << endl;
 
 		//Cuando el segmento es vertical su pendiente es infinito
 		if(p0_x==p1_x && p2_y==p3_y) {
@@ -286,15 +281,11 @@ namespace ibex {
 					i = make_pair(i_x.ub(),i_y.ub());
 
 	    }else{
-				cout << "nointer: rx"<< r_x << "  sx"<< s_x << endl;
-				cout << "nointer: ry"<< r_y << "  sy"<< s_y << endl;
 				throw NoIntersectionException();
 			}
 		}
 
 		add_infinity(i);
-
-		cout << "inter:" << i.first << "," << i.second << endl;
 
 		return i;
 

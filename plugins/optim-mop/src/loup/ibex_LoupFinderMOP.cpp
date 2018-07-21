@@ -95,7 +95,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 
 	int n=norm_sys.nb_var;
 
-	cout << nb_sol << " sols " << endl;
+	//cout << nb_sol << " sols " << endl;
 	//phase 0 or 1: call to simplex
     if(phase < nb_sol && phase<=1 && (lp_solver.default_limit_diam_box.contains(box.max_diam()))){
 

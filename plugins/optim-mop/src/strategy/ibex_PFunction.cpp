@@ -95,17 +95,16 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 	Interval derivate = deriv(init, m, minimize);
 
 	double t_final;
-	double epsilon = 0.0003;
+	double epsilon = 0.001;
 	double lb = NEG_INFINITY;
 	stack<Interval> pila;
 	pila.push(init);
 	Interval inter, left, right;
-	double point_t, point_c, t_before, error, min_interval, max_diam;
+	double point_t, point_c, t_before, error, max_diam;
 	Interval y_r, y_c, y_l;
 	double lb_interval;
 	// global values
 	error = 1e-4;
-	min_interval = 1e-4;
 	max_diam = 1e-3;
 
 	// pila
@@ -113,7 +112,7 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 	double t_temp;
 
 
-	while(!pila.empty() and lb < max_c) {
+	while(!pila.empty() and lb < max_c && iter < 10) {
 		// cout << pila.size() <<endl;
 
 		inter = pila.top();
@@ -242,9 +241,6 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 	//}
 
 	// if(minimize) lb = max(eval(0, m, minimize), eval(1, m, minimize)).lb() - (lb - max(eval(0, m, minimize), eval(1, m, minimize)).lb());
-	cout << "OPTIMIZE" << endl;
-	cout << "minimize " << minimize << endl;
-	cout << "m " << m << endl;
 	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (minimize && m.is_empty()) ) return make_pair(-lb, t_final);
 	else return make_pair(lb, t_final);
 }

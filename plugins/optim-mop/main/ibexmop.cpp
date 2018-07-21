@@ -48,8 +48,8 @@ int main(int argc, char** argv){
 	//args::Flag _hv(parser, "hv", "Compute the hypervolume", {"hv"});
 	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
-	args::Flag _ub_segment(parser, "ub_segment", "NDS defined by line segments instead of points.", {"ub_segment"});
-	args::Flag _hamb(parser, "ub_segment", "NDS defined by line segments (hamburger).", {"hamb"});
+	args::Flag _segments(parser, "segments", "NDS defined by line segments instead of points.", {"SEGMENTS"});
+	args::Flag _hamburger(parser, "hamburger", "NDS defined by line segments (hamburger).", {"HAMBURGER"});
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag _plot(parser, "plot", "Save a file to be plotted by plot.py.", {"plot"});
@@ -140,7 +140,8 @@ int main(int argc, char** argv){
 	//cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
 	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
 	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
-	cout << "ub segment?: " << ((_ub_segment)? "yes":"no") << endl;
+	cout << "segments?: " << ((_segments)? "yes":"no") << endl;
+		cout << "hamburger?: " << ((_hamburger)? "yes":"no") << endl;
 
 
 	SystemFactory fac;
@@ -267,7 +268,7 @@ int main(int argc, char** argv){
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-			(_hamb)?  OptimizerMOP::HAMBURGER: (_ub_segment)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS , eps);
+			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS , eps);
 	max_distance::UB= &o.get_UB();
 
 

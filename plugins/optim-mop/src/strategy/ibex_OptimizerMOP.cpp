@@ -100,7 +100,6 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 
 	try{
 		xa = finder.find(box2,box2,POS_INFINITY).first;
-		update_NDS_pt(xa);
 
 	}catch (LoupFinder::NotFound& ) {
 		return false;
@@ -108,22 +107,12 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 
 	try{
 		xb = finder.find(box2,box2,POS_INFINITY).first;
-		update_NDS_pt(xb);
 	}catch (LoupFinder::NotFound& ) {
 		nds.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
 		return true;
 	}
-	cout << "nb2" << endl;
 
-	if (nds_mode == SEGMENTS){
-		py_Plotter::offline_plot(NULL, NDS);
-		add_upper_segment(xa, xb);
-	}
-
-	if (nds_mode == HAMBURGER){
-		hamburger(xa, xb);
-	}
-
+	hamburger(xa, xb);
 
 	return true;
 
@@ -229,7 +218,7 @@ bool OptimizerMOP::update_NDS(const IntervalVector& box) {
 			flag=false;
 		}
 
-		cout << "nb:"  << i << endl;
+		//cout << "nb:"  << i << endl;
 		new_ub= update_NDS_pt(vec);
 
 	}
@@ -323,7 +312,7 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
 	if(box3[n+3]==0.0 || box3[n+3]==1.0 || box3[n+3].is_empty())
 		box3[n+3] = box[n].diam()/box[n+1].diam(); // a
 
-   cout <<box3[n+3]  << endl;
+   //cout <<box3[n+3]  << endl;
 
    //setting w_ub with the NDS points
 	 double w_ub=POS_INFINITY;
@@ -346,7 +335,7 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
 	 }
 
 	box3[n+2] = Interval(NEG_INFINITY, w_ub); // w
-  cout << 	box3[n+2] <<endl;
+   // cout << 	box3[n+2] <<endl;
 	//the contraction is performed
 	ctc.contract(box3);
 	c.get<CellMOP>().a = box3[n+3].mid();
@@ -475,32 +464,25 @@ void OptimizerMOP::cy_contract(Cell& c){
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
-	if(nds_mode == HAMBURGER){
-
+	//if(nds_mode == HAMBURGER){
 		list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
-		cout << "dist.size:" << inner_segments.size() << endl;
-		cout << c.box << endl;
 		dominance_peeler2(c.box,inner_segments);
-		cout << c.box << endl;
 
-		cout << "cy_contract" << endl;
 		if(cy_contract_var)
 			cy_contract2(c,inner_segments);
 		else
 			ctc.contract(c.box);
 
-		cout << c.box << endl;
-		cout << 4 << endl;
 
-	}else if(nds_mode==POINTS || nds_mode==SEGMENTS){
+	/*}else if(nds_mode==POINTS || nds_mode==SEGMENTS){
 		dominance_peeler(c.box);
-		discard_generalized_monotonicty_test(c.box, init_box);
+		//discard_generalized_monotonicty_test(c.box, init_box);
 
 		if(cy_contract_var){
 			cy_contract(c);
 		}else
 			ctc.contract(c.box);
-	}
+	}*/
 
 	if (c.box.is_empty()) return;
 
@@ -514,10 +496,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	nb_cells=0;
 
-
 	buffer.flush();
 
-	if(nds_mode == POINTS || nds_mode == SEGMENTS || nds_mode == HAMBURGER){
+	/*if(nds_mode == POINTS || nds_mode == SEGMENTS){
 		NDS.clear();
 		//the first point
 		NDS.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
@@ -528,9 +509,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	if( nds_mode == SEGMENTS)
 		nds.clear();
 
-	if(nds_mode == HAMBURGER)
-		ndsH.clear();
+	if(nds_mode == HAMBURGER)*/
 
+	ndsH.clear();
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
@@ -577,6 +558,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		  if (trace >= 2) cout << buffer;
 
 			Cell *c = buffer.pop();
+			if(c->get<CellMOP>().ub_distance < eps) break;
+
 			if(_plot) py_Plotter::plot_del_box(c);
 
 			nb_cells++;
@@ -587,15 +570,14 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 			}
 
-			cout << "updateNDS" << endl;
 
 			//if(nds_mode==POINTS)
 			//	update_NDS(c->box);
 
-			if(nds_mode==SEGMENTS || nds_mode == HAMBURGER)
+			//if(nds_mode==SEGMENTS || nds_mode == HAMBURGER)
 				update_NDS2(c->box);
 
-			cout << "end" << endl;
+
 
 			pair<IntervalVector,IntervalVector>* boxes=NULL;
 			bool atomic_box=false;
@@ -608,8 +590,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
         	double dist=0.0;
-        	if(!atomic_box) dist= (nds_mode==POINTS || nds_mode==SEGMENTS )? distance2(c) : NDS_seg::distance(c);
-        	cout << "dist:"  << dist << endl;
+        	if(!atomic_box) dist= NDS_seg::distance(c);
 
         	if(dist < eps || atomic_box){
         		if(dist <0.0){
@@ -621,17 +602,15 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
         		//TODO: Puede que sea lo mismo que la linea 659 (if(dist <0.0))
 
-        		if(nds_mode==POINTS || nds_mode==SEGMENTS || nds_mode == HAMBURGER){
+						/*
+        		if(nds_mode==POINTS || nds_mode==SEGMENTS){
         			map< pair <double, double>, IntervalVector >:: iterator ent1=NDS.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
         			ent1--;
         			if(ent1->first.second <= c->box[n+1].lb()){
         				delete c;
         				continue;
         			}
-        		}
-
-
-
+        		}*/
 
         		if(boxes) delete boxes;
 				delete c; continue;
@@ -693,11 +672,13 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	time = timer.get_time();
 
 
-	// if(_plot) (nds_mode==POINTS)? py_Plotter::offline_plot(NULL, NDS) : py_Plotter::offline_plot(NULL, NDS2);
+	// if(_plot) (nds_mode==POINTS)?
+	py_Plotter::offline_plot(NULL, ndsH.NDS2);
 	return status;
 }
 
 
+  // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
 void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bIV) {
 
 	IntervalVector xa=aIV;
@@ -705,31 +686,27 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 
 	PFunction pf(goal1, goal2, xa, xb);
 
-  // https://docs.google.com/document/d/1oXQhagd1dgZvkbPs34B4Nvye_GqA8lFxGZNQxqYwEgo/edit
-
 	Node_t n_init (Interval(0,1), 0.0, POS_INFINITY);
 	std::priority_queue<Node_t, vector<Node_t> > n;
 	if(process_node(pf, n_init)) n.push(n_init);
 
-	cout << "INIT HAMBURGER" << endl;
+	//cout << "INIT HAMBURGER" << endl;
 	while(n.size() > 0) {
 		Node_t nt = n.top();
 		n.pop();
 		if(nt.dist < eps) continue;
 
-		cout << "dist:" << nt.dist << endl;
+		//cout << "dist:" << nt.dist << endl;
 		Node_t n1( Interval(nt.t.lb(), nt.b), 0.0, POS_INFINITY);
 		if(process_node(pf, n1)){ n.push(n1);}
 
 		Node_t n2( Interval(nt.b, nt.t.ub()), 0.0, POS_INFINITY);
 		if(process_node(pf, n2)) n.push(n2);
 
-//		cout << "n " << n.size() << endl;
-
 	}
-	cout << "END HAMBURGER" << endl;
+	//cout << "END HAMBURGER" << endl;
 
-	getchar();
+	//getchar();
 }
 
 bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
@@ -740,14 +717,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
   if(!t.is_bisectable())
 		 return false;
 
-	cout << endl << endl << ">>>>PROCESS_NODE :  " ;
-	cout << "t " << t << endl;
-
-	PFunction pf_ctc = pf;
-	//TODO: el optimizador deberia recibir el intervalo t y esto deberia estar dentro
-	pf_ctc.contract_curve(t);
-	cout << "Contract curve" << endl;
-
 	// get extreme points
 	IntervalVector ft_lb = pf.get_point(t.lb());
 	IntervalVector ft_ub = pf.get_point(t.ub());
@@ -756,22 +725,28 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval yb1=ft_ub[0];
 	Interval yb2=ft_ub[1];
 
-	cout << "ya " << ya1.ub() << "," << ya2.ub() << endl;
-	cout << "yb " << yb1.ub() << "," << yb2.ub() << endl;
+	// add extreme points
+	ndsH.addPoint(ft_lb);
+	ndsH.addPoint(ft_ub);
 
-	cout << "y1 " << fabs(ya1.ub() - yb1.ub()) << endl;
-	cout << "y2 " << fabs(ya2.ub() - yb2.ub()) << endl;
+	if(nds_mode==POINTS) return false;
+
+	//dominated extremal points
+	//if(ndsH.is_dominated(make_pair(ya1.ub(),ya2.ub())) &&  ndsH.is_dominated(make_pair(yb1.ub(),yb2.ub())))
+		//return false;
 
   //too-close points
 	if( fabs(ya1.ub() - yb1.ub()) < eps && fabs(ya2.ub() - yb2.ub()) < eps ) {
-		std::vector< pair <double, double> > curve_y;
-		pf_ctc.get_curve_y( curve_y );
-		std::vector< pair <double, double> > curve_y_origin;
-		pf.get_curve_y( curve_y_origin );
-		std::vector< pair <double, double> > rectaUB;
-		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
-		cout << "y1 and y2 <<< eps" << endl;
-		getchar();
+		if(_plot){
+			std::vector< pair <double, double> > curve_y;
+			pf.get_curve_y( curve_y );
+			std::vector< pair <double, double> > curve_y_origin;
+			pf.get_curve_y( curve_y_origin );
+			std::vector< pair <double, double> > rectaUB;
+			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
+			cout << "y1 and y2 <<< eps" << endl;
+			getchar();
+		}
 		return false;
 	}
 
@@ -788,43 +763,23 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
 	Interval m_vertical = Interval(POS_INFINITY);
-	cout << "m " << m << endl;
-	cout << "m_horizontal " << m_horizontal << endl;
-	cout << "m_vertical " << m_vertical << endl;
 
-	// get minimum m_horizontal and m_vertical (c_lb, t_ub)
-	pair<double, double> c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY, t);
-	pair<double, double> c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, POS_INFINITY, t);
 
-	cout << "point lb box (" << c1_t1.first << "," << c2_t2.first << ")" << endl;
+	// get minf1 and minf2
+	pair<double, double> c1_t1 = make_pair(POS_INFINITY,0);
+	pair<double, double> c2_t2 = make_pair(POS_INFINITY,0);
+	if(nds_mode==HAMBURGER){
+		c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY, t);
+		c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, POS_INFINITY, t);
+	}
 
-	// check if point dominate curve is dominated by ndsH
-	if(ndsH.is_dominated(pair<double,double>(c1_t1.first, c2_t2.first))) {
-			std::vector< pair <double, double> > curve_y;
-			pf_ctc.get_curve_y( curve_y );
-			std::vector< pair <double, double> > curve_y_origin;
-			pf.get_curve_y( curve_y_origin );
-			std::vector< pair <double, double> > rectaUB;
-			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
-			cout << "lb box dominated" << endl;
-			getchar();
+	// check if the point dominating the curve is dominated by ndsH
+	if(ndsH.is_dominated(pair<double,double>(c1_t1.first, c2_t2.first)))
 			return false;
-	}
-
-
-	// add extreme point non dominated
-	if(ft_lb[0].lb() < ft_ub[0].ub() || ft_lb[1].lb() < ft_ub[1].lb()) {
-		cout << "add point " << ft_lb[0] << "," << ft_lb[1] << endl;
-		ndsH.addPoint(pair<double,double>(ft_lb[0].ub(), ft_lb[1].ub()));
-	}
-
-	if(ft_ub[0].lb() < ft_lb[0].ub() || ft_ub[1].lb() < ft_lb[1].ub()) {
-		cout << "add point " << ft_ub[0] << "," << ft_ub[1] << endl;
-			ndsH.addPoint(pair<double,double>(ft_ub[0].ub(),ft_ub[1].ub()));
-	}
 
 	// set bisection of inter
-	vector<double> v;
+	list<double> v;
+
 	//we save candidate points for bisection (t1 and t2)
 	v.push_back(c1_t1.second);
 	v.push_back(c2_t2.second);
@@ -832,19 +787,20 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 	if(m.ub() < 0) {
 		pair<double, double> c3_t3 = pf.optimize(m, PFunction::MAX, POS_INFINITY, t);
-		pair<double, double> c4_t4 = pf.optimize(m, PFunction::MIN, POS_INFINITY, t);
-
-		cout<< "addSegment " << ((ya2-c3_t3.first)/m).ub() <<"," << ya2.ub() << "  -  "
-		 << yb1.ub()<<"," << (yb1*m+c3_t3.first).ub() << endl;
+		pair<double, double> c4_t4;
+  	if(nds_mode==HAMBURGER)
+			 pair<double, double> c4_t4 = pf.optimize(m, PFunction::MIN, POS_INFINITY, t);
 
     ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
-		n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
-		cout << "distance1:" << n_t.dist << endl;
 
+		if(nds_mode==HAMBURGER)
+			n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
+
+    v.push_back(c3_t3.second);
 		v.push_back(c4_t4.second);
 
-	}else
+	}else if(nds_mode==HAMBURGER)
 		n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first);
 
 	double min_dist=2.0;
@@ -859,24 +815,22 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 	//if the bisection point is too close of a bound we bisect in the middle
 	if( std::min(vv-t.lb(),t.ub()-vv)/t.diam() < 0.1 ) vv=t.mid();
-	cout << "bis:" << vv  << endl;
-
 	n_t.b=vv;
 
 
+	if(_plot){
+		// plot curve
+		std::vector< pair <double, double> > curve_y;
+		pf.get_curve_y( curve_y );
+		std::vector< pair <double, double> > curve_y_origin;
+		pf.get_curve_y( curve_y_origin );
+		std::vector< pair <double, double> > rectaUB;
+		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
+		cout << "v" << endl;
+		getchar();
+	}
 
-	cout << "distance2:" << n_t.dist << endl;
-
-	// plot curve
-	std::vector< pair <double, double> > curve_y;
-	pf_ctc.get_curve_y( curve_y );
-	std::vector< pair <double, double> > curve_y_origin;
-	pf.get_curve_y( curve_y_origin );
-	std::vector< pair <double, double> > rectaUB;
-	py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
-	cout << "v" << endl;
-	getchar();
-
+	if(nds_mode!=HAMBURGER) return false;
 	return true;
 }
 
@@ -966,7 +920,7 @@ void OptimizerMOP::report(bool verbose) {
 
 	if (!verbose) {
         cout << endl 	<< "time 	#nodes 		|Y|" << endl;
-		cout << get_time() << " " << get_nb_cells() << " " << ((nds_mode==POINTS)? NDS.size():nds.size()) <<  endl;
+		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  endl;
 		return;
 	}
 
@@ -988,20 +942,20 @@ void OptimizerMOP::report(bool verbose) {
 
 	cout << " cpu time used: " << get_time() << "s." << endl;
 	cout << " number of cells: " << get_nb_cells() << endl;
-	if(nds_mode==SEGMENTS){
+	/*if(nds_mode==SEGMENTS){
 		cout << " number of solutions: "  << nds.size() << endl;
 		for(auto ub : nds.NDS2)
 			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
-	}if(nds_mode==HAMBURGER){
+	}
+	if(nds_mode==HAMBURGER){*/
 		cout << " number of solutions: "  << ndsH.size() << endl;
 		for(auto ub : ndsH.NDS2)
-			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
-	}else{
-
+			 cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
+	/*}else{
 		cout << " number of solutions: "  << NDS.size() << endl;
 		for(auto ub : NDS)
 			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
-	}
+	}*/
 
 }
 

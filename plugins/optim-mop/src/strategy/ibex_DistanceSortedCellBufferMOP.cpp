@@ -45,7 +45,9 @@ namespace ibex {
 		return c;
 	}
 
+  int counter=0;
 	Cell* DistanceSortedCellBufferMOP::top() const {
+
 		Cell* c = cells.top();
 		if(!c) return NULL;
 
@@ -61,7 +63,9 @@ namespace ibex {
 			dist=OptimizerMOP::distance(c);
 		}
 
-		//cout << "dist:" << dist << endl;
+    counter ++;
+		//cout << counter  <<":" <<  c->get<CellMOP>().ub_distance << endl;
+
 		return c;
 	}
 
