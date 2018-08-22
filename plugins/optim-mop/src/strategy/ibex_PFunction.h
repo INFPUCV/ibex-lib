@@ -51,7 +51,10 @@ public:
 	 * returning the lb/ub of its evaluation (c) and the best solution found t and its
 	 * input m, minimize, max_c=max_value
 	 */
-	pair<double,double> optimize(const Interval& m, bool minimize, double max_c=POS_INFINITY, Interval init=Interval::EMPTY_SET);
+	pair<double,double> optimize(const Interval& m, bool minimize, double max_c, Interval init=Interval::EMPTY_SET);
+
+	bool newton_lcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb);
+	bool newton_rcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb);
 
 private:
 
@@ -59,6 +62,10 @@ private:
 	const Function& f2;
 	IntervalVector xa;
 	IntervalVector xb;
+
+	static double _min_newton_step;
+	static double _min_diam;
+	static double _eps_opt;
 };
 
 } /* namespace ibex */

@@ -31,6 +31,7 @@ bool OptimizerMOP::_cy_upper =false;
 //bool OptimizerMOP::_hv =false;
 bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
+double OptimizerMOP::_rh = 0.1;
 
 
 
@@ -459,30 +460,36 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 
 	IntervalVector xa=aIV;
 	IntervalVector xb=bIV;
+	double dist0=POS_INFINITY;
 
 	PFunction pf(goal1, goal2, xa, xb);
 
 	Node_t n_init (Interval(0,1), 0.0, POS_INFINITY);
 	std::priority_queue<Node_t, vector<Node_t> > n;
-	if(process_node(pf, n_init)) n.push(n_init);
+	if(process_node(pf, n_init)) {
+		dist0=n_init.dist;
+		n.push(n_init);
 
-	//cout << "INIT HAMBURGER" << endl;
+	}
+
 	while(n.size() > 0) {
 		Node_t nt = n.top();
 		n.pop();
-		if(nt.dist < eps) continue;
+		if(nt.dist < eps || nt.dist < _rh*dist0 ) continue;
 
 		//cout << "dist:" << nt.dist << endl;
 		Node_t n1( Interval(nt.t.lb(), nt.b), 0.0, POS_INFINITY);
-		if(process_node(pf, n1)){ n.push(n1);}
+		if(process_node(pf, n1)) n.push(n1);
 
 		Node_t n2( Interval(nt.b, nt.t.ub()), 0.0, POS_INFINITY);
 		if(process_node(pf, n2)) n.push(n2);
 
+		if(_plot) {
+			py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			getchar();
+		}
 	}
-	//cout << "END HAMBURGER" << endl;
 
-	//getchar();
 }
 
 bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
@@ -507,24 +514,13 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 	if(nds_mode==POINTS) return false;
 
-	//dominated extremal points
-	//if(ndsH.is_dominated(make_pair(ya1.ub(),ya2.ub())) &&  ndsH.is_dominated(make_pair(yb1.ub(),yb2.ub())))
-		//return false;
+	//TODO: what if the extremal points are TOO dominated
 
-  //too-close points
-	if( fabs(ya1.ub() - yb1.ub()) < eps && fabs(ya2.ub() - yb2.ub()) < eps ) {
-		if(_plot){
-			std::vector< pair <double, double> > curve_y;
-			pf.get_curve_y( curve_y );
-			std::vector< pair <double, double> > curve_y_origin;
-			pf.get_curve_y( curve_y_origin );
-			std::vector< pair <double, double> > rectaUB;
-			py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
-			cout << "y1 and y2 <<< eps" << endl;
-			getchar();
-		}
+
+    //too-close points
+	if( fabs(ya1.ub() - yb1.ub()) < eps && fabs(ya2.ub() - yb2.ub()) < eps )
 		return false;
-	}
+
 
 	if(ya1.ub() > yb1.ub() || ya2.ub() < yb2.ub()) {
 		Interval aux = ya1;
@@ -544,8 +540,9 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	// get minf1 and minf2
 	pair<double, double> c1_t1 = make_pair(POS_INFINITY,0);
 	pair<double, double> c2_t2 = make_pair(POS_INFINITY,0);
+
 	if(nds_mode==HAMBURGER){
-		c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY, t);
+		c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY,  t);
 		c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, POS_INFINITY, t);
 	}
 
@@ -564,16 +561,16 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	if(m.ub() < 0) {
 		pair<double, double> c3_t3 = pf.optimize(m, PFunction::MAX, POS_INFINITY, t);
 		pair<double, double> c4_t4;
-  	if(nds_mode==HAMBURGER)
+		if(nds_mode==HAMBURGER)
 			 pair<double, double> c4_t4 = pf.optimize(m, PFunction::MIN, POS_INFINITY, t);
 
-    ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
+		ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
 
 		if(nds_mode==HAMBURGER)
 			n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
 
-    v.push_back(c3_t3.second);
+		v.push_back(c3_t3.second);
 		v.push_back(c4_t4.second);
 
 	}else if(nds_mode==HAMBURGER)
@@ -592,19 +589,6 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	//if the bisection point is too close of a bound we bisect in the middle
 	if( std::min(vv-t.lb(),t.ub()-vv)/t.diam() < 0.1 ) vv=t.mid();
 	n_t.b=vv;
-
-
-	if(_plot){
-		// plot curve
-		std::vector< pair <double, double> > curve_y;
-		pf.get_curve_y( curve_y );
-		std::vector< pair <double, double> > curve_y_origin;
-		pf.get_curve_y( curve_y_origin );
-		std::vector< pair <double, double> > rectaUB;
-		py_Plotter::offline_plot(NULL, ndsH.NDS2, rectaUB, curve_y_origin, curve_y);
-		cout << "v" << endl;
-		getchar();
-	}
 
 	if(nds_mode!=HAMBURGER) return false;
 	return true;

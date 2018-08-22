@@ -50,6 +50,9 @@ int main(int argc, char** argv){
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::Flag _segments(parser, "segments", "NDS defined by line segments instead of points.", {"SEGMENTS"});
 	args::Flag _hamburger(parser, "hamburger", "NDS defined by line segments (hamburger).", {"HAMBURGER"});
+	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the hamburger algorithm (dist < rh*ini_dist)", {"rh"});
+
+
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag _plot(parser, "plot", "Save a file to be plotted by plot.py.", {"plot"});
@@ -111,6 +114,7 @@ int main(int argc, char** argv){
 	double eps_x= (_epsx)? _epsx.Get() : 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
 	double eqeps= 1.e-8;
+	double rh=(_rh)? _rh.Get():0.1;
 
 	OptimizerMOP::_plot = _plot;
 
@@ -269,6 +273,8 @@ int main(int argc, char** argv){
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS , eps);
+	OptimizerMOP::_rh=rh;
+
 	//max_distance::UB= &o.get_UB();
 
 

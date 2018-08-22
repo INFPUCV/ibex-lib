@@ -13,6 +13,10 @@ namespace ibex {
 bool PFunction::MIN=true;
 bool PFunction::MAX=false;
 
+double PFunction::_min_newton_step=0.25; //25% of the current diameter
+double PFunction::_min_diam=0.15; //15% of the initial diameter
+double PFunction::_eps_opt=1e-7;
+
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
 		f1(f1),f2(f2), xa(xa), xb(xb) {}
 
@@ -74,6 +78,62 @@ void PFunction::get_curve_y(std::vector< pair <double, double> >& curve_y ){
 	}
 }
 
+bool PFunction::newton_rcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb){
+	double point_t = inter.ub();
+	double point_c = eval(point_t, m, minimize).ub();
+	double t_before = NEG_INFINITY;
+	while(derivate.lb() < 0 && t_before - point_t > _min_newton_step*inter.diam() && point_t > inter.lb()) {
+
+		t_before = point_t;
+
+		point_t = t_before - (lb - point_c)/derivate.lb();
+		point_c = eval(point_t, m, minimize).ub();
+	}
+
+	// TODO: puede pasar esto? error en caso de que c sea mayor al lb+epsilon
+	if(point_t > inter.lb() and point_c > lb + _eps_opt){
+		cout << "error: point_c > lb+epsilon" << endl;
+		exit(0);
+	}
+
+	// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
+	if(point_t <= inter.lb())
+		return false;
+	 else
+		inter = Interval(inter.lb(), point_t);
+
+
+	return true;
+}
+
+bool PFunction::newton_lcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb){
+	double point_t = inter.lb();
+	double point_c = eval(point_t, m, minimize).ub();
+	double t_before = NEG_INFINITY;
+
+	while(derivate.ub() > 0 && point_t - t_before > _min_newton_step*inter.diam() && point_t < inter.ub()) {
+		t_before = point_t;
+
+		point_t = (lb - point_c)/derivate.ub() + t_before;
+		point_c = eval(point_t, m, minimize).ub();
+	}
+
+	// TODO: puede pasar esto? error en caso de que c sea mayor al lb+epsilon
+	if(point_t < inter.ub() and point_c > lb+_eps_opt){
+		cout << "error: point_c > lb+eps" << endl;
+		exit(0);
+	}
+
+	// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
+	if(point_t >= inter.ub())
+		return false;
+	 else {
+		//se contracta el intervalo si point_t > 0
+		inter = Interval(point_t, inter.ub());
+	}
+
+	return true;
+}
 
 /**
  * \brief minimize/maximize the function pf: f1(t)+w*f2(t)
@@ -81,6 +141,8 @@ void PFunction::get_curve_y(std::vector< pair <double, double> >& curve_y ){
  * input m, minimize, max_c=max_value
  */
 pair<double, double> PFunction::optimize(const Interval& m, bool minimize, double max_c, Interval init){
+	double diam0=init.diam();
+
 	if(init.is_empty()) init=Interval(0,1);
 	//TODO: we are assuming minimize=false;
 
@@ -95,34 +157,29 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 	Interval derivate = deriv(init, m, minimize);
 
 	double t_final;
-	double epsilon = 0.001;
 	double lb = NEG_INFINITY;
 	stack<Interval> pila;
 	pila.push(init);
 	Interval inter, left, right;
-	double point_t, point_c, t_before, error, max_diam;
+	double point_t, point_c, t_before;
 	Interval y_r, y_c, y_l;
 	double lb_interval;
-	// global values
-	error = 1e-4;
-	max_diam = 1e-3;
+
 
 	// pila
-	int iter = 0;
 	double t_temp;
 
-
-	while(!pila.empty() and lb < max_c && iter < 10) {
+	int iter=0;
+	while(!pila.empty() and lb < max_c) {
 		// cout << pila.size() <<endl;
 
 		inter = pila.top();
 		pila.pop();
 
-		iter++;
-
 		derivate = deriv(inter, m, minimize);
 
-		// lowerbounding
+		/************ lowerbounding ***************/
+		//TODO: no se podrá optimizar esto?
 		y_r=eval(inter.lb(), m, minimize);
 		y_c=eval(inter.mid(), m, minimize);
 		y_l= eval(inter.ub(), m, minimize);
@@ -138,109 +195,39 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 			t_temp = inter.ub();
 		}
 
-		if(fabs(lb_interval) < 1 && lb_interval + epsilon > lb) {
+		if(fabs(lb_interval) < 1 && lb_interval + _eps_opt > lb) {
 			t_final = t_temp;
-			lb = lb_interval+epsilon;
+			lb = lb_interval+_eps_opt;
 		}
-		else if(fabs(lb_interval) >= 1 && lb_interval + fabs(lb_interval)*epsilon > lb) {
+		else if(fabs(lb_interval) >= 1 && lb_interval + fabs(lb_interval)*_eps_opt > lb) {
 			t_final = t_temp;
-			lb = lb_interval + fabs(lb_interval)*epsilon;
+			lb = lb_interval + fabs(lb_interval)*_eps_opt;
 		}
+		/***************************************/
 
 		// Contract if derivate is not empty
 		if(!derivate.is_empty()) {
+
 			// contract Newton from left
-			point_t = inter.lb();
-			point_c = eval(point_t, m, minimize).ub();
-			t_before = NEG_INFINITY;
-			while(derivate.ub() > 0 and point_t - t_before > error and point_t < inter.ub()) {
-				t_before = point_t;
-
-				if(0 == derivate.ub())
-					point_t = POS_INFINITY;
-				else{
-					// cout << (fabs(lb) < 1) << endl;
-					point_t = (lb - point_c)/derivate.ub() + t_before;
-					point_c = eval(point_t, m, minimize).ub();
-				}
-				// error en caso de que c sea mayor al lb+epsilon
-				if(point_t < inter.ub() and point_c > lb+epsilon) {
-					//cout << "ERRROR LEFT: point right is greater than lb " << endl;
-					//getchar();
-					break;
-					//exit(-1);
-				}
-
-				//cout << "point_t " << point_t << endl;
-			}
-
-			// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
-			if(point_t >= inter.ub()) {
+			if(!newton_lcontract(m,  minimize, inter, derivate, lb))
 				continue;
-			} else {
-				//se contracta el intervalo si point_t > 0
-				if(point_t > 0)
-					inter = Interval(point_t, inter.ub());
-			}
 
-			//cout << "contract left inter diam " << inter.diam() << " " << inter << endl;
-
-			// contract Newton from right
-			point_t = inter.ub();
-			point_c = eval(point_t, m, minimize).ub();
-			t_before = NEG_INFINITY;
-
-
-			while(derivate.lb() < 0 and t_before - point_t > error and point_t > inter.lb()) {
-				t_before = point_t;
-
-				if(0 == derivate.lb())
-					point_t = NEG_INFINITY;
-				else{
-					point_t = t_before - (lb - point_c)/derivate.lb();
-					point_c = eval(point_t, m, minimize).ub();
-				}
-
-				// error en caso de que c sea mayor al lb+epsilon
-				if(point_t > inter.lb() and point_c > lb+epsilon) {
-					//cout << "ERRROR RIGHT: point right is greater than lb" << endl;
-					//getchar();
-					break;
-				}
-			}
-
-			// Se remueve
-			if(point_t <= inter.lb()) {
+			if(!newton_rcontract(m,  minimize, inter, derivate, lb))
 				continue;
-			} else {
-				inter = Interval(inter.lb(), point_t);
-			}
 
-			//cout << "contract right inter diam " << inter.diam() << " " << inter << endl;
 		}
 
 
 		// bisect interval and push in stack
-		if(inter.is_bisectable() and inter.diam() > max_diam) {
+		if(inter.is_bisectable() and inter.diam() > _min_diam*diam0) {
 			pair<Interval,Interval> bsc = inter.bisect(0.5);
-			//cout << "bsc1 diam " << bsc.first.diam() << " " << bsc.first << endl;
-			//cout << "bsc2 diam " << bsc.second.diam() << " " << bsc.second << endl;
 			pila.push(bsc.first);
 			pila.push(bsc.second);
 		}
-		//cout << "iteracion " << iter << " pila " << pila.size() << endl;
+		iter++;
 	}
-	//cout << "derivate check2 " << derivate << endl;
+	//cout << iter << endl;
 
-
-
-	//if (derivate.is_empty()) {
-		//if(minimize) return min(eval(0, m, minimize), eval(1, m, minimize)).lb();
-		//else
-	//		return max(eval(0, m, minimize), eval(1, m, minimize)).ub();
-	//}
-
-	// if(minimize) lb = max(eval(0, m, minimize), eval(1, m, minimize)).lb() - (lb - max(eval(0, m, minimize), eval(1, m, minimize)).lb());
 	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (minimize && m.is_empty()) ) return make_pair(-lb, t_final);
 	else return make_pair(lb, t_final);
 }

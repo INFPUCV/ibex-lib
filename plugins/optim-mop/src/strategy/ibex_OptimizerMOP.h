@@ -252,6 +252,9 @@ public:
 	//True: the solver reduces the search spaces by reducing the NDS vectors in (eps, eps)
 	static bool _eps_contract;
 
+	//Termination criteria for the hamburger algorithm (dist < rh*ini_dist)
+	static double _rh;
+
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;
 
