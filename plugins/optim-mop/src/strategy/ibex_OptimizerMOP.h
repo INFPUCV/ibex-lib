@@ -155,12 +155,6 @@ public:
 	 */
 	Status get_status() const;
 
-	/**
-	 * \brief Get the "UB" set of the pareto front.
-	 *
-	 * \return the UB of the last call to optimize(...).
-	 */
-	map< pair <double, double>, IntervalVector >& get_UB()  { return NDS; }
 
 	//std::set< point2 >& get_LB()  { return LB; }
 
@@ -178,10 +172,6 @@ public:
 	 */
 	double get_nb_cells() const;
 
-	/**
-	 * \brief returns the distance from the box to the current NDS
-	 */
-	static double distance2(const Cell* c);
 
 	/* =========================== Settings ============================= */
 
@@ -276,15 +266,10 @@ public:
 	static IntervalVector deriv_goal(const Function& goal, const IntervalVector& x, int n);
 
 	static double distance(const Cell* c){
-		if(!NDS.empty()) return distance2(c);
-		else return NDS_seg::distance(c);
+		return NDS_seg::distance(c);
 	}
 
 protected:
-	/**
-	 * The contraction using y+cy
-	 */
-	void cy_contract(Cell& c);
 
 	/**
 	 * Hamburger Algorithm
@@ -318,14 +303,6 @@ protected:
 	 */
 	void contract_and_bound(Cell& c, const IntervalVector& init_box);
 
-	/**
-	 * \brief The box is reduced using the NDS
-	 *
-	 * Details are given in [Martin, B. et al.
-	 * Constraint propagation using dominance in interval
-	 * Branch & Bound for nonlinear biobjective optimization (2017)]
-	 */
-	void dominance_peeler(IntervalVector& box);
 
 	/**
 	 * \brief The box is reduced using NDS2
@@ -346,10 +323,6 @@ protected:
     	return finder.norm_sys.is_inner(box);
     }
 
-    /**
-     * \brief return true is the pair is dominated by some NDS point, false otherwise
-     */
-    bool is_dominated(pair< double, double>& eval);
 
     /**
      * \brief Implements the method for discarding boxes proposed in [J. Fernandez and B. Toth,
@@ -359,18 +332,6 @@ protected:
 	void discard_generalized_monotonicty_test(IntervalVector& box, const IntervalVector& initbox);
 
 
-	/**
-	 * \brief Main procedure for updating the NDS.
-	 * <ul>
-	 * <li> finds two points in a polytope using the #LoupFinderMOP,
-	 * <li> generate n equi-distant points between the two points,
-	 * <li> correct the points using a Hansen feasibility test (See #PdcHansenFeasibility)
-	 * <li> add the non-dominated vectors to NDS
-	 * </ul>
-	 */
-	bool update_NDS(const IntervalVector& box);
-
-  bool update_NDS_pt(IntervalVector& vec);
 
 	/**
 	 * \brief Main procedure for updating the NDS.
@@ -383,13 +344,6 @@ protected:
 	bool update_NDS2(const IntervalVector& box);
 
 
-	/**
-	 * \brief Finds the lower segment dominated by (f1(x),f2(x)) for some point in the line xa-xb
-	 *
-	 * returns a list of points and segments to be included in the NDS
-	 */
-	void add_upper_segment(const IntervalVector& aIV, const IntervalVector& bIV);
-
 private:
 
 
@@ -401,18 +355,6 @@ private:
 
 	/* Remember return status of the last optimization. */
 	Status status;
-
-
-
-	//TODO: this should not be static
-
-	/** The current non-dominated set sorted by increasing x */
-	static map< pair <double, double>, IntervalVector > NDS;
-
-	/** The current non-dominated set sorted by decreasing y */
-	map< pair <double, double>, IntervalVector, sorty > NDSy;
-
-	NDS_seg nds;
 
 	// Hamburger
 	NDS_seg ndsH;

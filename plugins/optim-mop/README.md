@@ -136,8 +136,9 @@ python3 plugins/optim-mop/main/plot.py
 
 
 ## Upper Envelope examples (LEGO2018):
-./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt --eps-contract --nb_ub_sols=2 --plot --ub_segment  | grep -e "iter:\|inter:\|p0\|p1\|p2\|p3\|add_point\|add_segment\|is_dom\|nointer:"
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt --eps-contract --nb_ub_sols=2 --plot --SEGMENTS  | grep -e "iter:\|inter:\|p0\|p1\|p2\|p3\|add_point\|add_segment\|is_dom\|nointer:"
 
+./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --eps-contract --nb_ub_sols=2 --SEGMENTS --eps=0.1 --cy-contract-full
 
 python3 plugins/optim-mop/main/plot.py
 

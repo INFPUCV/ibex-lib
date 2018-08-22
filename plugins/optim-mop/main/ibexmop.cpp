@@ -269,7 +269,7 @@ int main(int argc, char** argv){
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS , eps);
-	max_distance::UB= &o.get_UB();
+	//max_distance::UB= &o.get_UB();
 
 
 	//	cout << " sys.box " << sys.box << endl;
