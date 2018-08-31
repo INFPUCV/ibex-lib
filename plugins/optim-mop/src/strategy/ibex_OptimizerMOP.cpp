@@ -86,6 +86,17 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 	list< pair <double, double> > points;
 	list< pair< pair< double, double> , pair< double, double> > > segments;
 
+  if(nds_mode==POINTS) {
+		try{
+		while(true){
+			xa = finder.find(box2,box2,POS_INFINITY).first;
+			ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
+		}
+		}catch (LoupFinder::NotFound& ) {
+			return true;
+		}
+	}
+
 	try{
 		xa = finder.find(box2,box2,POS_INFINITY).first;
 
@@ -240,30 +251,16 @@ void OptimizerMOP::dominance_peeler2(IntervalVector& box, list <pair <double,dou
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
+	list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
+	dominance_peeler2(c.box,inner_segments);
 
-	//if(nds_mode == HAMBURGER){
-		list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
-		dominance_peeler2(c.box,inner_segments);
-
-		if(cy_contract_var)
+	if(cy_contract_var)
 			cy_contract2(c,inner_segments);
-		else
+	else
 			ctc.contract(c.box);
 
-
-	/*}else if(nds_mode==POINTS || nds_mode==SEGMENTS){
-		dominance_peeler(c.box);
-		//discard_generalized_monotonicty_test(c.box, init_box);
-
-		if(cy_contract_var){
-			cy_contract(c);
-		}else
-			ctc.contract(c.box);
-	}*/
 
 	if (c.box.is_empty()) return;
-
-
 
 }
 
@@ -274,19 +271,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	nb_cells=0;
 
 	buffer.flush();
-
-	/*if(nds_mode == POINTS || nds_mode == SEGMENTS){
-		NDS.clear();
-		//the first point
-		NDS.insert(make_pair(make_pair(NEG_INFINITY,POS_INFINITY), Vector(1)));
-		//the last point
-		NDS.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
-	}
-
-	if( nds_mode == SEGMENTS)
-		nds.clear();
-
-	if(nds_mode == HAMBURGER)*/
 
 	ndsH.clear();
 
@@ -330,8 +314,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		  iter++;
 
 
-		  //if((nds_mode == POINTS || nds_mode==SEGMENTS) && _plot) {py_Plotter::offline_plot(NULL, NDS);}
-
 		  if (trace >= 2) cout << buffer;
 
 			Cell *c = buffer.pop();
@@ -347,12 +329,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 			}
 
-
-			//if(nds_mode==POINTS)
-			//	update_NDS(c->box);
-
-			//if(nds_mode==SEGMENTS || nds_mode == HAMBURGER)
-				update_NDS2(c->box);
+			update_NDS2(c->box);
 
 
 
@@ -366,33 +343,22 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
 
-        	double dist=0.0;
-        	if(!atomic_box) dist= NDS_seg::distance(c);
+    	double dist=0.0;
+    	if(!atomic_box) dist= NDS_seg::distance(c);
 
-        	if(dist < eps || atomic_box){
-        		if(dist <0.0){
-        			delete c;
-        			continue;
-        		}
+    	if(dist < eps || atomic_box){
+    		if(dist <0.0){
+    			delete c;
+    			continue;
+    		}
 
-        		if(_plot) py_Plotter::plot_add_lb(c);
+  		if(_plot) py_Plotter::plot_add_lb(c);
 
-        		//TODO: Puede que sea lo mismo que la linea 659 (if(dist <0.0))
 
-						/*
-        		if(nds_mode==POINTS || nds_mode==SEGMENTS){
-        			map< pair <double, double>, IntervalVector >:: iterator ent1=NDS.upper_bound(make_pair(c->box[n].lb(),c->box[n+1].lb()));
-        			ent1--;
-        			if(ent1->first.second <= c->box[n+1].lb()){
-        				delete c;
-        				continue;
-        			}
-        		}*/
-
-        		if(boxes) delete boxes;
+    		if(boxes) delete boxes;
 				delete c; continue;
 
-			}
+		}
 
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
 		 IntervalVector left(c->box);
@@ -477,7 +443,6 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 		n.pop();
 		if(nt.dist < eps || nt.dist < _rh*dist0 ) continue;
 
-		//cout << "dist:" << nt.dist << endl;
 		Node_t n1( Interval(nt.t.lb(), nt.b), 0.0, POS_INFINITY);
 		if(process_node(pf, n1)) n.push(n1);
 
@@ -524,11 +489,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 	if(ya1.ub() > yb1.ub() || ya2.ub() < yb2.ub()) {
 		Interval aux = ya1;
-		ya1 = yb1;
-		yb1 = aux;
-		aux = ya2;
-		ya2 = yb2;
-		yb2 = aux;
+		ya1 = yb1; yb1 = aux; aux = ya2; ya2 = yb2; yb2 = aux;
 	}
 
 	// m ← getSlope(n.t)
@@ -536,14 +497,15 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval m_horizontal = Interval(0);
 	Interval m_vertical = Interval(POS_INFINITY);
 
-
 	// get minf1 and minf2
 	pair<double, double> c1_t1 = make_pair(POS_INFINITY,0);
 	pair<double, double> c2_t2 = make_pair(POS_INFINITY,0);
 
 	if(nds_mode==HAMBURGER){
-		c1_t1 = pf.optimize(m_vertical, PFunction::MIN, POS_INFINITY,  t);
-		c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, POS_INFINITY, t);
+		//minimize f1
+		c1_t1 = pf.optimize(m_vertical, PFunction::MIN, PFunction::F1, POS_INFINITY,  t);
+		//minimize f2
+		c2_t2 = pf.optimize(m_horizontal, PFunction::MIN, PFunction::F2, POS_INFINITY, t);
 	}
 
 	// check if the point dominating the curve is dominated by ndsH
@@ -559,10 +521,10 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 
 	if(m.ub() < 0) {
-		pair<double, double> c3_t3 = pf.optimize(m, PFunction::MAX, POS_INFINITY, t);
+		pair<double, double> c3_t3 = pf.optimize(m, PFunction::MAX, PFunction::F2_mF1, POS_INFINITY, t);
 		pair<double, double> c4_t4;
 		if(nds_mode==HAMBURGER)
-			 pair<double, double> c4_t4 = pf.optimize(m, PFunction::MIN, POS_INFINITY, t);
+			 c4_t4 = pf.optimize(m, PFunction::MIN, PFunction::F2_mF1, POS_INFINITY, t);
 
 		ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));

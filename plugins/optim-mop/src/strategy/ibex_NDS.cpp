@@ -146,7 +146,7 @@ namespace ibex {
 		pair <double, double> first_dom=it1->first;
 		it1--;
 		pair <double, double> last_dom=it1->first;
-    bool first=true;
+		bool first=true;
 		for(;it1 != NDS2.end();) {
 			// termina cuando it1 no este dentro de los rangos dominados del punto a agregar
 			if(it1->first.second < p[1]) break;

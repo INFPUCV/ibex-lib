@@ -55,6 +55,27 @@ public:
 		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 	}
 
+	double hypervolume(const Interval& y1, const Interval& y2) const{
+		double hv=0.0;
+		double prev1=y1.lb();
+		double prev2=y2.ub();
+		for(auto ndp:NDS2){
+			double next1=std::min(ndp.first.first,y1.ub());
+			double next2=std::min(y2.ub(),ndp.first.second);
+			if(next1 > prev1){
+				hv+=(next1-prev1)*(next2 + (prev2-next2)/2.0);
+				//cout << prev1 << "," << prev2 << endl;
+				//cout << next1 << "," << next2 << endl;
+			}
+
+			if(next1>=prev1 && next2<=prev2){
+				prev1=next1;
+				prev2=next2;
+			}
+		}
+		return hv;
+	}
+
 	int size(){
 		return NDS2.size();
 	}

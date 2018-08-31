@@ -172,6 +172,10 @@ public:
 	 */
 	double get_nb_cells() const;
 
+	double get_hypervolume() const{
+		return ndsH.hypervolume(CellMOP::y1_init,CellMOP::y2_init);
+	}
+
 
 	/* =========================== Settings ============================= */
 

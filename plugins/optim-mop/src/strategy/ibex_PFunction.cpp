@@ -34,24 +34,37 @@ void PFunction::contract_curve(const Interval& t) {
 	xb = b;
 }
 
-Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize) const{
+Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize, function f) const{
 	IntervalVector xt = xa+t*(xb-xa);
 	Interval result;
-	if(m.is_empty()) {
-		result = -OptimizerMOP::eval_goal(f1,xt,  xt.size());
-	} else result = OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1,xt,  xt.size());
-	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (!minimize && m.is_empty()) ) return Interval(-result.ub(), -result.lb());
+	if(f==F1)
+		result = OptimizerMOP::eval_goal(f1,xt,  xt.size());
+	else if(f==F2)
+		result = OptimizerMOP::eval_goal(f2,xt,  xt.size());
+	else
+		result = OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1, xt,  xt.size());
+
+	if( minimize )	return -result;
 	else return result;
 }
 
-Interval PFunction::deriv(const Interval& t, const Interval& m, bool minimize) const{
+Interval PFunction::deriv(const Interval& t, const Interval& m, bool minimize, function f) const{
 	IntervalVector xt = xa+t*(xb-xa);
-	IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
-	IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
 	Interval result;
-	if(m.is_empty()) {
-		return (-g1)*(xb-xa);
-	} else return (g2-m*g1)*(xb-xa);
+	if(f==F1){
+		IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
+		result = g1*(xb-xa);
+	}else if(f==F2){
+		IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
+		result = g2*(xb-xa);
+	}else{
+		IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
+		IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
+		result= (g2-m*g1)*(xb-xa);
+	}
+
+	if( minimize )	return -result;
+	else return result;
 }
 
 IntervalVector PFunction::get_point(const Interval& t) const{
@@ -78,83 +91,81 @@ void PFunction::get_curve_y(std::vector< pair <double, double> >& curve_y ){
 	}
 }
 
-bool PFunction::newton_rcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb){
+bool PFunction::newton_rcontract(const Interval& m, bool minimize, function f, Interval& inter, const Interval& derivate, double lb){
+  if(derivate.lb()>=0) return false;
+
 	double point_t = inter.ub();
-	double point_c = eval(point_t, m, minimize).ub();
+	Interval point_c = eval(point_t, m, minimize, f);
 	double t_before = NEG_INFINITY;
-	while(derivate.lb() < 0 && t_before - point_t > _min_newton_step*inter.diam() && point_t > inter.lb()) {
+	while(t_before - point_t > _min_newton_step*inter.diam() && point_t > inter.lb()) {
 
 		t_before = point_t;
 
-		point_t = t_before - (lb - point_c)/derivate.lb();
-		point_c = eval(point_t, m, minimize).ub();
+		point_t = (t_before - (lb - point_c)/derivate.lb()).ub();
+		point_c = eval(point_t, m, minimize, f).lb();
 	}
 
-	// TODO: puede pasar esto? error en caso de que c sea mayor al lb+epsilon
-	if(point_t > inter.lb() and point_c > lb + _eps_opt){
-		cout << "error: point_c > lb+epsilon" << endl;
-		exit(0);
+	// TODO: no debería pasar! problema con derivada? no conservativo?
+	if(point_t > inter.lb() and point_c.lb() > lb ){
+		cout << "r error: point_c > lb+epsilon " << point_c << "<" << lb << endl;
+		return true;
 	}
 
 	// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
-	if(point_t <= inter.lb())
+	if(point_t < inter.lb())
 		return false;
 	 else
-		inter = Interval(inter.lb(), point_t);
+		inter = Interval(inter.lb(), std::min(point_t,inter.ub()));
 
 
 	return true;
 }
 
-bool PFunction::newton_lcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb){
+bool PFunction::newton_lcontract(const Interval& m, bool minimize, function f, Interval& inter, const Interval& derivate, double lb){
+  if(derivate.ub()<=0) return false;
+
 	double point_t = inter.lb();
-	double point_c = eval(point_t, m, minimize).ub();
+	Interval point_c = eval(point_t, m, minimize, f);
 	double t_before = NEG_INFINITY;
 
-	while(derivate.ub() > 0 && point_t - t_before > _min_newton_step*inter.diam() && point_t < inter.ub()) {
-		t_before = point_t;
+/*  cout << "derivate:" << derivate << endl;
+	cout << "inter:" << inter << endl;
+	cout << "lb:" << lb << endl;
+	cout << "t:" << point_t << endl;
+	cout << "c:" << point_c.lb() << endl;*/
 
-		point_t = (lb - point_c)/derivate.ub() + t_before;
-		point_c = eval(point_t, m, minimize).ub();
+	while(point_t - t_before > _min_newton_step*inter.diam() && point_t < inter.ub()) {
+		t_before = point_t;
+		point_t = ((lb - point_c)/derivate.ub() + t_before).lb();
+		point_c = eval(point_t, m, minimize, f);
+		//cout << "t:" << point_t << endl;
+		//cout << "c:" << point_c.lb() << endl;
 	}
 
-	// TODO: puede pasar esto? error en caso de que c sea mayor al lb+epsilon
-	if(point_t < inter.ub() and point_c > lb+_eps_opt){
-		cout << "error: point_c > lb+eps" << endl;
-		exit(0);
+		// TODO: no debería pasar! problema con derivada? no conservativo?
+	if(point_t < inter.ub() and point_c.lb() > lb ){
+		cout << "l error: point_c > lb " << lb-point_c.lb() << endl;
+    return true;
+		//exit(0);
 	}
 
 	// Se elimina el intervalo ya que no contiene una solucion mejor a lb+epsilon
-	if(point_t >= inter.ub())
+	if(point_t > inter.ub())
 		return false;
 	 else {
 		//se contracta el intervalo si point_t > 0
-		inter = Interval(point_t, inter.ub());
+		inter = Interval(std::max(point_t,inter.lb()), inter.ub());
 	}
 
 	return true;
 }
 
-/**
- * \brief minimize/maximize the function pf: f1(t)+w*f2(t)
- * returning the best solution found t and its the lb/ub of its evaluation
- * input m, minimize, max_c=max_value
- */
-pair<double, double> PFunction::optimize(const Interval& m, bool minimize, double max_c, Interval init){
+pair<double, double> PFunction::optimize(const Interval& m, bool minimize, function f, double max_c, Interval init){
 	double diam0=init.diam();
 
-	if(init.is_empty()) init=Interval(0,1);
-	//TODO: we are assuming minimize=false;
+	//if(init.is_empty()) init=Interval(0,1);
 
-	// TODO: ver cuando es conveniente realizar Newton
-	// 1. Revisar que cuando la derivada sea vacia no se contracte
-	// 2. Revisar que cunado la derivada sea muy alta no haga nada
-	// 3. Revisar que newton si supera el max c no siga buscando y no se contracte
-	// 4. Distancia minima entre puntos ya e yb
-
-	//if(minimize && max_c != POS_INFINITY) max_c = -max_c;
-
-	Interval derivate = deriv(init, m, minimize);
+	Interval derivate;
 
 	double t_final;
 	double lb = NEG_INFINITY;
@@ -176,13 +187,13 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 		inter = pila.top();
 		pila.pop();
 
-		derivate = deriv(inter, m, minimize);
+
 
 		/************ lowerbounding ***************/
 		//TODO: no se podrá optimizar esto?
-		y_r=eval(inter.lb(), m, minimize);
-		y_c=eval(inter.mid(), m, minimize);
-		y_l= eval(inter.ub(), m, minimize);
+		y_r=eval(inter.lb(), m, minimize, f);
+		y_c=eval(inter.mid(), m, minimize, f);
+		y_l= eval(inter.ub(), m, minimize, f);
 
 		lb_interval = y_r.ub();
 		t_temp = inter.lb();
@@ -206,13 +217,15 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 		/***************************************/
 
 		// Contract if derivate is not empty
+
+    derivate = deriv(inter, m, minimize, f);
 		if(!derivate.is_empty()) {
 
 			// contract Newton from left
-			if(!newton_lcontract(m,  minimize, inter, derivate, lb))
+			if(derivate.ub()!=POS_INFINITY &&  !newton_lcontract(m,  minimize, f, inter, derivate, lb))
 				continue;
 
-			if(!newton_rcontract(m,  minimize, inter, derivate, lb))
+			if(derivate.lb()!=NEG_INFINITY && !newton_rcontract(m,  minimize, f, inter, derivate, lb))
 				continue;
 
 		}
@@ -226,10 +239,14 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, doubl
 		}
 		iter++;
 	}
-	//cout << iter << endl;
 
-	if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (minimize && m.is_empty()) ) return make_pair(-lb, t_final);
-	else return make_pair(lb, t_final);
+	if(minimize)
+		return make_pair(-lb, t_final);
+	else
+		return make_pair(lb, t_final);
+
+	//if( (!minimize && m.ub() > 0) || (minimize && m.ub() <= 0) || (minimize && m.is_empty()) ) return make_pair(-lb, t_final);
+	//else return make_pair(lb, t_final);
 }
 
 } /* namespace ibex */

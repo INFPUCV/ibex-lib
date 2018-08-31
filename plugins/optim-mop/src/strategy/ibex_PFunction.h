@@ -33,11 +33,14 @@ public:
 	static bool MIN;
 	static bool MAX;
 
+	enum function{F1, F2, F2_mF1};
+
+
 	void contract_curve(const Interval& t);
 
-	Interval eval(const Interval& t, const Interval& m, bool minimize) const;
+	Interval eval(const Interval& t, const Interval& m, bool minimize, function f) const;
 
-	Interval deriv(const Interval& t, const Interval& m, bool minimize) const;
+	Interval deriv(const Interval& t, const Interval& m, bool minimize, function f) const;
 
 	IntervalVector get_point(const Interval& t) const;
 
@@ -51,10 +54,10 @@ public:
 	 * returning the lb/ub of its evaluation (c) and the best solution found t and its
 	 * input m, minimize, max_c=max_value
 	 */
-	pair<double,double> optimize(const Interval& m, bool minimize, double max_c, Interval init=Interval::EMPTY_SET);
+	pair<double,double> optimize(const Interval& m, bool minimize, function f, double max_c, Interval init);
 
-	bool newton_lcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb);
-	bool newton_rcontract(const Interval& m, bool minimize, Interval& inter, const Interval& derivate, double lb);
+	bool newton_lcontract(const Interval& m, bool minimize, function f, Interval& inter, const Interval& derivate, double lb);
+	bool newton_rcontract(const Interval& m, bool minimize, function f, Interval& inter, const Interval& derivate, double lb);
 
 private:
 

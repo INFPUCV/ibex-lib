@@ -292,6 +292,8 @@ int main(int argc, char** argv){
 
 	// printing the results
 	o.report(verbose);
+/*
+	cout << o.get_hypervolume() << endl;
 
 	delete bs;
 	delete buffer;
@@ -304,7 +306,7 @@ int main(int argc, char** argv){
 	    delete cxn_compo;
 	}
 
-
+*/
 
 	return 0;
 
