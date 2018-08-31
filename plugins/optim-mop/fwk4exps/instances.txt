@@ -10,8 +10,8 @@
 --eps=0.001 ../benchs/ctp7-4.txt
 --eps=0.001 ../benchs/ctp7-5.txt
 --eps=0.001 ../benchs/kim.txt
---eps=0.01 ../benchs/mop7.txt
---eps=0.1 ../benchs/mop10.txt
+--eps=0.1 ../benchs/mop-7.txt
+--eps=0.1 ../benchs/mop-10.txt*
 --eps=0.001 ../benchs/nbi.txt
 --eps=0.001 ../benchs/osy.txt
 --eps=0.001 ../benchs/sr.txt
