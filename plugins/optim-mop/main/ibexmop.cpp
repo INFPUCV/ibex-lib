@@ -284,13 +284,13 @@ int main(int argc, char** argv){
 	delete bs;
 	delete buffer;
 	delete _ext_sys;
-	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn") {
+	/*if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn") {
 		delete lr;
 	    delete ctcxn;
 	    delete cxn;
 	    delete cxn_poly;
 	    delete cxn_compo;
-	}
+	}*/
 
 
 
