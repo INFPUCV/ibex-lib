@@ -55,23 +55,43 @@ public:
 		NDS2.insert(make_pair(make_pair(POS_INFINITY,NEG_INFINITY), Vector(1)));
 	}
 
-	double hypervolume(const Interval& y1, const Interval& y2) const{
-		double hv=0.0;
+	pair<double,double> lb(){
+		if(NDS2.size()>3){
+			auto it=NDS2.begin();
+			it++;
+			double min1=it->first.first;
+			it=NDS2.end();
+			it--;
+			it--;
+			double min2=it->first.second;
+			return make_pair(min1,min2);
+		}
+		else return make_pair(POS_INFINITY, POS_INFINITY);
+	}
+
+	Interval hypervolume(const Interval& y1, const Interval& y2) const{
+		Interval hv=0.0;
 		double prev1=y1.lb();
 		double prev2=y2.ub();
 		for(auto ndp:NDS2){
+			if(ndp.first.first == NEG_INFINITY) continue;
+			if(ndp.first.second == NEG_INFINITY) continue;
+
 			double next1=std::min(ndp.first.first,y1.ub());
 			double next2=std::min(y2.ub(),ndp.first.second);
+
 			if(next1 > prev1){
-				hv+=(next1-prev1)*(next2 + (prev2-next2)/2.0);
-				//cout << prev1 << "," << prev2 << endl;
-				//cout << next1 << "," << next2 << endl;
+				Interval hvv=(Interval(next1)-prev1)*( (y2.ub()	-Interval(prev2))  +  (Interval(prev2)-next2)/2.0);
+				hv+=hvv;
+
 			}
 
 			if(next1>=prev1 && next2<=prev2){
 				prev1=next1;
 				prev2=next2;
 			}
+
+
 		}
 		return hv;
 	}
@@ -107,7 +127,7 @@ public:
     };
 
 	//returns a list of points non-dominated by lb
-	static list<pair <double,double> > non_dominated_points(double lbx, double lby){
+	list<pair <double,double> > non_dominated_points(double lbx, double lby){
 		list <pair <double,double> > inpoints;
 
 		pair <double, double> firstp;
@@ -150,9 +170,9 @@ public:
 		return inpoints;
 	}
 
-  static void remove_infinity(pair<double, double>& p);
+  void remove_infinity(pair<double, double>& p);
 
-	static void add_infinity(pair<double, double>& p);
+	void add_infinity(pair<double, double>& p);
 
   /**
 	* \brief Returns the point intersecting two segments. Otherwise it throw
@@ -162,11 +182,11 @@ public:
 	* 2) if there are no intersection it may return an exception or a point dominated by one segment
 	* TODO: revise with colinear generated examples
 	*/
-	static pair<double, double> pointIntersection(pair<double, double> p0, pair<double, double> p1,
+	pair<double, double> pointIntersection(pair<double, double> p0, pair<double, double> p1,
 			pair<double, double> p2, pair<double, double> p3);
 
   static bool _trace;
-	static double distance(const Cell* c){
+	double distance(const Cell* c){
 		int n=c->box.size();
 
 		double a = c->get<CellMOP>().a;
@@ -176,18 +196,21 @@ public:
 
     double dist;
 		_trace=true;
-		if(a!=0)
-		  dist= distance(c->box[n-2].lb(),c->box[n-1].lb(),-1/a, w_lb/a);
-    else
-		   dist= distance(c->box[n-2].lb(),c->box[n-1].lb());
+		IntervalVector points(4);
+		if(a!=0){
+			points = get_points(c->box[n-2].lb(),c->box[n-1].lb(),-1/a, w_lb/a);
+			dist= distance(points,-1/a, w_lb/a);
+    }else{
+			points = get_points(c->box[n-2].lb(),c->box[n-1].lb());
+			dist= distance(points);
+		}
+
+
 		_trace=false;
 		return dist;
 	}
 
-
-
-	// m in [-oo, 0]
-	static double distance(double lbx, double lby, double m=POS_INFINITY, double c=POS_INFINITY){
+  IntervalVector get_points(double lbx, double lby, double m=POS_INFINITY, double c=POS_INFINITY){
 		double max_dist=NEG_INFINITY;
 
 		Interval Ay=lby;
@@ -200,11 +223,28 @@ public:
 			if(Bx.lb() < lbx){ Bx=lbx; }
 		}
 
+		IntervalVector points(4);
+		points[0]=lbx;
+		points[1]=Ay;
+		points[2]=Bx;
+		points[3]=lby;
+		return points;
+	}
+
+
+	// m in [-oo, 0]
+	double distance(IntervalVector& points, double m=POS_INFINITY, double c=POS_INFINITY){
+		Interval Ax=points[0];
+		Interval Ay=points[1];
+		Interval Bx=points[2];
+		Interval By=points[3];
+
+		double max_dist=NEG_INFINITY;
 
 		//	cout << "A:" << lbx << "," << Ay.mid() << endl;
-		//	cout << "B:" << Bx.mid() << "," << lby << endl;
+		//	cout << "B:" << Bx.mid() << "," << By << endl;
 
-		list<pair <double,double> > inner_segments= non_dominated_points(lbx, lby);
+		list<pair <double,double> > inner_segments= non_dominated_points(Ax.mid(), By.mid());
 		pair <double,double>* p0=NULL;
 
 		bool Adist=false;
@@ -217,13 +257,13 @@ public:
 
 			Interval dist;
 			//up-left point
-			if(p.first-lbx < (p.second-Ay).ub() || p.second==POS_INFINITY){
-				dist=p.first-Interval(lbx);
+			if((p.first-Ax).lb() < (p.second-Ay).ub() || p.second==POS_INFINITY){
+				dist=p.first-Interval(Ax);
 				//cout << "dist-UL:" << p.first  << "," << p.second << "-->" <<  dist.ub() << endl;
 			}
 			//bottom-right point
-			else if(p.second-lby < (p.first-Bx).ub() || p.first==POS_INFINITY){
-				dist=p.second-Interval(lby);
+			else if((p.second-By).lb() < (p.first-Bx).ub() || p.first==POS_INFINITY){
+				dist=p.second-Interval(By);
 				//cout << "dist-BR:" << p.first  << "," << p.second << "-->" <<  dist.ub() << endl;
 				if(!Bdist && p0){
 					Interval mm=NEG_INFINITY;
@@ -234,8 +274,8 @@ public:
 					//cout << "dist-B (m):" << mm << endl;
 					if(mm.lb() > -1 && mm.lb() < 0.0 ){
 						Interval cc= p.second - mm*p.first;
-						//cout << "dist-B:" << (mm*lbx - Ay + cc)/(1.0-mm) << endl;
-						dist=std::max(dist.ub(), ((mm*lbx - Ay + cc)/(1.0-mm)).lb());
+						//cout << "dist-B:" << (mm*Ax - Ay + cc)/(1.0-mm) << endl;
+						dist=std::max(dist.ub(), ((mm*Ax - Ay + cc)/(1.0-mm)).lb());
 						Bdist=true;
 					}
 				}
@@ -243,8 +283,8 @@ public:
 			//cy-45-degree zone
 			else{
 				dist= -(m*p.first - p.second+c)/(1.0-m);
-			//	cout << "A:" << lbx << "," << Ay.mid() << endl;
-			//	cout << "B:" << Bx.mid() << "," << lby << endl;
+			//	cout << "A:" << Ax << "," << Ay.mid() << endl;
+			//	cout << "B:" << Bx.mid() << "," << By << endl;
 				//cout << "dist-IN:" << p.first  << "," << p.second << "-->" <<  dist.ub() << endl;
 				if(!Adist && p0){
 					Interval mm=NEG_INFINITY;
@@ -253,8 +293,8 @@ public:
 
 					if(mm.lb() <-1 && mm.lb()>NEG_INFINITY){
 						Interval cc= p.second - mm*p.first;
-						//cout << "dist-A:" << (mm*Bx - lby + cc)/(1.0-mm) << endl;
-						dist=std::max(dist.ub(), ((mm*Bx - lby + cc)/(1.0-mm)).lb());
+						//cout << "dist-A:" << (mm*Bx - By + cc)/(1.0-mm) << endl;
+						dist=std::max(dist.ub(), ((mm*Bx - By + cc)/(1.0-mm)).lb());
 						Adist=true;
 					}
 				}
@@ -276,7 +316,7 @@ public:
 
 
 	/** The current non-dominated set sorted by increasing x */
-	static map< pair <double, double>, IntervalVector, sorty2 > NDS2;
+	map< pair <double, double>, IntervalVector, sorty2 > NDS2;
 };
 
 } /* namespace ibex */

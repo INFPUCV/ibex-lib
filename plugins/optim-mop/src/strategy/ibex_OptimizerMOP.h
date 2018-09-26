@@ -172,10 +172,17 @@ public:
 	 */
 	double get_nb_cells() const;
 
-	double get_hypervolume() const{
-		return ndsH.hypervolume(CellMOP::y1_init,CellMOP::y2_init);
+	Interval get_hypervolume() const{
+		return ndsH.hypervolume(y1refi,y2refi);
 	}
 
+	Interval get_rdelta_hypervolume() const{
+		return (LB.hypervolume(y1refi,y2refi)-ndsH.hypervolume(y1refi,y2refi))/LB.hypervolume(y1refi,y2refi);
+	}
+
+	Interval get_delta_hypervolume() const{
+		return (LB.hypervolume(y1refi,y2refi)-ndsH.hypervolume(y1refi,y2refi));
+	}
 
 	/* =========================== Settings ============================= */
 
@@ -224,6 +231,8 @@ public:
 	/** Default precision: 0.01 */
 	static const double default_eps;
 
+	static bool _hv;
+
 	/**
 	 * \brief Trace activation flag.
 	 */
@@ -238,6 +247,11 @@ public:
 	 */
 	double timeout;
 
+	pair <double, double> y1ref;
+	pair <double, double> y2ref;
+
+	Interval y1refi;
+	Interval y2refi;
 
 	/* ======== Some other parameters of the solver =========== */
 
@@ -272,9 +286,12 @@ public:
 	 */
 	static IntervalVector deriv_goal(const Function& goal, const IntervalVector& x, int n);
 
-	static double distance(const Cell* c){
+	/*double distance(const Cell* c){
 		return NDS_seg::distance(c);
-	}
+	}*/
+
+	// Hamburger
+	NDS_seg ndsH;
 
 protected:
 
@@ -351,6 +368,7 @@ protected:
 	bool update_NDS2(const IntervalVector& box);
 
 
+
 private:
 
 
@@ -363,8 +381,9 @@ private:
 	/* Remember return status of the last optimization. */
 	Status status;
 
-	// Hamburger
-	NDS_seg ndsH;
+
+
+	NDS_seg LB;
 
 	/** The current non-dominated set sorted by increasing x */
 	//static map< pair <double, double>, IntervalVector, sorty2 > NDS2;

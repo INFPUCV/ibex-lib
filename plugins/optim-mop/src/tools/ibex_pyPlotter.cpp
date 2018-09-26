@@ -61,7 +61,8 @@ output << "]" << endl;
 
 }
 
-void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS){
+void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
+ map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2){
 	//cout << "print plotX2:" << NDS.size() << endl;
 	ofstream output;
 	output.open("output2.txt");
@@ -70,10 +71,22 @@ void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVecto
 
 	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
 	for(;ub!=NDS.end();ub++){
+		//cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
 		output << "(" << ub->first.first << "," << ub->first.second << "),";
 	}
     output << "]" << endl;
 
+  if(NDS2){
+		output << "[";
+		ub=NDS2->begin();
+		for(;ub!=NDS2->end();ub++){
+			//cout << "(" << ub->first.first << "," << ub->first.second << ")" << endl;
+			output << "(" << ub->first.first << "," << ub->first.second << "),";
+		}
+	  output << "]" << endl;
+  }else{
+		output << "[]" << endl;
+	}
 	output.close();
 
 }
@@ -111,9 +124,9 @@ output << "]" << endl;
 
 /**
  * Hamburger plot
- * 
+ *
  */
-void py_Plotter::offline_plot(Cell* c, 
+void py_Plotter::offline_plot(Cell* c,
 		map< pair <double, double>, IntervalVector, struct sorty2 > NDS,
 		std::vector< pair <double, double> > rectaUB,
 		std::vector< pair <double, double> > functionPoly_origin,

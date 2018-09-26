@@ -45,7 +45,9 @@ int main(int argc, char** argv){
 	args::ValueFlag<double> _epsx(parser, "float", "The minimum size of boxes", {"eps_x"});
 	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
 	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
-	//args::Flag _hv(parser, "hv", "Compute the hypervolume", {"hv"});
+	args::Flag _hv(parser, "hv", "Compute the hypervolume (some components must be disactivated)", {"hv"});
+	args::ValueFlag<std::string> _y1ref(parser, "hv", "Reference interval y1 for computing HV", {"y1"});
+	args::ValueFlag<std::string> _y2ref(parser, "hv", "Reference interval y2 for computing HV", {"y2"});
 	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::Flag _segments(parser, "segments", "NDS defined by line segments instead of points.", {"SEGMENTS"});
@@ -123,6 +125,7 @@ int main(int argc, char** argv){
 	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
+	//if(_hv) OptimizerMOP::_eps_contract = false;
 
 	if(bisection=="largestfirst_noy"){
 		bisection="largestfirst";
@@ -274,6 +277,32 @@ int main(int argc, char** argv){
 	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS , eps);
 	OptimizerMOP::_rh=rh;
+	OptimizerMOP::_hv=_hv;
+
+  if(_y1ref){
+	  string s=_y1ref.Get();
+		std::string delimiter = ",";
+		int d=s.find(delimiter);
+
+		double lb = std::stod(s.substr(0, d));
+		double ub = std::stod(s.substr(d+1, s.size()));
+
+		o.y1ref = make_pair(lb,ub);
+	}
+
+	if(_y2ref){
+	  string s=_y2ref.Get();
+		std::string delimiter = ",";
+		int d=s.find(delimiter);
+	  double lb = std::stod(s.substr(0, d));
+		double ub = std::stod(s.substr(d+1, s.size()));
+
+		o.y2ref = make_pair(lb,ub);
+	}
+
+	if(strategy=="NDSdist"){
+		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o.ndsH);
+	}
 
 	//max_distance::UB= &o.get_UB();
 
@@ -290,11 +319,13 @@ int main(int argc, char** argv){
 	// the search itself
 	o.optimize(ext_sys.box);
 
+
 	// printing the results
 	o.report(verbose);
-/*
-	cout << o.get_hypervolume() << endl;
 
+
+
+/*
 	delete bs;
 	delete buffer;
 	delete _ext_sys;

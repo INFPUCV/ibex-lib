@@ -32,6 +32,7 @@ bool OptimizerMOP::_cy_upper =false;
 bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
 double OptimizerMOP::_rh = 0.1;
+bool OptimizerMOP::_hv=false;
 
 
 
@@ -39,7 +40,9 @@ OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode, double eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode)
+                				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode),
+												y1ref(make_pair(POS_INFINITY,NEG_INFINITY)),
+												y2ref(make_pair(POS_INFINITY,NEG_INFINITY))
 								 {
 
 	py_Plotter::n=n;
@@ -273,6 +276,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	buffer.flush();
 
 	ndsH.clear();
+	LB.clear();
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
@@ -282,8 +286,16 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	CellMOP::y1_init=eval_goal(goal1, root->box, n);
 	CellMOP::y2_init=eval_goal(goal2, root->box, n);
 
+	cout << CellMOP::y1_init << endl;
+	cout << CellMOP::y2_init << endl;
+
+
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
+
+
+	list<IntervalVector> B; //list of discarde boxes Y
+
 
 
 	// add data required by the bisector
@@ -317,7 +329,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		  if (trace >= 2) cout << buffer;
 
 			Cell *c = buffer.pop();
-			if(c->get<CellMOP>().ub_distance < eps) break;
+			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
+					break;
+	   	}
 
 			if(_plot) py_Plotter::plot_del_box(c);
 
@@ -331,6 +345,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			update_NDS2(c->box);
 
+			y1_ub.first = ndsH.lb().first;
+			y2_ub.second= ndsH.lb().second;
 
 
 			pair<IntervalVector,IntervalVector>* boxes=NULL;
@@ -344,16 +360,31 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 
     	double dist=0.0;
-    	if(!atomic_box) dist= NDS_seg::distance(c);
+    	if(!atomic_box || _hv) dist= ndsH.distance(c);
 
     	if(dist < eps || atomic_box){
-    		if(dist <0.0){
-    			delete c;
-    			continue;
-    		}
 
-  		if(_plot) py_Plotter::plot_add_lb(c);
+				if(_hv && dist>=0.0){
+					IntervalVector points = LB.get_points(c->box[n].lb(),c->box[n+1].lb(),
+					                   -1/c->get<CellMOP>().a, c->get<CellMOP>().w_lb/c->get<CellMOP>().a);
+					LB.addPoint(make_pair(points[0].lb(),points[1].lb()) );
+					LB.addPoint(make_pair(points[2].lb(),points[3].lb()) );
 
+
+					//py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LB.NDS2);
+
+					LB.addSegment(make_pair(points[0].lb(),points[1].lb()),make_pair(points[2].lb(),points[3].lb()) );
+
+					if(y1ref.first > points[0].lb()) y1ref.first = points[0].lb();
+					if(y1ref.first > points[2].lb()) y1ref.first = points[2].lb();
+					if(y2ref.first > points[1].lb()) y2ref.first = points[1].lb();
+					if(y2ref.first > points[3].lb()) y2ref.first = points[3].lb();
+					IntervalVector A(2);
+					A[0]=c->box[n];
+					A[1]=c->box[n+1];
+					B.push_back(A);
+					//py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LB.NDS2);
+				}
 
     		if(boxes) delete boxes;
 				delete c; continue;
@@ -414,9 +445,21 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	timer.stop();
 	time = timer.get_time();
 
+  pair<double,double> lb=ndsH.lb();
+  for(auto b:B){
+		if(b[0].lb() <= lb.first && b[1].ub() > y2ref.second)
+			y2ref.second = b[1].ub();
+		if(b[1].lb() <= lb.second && b[0].ub() > y1ref.second)
+				y1ref.second = b[0].ub();
+	}
+	y1refi = Interval(y1ref.first, y1ref.second);
+	y2refi = Interval(y2ref.first, y2ref.second);
 
 	// if(_plot) (nds_mode==POINTS)?
-	py_Plotter::offline_plot(NULL, ndsH.NDS2);
+	if(OptimizerMOP::_hv)
+ 	   py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LB.NDS2);
+	else
+	   py_Plotter::offline_plot(NULL, ndsH.NDS2);
 	return status;
 }
 
@@ -451,6 +494,7 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 
 		if(_plot) {
 			py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			//py_Plotter::offline_plot(NULL, LB.NDS2);
 			getchar();
 		}
 	}
@@ -529,14 +573,18 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
 
-		if(nds_mode==HAMBURGER)
-			n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
+		if(nds_mode==HAMBURGER){
+		  IntervalVector points = ndsH.get_points(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
+			n_t.dist= ndsH.distance(points,m.mid(),c4_t4.first);
+		}
 
 		v.push_back(c3_t3.second);
 		v.push_back(c4_t4.second);
 
-	}else if(nds_mode==HAMBURGER)
-		n_t.dist=ndsH.distance(c1_t1.first,c2_t2.first);
+	}else if(nds_mode==HAMBURGER){
+		IntervalVector points = ndsH.get_points(c1_t1.first,c2_t2.first);
+		n_t.dist=ndsH.distance(points);
+	}
 
 	double min_dist=2.0;
 	double vv;
@@ -561,7 +609,14 @@ void OptimizerMOP::report(bool verbose) {
 
 	if (!verbose) {
         cout << endl 	<< "time 	#nodes 		|Y|" << endl;
-		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  endl;
+		if(_hv)
+		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() << " "
+		 << ndsH.hypervolume(y1refi,y2refi) << " " << LB.hypervolume(y1refi,y2refi) << " "  <<
+		get_delta_hypervolume() << " "  << get_rdelta_hypervolume() <<
+		" --y1=" << y1refi.lb() << "," << y1refi.ub() <<
+		" --y2=" << y2refi.lb() << "," << y2refi.ub() << endl;
+		else
+			cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  " "<< get_hypervolume().ub()  << endl;
 		return;
 	}
 

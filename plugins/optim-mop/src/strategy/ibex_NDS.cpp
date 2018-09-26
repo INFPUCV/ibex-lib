@@ -9,7 +9,7 @@
 
 namespace ibex {
 
-	 map< pair <double, double>, IntervalVector, sorty2 > NDS_seg::NDS2;
+	 //map< pair <double, double>, IntervalVector, sorty2 > NDS_seg::NDS2;
 	 bool NDS_seg::_trace;
 
 	bool NDS_seg::is_dominated(pair< double, double> new_p){
@@ -70,7 +70,7 @@ namespace ibex {
 
 
 	void NDS_seg::addSegment(pair< double, double> p1, pair< double, double> p2) {
-		//cout << "add_segment:" << p1.first << "," << p1.second << " -- "	<< p2.first << "," << p2.second  <<endl;
+	 //  cout << "add_segment:" << p1.first << "," << p1.second << " -- "	<< p2.first << "," << p2.second  <<endl;
 
 		if(p1.first == p2.first  &&  p1.second == p2.second ){
 			addPoint(p1);
@@ -96,7 +96,8 @@ namespace ibex {
 			if(flagDS2) break;
 
       //se elimina el punto si es dominado por el segmento
-			if( c_ub < (Interval(it1->first.second) - m*Interval(it1->first.first)).lb()){
+			if( c_ub < (Interval(it1->first.second) - m*Interval(it1->first.first)).lb()
+			 && p1.first < it1->first.first && p2.second < it1->first.second){
 				aux = it1; ++aux;
 				NDS2.erase(it1);
 				it1 = aux;
@@ -110,7 +111,11 @@ namespace ibex {
 			if(prev==second) continue;
 
 			try{
+				//cout << "prev:" << prev.first << "," << prev.second << endl;
+				//cout << "second:" << second.first << "," << second.second << endl;
 				point = pointIntersection(prev, second, p1, p2);
+
+
 				NDS2.insert(make_pair(point,IntervalVector(1)));
 			}catch(NoIntersectionException& e) {
 			}
@@ -204,55 +209,79 @@ namespace ibex {
 		if(p.second==1e20) p.second=POS_INFINITY;
 	}
 
+
 	// Returns 1 if the lines intersect, otherwise 0. In addition, if the lines
 	// intersect the intersection point may be stored in the floats i_x and i_y.
 	pair<double, double> NDS_seg::pointIntersection(pair<double, double> p0, pair<double, double> p1,
 			pair<double, double> p2, pair<double, double> p3)
 	{
-		remove_infinity(p0);
-		remove_infinity(p1);
-		remove_infinity(p2);
-		remove_infinity(p3);
+		//remove_infinity(p0);
+		//remove_infinity(p1);
+		//remove_infinity(p2);
+		//remove_infinity(p3);
 
-		Interval p0_x=p0.first;
-		Interval p0_y=p0.second;
-		Interval p1_x=p1.first;
-		Interval p1_y=p1.second;
-		Interval p2_x=p2.first;
-		Interval p2_y=p2.second;
-		Interval p3_x=p3.first;
-		Interval p3_y=p3.second;
+
+		double p0_x=p0.first;
+		double p0_y=p0.second;
+		double p1_x=p1.first;
+		double p1_y=p1.second;
+		double p2_x=p2.first;
+		double p2_y=p2.second;
+		double p3_x=p3.first;
+		double p3_y=p3.second;
+
+    /*cout << p0_x << "," << p0_y << endl;
+    cout << p1_x << "," << p1_y << endl;
+    cout << p2_x << "," << p2_y << endl;
+    cout << p3_x << "," << p3_y << endl;*/
 
 		Interval i_x, i_y;
 		pair<double,double> i ;
 
+
 		//Cuando el segmento es vertical su pendiente es infinito
 		if(p0_x==p1_x && p2_y==p3_y) {
-			if( ((p2_x.mid() <= p0_x.mid() and p0_x.mid() <= p3_x.mid()) or
-					(p3_x.mid() <= p0_x.mid() and p0_x.mid() <= p2_x.mid()))
-			   && ((p0_y.mid() <= p2_y.mid() and p2_y.mid() <= p1_y.mid()) or
-					(p1_y.mid() <= p2_y.mid() and p2_y.mid() <= p0_y.mid())) )
+			if( ((p2_x <= p0_x and p0_x <= p3_x) or
+					(p3_x <= p0_x and p0_x <= p2_x))
+			   && ((p0_y <= p2_y and p2_y <= p1_y) or
+					(p1_y <= p2_y and p2_y <= p0_y)) )
 
-				i = make_pair(p0_x.mid(),p2_y.mid());
+				i = make_pair(p0_x,p2_y);
 
 			else throw NoIntersectionException();
 		}
 		else if (p0_y==p1_y && p2_x==p3_x){
 
-			if( ((p0_x.mid() <= p2_x.mid() and p2_x.mid() <= p1_x.mid()) or
-					(p1_x.mid() <= p2_x.mid() and p2_x.mid() <= p1_x.mid())) &&
-				((p2_y.mid() <= p0_y.mid() and p0_y.mid() <= p3_y.mid()) or
-					(p3_y.mid() <= p0_y.mid() and p0_y.mid() <= p2_y.mid())))
+			if( ((p0_x <= p2_x and p2_x <= p1_x) or
+					(p1_x <= p2_x and p2_x <= p1_x)) &&
+				((p2_y <= p0_y and p0_y <= p3_y) or
+					(p3_y <= p0_y and p0_y <= p2_y)))
 
-					i = make_pair(p2_x.mid(),p0_y.mid());
+					i = make_pair(p2_x,p0_y);
 
 			else throw NoIntersectionException();
 		}else{
+
+      if(p0_y==POS_INFINITY) p0_y=std::max(p2_y,p3_y);
+			if(p0_y==POS_INFINITY) p0_y=std::min(p2_y,p3_y);
+			if(p1_y==POS_INFINITY) p1_y=std::max(p2_y,p3_y);
+			if(p1_y==POS_INFINITY) p1_y=std::min(p2_y,p3_y);
+			if(p0_x==POS_INFINITY) p0_x=std::max(p2_x,p3_x);
+			if(p0_x==POS_INFINITY) p0_x=std::min(p2_x,p3_x);
+			if(p1_x==POS_INFINITY) p1_x=std::max(p2_x,p3_x);
+			if(p1_x==POS_INFINITY) p1_x=std::min(p2_x,p3_x);
+			if(p2_y==POS_INFINITY) p2_y=std::max(p0_y,p1_y);
+			if(p3_y==POS_INFINITY) p3_y=std::max(p0_y,p1_y);
+			if(p2_x==POS_INFINITY) p2_x=std::max(p0_x,p1_x);
+			if(p3_x==POS_INFINITY) p3_x=std::max(p0_x,p1_x);
+
 		  Interval r_x, r_y, s_x, s_y, u, t, p_x=p0_x, p_y=p0_y, q_x=p2_x, q_y=p2_y;
-	    r_x = p1_x - p0_x;     r_y = p1_y - p0_y;
-	    s_x = p3_x - p2_x;     s_y = p3_y - p2_y;
+	    r_x = p1_x - p_x;     r_y = p1_y - p_y;
+	    s_x = p3_x - q_x;     s_y = p3_y - q_y;
 
 			Interval rxs = -s_x * r_y + r_x * s_y;
+
+
 			if(!rxs.contains(0)){
 	    	//u = (-r_y * (p_x - q_x) + r_x * (p_y - q_y)) / rxs;  //(p-q) x r /rxs
  	    	t = ( s_x * (p_y - q_y) - s_y * (p_x - q_x)) / rxs;  //(p-q) x s /rxs
@@ -264,7 +293,8 @@ namespace ibex {
 
 				t = Interval(0,1);
 				t &= Interval(std::min(t0.lb(),t1.lb()),std::max(t0.ub(),t1.ub()));
-			}
+			}else //parallel
+				throw NoIntersectionException();
 
 
 	    if (/*u.ub() >= 0 && u.lb() <= 1 &&*/ t.ub() >= 0 && t.lb() <= 1)
@@ -279,17 +309,17 @@ namespace ibex {
 					if (p2_y==p3_y) i_y=p2_y;
 
 					i = make_pair(i_x.ub(),i_y.ub());
+					//cout << r_y << endl;
+					//cout << "point:" << i.first << "," << i.second << endl;
 
 	    }else{
 				throw NoIntersectionException();
 			}
 		}
 
-		add_infinity(i);
+		//add_infinity(i);
 
 		return i;
-
-
 
 	}
 
