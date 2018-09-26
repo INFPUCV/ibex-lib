@@ -1,6 +1,7 @@
 solved instances in standard strategy times
 mintime:0.000100
 <0.10 [0.10,0.20] [0.20,0.50] [0.50,0.67] [0.67,0.83] [0.83,1.00] [1.00,1.20] [1.20,1.50] [1.50,2.00] [2.00,5.00] [5.00,10.00] >10.00 
+<<<<<<< HEAD
 
 1.000000 
 1.200480 
@@ -15,3 +16,32 @@ instances with significative gains (1.2)
 gains
 0.000100 1.000000 19 
 total time: 1.000000 
+=======
+  segments   0   0   1   2   2   8  10   2   1   0   0   0 
+   3points   4   5   6   8   9  13   3   0   0   0   0   0 
+  50points   0   0   4   4   7  13   3   1   0   0   0   0 
+segments 3points 50points 
+1.000000 10/8 3/13 3/13 
+1.200480 2/2 0/9 1/7 
+1.503759 1/2 0/8 0/4 
+2.000000 0/1 0/6 0/4 
+5.000000 0/0 0/5 0/0 
+10.000000 0/0 0/4 0/0 
+
+
+instances with significative gains (1.2)
+--eps=0.001 ../benchs/binh.txt 2 nan 4 nan 112 nan 9 nan 
+--eps=0.001 ../benchs/cf3-3.txt 20 nan 20 nan 19 nan 25 nan 
+--eps=0.001 ../benchs/ctp6-3.txt 93 nan 92 nan 146 nan 116 nan 
+--eps=0.001 ../benchs/ctp7-4.txt 0 nan 0 nan 1 nan 0 nan 
+--eps=0.001 ../benchs/kim.txt 41 nan 24 nan 64 nan 38 nan 
+--eps=0.1 ../benchs/mop-7.txt 28 28 58 nan 77 nan 38 nan 
+--eps=0.001 ../benchs/nbi.txt 20 nan 22 nan 100 nan 16 nan 
+--eps=0.001 ../benchs/osy.txt 18 nan 13 nan 401 nan 54 nan 
+--eps=0.001 ../benchs/sr.txt 17 nan 15 nan 924 924 78 nan 
+--eps=0.00001 ../benchs/tan.txt 3 nan 2 nan 42 nan 7 nan 
+
+gains
+0.000100 1.000000 16 0.982328 16 0.484143 16 0.699826 16 
+total time: 1.000000 0.992068 0.474629 0.908616 
+>>>>>>> b3b35f4b2ba64ac47fafcfd146764b9a6680d9ad

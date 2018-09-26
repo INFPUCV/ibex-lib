@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 algos:HV 
 gains (average relative times):1.000000 
 gains (total time)            :1.000000 
@@ -5,3 +6,12 @@ compared instances: 19
 runs    : 20 
 L:  0 
 W:  0 
+=======
+algos:hamburger segments 3points 50points 
+gains (average relative times):1.000000 1.000000 1.000000 1.000000 
+gains (total time)            :1.000000 1.000000 1.000000 1.000000 
+compared instances: 15   0   0   0 
+runs    : 19  19  19  19 
+L:  0   0   0   0 
+W:  0   0   0   0 
+>>>>>>> b3b35f4b2ba64ac47fafcfd146764b9a6680d9ad

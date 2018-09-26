@@ -10,23 +10,26 @@ algo_names = HV
 #innerpoly20 cy cy-full eps-ctc ndist
 
 [hamburger]
-exec = "./__build__/plugins/optim-mop/ibexmop"
-params =  ./__build__/plugins/optim-mop/ibexmop _INSTANCE --eps-contract --cy-contract-full --rh=0.05 --HAMBURGER -t _MAXTIME
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params = _INSTANCE --eps-contract --cy-contract-full --rh=0.01 --HAMBURGER -t _MAXTIME
+outputpos_times = 0
 outputpos_boxes = 0
 
 [segments]
-exec = "./__build__/plugins/optim-mop/ibexmop"
-params =  ./__build__/plugins/optim-mop/ibexmop _INSTANCE --eps-contract --cy-contract-full --SEGMENTS -t _MAXTIME
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params = _INSTANCE --eps-contract --cy-contract-full --SEGMENTS -t _MAXTIME
 outputpos_boxes = 0
+outputpos_times = 0
 
 [3points]
-exec = "./__build__/plugins/optim-mop/ibexmop"
-params =  ./__build__/plugins/optim-mop/ibexmop _INSTANCE --eps-contract --nb_ub_sols=3 --cy-contract-full -t _MAXTIME
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params = _INSTANCE --eps-contract --nb_ub_sols=3 --cy-contract-full -t _MAXTIME
 outputpos_boxes = 0
+outputpos_times = 0
 
 [50points]
-exec = "./__build__/plugins/optim-mop/ibexmop"
-params =  ./__build__/plugins/optim-mop/ibexmop _INSTANCE --eps-contract --nb_ub_sols=50 --cy-contract-full -t _MAXTIME
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params =  _INSTANCE --eps-contract --nb_ub_sols=50 --cy-contract-full -t _MAXTIME
 outputpos_boxes = 0
 
 [HV]
@@ -70,6 +73,5 @@ exec = "../../../__build__/plugins/optim-mop/ibexmop"
 params =  _INSTANCE --nb_ub_sols=50 --cy-contract-full --eps-contract -t _MAXTIME 
 outputpos_boxes = 0
 outputpos_times = 0
-
 
 
