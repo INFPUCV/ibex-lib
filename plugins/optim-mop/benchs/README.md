@@ -1,4 +1,4 @@
-Table summarizing the characteristics of the instances
+Table summarizing the characteristics of the instances. Approximations of the optimal hypervolume value, the nadir vector and the ideal vector were computed by solving the instances with a strategy using the constraint envelope $c_y$. For upperbounding we used inner linear relaxations and simplex for generating up to $N=50$ feasible solutions in each node.
 
 |        | n  | p  | q | eps    | HV           | ideal(y1)     | ideal(y2)     | nadir(y1)    | nadir(y2)    |
 |--------|----|----|---|--------|--------------|---------------|---------------|--------------|--------------|
