@@ -18,7 +18,11 @@ namespace ibex {
 LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps, int nb_sol) :
 		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT),
 		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LPSolver::default_max_iter)),
-		goal1(goal1), goal2(goal2), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var) {
+		goal1(goal1), goal2(goal2), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var),
+		y11(0.0), y12(0.0), y21(0.0), y22(0.0), dynamic_nb_sol(false), max_nb_sol(nb_sol) {
+
+	dynamic_nb_sol=true;
+
 
 	if (sys.nb_ctr>0)
 		// ==== check if the system contains equalities ====
@@ -95,6 +99,8 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 
 	int n=norm_sys.nb_var;
 
+	if(dynamic_nb_sol && phase==0) nb_sol=2;
+
 	//phase 0 or 1: call to simplex
     if(phase < nb_sol && phase<=1 && (lp_solver.default_limit_diam_box.contains(box.max_diam()))){
 
@@ -138,6 +144,19 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 			//the linear solution is mapped to intervals
 			Vector loup_point(n);
 			lp_solver.get_primal_sol(loup_point);
+
+			if(dynamic_nb_sol){
+				if(phase==0){
+					y11= (goal1.gradient(box2.mid())*loup_point).mid();
+					y21= (goal2.gradient(box2.mid())*loup_point).mid();
+				}else if(phase==1){
+					y12= (goal1.gradient(box2.mid())*loup_point).mid();
+					y22= (goal2.gradient(box2.mid())*loup_point).mid();
+
+					nb_sol=std::min((int) ceil(std::min(std::abs(y12-y11), std::abs(y22-y21))/eps), max_nb_sol);
+				}
+			}
+
 
 
 			//std::cout << " simplex result " << loup_point << std::endl;

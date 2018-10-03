@@ -31,6 +31,7 @@ bool OptimizerMOP::_cy_upper =false;
 //bool OptimizerMOP::_hv =false;
 bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
+int OptimizerMOP::_print_convergence = 0;
 
 map< pair <double, double>, IntervalVector > OptimizerMOP::NDS;
 
@@ -356,8 +357,19 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 }
 
+double OptimizerMOP::max_dist(map<Cell*, double> cell_dist){
+	double max=0.0;
+	for(auto dist:cell_dist){
+		double d=distance2(dist.first);
+		if(d>max) max=d;
+	}
+
+	return max;
+}
+
 OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
+  map<Cell*, double> cell_dist;
 	status=SUCCESS;
 
 	nb_cells=0;
@@ -395,8 +407,14 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	//handle_cell(*root,init_box);
 	buffer.push(root);
+	if(_print_convergence) cell_dist.insert(make_pair(root,0.0));
+
 	if(_plot) py_Plotter::plot_add_box(root);
 
+
+
+
+  int i=-1;
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
@@ -404,7 +422,23 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		  if (trace >= 2) cout << buffer;
 
 
-			Cell *c = buffer.pop();
+			Cell *c = buffer.pop(); i++;
+
+			if (c->get<CellMOP>().ub_distance < eps ){
+				  if(_print_convergence) cell_dist.erase(c);
+					delete c;
+					continue;
+				}
+
+      /*if(c->get<CellMOP>().ub_distance < POS_INFINITY)
+			   cout << c->get<CellMOP>().ub_distance << endl;
+			else*/
+			if(_print_convergence){
+			   if(i%_print_convergence==0) cout << i << ":" << max_dist(cell_dist) << endl;
+				 cell_dist.erase(c);
+			 }
+
+
 			if(_plot) py_Plotter::plot_del_box(c);
 
 
@@ -437,6 +471,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
         	if(!atomic_box /*&& eps>0.0*/) dist=distance2(c);
 
 
+
         	if(dist < eps || atomic_box){
         		if(dist <0.0){
         			delete c;
@@ -460,8 +495,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			}
 
+
+
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
-		  IntervalVector left(c->box);
+		 /* IntervalVector left(c->box);
 		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
 				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
 
@@ -482,9 +519,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 				if(!bottom.is_empty())
 				  new_cells=c->bisect(bottom,c->box);
-				else
-				 new_cells=c->bisect(boxes->first,boxes->second); //originally we should do only do this
-			}
+				else*/
+        	pair<Cell*,Cell*> new_cells=c->bisect(boxes->first,boxes->second); //originally we should do only do this
+			//}
       /****/
 
     	delete boxes;
@@ -496,6 +533,12 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			buffer.push(new_cells.second);
 
 			if(_plot) py_Plotter::plot_add_box(new_cells.second);
+
+       if(_print_convergence){
+				 cell_dist.insert(make_pair(new_cells.first,dist));
+				 cell_dist.insert(make_pair(new_cells.second,dist));
+			 }
+
 
 
 

@@ -94,6 +94,8 @@ public:
 	 */
 	double static _weight2;
 
+	double eps;
+
 protected:
 
 	/**
@@ -128,8 +130,14 @@ protected:
 
 private:
 
+	bool dynamic_nb_sol;
+
+	int max_nb_sol;
+
 	//number of solutions to find
 	int nb_sol;
+
+	double y11,y12,y21,y22;
 
 	//0: means the first solution of the polytope (or the midpoint)
 	//1: means the second solution of the polytope

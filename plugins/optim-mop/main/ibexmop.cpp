@@ -49,6 +49,7 @@ int main(int argc, char** argv){
 	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
+  args::ValueFlag<int> _print_convergence(parser, "int", "Print Convergence.", {"print_convergence"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag _plot(parser, "plot", "Save a file to be plotted by plot.py.", {"plot"});
 	args::Positional<std::string> filename(parser, "filename", "The name of the MINIBEX file.");
@@ -94,6 +95,7 @@ int main(int argc, char** argv){
 	OptimizerMOP::cy_contract_var= _cy_contract || _cy_contract_full;
 	OptimizerMOP::_cy_upper= _cy_contract_full;
 
+
 	System *_ext_sys;
 	if(OptimizerMOP::cy_contract_var)	_ext_sys=new System(ext_sys, System(fac2));
 	else _ext_sys =new System(ext_sys);
@@ -108,6 +110,7 @@ int main(int argc, char** argv){
 	double eps= (_eps)? _eps.Get() : 0.01 ;
 	double eps_x= (_epsx)? _epsx.Get() : 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
+	double convergence = (_print_convergence)? _print_convergence.Get():0;
 	double eqeps= 1.e-8;
 
 	OptimizerMOP::_plot = _plot;
@@ -117,6 +120,7 @@ int main(int argc, char** argv){
 	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
+	OptimizerMOP::_print_convergence=convergence;
 
 	if(bisection=="largestfirst_noy"){
 		bisection="largestfirst";
@@ -162,6 +166,7 @@ int main(int argc, char** argv){
 	box[sys.nb_var+1]=0;
 
 	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f, 1e-8, nb_ub_sols);
+	finder.eps=eps;
 
 	CellBufferOptim* buffer;
 	if(strategy=="OC1")

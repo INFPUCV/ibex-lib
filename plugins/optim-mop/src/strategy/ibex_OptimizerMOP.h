@@ -231,8 +231,12 @@ public:
 	//True: the solver reduces the search spaces by reducing the NDS vectors in (eps, eps)
 	static bool _eps_contract;
 
+	static int _print_convergence;
+
 
 protected:
+
+  double max_dist(map<Cell*, double> cell_dist);
 
 	/**
 	 * The contraction using y+cy
