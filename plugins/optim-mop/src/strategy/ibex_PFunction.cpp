@@ -35,6 +35,10 @@ void PFunction::contract_curve(const Interval& t) {
 }
 
 Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize, function f) const{
+	if(evals.find(t.mid()) != evals.end()){
+		return evals.at(t.mid());
+	}
+
 	IntervalVector xt = xa+t*(xb-xa);
 	Interval result;
 	if(f==F1)
@@ -44,8 +48,13 @@ Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize, fu
 	else
 		result = OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1, xt,  xt.size());
 
-	if( minimize )	return -result;
-	else return result;
+	if( minimize ){
+		evals[t.mid()]=-result;
+		return -result;
+	}	else {
+		evals[t.mid()]=result;
+		return result;
+	}
 }
 
 Interval PFunction::deriv(const Interval& t, const Interval& m, bool minimize, function f) const{
@@ -161,8 +170,9 @@ bool PFunction::newton_lcontract(const Interval& m, bool minimize, function f, I
 }
 
 pair<double, double> PFunction::optimize(const Interval& m, bool minimize, function f, double max_c, Interval init){
-	double diam0=init.diam();
+	evals.clear();
 
+	double diam0=init.diam();
 	//if(init.is_empty()) init=Interval(0,1);
 
 	Interval derivate;
@@ -190,7 +200,7 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, funct
 
 
 		/************ lowerbounding ***************/
-		//TODO: no se podrá optimizar esto?
+		//Optimized with a map for keeping the evaluations
 		y_r=eval(inter.lb(), m, minimize, f);
 		y_c=eval(inter.mid(), m, minimize, f);
 		y_l= eval(inter.ub(), m, minimize, f);

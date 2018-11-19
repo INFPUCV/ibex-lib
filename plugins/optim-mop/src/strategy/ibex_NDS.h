@@ -69,6 +69,20 @@ public:
 		else return make_pair(POS_INFINITY, POS_INFINITY);
 	}
 
+	pair<double,double> nadir(){
+		if(NDS2.size()>3){
+			auto it=NDS2.begin();
+			it++;it++;
+			double min2=it->first.second;
+			it=NDS2.end();
+			it--;
+			it--;it--;
+			double min1=it->first.first;
+			return make_pair(min1,min2);
+		}
+		else return make_pair(NEG_INFINITY, NEG_INFINITY);
+	}
+
 	Interval hypervolume(const Interval& y1, const Interval& y2) const{
 		Interval hv=0.0;
 		double prev1=y1.lb();
@@ -200,14 +214,24 @@ public:
 		if(a!=0){
 			points = get_points(c->box[n-2].lb(),c->box[n-1].lb(),-1/a, w_lb/a);
 			dist= distance(points,-1/a, w_lb/a);
-    }else{
+		}else{
 			points = get_points(c->box[n-2].lb(),c->box[n-1].lb());
 			dist= distance(points);
 		}
 
+		//nadir distance
+		double nadir_dist=0.0;
+		/*pair<double,double> lower = lb();
+		pair<double,double> nad = nadir();
+		if(c->box[n-2].lb() < lower.first)
+			nadir_dist=c->box[n-1].ub()-nad.second;
+
+		if(c->box[n-1].lb() < lower.second)
+			nadir_dist= std::max(nadir_dist, c->box[n-2].ub()-nad.first);
+		 */
 
 		_trace=false;
-		return dist;
+		return std::max(nadir_dist,dist);
 	}
 
   IntervalVector get_points(double lbx, double lby, double m=POS_INFINITY, double c=POS_INFINITY){

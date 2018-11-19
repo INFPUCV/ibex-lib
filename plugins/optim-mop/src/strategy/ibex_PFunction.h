@@ -5,6 +5,7 @@
  *      Author: iaraya
  */
 
+#include <unordered_map>
 #include "ibex_Function.h"
 
 
@@ -69,6 +70,8 @@ private:
 	static double _min_newton_step;
 	static double _min_diam;
 	static double _eps_opt;
+
+	mutable unordered_map<double, Interval> evals;
 };
 
 } /* namespace ibex */

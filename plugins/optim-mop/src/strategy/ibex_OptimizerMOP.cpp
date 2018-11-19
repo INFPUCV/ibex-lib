@@ -257,6 +257,10 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 	list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
 	dominance_peeler2(c.box,inner_segments);
 
+	//discard_generalized_monotonicty_test(c.box, init_box);
+
+	if (c.box.is_empty()) return;
+
 	if(cy_contract_var)
 			cy_contract2(c,inner_segments);
 	else
@@ -264,6 +268,8 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 
 	if (c.box.is_empty()) return;
+
+
 
 }
 
@@ -294,7 +300,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	y2_ub.second=POS_INFINITY;
 
 
-	list<IntervalVector> B; //list of discarde boxes Y
+	list<IntervalVector> B; //list of discarded boxes Y
 
 
 
@@ -638,20 +644,11 @@ void OptimizerMOP::report(bool verbose) {
 
 	cout << " cpu time used: " << get_time() << "s." << endl;
 	cout << " number of cells: " << get_nb_cells() << endl;
-	/*if(nds_mode==SEGMENTS){
-		cout << " number of solutions: "  << nds.size() << endl;
-		for(auto ub : nds.NDS2)
-			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
-	}
-	if(nds_mode==HAMBURGER){*/
-		cout << " number of solutions: "  << ndsH.size() << endl;
-		for(auto ub : ndsH.NDS2)
-			 cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
-	/*}else{
-		cout << " number of solutions: "  << NDS.size() << endl;
-		for(auto ub : NDS)
-			cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
-	}*/
+
+	cout << " number of solutions: "  << ndsH.size() << endl;
+	for(auto ub : ndsH.NDS2)
+		 cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
+
 
 }
 
