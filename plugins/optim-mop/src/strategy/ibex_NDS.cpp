@@ -69,12 +69,12 @@ namespace ibex {
 
 
 
-	void NDS_seg::addSegment(pair< double, double> p1, pair< double, double> p2) {
+	bool NDS_seg::addSegment(pair< double, double> p1, pair< double, double> p2) {
 	 //  cout << "add_segment:" << p1.first << "," << p1.second << " -- "	<< p2.first << "," << p2.second  <<endl;
 
 		if(p1.first == p2.first  &&  p1.second == p2.second ){
 			addPoint(p1);
-			return;
+			return true;
 		}
 
 		//se insertan en DS2 todos los puntos que se ubican entre p1 y p2 incluyendo en anterior en y1 y el siguiente en y2
@@ -95,7 +95,7 @@ namespace ibex {
 			DS2.push_back(it1->first);
 			if(flagDS2) break;
 
-      //se elimina el punto si es dominado por el segmento
+			//se elimina el punto si es dominado por el segmento
 			if( c_ub < (Interval(it1->first.second) - m*Interval(it1->first.first)).lb()
 			 && p1.first < it1->first.first && p2.second < it1->first.second){
 				aux = it1; ++aux;
@@ -104,8 +104,9 @@ namespace ibex {
 			} else it1++;
 		}
 
-    //se intersecta el segmento con los segmentos de la NDS
+		//se intersecta el segmento con los segmentos de la NDS
 		//se agregan las intersecciones en NDS
+		int intersections=0;
 		pair< double, double> prev = DS2.front();
 		for(auto second:DS2){
 			if(prev==second) continue;
@@ -115,14 +116,16 @@ namespace ibex {
 				//cout << "second:" << second.first << "," << second.second << endl;
 				point = pointIntersection(prev, second, p1, p2);
 
-
 				NDS2.insert(make_pair(point,IntervalVector(1)));
+				intersections++;
 			}catch(NoIntersectionException& e) {
 			}
 
 			prev = second;
 		}
 
+
+		return (intersections>0);
 		// getchar();
 		//std::vector< pair <double, double> > curve_y;
 		//std::vector< pair <double, double> > rectaUB;

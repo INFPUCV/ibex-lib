@@ -52,6 +52,10 @@ int main(int argc, char** argv){
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::Flag _segments(parser, "segments", "NDS defined by line segments instead of points.", {"SEGMENTS"});
 	args::Flag _hamburger(parser, "hamburger", "NDS defined by line segments (hamburger).", {"HAMBURGER"});
+
+	args::Flag _maxdist(parser, "hamburger", "Bisection in the maximum distance vector.", {"MAXsplit"});
+	args::Flag _3split(parser, "hamburger", "Trisection.", {"3split"});
+
 	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the hamburger algorithm (dist < rh*ini_dist)", {"rh"});
 
 
@@ -275,7 +279,8 @@ int main(int argc, char** argv){
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS , eps);
+			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+			(_maxdist)?	OptimizerMOP::MAXDIST: (_3split)? OptimizerMOP::ALL:OptimizerMOP::MIDPOINT,	eps);
 	OptimizerMOP::_rh=rh;
 	OptimizerMOP::_hv=_hv;
 

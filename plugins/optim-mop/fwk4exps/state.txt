@@ -1,7 +1,7 @@
-algos:hamburgerb segmentsb 50pointss 
-gains (average relative times):1.000000 0.951803 0.707712 
-gains (total time)            :1.000000 0.998111 0.862012 
-compared instances: 17  17  17 
-runs    : 19  19  19 
-L:  0   3   9 
-W:  0   1   0 
+algos:hamburger-rh_RH0.1 hamburger-rh_RH0.05 hamburger-rh_RH0.01 hamburger-rh_RH0.005 
+gains (average relative times):1.000000 0.998327 0.999295 0.972281 
+gains (total time)            :1.000000 1.012061 1.011647 1.009571 
+compared instances: 17  17  17  17 
+runs    : 19  19  19  19 
+L:  0   0   0   1 
+W:  0   0   0   1 

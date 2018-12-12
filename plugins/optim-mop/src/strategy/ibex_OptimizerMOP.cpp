@@ -37,10 +37,10 @@ bool OptimizerMOP::_hv=false;
 
 
 OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode, double eps) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode, Mode split_mode, double eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode),
+                				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode), split_mode(split_mode),
 												y1ref(make_pair(POS_INFINITY,NEG_INFINITY)),
 												y2ref(make_pair(POS_INFINITY,NEG_INFINITY))
 								 {
@@ -479,24 +479,29 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 
 	PFunction pf(goal1, goal2, xa, xb);
 
-	Node_t n_init (Interval(0,1), 0.0, POS_INFINITY);
+	Node_t n_init (Interval(0,1), POS_INFINITY);
 	std::priority_queue<Node_t, vector<Node_t> > n;
 	if(process_node(pf, n_init)) {
 		dist0=n_init.dist;
 		n.push(n_init);
-
 	}
+	int count=1;
 
 	while(n.size() > 0) {
 		Node_t nt = n.top();
 		n.pop();
 		if(nt.dist < eps || nt.dist < _rh*dist0 ) continue;
 
-		Node_t n1( Interval(nt.t.lb(), nt.b), 0.0, POS_INFINITY);
-		if(process_node(pf, n1)) n.push(n1);
-
-		Node_t n2( Interval(nt.b, nt.t.ub()), 0.0, POS_INFINITY);
+		double pold=nt.t.lb();
+		for(auto p:nt.b){
+			Node_t n1( Interval(pold, p), POS_INFINITY);
+			if(process_node(pf, n1)) n.push(n1);
+			count++;
+			pold=p;
+		}
+		Node_t n2( Interval(pold, nt.t.ub()), POS_INFINITY);
 		if(process_node(pf, n2)) n.push(n2);
+		count++;
 
 		if(_plot) {
 			py_Plotter::offline_plot(NULL, ndsH.NDS2);
@@ -504,6 +509,7 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 			getchar();
 		}
 	}
+	//cout << count << endl;
 
 }
 
@@ -563,11 +569,8 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 			return false;
 
 	// set bisection of inter
-	list<double> v;
+	set< pair<double, double> > v;
 
-	//we save candidate points for bisection (t1 and t2)
-	v.push_back(c1_t1.second);
-	v.push_back(c2_t2.second);
 
 
 	if(m.ub() < 0) {
@@ -576,6 +579,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		if(nds_mode==HAMBURGER)
 			 c4_t4 = pf.optimize(m, PFunction::MIN, PFunction::F2_mF1, POS_INFINITY, t);
 
+		//agregar este segmento mejoro el conjunto Y'?
 		ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
 
@@ -584,27 +588,43 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 			n_t.dist= ndsH.distance(points,m.mid(),c4_t4.first);
 		}
 
-		v.push_back(c3_t3.second);
-		v.push_back(c4_t4.second);
+		v.insert(c3_t3);
+		v.insert(c4_t4);
 
 	}else if(nds_mode==HAMBURGER){
 		IntervalVector points = ndsH.get_points(c1_t1.first,c2_t2.first);
 		n_t.dist=ndsH.distance(points);
 	}
 
-	double min_dist=2.0;
-	double vv;
-	for(auto point:v){
-		 double dist=std::abs(point-t.mid());
-		 if(dist<min_dist){
-			 min_dist=dist;
-			 vv=point;
-		 }
+	split_mode=MIDPOINT;
+
+	if(split_mode==MIDPOINT)
+		n_t.b.insert(t.mid());
+	else if(split_mode==MAXDIST){
+		double vv;
+		if(v.size()>0){
+          double c=(ya2-m*ya1).mid();
+		  double min_dist=POS_INFINITY;
+		  for(auto point:v){
+			double dist=std::abs(point.first-c);
+			 if(dist<min_dist){
+				 min_dist=dist;
+				 vv=point.second;
+			 }
+		  }
+		}else{
+			if(std::min(ya1.mid(),yb1.mid()) - c1_t1.first < std::min(ya2.mid(),yb2.mid()) - c2_t2.first )
+				vv=c2_t2.second;
+			else
+				vv=c1_t1.second;
+		}
+		if( std::min(vv-t.lb(),t.ub()-vv)/t.diam() > 0.05 ) n_t.b.insert(vv);
+	}else if(split_mode==ALL){
+		for(auto vv:v)
+			if( std::min(vv.second-t.lb(),t.ub()-vv.second)/t.diam() > 0.05 ) n_t.b.insert(vv.second);
 	}
 
-	//if the bisection point is too close of a bound we bisect in the middle
-	if( std::min(vv-t.lb(),t.ub()-vv)/t.diam() < 0.1 ) vv=t.mid();
-	n_t.b=vv;
+	if(n_t.b.size()==0) n_t.b.insert(t.mid());
 
 	if(nds_mode!=HAMBURGER) return false;
 	return true;

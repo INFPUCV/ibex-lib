@@ -130,9 +130,9 @@ public:
 	};
 
 	/**
-	* Add a segment in the NDS structure
+	* Add a segment in the NDS structure. Return 0 if the segment did not modify the NDS
 	*/
-	void addSegment(pair< double, double> p1, pair< double, double> p2);
+	bool addSegment(pair< double, double> p1, pair< double, double> p2);
 
     struct NoIntersectionException : public exception {
        const char * what () const throw () {

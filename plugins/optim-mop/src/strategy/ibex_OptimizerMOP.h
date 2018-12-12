@@ -55,14 +55,14 @@ static bool sort_using_middle_than(double u, double v)
 
 class Node_t{
 public:
-	Node_t(Interval t, double b, double dist) : t(t), b(b), dist(dist) { }
+	Node_t(Interval t, double dist) : t(t), dist(dist) { }
 
 	friend bool operator<(const Node_t& n1, const Node_t& n2){
 		return n1.dist < n2.dist;
 	}
 
 	Interval t;
-	double b;
+	set<double> b;
 	double dist;
 };
 
@@ -87,7 +87,9 @@ public:
 	 */
 	typedef enum {SUCCESS, INFEASIBLE, NO_FEASIBLE_FOUND, UNBOUNDED_OBJ, TIME_OUT, UNREACHED_PREC} Status;
 
-	typedef enum {POINTS, SEGMENTS, HAMBURGER} Mode;
+	typedef enum {POINTS, SEGMENTS, HAMBURGER, /* splitting strategies */ MIDPOINT, MAXDIST, ALL} Mode;
+
+
 
 	/**
 	 *  \brief Create an optimizer.
@@ -112,7 +114,8 @@ public:
 	 *
 	 */
 	OptimizerMOP(int n, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode=POINTS, double eps=default_eps);
+			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
+			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps);
 
 	/**
 	 * \brief Delete *this.
@@ -275,6 +278,9 @@ public:
 
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;
+
+	Mode split_mode;
+
 
 	/**
 	 * \brief Evaluate the goal in the point x
