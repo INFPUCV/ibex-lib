@@ -89,6 +89,11 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 	list< pair <double, double> > points;
 	list< pair< pair< double, double> , pair< double, double> > > segments;
 
+	Vector mid=box2.mid();
+	if (finder.norm_sys.is_inner(mid)){
+		ndsH.addPoint(make_pair(eval_goal(goal1,mid,n).ub(), eval_goal(goal2,mid,n).ub()));
+	}
+
   if(nds_mode==POINTS) {
 		try{
 		while(true){
