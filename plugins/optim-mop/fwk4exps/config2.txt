@@ -31,7 +31,7 @@ outputpos_boxes = 0
 
 [hamburger]
 exec = "../../../__build__/plugins/optim-mop/ibexmop"
-params = _INSTANCE --eps-contract --cy-contract-full --nb_ub_sols=2 --rh=0.01 --HAMBURGER -t _MAXTIME
+params = _INSTANCE --eps-contract --cy-contract-full --nb_ub_sols=2 --rh=0.1 --HAMBURGER -t _MAXTIME
 outputpos_times = 0
 outputpos_boxes = 0
 

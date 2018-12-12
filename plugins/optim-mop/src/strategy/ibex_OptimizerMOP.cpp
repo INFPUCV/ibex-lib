@@ -495,7 +495,8 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 	while(n.size() > 0) {
 		Node_t nt = n.top();
 		n.pop();
-		if(nt.dist < eps || nt.dist < _rh*dist0 ) continue;
+		//if(nt.dist < eps || nt.dist < _rh*dist0 ) continue;
+		if(nt.dist < eps || nt.t.diam() < _rh ) continue;
 
 		double pold=nt.t.lb();
 		for(auto p:nt.b){
