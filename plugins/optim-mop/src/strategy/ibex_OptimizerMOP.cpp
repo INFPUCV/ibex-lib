@@ -323,28 +323,29 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	//handle_cell(*root,init_box);
 	buffer.push(root);
-	if(_plot) py_Plotter::plot_add_box(root);
+	//if(_plot) py_Plotter::plot_add_box(root);
 
 	int iter=0;
 
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-		  if(_plot) {
+		  /*if(_plot) {
 			  cout << "iter:" << iter << endl;
 			  cout << "buffer_size:" << buffer.size() << endl;
-		  }
+		  }*/
 		  iter++;
 
 
 		  if (trace >= 2) cout << buffer;
 
 			Cell *c = buffer.pop();
+			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
 					break;
 	   	}
 
-			if(_plot) py_Plotter::plot_del_box(c);
+			//if(_plot) py_Plotter::plot_del_box(c);
 
 			nb_cells++;
 			contract_and_bound(*c, init_box);
@@ -433,11 +434,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			delete c; // deletes the cell.
 
 			buffer.push(new_cells.first);
-			if(_plot) py_Plotter::plot_add_box(new_cells.first);
+			//if(_plot) py_Plotter::plot_add_box(new_cells.first);
 
 			buffer.push(new_cells.second);
 
-			if(_plot) py_Plotter::plot_add_box(new_cells.second);
+			//if(_plot) py_Plotter::plot_add_box(new_cells.second);
 
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
 			time = timer.get_time();
@@ -495,17 +496,18 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 	while(n.size() > 0) {
 		Node_t nt = n.top();
 		n.pop();
-		//if(nt.dist < eps || nt.dist < _rh*dist0 ) continue;
-		if(nt.dist < eps || nt.t.diam() < _rh ) continue;
+       // cout << nt.dist << endl;
+		if(nt.dist < eps || nt.dist < _rh*dist0 ) continue;
+		//if(nt.dist < eps || nt.t.diam() < _rh ) continue;
 
 		double pold=nt.t.lb();
 		for(auto p:nt.b){
-			Node_t n1( Interval(pold, p), POS_INFINITY);
+			Node_t n1( Interval(pold, p), nt.dist);
 			if(process_node(pf, n1)) n.push(n1);
 			count++;
 			pold=p;
 		}
-		Node_t n2( Interval(pold, nt.t.ub()), POS_INFINITY);
+		Node_t n2( Interval(pold, nt.t.ub()), nt.dist);
 		if(process_node(pf, n2)) n.push(n2);
 		count++;
 
@@ -585,13 +587,16 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		if(nds_mode==HAMBURGER)
 			 c4_t4 = pf.optimize(m, PFunction::MIN, PFunction::F2_mF1, POS_INFINITY, t);
 
+
 		//agregar este segmento mejoro el conjunto Y'?
-		ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
+		//cout << "add:(" << ((ya2-c3_t3.first)/m).ub() << "," << ya2.ub() << "); " <<  yb1.ub() << "," << (yb1*m+c3_t3.first).ub() << endl;
+		bool improve=ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
 										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
+		//py_Plotter::offline_plot(NULL, ndsH.NDS2); getchar();
 
 		if(nds_mode==HAMBURGER){
 		  IntervalVector points = ndsH.get_points(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
-			n_t.dist= ndsH.distance(points,m.mid(),c4_t4.first);
+			n_t.dist= std::min(n_t.dist, ndsH.distance(points,m.mid(),c4_t4.first));
 		}
 
 		v.insert(c3_t3);
@@ -599,7 +604,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 	}else if(nds_mode==HAMBURGER){
 		IntervalVector points = ndsH.get_points(c1_t1.first,c2_t2.first);
-		n_t.dist=ndsH.distance(points);
+		n_t.dist= std::min(n_t.dist,ndsH.distance(points));
 	}
 
 	split_mode=MIDPOINT;

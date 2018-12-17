@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.animation as animation
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import math
 import os
 import random
@@ -85,7 +85,8 @@ def updateplot(q):
             		line = plt.Line2D((lb['pA'][0], lb['pB'][0]),(lb['pA'][1], lb['pB'][1]),lw=0.5,markeredgecolor='black')
             		ax1.add_line(line)
             ax1.plot()
-            plt.step(UBx, UBy, 'g.',  where='post', markersize=0)
+            
+            plt.plot(UBx, UBy, '-g', lw=0.5)
             plt.plot(LBx, LBy, '-b', lw=0.5)
             #ax1.set_xlim([0.0,0.35])
             #ax1.set_ylim([0.7,1.0])
@@ -111,14 +112,14 @@ def simulation(q):
     global filedate
     # print(filedate)
     while True:
-        st = os.stat('output.txt')
+        st = os.stat('output2.txt')
         # print(st[ST_MTIME])
         if(st[ST_MTIME] == filedate):
             time.sleep(1)
             pass
         else:
             filedate = st[ST_MTIME]
-            f = open("output.txt")
+            f = open("output2.txt")
             reader = f.read()
             reader = reader.replace('inf', "math.inf")
             reader = reader.replace('nan', "0")

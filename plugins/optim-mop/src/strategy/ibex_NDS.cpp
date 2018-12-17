@@ -89,18 +89,24 @@ namespace ibex {
 		DS2.push_back(it1->first);
 		it1++;
 
+
 		bool flagDS2 = false;
 		for(;it1 != NDS2.end();) {
+
 			if(it1->first.second < p1.second and it1->first.second < p2.second) flagDS2= true;
 			DS2.push_back(it1->first);
 			if(flagDS2) break;
 
 			//se elimina el punto si es dominado por el segmento
+
+
 			if( c_ub < (Interval(it1->first.second) - m*Interval(it1->first.first)).lb()
 			 && p1.first < it1->first.first && p2.second < it1->first.second){
 				aux = it1; ++aux;
+				//cout << "del:" << it1->first.first << "," << it1->first.second << endl;;
 				NDS2.erase(it1);
 				it1 = aux;
+
 			} else it1++;
 		}
 
@@ -116,6 +122,7 @@ namespace ibex {
 				//cout << "second:" << second.first << "," << second.second << endl;
 				point = pointIntersection(prev, second, p1, p2);
 
+				//cout << "add:" << point.first << "," << point.second << endl;
 				NDS2.insert(make_pair(point,IntervalVector(1)));
 				intersections++;
 			}catch(NoIntersectionException& e) {
@@ -123,6 +130,7 @@ namespace ibex {
 
 			prev = second;
 		}
+
 
 
 		return (intersections>0);
@@ -166,7 +174,7 @@ namespace ibex {
 				if(first) first_dom=it1->first;
 				first=false;
 				last_dom=it1->first;
-
+				//cout << "delp:" << it1->first.first << "," << it1->first.second << endl;
 				NDS2.erase(it1);
 				it1 = aux;
 			} else ++it1;
@@ -185,8 +193,11 @@ namespace ibex {
 		//cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
 		// se agregan el punto y los dos obtenidos anteriormente
 		NDS2.insert(make_pair(new_p, IntervalVector(1)));
+		//cout << "addp:" << new_p.first << "," << new_p.second << endl;
 		NDS2.insert(make_pair(intersection1, IntervalVector(1)));
+		//cout << "addp:" << intersection1.first << "," << intersection1.second << endl;
 		NDS2.insert(make_pair(intersection2, IntervalVector(1)));
+		//cout << "addp:" << intersection2.first << "," << intersection2.second << endl;
 
 
 		//std::vector< pair <double, double> > curve_y;

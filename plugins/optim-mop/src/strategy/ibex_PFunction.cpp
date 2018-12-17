@@ -13,8 +13,8 @@ namespace ibex {
 bool PFunction::MIN=true;
 bool PFunction::MAX=false;
 
-double PFunction::_min_newton_step=0.25; //25% of the current diameter
-double PFunction::_min_diam=0.15; //15% of the initial diameter
+double PFunction::_min_newton_step=0.1; //25% of the current diameter
+double PFunction::_min_diam=0.1; //15% of the initial diameter
 double PFunction::_eps_opt=1e-7;
 
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
@@ -216,6 +216,12 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, funct
 			t_temp = inter.ub();
 		}
 
+		if(lb_interval + _eps_opt > lb) {
+			t_final = t_temp;
+			lb = lb_interval+_eps_opt;
+		}
+
+		/*
 		if(fabs(lb_interval) < 1 && lb_interval + _eps_opt > lb) {
 			t_final = t_temp;
 			lb = lb_interval+_eps_opt;
@@ -223,12 +229,12 @@ pair<double, double> PFunction::optimize(const Interval& m, bool minimize, funct
 		else if(fabs(lb_interval) >= 1 && lb_interval + fabs(lb_interval)*_eps_opt > lb) {
 			t_final = t_temp;
 			lb = lb_interval + fabs(lb_interval)*_eps_opt;
-		}
+		}*/
 		/***************************************/
 
 		// Contract if derivate is not empty
 
-    derivate = deriv(inter, m, minimize, f);
+		derivate = deriv(inter, m, minimize, f);
 		if(!derivate.is_empty()) {
 
 			// contract Newton from left
