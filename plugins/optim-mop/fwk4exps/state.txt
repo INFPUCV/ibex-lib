@@ -1,7 +1,7 @@
-algos:hamburger-rh_RH0.1 hamburger-rh_RH0.05 hamburger-rh_RH0.01 hamburger-rh_RH0.005 hamburger-rh_RH0.001 
-gains (average relative times):1.000000 0.988718 0.934447 0.980667 0.954519 
-gains (total time)            :1.000000 1.011136 0.935044 1.026938 0.999454 
-compared instances: 19  19  19  19  19 
-runs    : 19  19  19  19  19 
-L:  0   1   2   2   2 
-W:  0   2   2   1   1 
+algos:segments 
+gains (average relative times):1.000000 
+gains (total time)            :1.000000 
+compared instances: 19 
+runs    : 19 
+L:  0 
+W:  0 
