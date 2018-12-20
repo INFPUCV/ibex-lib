@@ -260,7 +260,9 @@ void OptimizerMOP::dominance_peeler2(IntervalVector& box, list <pair <double,dou
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
-	dominance_peeler2(c.box,inner_segments);
+
+	if(_cy_upper)
+		dominance_peeler2(c.box,inner_segments);
 
 	//discard_generalized_monotonicty_test(c.box, init_box);
 
@@ -514,7 +516,7 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 		if(_plot) {
 			py_Plotter::offline_plot(NULL, ndsH.NDS2);
 			//py_Plotter::offline_plot(NULL, LB.NDS2);
-			getchar();
+			//getchar();
 		}
 	}
 	//cout << count << endl;
