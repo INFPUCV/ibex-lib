@@ -1,4 +1,4 @@
-#Ibex-MOP
+# Ibex-MOP
 
 *ibexMop* is an interval branch & bound solver for **Nonlinear BiObjective Optimization** problems.
 
