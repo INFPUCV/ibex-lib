@@ -1,7 +1,7 @@
-algos:segments 
-gains (average relative times):1.000000 
-gains (total time)            :1.000000 
-compared instances: 19 
-runs    : 19 
-L:  0 
-W:  0 
+algos:hamburger-nocontracty 50points-nocontracty 
+gains (average relative times):1.000000 1.188313 
+gains (total time)            :1.000000 2.055491 
+compared instances: 13  17 
+runs    : 19  19 
+L:  0   5 
+W:  0   5 
