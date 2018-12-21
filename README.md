@@ -86,7 +86,7 @@ Example of using ub2 for finding an upper envelope for the blue feasible curve i
 
 ## Run an example:
 
-     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --eps-contract --HAMBURGER --eps=0.001 --cy-contract-full
+     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --eps-contract --ub=ub1 --eps=0.001 --cy-contract-full
 
 For plotting the non-dominated vectors returned by the solver
 
