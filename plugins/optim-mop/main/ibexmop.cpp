@@ -41,7 +41,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<double> _timelimit(parser, "float", "timelimit (default: 100)", {'t',"timelimit"});
 	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the additional constraint cy.", {"cy-contract-full"});
 	args::Flag _eps_contract(parser, "eps-contract", "Contract using eps.", {"eps-contract"});
-	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"nb_ub_sols"});
+	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"N"});
 	args::ValueFlag<double> _epsx(parser, "float", "The minimum size of boxes", {"eps_x"});
 	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
 	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
@@ -50,8 +50,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _y2ref(parser, "hv", "Reference interval y2 for computing HV", {"y2"});
 	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
-	args::Flag _segments(parser, "segments", "NDS defined by line segments instead of points.", {"SEGMENTS"});
-	args::Flag _hamburger(parser, "hamburger", "NDS defined by line segments (hamburger).", {"HAMBURGER"});
+	args::ValueFlag<std::string> _upperbounding(parser, "string", "Upper bounding strategy (default: ub2).", {"ub"});
 
 	args::Flag _maxdist(parser, "hamburger", "Bisection in the maximum distance vector.", {"MAXsplit"});
 	args::Flag _3split(parser, "hamburger", "Trisection.", {"3split"});
@@ -121,6 +120,8 @@ int main(int argc, char** argv){
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
 	double eqeps= 1.e-8;
 	double rh=(_rh)? _rh.Get():0.1;
+	bool _segments=(_upperbounding && _upperbounding.Get()=="ub1");
+	bool _hamburger=(_upperbounding && _upperbounding.Get()=="ub2");
 
 	OptimizerMOP::_plot = _plot;
 

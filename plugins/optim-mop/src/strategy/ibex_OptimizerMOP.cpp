@@ -261,8 +261,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 	list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
 
-	if(_cy_upper)
-		dominance_peeler2(c.box,inner_segments);
+	dominance_peeler2(c.box,inner_segments);
 
 	//discard_generalized_monotonicty_test(c.box, init_box);
 
