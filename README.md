@@ -29,7 +29,7 @@ Then it finds a set of N-2 (by default N=50) equidistant feasible solutions.
   
   * (ub2) The upper envelope Y' is also represented by using a set of upper line segments. 
   The algorithm performs the same procedure than ub1 for finding upper line segments, however
-  it goes further and is able to find the whole upper envelope related to the feasible line segment.
+  it goes further and it is able to find the whole upper envelope related to the feasible line segment.
 
 ![ub1](https://i.imgur.com/H6zAwpO.png)
 Example of an upper line segment.
