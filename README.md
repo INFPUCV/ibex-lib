@@ -37,6 +37,12 @@ Example of an upper line segment.
 ![Cy Comparison](https://i.imgur.com/Wphf10d.png)
 Example of using ub2 for finding an upper envelope for the blue feasible curve in the objective space.
 
+## Download
+````
+git clone https://github.com/INFPUCV/ibex-lib.git
+git checkout -t origin/master-mop
+``
+
 ## Installation
 
 ````
