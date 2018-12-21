@@ -103,7 +103,7 @@ Constraints
 <expression of the second objective function> = z2;
 // other constraints...
 ```
-You can see the set of instances in plugins/optim-mop/benchs.
+You can see the set of instances in [plugins/optim-mop/benchs](https://github.com/INFPUCV/ibex-lib/tree/master-mop/plugins/optim-mop/benchs).
 
 
 ## Authors:
