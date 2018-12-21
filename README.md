@@ -59,9 +59,9 @@ Then it finds a set of N-2 (by default N=50) equidistant feasible solutions.
   The algorithm performs the same procedure than ub1 for finding upper line segments, however
   it goes further and is able to find the whole upper envelope related to the feasible line segment.
 
-![ub1](https://imgur.com/H6zAwpO)
+![ub1](https://i.imgur.com/H6zAwpO.png)
 Example of an upper line segment.
   
-![Cy Comparison](https://imgur.com/Wphf10d)
+![Cy Comparison](https://i.imgur.com/Wphf10d.png)
 Example of using ub2 for finding an upper envelope for the blue feasible curve in the objective space.
 
