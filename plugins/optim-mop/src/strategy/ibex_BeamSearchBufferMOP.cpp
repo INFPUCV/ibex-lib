@@ -27,24 +27,38 @@ namespace ibex {
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
         double dist=nds->distance(cell);
+		int delta=0,i=0;
 		if(dist < cell->get<CellMOP>().ub_distance && !OptimizerMOP::_hv)
 			cell->get<CellMOP>().ub_distance=dist;
         
         
         if(globalBuffer.empty() && currentBuffer.empty() && nextBuffer.empty()){
+		
 			globalBuffer.push(cell);
-		}else if(nextBuffer.size()+1>4){
-			
-        }       nextBuffer.push(cell);
+		
+		}else{
+
+			nextBuffer.insert(cell);
+			if(nextBuffer.size()>4){
+	
+				globalBuffer.push(nextBuffer.pop());
+	
+			}
+		}       
 
 		
 
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
+		Cell* c = NULL;
+		//sacar de current
+		if(!currentBuffer.empty()){
+			Cell* c = currentBuffer.top();
+        	currentBuffer.pop();
+		}
 
-        Cell* c = top();
-        globalBuffer.pop();
+        
 
 		return c;
 	}
