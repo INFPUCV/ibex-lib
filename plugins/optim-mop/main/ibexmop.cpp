@@ -191,6 +191,8 @@ int main(int argc, char** argv){
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
+	else if(strategy=="BS")
+		buffer = new BeamSearchBufferMOP;
 
 
 	// Build the bisection heuristic
