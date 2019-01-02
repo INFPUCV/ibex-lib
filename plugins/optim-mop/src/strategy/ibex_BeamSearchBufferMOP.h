@@ -36,20 +36,6 @@ struct max_distance {
 
 };
 
-struct min_distance {
-
-
-	bool operator() (const Cell* c1, const Cell* c2){
-	   int n = c1->box.size();
-	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
-		   return (c1->get<CellMOP>().ub_distance > c2->get<CellMOP>().ub_distance);
-	   else if(c1->box[n-2].lb() <= c2->box[n-2].lb() && c1->box[n-1].lb() <= c2->box[n-1].lb()) return true;
-	   else return false;
-	}
-
-};
-
-
 /** \ingroup strategy
  *
  * \brief Buffer which selects next the box maximizing the distance to the non dominated set.
@@ -110,6 +96,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distance > globalBuffer;
     mutable std::priority_queue<Cell*, std:vector<Cell*>, max_distance > currentBuffer;
     mutable std::multiset <Cell*, max_distance> nextBuffer;
+    mutable std::multiset <Cell*, max_distance>::iterator it;
 
   NDS_seg* nds;
 
