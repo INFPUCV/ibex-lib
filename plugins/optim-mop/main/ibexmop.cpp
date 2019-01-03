@@ -143,8 +143,8 @@ int main(int argc, char** argv){
 	cout << "Linear Relax: " << linearrelaxation << endl;
 	cout << "Bisector: " << bisection << endl;
 	cout << "Strategy: " << strategy << endl;
-	cout << "eps: " << eps << endl;
-	cout << "eps_x: " << eps_x << endl;
+	//cout << "eps: " << eps << endl;
+	//cout << "eps_x: " << eps_x << endl;
 	cout << "nb_ub_sols: " << nb_ub_sols << endl;
 	//cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
 	cout << "plot: " <<  ((OptimizerMOP::_plot)? "yes":"no") << endl;
@@ -192,7 +192,7 @@ int main(int argc, char** argv){
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
 	else if(strategy=="BS")
-		buffer = new BeamSearchBufferMOP;
+	  buffer = new BeamSearchBufferMOP;
 
 
 	// Build the bisection heuristic

@@ -2,7 +2,7 @@
  * ibex_BeamSearchBufferMOP.cpp
  *
  *  Created on: 20 oct. 2017
- *      Author: iaraya
+ *      Author: matias y pablo
  */
 
 #include "ibex_BeamSearchBufferMOP.h"
@@ -27,9 +27,7 @@ namespace ibex {
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
         double dist=nds->distance(cell);
-
 		int delta=0,i=0;
-
 		if(dist < cell->get<CellMOP>().ub_distance && !OptimizerMOP::_hv)
 			cell->get<CellMOP>().ub_distance=dist;
         
@@ -42,11 +40,9 @@ namespace ibex {
 
 			nextBuffer.insert(cell);
 			if(nextBuffer.size()>4){
-
-				it = it.nextBuffer.end();
-				globalBuffer.push(it);
-				nextBuffer.erase(it);
-
+	
+				globalBuffer.push(*nextBuffer.end());
+	
 			}
 		}       
 
@@ -56,23 +52,10 @@ namespace ibex {
 
 	Cell* BeamSearchBufferMOP::pop() {
 		Cell* c = NULL;
-		int i =0;
 		//sacar de current
-		if(currentBuffer.empty() && nextBuffer.empty()){
-			c = globalBuffer.top();
-			globalBuffer.pop();
-		}
-		else if(!currentBuffer.empty()){
-
-			c = currentBuffer.top();
+		if(!currentBuffer.empty()){
+			Cell* c = currentBuffer.top();
         	currentBuffer.pop();
-
-        	if(currentBuffer.empty()){
-        		for (it=nextBuffer.begin(); it!=nextBuffer.end(); ++it){
-       				currentBuffer.push(it);
-    				it=nextBuffer.erase(it);
-        		}
-        	}
 		}
 
         
@@ -80,7 +63,7 @@ namespace ibex {
 		return c;
 	}
 
-  int counter=0;
+  int counter1=0;
 	Cell* BeamSearchBufferMOP::top() const {
 
 		Cell* c = globalBuffer.top();
@@ -99,8 +82,8 @@ namespace ibex {
 			dist=nds->distance(c);
 		}
 
-    counter ++;
-		//cout << counter  <<":" <<  c->get<CellMOP>().ub_distance << endl;
+    	counter1 ++;
+		//cout << counter1  <<":" <<  c->get<CellMOP>().ub_distance << endl;
 
 		return c;
 	}

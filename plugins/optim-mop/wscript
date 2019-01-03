@@ -84,8 +84,8 @@ def build (bld):
 ######################
 ##### benchmarks #####
 ######################
-def benchmarks (bch):
-	pass
+#def benchmarks (bch):
+	#pass
 	# Build the benchmark program
 	#  bch.program (source = "benchmark_optim.cpp",
 	#               target = "benchmark_optim",

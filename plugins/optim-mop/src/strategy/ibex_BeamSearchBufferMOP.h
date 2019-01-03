@@ -2,11 +2,11 @@
  * ibex_BeamSearchBufferMOP.h
  *
  *  Created on: 20 oct. 2017
- *      Author: iaraya
+ *      Author: matias y pablo
  */
 
-#ifndef OPTIM_SRC_STRATEGY_IBEX_BeamSearchBufferMOP_H_
-#define OPTIM_SRC_STRATEGY_IBEX_BeamSearchBufferMOP_H_
+#ifndef OPTIM_SRC_STRATEGY_IBEX_BEAMSEARCHBUFFERMOP_H_
+#define OPTIM_SRC_STRATEGY_IBEX_BEAMSEARCHBUFFERMOP_H_
 
 
 
@@ -23,7 +23,7 @@ namespace ibex {
 /**
  * Criteria for bi-objective problems
  */
-struct max_distance {
+struct max_distanceBeam {
 
 
 	bool operator() (const Cell* c1, const Cell* c2){
@@ -93,10 +93,10 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	 * A heap data structure for keeping the cells sorted by distance
 	 */
 
-	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distance > globalBuffer;
-    mutable std::priority_queue<Cell*, std:vector<Cell*>, max_distance > currentBuffer;
-    mutable std::multiset <Cell*, max_distance> nextBuffer;
-    mutable std::multiset <Cell*, max_distance>::iterator it;
+	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > globalBuffer;
+    mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > currentBuffer;
+    mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
+    mutable std::multiset <Cell*, max_distanceBeam>::iterator it;
 
   NDS_seg* nds;
 

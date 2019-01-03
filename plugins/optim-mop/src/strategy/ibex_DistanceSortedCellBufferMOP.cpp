@@ -13,7 +13,7 @@ namespace ibex {
 
 
 
-	map< pair <double, double>, IntervalVector >* max_distance::UB=NULL;
+	//map< pair <double, double>, IntervalVector >* max_distance::UB=NULL;
 
 
 	void DistanceSortedCellBufferMOP::flush() {
