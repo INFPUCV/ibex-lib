@@ -50,7 +50,8 @@ namespace ibex {
 	
 			}
 		}  
-  
+
+		cout << "termino push" << endl;
 
 		
 
@@ -62,28 +63,29 @@ namespace ibex {
 		//sacar de current
 
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-
-				for(it = nextBuffer.begin(); it != nextBuffer.end(); ++it){
-					
-					currentBuffer.push(*it);
-					
-					it = nextBuffer.erase(it);
-					
-				}
-				cout << "salida for" << endl;
-			}else if(currentBuffer.empty() && nextBuffer.empty()){	
 				
-					c = globalBuffer.top();
-					
-					globalBuffer.pop();
-					
-			}else if(!currentBuffer.empty()){
-					
-					c = currentBuffer.top();
-					currentBuffer.pop();
+			while(!nextBuffer.empty()){
+				cout << "entrada while" << endl;
+				it = nextBuffer.begin();
+				currentBuffer.push(*it);	
+				nextBuffer.erase(it);
+			}
+			cout << "salida while" << endl;
+		}else if(currentBuffer.empty() && nextBuffer.empty()){
 
-			} 
-	
+			cout << "primera iter" << endl;
+			c = globalBuffer.top();
+			globalBuffer.pop();
+					
+		}else if(!currentBuffer.empty()){
+					
+			c = currentBuffer.top();
+			currentBuffer.pop();
+
+		} 
+
+		cout << "termino pop"<< endl;
+
 		return c;
 	}
 
