@@ -311,6 +311,11 @@ int main(int argc, char** argv){
 		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o.ndsH);
 	}
 
+	if(strategy=="BS"){
+		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH);
+	}
+
+
 	//max_distance::UB= &o.get_UB();
 
 

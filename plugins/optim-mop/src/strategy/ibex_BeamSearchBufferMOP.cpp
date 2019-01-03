@@ -26,11 +26,16 @@ namespace ibex {
 	}
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
+		cout << nds << endl;
         double dist=nds->distance(cell);
+		cout << dist << endl;
 		int delta=0,i=0;
-		if(dist < cell->get<CellMOP>().ub_distance && !OptimizerMOP::_hv)
+		if(dist < cell->get<CellMOP>().ub_distance)
+		{	
+
 			cell->get<CellMOP>().ub_distance=dist;
-        
+		}
+ 
         
         if(globalBuffer.empty() && currentBuffer.empty() && nextBuffer.empty()){
 		
@@ -44,7 +49,8 @@ namespace ibex {
 				globalBuffer.push(*nextBuffer.end());
 	
 			}
-		}       
+		}  
+  
 
 		
 
@@ -52,14 +58,32 @@ namespace ibex {
 
 	Cell* BeamSearchBufferMOP::pop() {
 		Cell* c = NULL;
+		std::multiset <Cell*>::iterator it;
 		//sacar de current
-		if(!currentBuffer.empty()){
-			Cell* c = currentBuffer.top();
-        	currentBuffer.pop();
-		}
 
-        
+		if(currentBuffer.empty() && !nextBuffer.empty()){
 
+				for(it = nextBuffer.begin(); it != nextBuffer.end(); ++it){
+					
+					currentBuffer.push(*it);
+					
+					it = nextBuffer.erase(it);
+					
+				}
+				cout << "salida for" << endl;
+			}else if(currentBuffer.empty() && nextBuffer.empty()){	
+				
+					c = globalBuffer.top();
+					
+					globalBuffer.pop();
+					
+			}else if(!currentBuffer.empty()){
+					
+					c = currentBuffer.top();
+					currentBuffer.pop();
+
+			} 
+	
 		return c;
 	}
 

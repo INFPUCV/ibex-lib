@@ -96,7 +96,6 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > globalBuffer;
     mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > currentBuffer;
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
-    mutable std::multiset <Cell*, max_distanceBeam>::iterator it;
 
   NDS_seg* nds;
 
