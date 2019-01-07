@@ -35,6 +35,8 @@ namespace ibex {
 		if(dist < cell->get<CellMOP>().ub_distance && !OptimizerMOP::_hv)
 			cell->get<CellMOP>().ub_distance=dist;
 		cells.push(cell);
+		iter++;
+		cout << iter << endl;
 	}
 
 	Cell* DistanceSortedCellBufferMOP::pop() {

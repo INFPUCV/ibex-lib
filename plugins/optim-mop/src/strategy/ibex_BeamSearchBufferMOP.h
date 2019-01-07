@@ -43,7 +43,7 @@ struct min_distanceBeam {
 	   int n = c1->box.size();
 	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
 		   return (c1->get<CellMOP>().ub_distance > c2->get<CellMOP>().ub_distance);
-	   else if(c1->box[n-2].lb() <= c2->box[n-2].lb() && c1->box[n-1].lb() <= c2->box[n-1].lb()) return true;
+	   else if(c1->box[n-2].lb() < c2->box[n-2].lb() && c1->box[n-1].lb() < c2->box[n-1].lb()) return true;
 	   else return false;
 	}
 
@@ -108,11 +108,12 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 
 	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > globalBuffer;
     mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > currentBuffer;
-    mutable std::multiset <Cell*, min_distanceBeam> nextBuffer;
+	//mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > nextBuffer;
+    mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
 
   NDS_seg* nds;
   private:
-	int cont = 0;
+	int cont = 0, iter = 0;
 };
 
 

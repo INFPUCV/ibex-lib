@@ -27,8 +27,8 @@ namespace ibex {
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
 		//cout << nds << endl;
-		cout << "push"<< endl;
         double dist=nds->distance(cell);
+		std::multiset <Cell*>::iterator it;
 		//cout << dist << endl;
 		int delta=0,i=0;
 		if(dist < cell->get<CellMOP>().ub_distance)
@@ -51,24 +51,25 @@ namespace ibex {
 
 			//cout << "tamaño next cuando el global tiene elementos " << endl;
 			//cout << globalBuffer.size() << endl;
-			cout << "hola" << endl;
 			while(nextBuffer.size()>4){
-				
-				globalBuffer.push(*nextBuffer.begin());
+			/*	it = nextBuffer.end();
+				globalBuffer.push(*it);
+
+				nextBuffer.erase(*it);
+				JELP
+*/
+				globalBuffer.push(*nextBuffer.begin())	;
 				nextBuffer.erase(nextBuffer.begin());
-	
 			}
 		}  		
-
-		cout << "termino push" << endl;
-
+		iter++;
+		cout << iter << endl;
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
 		Cell* c = NULL;
 		std::multiset <Cell*>::iterator it;
 		//sacar de current
-		cout << "pop" << endl;
 		if(currentBuffer.empty() && !nextBuffer.empty()){
 				
 			while(!nextBuffer.empty()){
@@ -77,25 +78,17 @@ namespace ibex {
 				it = nextBuffer.begin();
 				currentBuffer.push(*it);	
 				nextBuffer.erase(it);
-				//cout << "tamaño current" << endl;
-				//cout << currentBuffer.size() << endl;
-				//cout << "tamaño next" << endl;
-				//cout << nextBuffer.size() << endl;
 			}
 			//cout << "salida while" << endl;
 		}
 		
 		if(currentBuffer.empty() && nextBuffer.empty()){
 
-			//cout << "tamaño global" << endl;
-			//cout << globalBuffer.size() << endl;
 			c = globalBuffer.top();
 			globalBuffer.pop();
 					
 		}else if(!currentBuffer.empty()){
 			
-			//cout << "tamaño current" << endl;
-			//cout << currentBuffer.size() << endl;
 			c = currentBuffer.top();
 			currentBuffer.pop();
 
@@ -103,7 +96,6 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		cout << "termino pop" << endl;
 		return c;
 	}
 
