@@ -9,7 +9,7 @@
 #include "ibex_OptimizerMOP.h"
 #include <algorithm>    // std::min_element, std::max_element
 
-namespace ibex {
+namespace ibex { 
 
 	void BeamSearchBufferMOP::flush() {
 		while (!globalBuffer.empty()) {
@@ -22,13 +22,14 @@ namespace ibex {
 	}
 
 	bool BeamSearchBufferMOP::empty() const {
-		return globalBuffer.empty();
+		return (globalBuffer.empty() && currentBuffer.empty() && nextBuffer.empty());
 	}
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
-		cout << nds << endl;
+		//cout << nds << endl;
+		cout << "push"<< endl;
         double dist=nds->distance(cell);
-		cout << dist << endl;
+		//cout << dist << endl;
 		int delta=0,i=0;
 		if(dist < cell->get<CellMOP>().ub_distance)
 		{	
@@ -36,24 +37,30 @@ namespace ibex {
 			cell->get<CellMOP>().ub_distance=dist;
 		}
  
-        
-        if(globalBuffer.empty() && currentBuffer.empty() && nextBuffer.empty()){
-		
+        //cout << cont << endl;
+        if(globalBuffer.empty() && nextBuffer.empty() && cont==0){
+			
 			globalBuffer.push(cell);
+			//cout << "tamaño global cuando los 3 estan vacios" << endl;
+			//cout << globalBuffer.size() << endl;
+			cont=1;
 		
 		}else{
-
+			
 			nextBuffer.insert(cell);
-			if(nextBuffer.size()>4){
-	
-				globalBuffer.push(*nextBuffer.end());
+
+			//cout << "tamaño next cuando el global tiene elementos " << endl;
+			//cout << globalBuffer.size() << endl;
+			cout << "hola" << endl;
+			while(nextBuffer.size()>4){
+				
+				globalBuffer.push(*nextBuffer.begin());
+				nextBuffer.erase(nextBuffer.begin());
 	
 			}
-		}  
+		}  		
 
 		cout << "termino push" << endl;
-
-		
 
 	}
 
@@ -61,31 +68,42 @@ namespace ibex {
 		Cell* c = NULL;
 		std::multiset <Cell*>::iterator it;
 		//sacar de current
-
+		cout << "pop" << endl;
 		if(currentBuffer.empty() && !nextBuffer.empty()){
 				
 			while(!nextBuffer.empty()){
-				cout << "entrada while" << endl;
+
+				//cout << "entrada while" << endl;
 				it = nextBuffer.begin();
 				currentBuffer.push(*it);	
 				nextBuffer.erase(it);
+				//cout << "tamaño current" << endl;
+				//cout << currentBuffer.size() << endl;
+				//cout << "tamaño next" << endl;
+				//cout << nextBuffer.size() << endl;
 			}
-			cout << "salida while" << endl;
-		}else if(currentBuffer.empty() && nextBuffer.empty()){
+			//cout << "salida while" << endl;
+		}
+		
+		if(currentBuffer.empty() && nextBuffer.empty()){
 
-			cout << "primera iter" << endl;
+			//cout << "tamaño global" << endl;
+			//cout << globalBuffer.size() << endl;
 			c = globalBuffer.top();
 			globalBuffer.pop();
 					
 		}else if(!currentBuffer.empty()){
-					
+			
+			//cout << "tamaño current" << endl;
+			//cout << currentBuffer.size() << endl;
 			c = currentBuffer.top();
 			currentBuffer.pop();
 
+		}else{
+			cout << "error" << endl;
+		 	exit;
 		} 
-
-		cout << "termino pop"<< endl;
-
+		cout << "termino pop" << endl;
 		return c;
 	}
 

@@ -351,7 +351,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			nb_cells++;
 			contract_and_bound(*c, init_box);
-
 			if (c->box.is_empty()) {
 				delete c;
 				continue;
