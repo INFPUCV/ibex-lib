@@ -63,19 +63,28 @@ namespace ibex {
 			}
 		}  		
 		iter++;
-		cout << iter << endl;
+		//cout << iter << endl;
+		//double distNext = nds->distance(*nextBuffer.begin());
+		//cout << nds << endl;
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
 		Cell* c = NULL;
 		std::multiset <Cell*>::iterator it;
-		//sacar de current
+		
 		if(currentBuffer.empty() && !nextBuffer.empty()){
 				
 			while(!nextBuffer.empty()){
 
 				//cout << "entrada while" << endl;
 				it = nextBuffer.begin();
+				//double distNextBegin = nds->distance(*nextBuffer.begin());
+				//cout << "distancia primero: " << distNextBegin << endl;
+				/*if(nextBuffer.size()>1){
+					it++;
+					double distNextEnd = nds->distance(*it);
+					//cout << "distancia siguiente: " << distNextEnd << endl;
+				}*/
 				currentBuffer.push(*it);	
 				nextBuffer.erase(it);
 			}

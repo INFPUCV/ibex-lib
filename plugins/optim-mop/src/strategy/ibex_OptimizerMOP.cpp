@@ -332,6 +332,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
+			py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			getchar();
 		  /*if(_plot) {
 			  cout << "iter:" << iter << endl;
 			  cout << "buffer_size:" << buffer.size() << endl;
@@ -344,7 +346,12 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			Cell *c = buffer.pop();
 			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
+				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)!=NULL)
 					break;
+				else{
+					delete c;
+					continue;
+				}
 	   	}
 
 			//if(_plot) py_Plotter::plot_del_box(c);
