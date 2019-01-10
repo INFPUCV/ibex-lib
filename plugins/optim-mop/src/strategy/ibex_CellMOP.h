@@ -23,13 +23,13 @@ public:
 	/**
 	 * \brief Constructor for the root node (followed by a call to init_root).
 	 */
-	CellMOP() : depth(0), id(0), a(0.0), w_lb(POS_INFINITY), ub_distance(POS_INFINITY) {}
+	CellMOP() : depth(0), id(0), randomid(rand()), a(0.0), w_lb(POS_INFINITY), ub_distance(POS_INFINITY) {}
 
 	/**
 	 * \brief Copy constructor
 	 */
 
-	CellMOP(const CellMOP& c) : depth(c.depth+1), id(++nb_cells),
+	CellMOP(const CellMOP& c) : depth(c.depth+1), id(++nb_cells), randomid(rand()),
 			a(c.a), w_lb(c.w_lb), ub_distance(c.ub_distance) { }
 
 	/**
@@ -60,6 +60,7 @@ public:
     /**unique identifier for comparisons*/
     int id;
 
+	int randomid;
 	/** depth of the node **/
 	int depth;
 

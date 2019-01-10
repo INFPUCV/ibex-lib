@@ -16,6 +16,7 @@
 #include <queue>
 #include <map>
 
+
 using namespace std;
 
 namespace ibex {
@@ -27,27 +28,31 @@ struct max_distanceBeam {
 
 
 	bool operator() (const Cell* c1, const Cell* c2){
-	   int n = c1->box.size();
-	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
+	    int n = c1->box.size();
+	    if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
 		   return (c1->get<CellMOP>().ub_distance < c2->get<CellMOP>().ub_distance);
-	   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
-	   else return false;
+	    else if(c1->get<CellMOP>().ub_distance == c2->get<CellMOP>().ub_distance)
+	   		return (c1->get<CellMOP>().depth > c2->get<CellMOP>().depth);
+		else if(c1->get<CellMOP>().ub_distance == c2->get<CellMOP>().ub_distance && c1->get<CellMOP>().depth == c2->get<CellMOP>().depth)
+	   		return (c1->get<CellMOP>().id < c2->get<CellMOP>().id);
+	    else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
+	    else return false;
 	}
 
 };
 
-struct min_distanceBeam {
+// struct min_distanceBeam {
 
 
-	bool operator() (const Cell* c1, const Cell* c2){
-	   int n = c1->box.size();
-	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
-		   return (c1->get<CellMOP>().ub_distance > c2->get<CellMOP>().ub_distance);
-	   else if(c1->box[n-2].lb() < c2->box[n-2].lb() && c1->box[n-1].lb() < c2->box[n-1].lb()) return true;
-	   else return false;
-	}
+// 	bool operator() (const Cell* c1, const Cell* c2){
+// 	   int n = c1->box.size();
+// 	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
+// 		   return (c1->get<CellMOP>().ub_distance > c2->get<CellMOP>().ub_distance);
+// 	   else if(c1->box[n-2].lb() < c2->box[n-2].lb() && c1->box[n-1].lb() < c2->box[n-1].lb()) return true;
+// 	   else return false;
+// 	}
 
-};
+// };
 
 /** \ingroup strategy
  *
@@ -55,6 +60,8 @@ struct min_distanceBeam {
  */
 class BeamSearchBufferMOP : public CellBufferOptim {
  public:
+
+   static int nextBufferSize;
 
    void set(NDS_seg& nds) {
 		 this->nds=&nds;
@@ -112,8 +119,9 @@ class BeamSearchBufferMOP : public CellBufferOptim {
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
 
   NDS_seg* nds;
+
   private:
-	int cont = 0, iter = 0;
+	int cont = 0, iter = 0, cantBeam = 0;
 };
 
 

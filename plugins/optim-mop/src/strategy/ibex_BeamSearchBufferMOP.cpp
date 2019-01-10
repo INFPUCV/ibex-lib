@@ -9,11 +9,20 @@
 #include "ibex_OptimizerMOP.h"
 #include <algorithm>    // std::min_element, std::max_element
 
+
 namespace ibex { 
+
+	int BeamSearchBufferMOP::nextBufferSize = 4;
 
 	void BeamSearchBufferMOP::flush() {
 		while (!globalBuffer.empty()) {
 			delete pop();
+		}
+		while (!currentBuffer.empty()) {
+			delete pop();
+		}
+		while (!nextBuffer.empty()) {
+			nextBuffer.erase(nextBuffer.begin());
 		}
 	}
 
@@ -26,10 +35,10 @@ namespace ibex {
 	}
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
-		//cout << nds << endl;
+		
         double dist=nds->distance(cell);
 		std::multiset <Cell*>::iterator it;
-		//cout << dist << endl;
+		
 		int delta=0,i=0;
 		if(dist < cell->get<CellMOP>().ub_distance)
 		{	
@@ -37,46 +46,37 @@ namespace ibex {
 			cell->get<CellMOP>().ub_distance=dist;
 		}
  
-        //cout << cont << endl;
+        //primera iteracion
         if(globalBuffer.empty() && nextBuffer.empty() && cont==0){
 			
 			globalBuffer.push(cell);
-			//cout << "tamaño global cuando los 3 estan vacios" << endl;
-			//cout << globalBuffer.size() << endl;
+			//se cambia el valor del flag cont para no entrar nuevamente
 			cont=1;
 		
 		}else{
 			
 			nextBuffer.insert(cell);
 
-			//cout << "tamaño next cuando el global tiene elementos " << endl;
-			//cout << globalBuffer.size() << endl;
-			while(nextBuffer.size()>4){
-			/*	it = nextBuffer.end();
-				globalBuffer.push(*it);
+			//Si el NextBuffer sobrepasa la capacidad maxima, se borran y se mueven al global
+			//cout << "size next: " << nextBufferSize << endl;
+			while(nextBuffer.size()> nextBufferSize){
 
-				nextBuffer.erase(*it);
-				JELP
-*/
 				globalBuffer.push(*nextBuffer.begin())	;
 				nextBuffer.erase(nextBuffer.begin());
 			}
 		}  		
-		iter++;
-		//cout << iter << endl;
-		//double distNext = nds->distance(*nextBuffer.begin());
-		//cout << nds << endl;
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
 		Cell* c = NULL;
 		std::multiset <Cell*>::iterator it;
 		
+		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-				
+			cantBeam++;
+			//cout << "BeamSearch: " << cantBeam << endl;
 			while(!nextBuffer.empty()){
 
-				//cout << "entrada while" << endl;
 				it = nextBuffer.begin();
 				//double distNextBegin = nds->distance(*nextBuffer.begin());
 				//cout << "distancia primero: " << distNextBegin << endl;
@@ -88,16 +88,16 @@ namespace ibex {
 				currentBuffer.push(*it);	
 				nextBuffer.erase(it);
 			}
-			//cout << "salida while" << endl;
 		}
 		
+		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty()){
 
 			c = globalBuffer.top();
 			globalBuffer.pop();
 					
 		}else if(!currentBuffer.empty()){
-			
+			//si current tiene elementos, siempre se sacan de current
 			c = currentBuffer.top();
 			currentBuffer.pop();
 

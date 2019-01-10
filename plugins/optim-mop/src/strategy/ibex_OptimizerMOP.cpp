@@ -332,8 +332,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-			py_Plotter::offline_plot(NULL, ndsH.NDS2);
-			getchar();
+			//py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			//getchar();
 		  /*if(_plot) {
 			  cout << "iter:" << iter << endl;
 			  cout << "buffer_size:" << buffer.size() << endl;

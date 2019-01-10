@@ -1,0 +1,24 @@
+[base]
+test_instances = instances.txt
+mintime = 0.0001
+maxtime = 3600
+factors = 1 0.833 0.665 0.5 0.2 0.1
+sig_gain = 1.2
+max_seeds = 1
+min_seeds = 1
+algo_names = std bs 
+#innerpoly20 cy cy-full eps-ctc ndist
+
+[std]
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params = _INSTANCE --eps-contract --nb_ub_sols=10 --cy-contract-full -t _MAXTIME
+outputpos_boxes = 0
+outputpos_times = 0
+
+[bs]
+tuning_param = SIZEBS
+tuning_values = 2 4 8
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params = _INSTANCE --eps-contract --nb_ub_sols=10 --cy-contract-full -t _MAXTIME --search=BS --nSize=_SIZEBS
+outputpos_boxes = 0
+outputpos_times = 0
