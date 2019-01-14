@@ -14,17 +14,17 @@ bs_SIZEBS2 bs_SIZEBS4 bs_SIZEBS8
 
 
 instances with significative gains (1.2)
---eps=0.001 ../benchs/cf3-3.txt 25 25 18 18 25 25 38 38 
---eps=0.001 ../benchs/cf3-5.txt 387 387 113 113 185 185 192 192 
---eps=0.001 ../benchs/ctp2-3.txt 9 9 11 11 9 9 13 13 
---eps=0.001 ../benchs/ctp6-3.txt 226 226 171 171 192 192 178 178 
---eps=0.001 ../benchs/ctp7-5.txt 4 4 128 128 4 4 4 4 
---eps=0.1 ../benchs/mop-7.txt 74 74 63 63 61 61 51 51 
---eps=0.5 ../benchs/mop-10.txt 677 677 601 601 554 554 560 560 
---eps=0.001 ../benchs/nbi.txt 49 49 102 102 121 121 112 112 
---eps=0.001 ../benchs/osy.txt 139 139 235 235 237 237 247 247 
---eps=0.001 ../benchs/wb.txt 2 2 3600 3600 2 2 3 3 
+--eps=0.001 ../benchs/cf3-3.txt 25 nan 18 nan 25 nan 38 nan 
+--eps=0.001 ../benchs/cf3-5.txt 387 nan 113 nan 185 nan 192 nan 
+--eps=0.001 ../benchs/ctp2-3.txt 9 nan 11 nan 9 nan 13 nan 
+--eps=0.001 ../benchs/ctp6-3.txt 226 nan 171 nan 192 nan 178 nan 
+--eps=0.001 ../benchs/ctp7-5.txt 4 nan 128 nan 4 nan 4 nan 
+--eps=0.1 ../benchs/mop-7.txt 74 nan 63 nan 61 nan 51 nan 
+--eps=0.5 ../benchs/mop-10.txt 677 nan 601 nan 554 nan 560 nan 
+--eps=0.001 ../benchs/nbi.txt 49 nan 102 nan 121 nan 112 nan 
+--eps=0.001 ../benchs/osy.txt 139 nan 235 nan 237 nan 247 nan 
+--eps=0.001 ../benchs/wb.txt 2 nan 3600 nan 2 nan 3 nan 
 
 gains
-0.000100 1.000000 19 0.837742 19 0.967554 19 0.928704 19 
+0.000100 1.000000 19 0.837742 19 0.967552 19 0.928703 19 
 total time: 1.000000 0.531396 1.036206 1.072326 

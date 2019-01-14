@@ -322,9 +322,23 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	timer.start();
 
 
+	// Reset de archivo
+	ofstream myfile;
+	myfile.open("out.txt");
+	myfile.close();
+
+	myfile.open("outDim.txt");
+	myfile << root->box[n-1].ub() << endl;
+	myfile << root->box[n-2].ub() << endl;
+	myfile.close();
+
+
 
 	//handle_cell(*root,init_box);
+	cout << "pusheo root" << endl;	
 	buffer.push(root);
+	cout << root->box[n-1] << endl;
+	cout << root->box[n-2] << endl;
 	//if(_plot) py_Plotter::plot_add_box(root);
 
 	int iter=0;
@@ -343,7 +357,18 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 		  if (trace >= 2) cout << buffer;
 
+			cout << "pop en main" << endl;
 			Cell *c = buffer.pop();
+			
+			// Guardando archivo 
+			ofstream myfile;
+  			myfile.open ("out.txt");//, std::ios_base::app);
+			myfile << c->box[n-1] << "\n" << c->box[n-2] << "\n";
+			myfile.close();
+			
+			cout << c->box[n-1] << endl;
+			cout << c->box[n-2] << endl;
+			getchar();
 			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
 				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)!=NULL)
@@ -420,6 +445,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			 c->box[n]=Interval(y1_ub.first,c->box[n].ub());
 		  }else left.set_empty();
 
+		 cout << "bisecto" << endl;
          pair<Cell*,Cell*> new_cells;
 			if(!left.is_empty())
 				  new_cells=c->bisect(left,c->box);
@@ -431,6 +457,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 					c->box[n+1]=Interval(y2_ub.second,c->box[n+1].ub());
 				}else bottom.set_empty();
 
+				
 				if(!bottom.is_empty())
 				  new_cells=c->bisect(bottom,c->box);
 				else
@@ -441,10 +468,16 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
     	delete boxes;
 			delete c; // deletes the cell.
 
+			cout << "pusheo la primera" << endl;
 			buffer.push(new_cells.first);
+			cout << new_cells.first->box[n-1] << endl;
+			cout << new_cells.first->box[n-2] << endl;
 			//if(_plot) py_Plotter::plot_add_box(new_cells.first);
 
+			cout << "pusheo la segunda" << endl;
 			buffer.push(new_cells.second);
+			cout << new_cells.second->box[n-1] << endl;
+			cout << new_cells.second->box[n-2] << endl;
 
 			//if(_plot) py_Plotter::plot_add_box(new_cells.second);
 

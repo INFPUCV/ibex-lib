@@ -12,6 +12,7 @@ from tkinter import *
 import time
 from itertools import islice
 # window=Tk()
+
 filedate = None
 
 def main():
@@ -89,7 +90,7 @@ def updateplot(q):
             #ax1.set_xlim([0.0,0.35])
             #ax1.set_ylim([0.7,1.0])
             #plt.gca().set_aspect('equal', adjustable='box')
-            plt.axis('scaled')
+            #plt.axis('scaled')
             plt.pause(1)
             updateplot(q)
              # print(result)

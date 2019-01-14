@@ -27,7 +27,7 @@ namespace ibex {
 	}
 
 	unsigned int BeamSearchBufferMOP::size() const {
-		return globalBuffer.size();
+		return (globalBuffer.size()+currentBuffer.size()+nextBuffer.size());
 	}
 
 	bool BeamSearchBufferMOP::empty() const {
@@ -38,7 +38,7 @@ namespace ibex {
 		
         double dist=nds->distance(cell);
 		std::multiset <Cell*>::iterator it;
-		
+
 		int delta=0,i=0;
 		if(dist < cell->get<CellMOP>().ub_distance)
 		{	
@@ -58,13 +58,20 @@ namespace ibex {
 			nextBuffer.insert(cell);
 
 			//Si el NextBuffer sobrepasa la capacidad maxima, se borran y se mueven al global
-			//cout << "size next: " << nextBufferSize << endl;
+			//cout << "size next antes while: " << nextBuffer.size() << endl;
 			while(nextBuffer.size()> nextBufferSize){
-
-				globalBuffer.push(*nextBuffer.begin())	;
+				
+				globalBuffer.push(*nextBuffer.begin());
 				nextBuffer.erase(nextBuffer.begin());
+				// cout << "size next en while: " << nextBuffer.size() << endl;
+				// cout << "size global en while: " << globalBuffer.size() << endl;
 			}
-		}  		
+		}  	
+
+		// cout << "tamaño global: " << globalBuffer.size() << endl;
+		// cout << "tamaño current: " << currentBuffer.size() << endl;
+		// cout << "tamaño next: " << nextBuffer.size() << endl;
+		//getchar();	
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
@@ -73,11 +80,12 @@ namespace ibex {
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-			cantBeam++;
+			//cantBeam++;
 			//cout << "BeamSearch: " << cantBeam << endl;
+
 			while(!nextBuffer.empty()){
 
-				it = nextBuffer.begin();
+				//it = nextBuffer.begin();
 				//double distNextBegin = nds->distance(*nextBuffer.begin());
 				//cout << "distancia primero: " << distNextBegin << endl;
 				/*if(nextBuffer.size()>1){
@@ -85,16 +93,23 @@ namespace ibex {
 					double distNextEnd = nds->distance(*it);
 					//cout << "distancia siguiente: " << distNextEnd << endl;
 				}*/
-				currentBuffer.push(*it);	
-				nextBuffer.erase(it);
+
+				currentBuffer.push(*nextBuffer.begin());	
+				nextBuffer.erase(nextBuffer.begin());
+				
 			}
 		}
 		
 		//Si current y next estan vacios, se popea del global
-		if(currentBuffer.empty() && nextBuffer.empty()){
+		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
 
 			c = globalBuffer.top();
 			globalBuffer.pop();
+			//cantBeam++;
+			//cout << "BeamSearch: " << cantBeam << endl;
+			//int p = c->get<CellMOP>().depth;
+			//cout << "Profundidad: " << p << endl;
+			//getchar();
 					
 		}else if(!currentBuffer.empty()){
 			//si current tiene elementos, siempre se sacan de current
@@ -105,6 +120,9 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
+		// cout << "tamaño next 2: " << nextBuffer.size() << endl;
+		// cout << "tamaño current 2: " << currentBuffer.size() << endl;
+		//getchar();
 		return c;
 	}
 
