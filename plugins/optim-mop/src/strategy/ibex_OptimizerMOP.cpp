@@ -332,7 +332,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	myfile << root->box[n-2].ub() << endl;
 	myfile.close();
 
-
+	cout << n << endl;	
+	cout << root->box.size() << endl;	
+	getchar();
 
 	//handle_cell(*root,init_box);
 	cout << "pusheo root" << endl;	
@@ -359,12 +361,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			cout << "pop en main" << endl;
 			Cell *c = buffer.pop();
-			
-			// Guardando archivo 
-			ofstream myfile;
-  			myfile.open ("out.txt");//, std::ios_base::app);
-			myfile << c->box[n-1] << "\n" << c->box[n-2] << "\n";
-			myfile.close();
 			
 			cout << c->box[n-1] << endl;
 			cout << c->box[n-2] << endl;

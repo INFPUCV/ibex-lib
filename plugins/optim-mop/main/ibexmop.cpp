@@ -205,6 +205,7 @@ int main(int argc, char** argv){
 	}
 
 	BeamSearchBufferMOP::nextBufferSize = nSize;
+	BeamSearchBufferMOP::nn = sys.nb_var;
 
 	// Build the bisection heuristic
 	// --------------------------

@@ -13,6 +13,7 @@
 namespace ibex { 
 
 	int BeamSearchBufferMOP::nextBufferSize = 4;
+	int BeamSearchBufferMOP::nn = 0;
 
 	void BeamSearchBufferMOP::flush() {
 		while (!globalBuffer.empty()) {
@@ -56,13 +57,24 @@ namespace ibex {
 		}else{
 			
 			nextBuffer.insert(cell);
-
+			Cell* c=NULL;
 			//Si el NextBuffer sobrepasa la capacidad maxima, se borran y se mueven al global
 			//cout << "size next antes while: " << nextBuffer.size() << endl;
 			while(nextBuffer.size()> nextBufferSize){
 				
+				c=*nextBuffer.begin();
 				globalBuffer.push(*nextBuffer.begin());
+
+				// Guardando archivo 
+				ofstream myfile;
+				myfile.open ("out.txt");//, std::ios_base::app);
+				myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
+				myfile.close();	
+
 				nextBuffer.erase(nextBuffer.begin());
+
+				
+
 				// cout << "size next en while: " << nextBuffer.size() << endl;
 				// cout << "size global en while: " << globalBuffer.size() << endl;
 			}
@@ -94,8 +106,13 @@ namespace ibex {
 					//cout << "distancia siguiente: " << distNextEnd << endl;
 				}*/
 
-				currentBuffer.push(*nextBuffer.begin());	
+				currentBuffer.push(*nextBuffer.begin());
+
+				
+				
 				nextBuffer.erase(nextBuffer.begin());
+
+				
 				
 			}
 		}
