@@ -18,16 +18,16 @@ setDim()
 rects = []
 
 def anim(i):
-    setDim()
+    #setDim()
     global rects
     for rect in rects:
         rect.remove()
     rects = []
 
-    with open("out.txt") as f:
+    with open("cajasCurrent.txt") as f:
         content = f.readlines()
 
-        for index in range(len(content)/2):
+        for index in range(int(len(content)/2)):
             index = index*2
             ly = content[index].strip("[").strip("]\n").strip(" ").split(",")
             index += 1
@@ -38,8 +38,26 @@ def anim(i):
             dimY = float(ly[1]) - float(ly[0])
 
             rects.append(Rectangle(pos, dimX, dimY, 
-                alpha=0.3, facecolor="red"))
+                alpha=0.3, facecolor="green", edgecolor="black"))
             currentAxis.add_patch(rects[-1])
+    
+    with open("cajasDescartadas.txt") as f:
+        content = f.readlines()
 
-ani = animation.FuncAnimation(figSalida, anim, interval=10)
+        for index in range(int(len(content)/2)):
+            index = index*2
+            ly = content[index].strip("[").strip("]\n").strip(" ").split(",")
+            index += 1
+            lx = content[index].strip("[").strip("]\n").strip(" ").split(",")
+
+            pos = (float(lx[0]), float(ly[0]))
+            dimX = float(lx[1]) - float(lx[0])
+            dimY = float(ly[1]) - float(ly[0])
+
+            rects.append(Rectangle(pos, dimX, dimY, 
+                alpha=0.3, facecolor="red", edgecolor="black"))
+            currentAxis.add_patch(rects[-1])
+    
+
+ani = animation.FuncAnimation(figSalida, anim, interval=1000)
 plt.show()

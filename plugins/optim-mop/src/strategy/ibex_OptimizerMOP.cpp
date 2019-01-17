@@ -120,7 +120,6 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 	}
 
 	hamburger(xa, xb);
-
 	return true;
 
 }
@@ -322,19 +321,21 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	timer.start();
 
 
-	// Reset de archivo
 	ofstream myfile;
-	myfile.open("out.txt");
-	myfile.close();
-
 	myfile.open("outDim.txt");
 	myfile << root->box[n-1].ub() << endl;
 	myfile << root->box[n-2].ub() << endl;
 	myfile.close();
 
-	cout << n << endl;	
-	cout << root->box.size() << endl;	
-	getchar();
+	ofstream myfile2;
+	myfile2.open("global.txt");
+	myfile2 << "[" << "0" << root->box[n-1].ub() << "]" << endl;
+	myfile2 << "[" << "0" << root->box[n-2].ub() << "]" << endl;
+	myfile2.close();
+
+	//cout << n << endl;	
+	//cout << root->box.size() << endl;	
+	//getchar();
 
 	//handle_cell(*root,init_box);
 	cout << "pusheo root" << endl;	
@@ -348,7 +349,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-			//py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			py_Plotter::offline_plot(NULL, ndsH.NDS2);
 			//getchar();
 		  /*if(_plot) {
 			  cout << "iter:" << iter << endl;
@@ -359,12 +360,12 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 		  if (trace >= 2) cout << buffer;
 
-			cout << "pop en main" << endl;
+			//cout << "pop en main" << endl;
 			Cell *c = buffer.pop();
 			
-			cout << c->box[n-1] << endl;
-			cout << c->box[n-2] << endl;
-			getchar();
+			//cout << c->box[n-1] << endl;
+			//cout << c->box[n-2] << endl;
+			//getchar();
 			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
 				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)!=NULL)

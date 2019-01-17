@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.animation as animation
+from matplotlib.patches import Rectangle
+from matplotlib.patches import Circle
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib import collections  as mc
 import math
@@ -14,6 +16,7 @@ from itertools import islice
 # window=Tk()
 
 filedate = None
+rects = []
 
 def main():
     global filedate
@@ -44,6 +47,80 @@ def plot():
     # canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
     line, = ax1.plot([], [])
 
+def updateRect(i):
+    #setDim()
+    global rects
+    global circ
+    global ax1
+    
+    for rect in rects:
+        rect.remove()
+    rects = []
+
+    with open("cajasCurrent.txt") as f:
+        content = f.readlines()
+
+        for index in range(int(len(content)/2)):
+            index = index*2
+            ly = content[index].strip("[").strip("]\n").strip(" ").split(",")
+            index += 1
+            lx = content[index].strip("[").strip("]\n").strip(" ").split(",")
+
+            pos = (float(lx[0]), float(ly[0]))
+            dimX = float(lx[1]) - float(lx[0])
+            dimY = float(ly[1]) - float(ly[0])
+
+            rects.append(Rectangle(pos, dimX, dimY, 
+                alpha=0.3, facecolor="green", edgecolor="black"))
+            ax1.add_patch(rects[-1])
+    
+    with open("cajasDescartadas.txt") as f:
+        content = f.readlines()
+
+        for index in range(int(len(content)/2)):
+            index = index*2
+            ly = content[index].strip("[").strip("]\n").strip(" ").split(",")
+            index += 1
+            lx = content[index].strip("[").strip("]\n").strip(" ").split(",")
+
+            pos = (float(lx[0]), float(ly[0]))
+            dimX = float(lx[1]) - float(lx[0])
+            dimY = float(ly[1]) - float(ly[0])
+
+            rects.append(Rectangle(pos, dimX, dimY, 
+                alpha=0.3, facecolor="red", edgecolor="black"))
+            ax1.add_patch(rects[-1])
+
+    with open("global.txt") as f:
+        content = f.readlines()
+
+        for index in range(int(len(content)/2)):
+            index = index*2
+            ly = content[index].strip("[").strip("]\n").strip(" ").split(",")
+            index += 1
+            lx = content[index].strip("[").strip("]\n").strip(" ").split(",")
+
+            pos = (float(lx[0]), float(ly[0]))
+            dimX = float(lx[1]) - float(lx[0])
+            dimY = float(ly[1]) - float(ly[0])
+
+            rects.append(Rectangle(pos, dimX, dimY, 
+                alpha=0.3, facecolor="yellow", edgecolor="black"))
+            ax1.add_patch(rects[-1])
+
+    with open("puntos.txt") as f:
+        content = f.readlines()
+
+        x = []
+        y = []
+        for line in content:
+            l = line.strip("\n").strip(" ").split(",")
+            x.append(float(l[0]))
+            y.append(float(l[1]))
+            
+        plt.plot(x, y, "bo")
+    print("Ok")
+
 def updateplot(q):
     try:       #Try to check if there is data in the queue
         result=q.get_nowait()
@@ -57,6 +134,8 @@ def updateplot(q):
             LBy = []
 
             ax1.clear()
+
+            updateRect(q)
 
             for ub in UB:
                 UBx.append(ub[0])
@@ -83,7 +162,7 @@ def updateplot(q):
                 lc = mc.LineCollection(lines, colors='green', linewidths=0.5)
                 ax1.add_collection(lc)
 
-
+            
             ax1.plot()
             plt.plot(UBx, UBy, 'r-', markersize=3)
             # plt.plot(LBx, LBy, '-b', lw=0.5)

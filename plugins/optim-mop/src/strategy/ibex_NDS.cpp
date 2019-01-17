@@ -6,11 +6,13 @@
  */
 
 #include "ibex_NDS.h"
+#include "ibex_BeamSearchBufferMOP.h"
+#include "ibex_OptimizerMOP.h"
 
 namespace ibex {
 
 	 //map< pair <double, double>, IntervalVector, sorty2 > NDS_seg::NDS2;
-	 bool NDS_seg::_trace;
+	bool NDS_seg::_trace;
 
 	bool NDS_seg::is_dominated(pair< double, double> new_p){
 		if(new_p.first == POS_INFINITY && new_p.second == POS_INFINITY) return false;
@@ -145,6 +147,10 @@ namespace ibex {
 		vector<double> p(2);
 		p[0]=new_p.first;
 		p[1]=new_p.second;
+		ofstream myfile;
+		myfile.open ("puntos.txt", std::ios_base::app);
+		myfile << p[0] << "," << p[1] << "\n";
+		myfile.close();
 
 		//cout << "add_point:" << p[0] << "," << p[1] << endl;
         //cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
@@ -178,7 +184,11 @@ namespace ibex {
 				NDS2.erase(it1);
 				it1 = aux;
 			} else ++it1;
+
 		}
+
+		
+
 
 		std::map<pair<double, double>, IntervalVector>::iterator it2 = --NDS2.lower_bound(new_p);
 		it1 = it2;

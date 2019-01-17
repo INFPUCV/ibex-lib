@@ -60,23 +60,26 @@ namespace ibex {
 			Cell* c=NULL;
 			//Si el NextBuffer sobrepasa la capacidad maxima, se borran y se mueven al global
 			//cout << "size next antes while: " << nextBuffer.size() << endl;
-			while(nextBuffer.size()> nextBufferSize){
-				
-				c=*nextBuffer.begin();
-				globalBuffer.push(*nextBuffer.begin());
-
-				// Guardando archivo 
+			if(nextBuffer.size() > nextBufferSize){
 				ofstream myfile;
-				myfile.open ("out.txt");//, std::ios_base::app);
-				myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
+				myfile.open ("cajasDescartadas.txt", std::ios_base::app);
+				while(nextBuffer.size()> nextBufferSize){
+					
+					c=*nextBuffer.begin();
+					globalBuffer.push(*nextBuffer.begin());
+
+					// Guardando archivo 
+					
+					myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
+
+					nextBuffer.erase(nextBuffer.begin());
+
+					
+
+					// cout << "size next en while: " << nextBuffer.size() << endl;
+					// cout << "size global en while: " << globalBuffer.size() << endl;
+				}
 				myfile.close();	
-
-				nextBuffer.erase(nextBuffer.begin());
-
-				
-
-				// cout << "size next en while: " << nextBuffer.size() << endl;
-				// cout << "size global en while: " << globalBuffer.size() << endl;
 			}
 		}  	
 
@@ -92,9 +95,21 @@ namespace ibex {
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-			//cantBeam++;
-			//cout << "BeamSearch: " << cantBeam << endl;
-
+			getchar();
+			ofstream myfile;
+			myfile.open ("cajasCurrent.txt");
+			// Reset de archivo
+			ofstream myfile2;
+			myfile2.open("puntos.txt");
+			myfile2.close();
+			// Reset de archivo
+			ofstream myfile3;
+			myfile3.open("cajasDescartadas.txt");
+			myfile3.close();
+			// Reset de archivo
+			ofstream myfile5;
+			myfile5.open("global.txt");
+			myfile5.close();
 			while(!nextBuffer.empty()){
 
 				//it = nextBuffer.begin();
@@ -105,22 +120,33 @@ namespace ibex {
 					double distNextEnd = nds->distance(*it);
 					//cout << "distancia siguiente: " << distNextEnd << endl;
 				}*/
-
+				c=*nextBuffer.begin();
 				currentBuffer.push(*nextBuffer.begin());
 
-				
+				myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
 				
 				nextBuffer.erase(nextBuffer.begin());
 
 				
 				
 			}
+			myfile.close();	
 		}
 		
 		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
+			
+			// Reset de archivo
+			ofstream myfile4;
+			myfile4.open("global.txt");
 
 			c = globalBuffer.top();
+
+			myfile4 << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
+
+			myfile4.close();
+
+			
 			globalBuffer.pop();
 			//cantBeam++;
 			//cout << "BeamSearch: " << cantBeam << endl;
@@ -139,7 +165,6 @@ namespace ibex {
 		} 
 		// cout << "tamaño next 2: " << nextBuffer.size() << endl;
 		// cout << "tamaño current 2: " << currentBuffer.size() << endl;
-		//getchar();
 		return c;
 	}
 
