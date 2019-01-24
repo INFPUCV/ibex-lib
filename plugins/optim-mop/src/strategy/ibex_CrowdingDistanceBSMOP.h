@@ -1,12 +1,12 @@
 /*
- * ibex_BeamSearchBufferMOP.h
+ * ibex_CROWDINGDISTANCEBSMOP.h
  *
  *  Created on: 20 oct. 2017
  *      Author: matias y pablo
  */
 
-#ifndef OPTIM_SRC_STRATEGY_IBEX_BEAMSEARCHBUFFERMOP_H_
-#define OPTIM_SRC_STRATEGY_IBEX_BEAMSEARCHBUFFERMOP_H_
+#ifndef OPTIM_SRC_STRATEGY_IBEX_CROWDINGDISTANCEBSMOP_H_
+#define OPTIM_SRC_STRATEGY_IBEX_CROWDINGDISTANCEBSMOP_H_
 
 
 
@@ -24,7 +24,7 @@ namespace ibex {
 /**
  * Criteria for bi-objective problems
  */
-struct max_distanceBeam {
+struct max_distanceBeamBS {
 
 
 	bool operator() (const Cell* c1, const Cell* c2){
@@ -41,6 +41,16 @@ struct max_distanceBeam {
 
 };
 
+struct crowding_distanceBeam {
+
+
+	bool operator() (const Cell* c1, const Cell* c2){
+	    int n = c1->box.size();
+		if(c1->box[n-2].lb() <= c2->box[n-2].lb() && c1->box[n-1].lb() <= c2->box[n-1].lb()) return true;
+	    else return false;
+	}
+
+};
 
 // struct min_distanceBeam {
 
@@ -59,7 +69,7 @@ struct max_distanceBeam {
  *
  * \brief Buffer which selects next the box maximizing the distance to the non dominated set.
  */
-class BeamSearchBufferMOP : public CellBufferOptim {
+class CrowdingDistanceBSMOP : public CellBufferOptim {
  public:
 
    static int nextBufferSize;
@@ -97,7 +107,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	*
 	*/
   virtual double minimum() const {
-	  cout << "BeamSearchBufferMOP::minimum is not implemented" << endl;
+	  cout << "CROWDINGDISTANCEBSMOP::minimum is not implemented" << endl;
 	  exit(0);
 	  return 0.0;
   }
@@ -106,7 +116,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	 * \brief Contract the buffer using the UB
 	 */
 	virtual void contract(double loup){
-		  cout << "BeamSearchBufferMOP::contract is not implemented" << endl;
+		  cout << "CROWDINGDISTANCEBSMOP::contract is not implemented" << endl;
 		  exit(0);
 	}
 
@@ -115,10 +125,10 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	 * A heap data structure for keeping the cells sorted by distance
 	 */
 
-	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > globalBuffer;
-    mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > currentBuffer;
+	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeamBS > globalBuffer;
+    mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeamBS > currentBuffer;
 	//mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > nextBuffer;
-    mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
+    mutable std::multiset <Cell*, crowding_distanceBeam> nextBuffer;
 
   NDS_seg* nds;
 
@@ -131,4 +141,4 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 
 
 } // end namespace ibex
-#endif //  /* OPTIM_SRC_STRATEGY_IBEX_BeamSearchBufferMOP_H_ */
+#endif //  /* OPTIM_SRC_STRATEGY_IBEX_CROWDINGDISTANCEBSMOP_H_ */

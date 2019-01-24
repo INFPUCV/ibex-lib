@@ -149,7 +149,7 @@ int main(int argc, char** argv){
 	cout << "Linear Relax: " << linearrelaxation << endl;
 	cout << "Bisector: " << bisection << endl;
 	cout << "Strategy: " << strategy << endl;
-	if(strategy=="BS"){
+	if(strategy=="BS"||strategy=="crowdingBS"){
 		cout << "nextBuffer size: " << nSize << endl;
 	}
 	//cout << "eps: " << eps << endl;
@@ -200,9 +200,11 @@ int main(int argc, char** argv){
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
-	else if(strategy=="BS"){
+	else if(strategy=="BS")
 	  buffer = new BeamSearchBufferMOP;
-	}
+	else if(strategy=="crowdingBS")
+		buffer = new CrowdingDistanceBSMOP;
+	
 
 	BeamSearchBufferMOP::nextBufferSize = nSize;
 	BeamSearchBufferMOP::nn = sys.nb_var;
@@ -325,6 +327,10 @@ int main(int argc, char** argv){
 
 	if(strategy=="BS"){
 		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH);
+	}
+
+	if(strategy=="crowdingBS"){
+		dynamic_cast<CrowdingDistanceBSMOP*>(buffer)->set(o.ndsH);
 	}
 
 

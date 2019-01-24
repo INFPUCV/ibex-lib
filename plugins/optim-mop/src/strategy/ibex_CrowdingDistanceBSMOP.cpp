@@ -1,21 +1,21 @@
 /*
- * ibex_BeamSearchBufferMOP.cpp
+ * ibex_CrowdingDistanceBSMOP.cpp
  *
  *  Created on: 20 oct. 2017
  *     Authors: matias y pablo
  */
 
-#include "ibex_BeamSearchBufferMOP.h"
+#include "ibex_CrowdingDistanceBSMOP.h"
 #include "ibex_OptimizerMOP.h"
 #include <algorithm>    // std::min_element, std::max_element
 
 
 namespace ibex { 
 
-	int BeamSearchBufferMOP::nextBufferSize = 4;
-	int BeamSearchBufferMOP::nn = 0;
+	int CrowdingDistanceBSMOP::nextBufferSize = 4;
+	int CrowdingDistanceBSMOP::nn = 0;
 
-	void BeamSearchBufferMOP::flush() {
+	void CrowdingDistanceBSMOP::flush() {
 		while (!globalBuffer.empty()) {
 			delete pop();
 		}
@@ -27,15 +27,15 @@ namespace ibex {
 		}
 	}
 
-	unsigned int BeamSearchBufferMOP::size() const {
+	unsigned int CrowdingDistanceBSMOP::size() const {
 		return (globalBuffer.size()+currentBuffer.size()+nextBuffer.size());
 	}
 
-	bool BeamSearchBufferMOP::empty() const {
+	bool CrowdingDistanceBSMOP::empty() const {
 		return (globalBuffer.empty() && currentBuffer.empty() && nextBuffer.empty());
 	}
 
-	void BeamSearchBufferMOP::push(Cell* cell) {
+	void CrowdingDistanceBSMOP::push(Cell* cell) {
 		
         double dist=nds->distance(cell);
 		std::multiset <Cell*>::iterator it;
@@ -85,13 +85,13 @@ namespace ibex {
 		//getchar();	
 	}
 
-	Cell* BeamSearchBufferMOP::pop() {
+	Cell* CrowdingDistanceBSMOP::pop() {
 		Cell *c = NULL, *c2 = NULL;
 		std::multiset <Cell*>::iterator it;
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-			getchar();
+		//	getchar();
 			ofstream myfile;
 			myfile.open ("cajasCurrent.txt");
 			// Reset de archivo
@@ -166,8 +166,8 @@ namespace ibex {
 		return c;
 	}
 
-  int counter1=0;
-	Cell* BeamSearchBufferMOP::top() const {
+  int counter2=0;
+	Cell* CrowdingDistanceBSMOP::top() const {
 
 		Cell* c = globalBuffer.top();
 		if(!c) return NULL;
@@ -185,8 +185,8 @@ namespace ibex {
 			dist=nds->distance(c);
 		}
 
-    	counter1 ++;
-		//cout << counter1  <<":" <<  c->get<CellMOP>().ub_distance << endl;
+    	counter2 ++;
+		//cout << counter2  <<":" <<  c->get<CellMOP>().ub_distance << endl;
 
 		return c;
 	}
