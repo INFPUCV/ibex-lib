@@ -91,7 +91,7 @@ namespace ibex {
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-			getchar();
+		//	getchar();
 			ofstream myfile;
 			myfile.open ("cajasCurrent.txt");
 			// Reset de archivo
