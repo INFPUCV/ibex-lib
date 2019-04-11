@@ -14,7 +14,6 @@
 #include "ibex_Ctc.h"
 #include "ibex_Bsc.h"
 #include "ibex_LoupFinderMOP.h"
-#include "ibex_CellMOP.h"
 #include "ibex_CtcKhunTucker.h"
 #include "ibex_DistanceSortedCellBufferMOP.h"
 #include "ibex_pyPlotter.h"
@@ -26,6 +25,8 @@
 #include <list>
 #include <stack>
 #include <math.h>
+
+#include "ibex_BxpMOPData.h"
 //#include "ibex_DistanceSorted.h"
 
 using namespace std;

@@ -11,13 +11,15 @@
 #include "ibex_Timer.h"
 #include "ibex_Function.h"
 #include "ibex_NoBisectableVariableException.h"
-#include "ibex_Backtrackable.h"
-#include "ibex_OptimData.h"
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
 #include <iostream>
 //#include "ibex_CellSet.h"
+
+#ifndef cdata
+#define cdata ((BxpMOPData*) c->prop[BxpMOPData::id])
+#endif
 
 using namespace std;
 
@@ -233,8 +235,8 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
    // cout << 	box3[n+2] <<endl;
 	//the contraction is performed
 	ctc.contract(box3);
-	c.get<CellMOP>().a = box3[n+3].mid();
-	c.get<CellMOP>().w_lb = box3[n+2].lb();
+	((BxpMOPData*) c.prop[BxpMOPData::id])->a = box3[n+3].mid();
+	((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb = box3[n+2].lb();
 
 	box=box3;
 	box.resize(n+2);
@@ -295,11 +297,21 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	root->box=init_box;
 
-	CellMOP::y1_init=eval_goal(goal1, root->box, n);
-	CellMOP::y2_init=eval_goal(goal2, root->box, n);
+	// add data required by the cell buffer
+	buffer.add_property(init_box, root->prop);
 
-	cout << CellMOP::y1_init << endl;
-	cout << CellMOP::y2_init << endl;
+	// add data required by the bisector
+	bsc.add_property(init_box, root->prop);
+
+	// add data required by the contractor
+	ctc.add_property(init_box, root->prop);
+
+
+	BxpMOPData::y1_init=eval_goal(goal1, root->box, n);
+	BxpMOPData::y2_init=eval_goal(goal2, root->box, n);
+
+	cout << BxpMOPData::y1_init << endl;
+	cout << BxpMOPData::y2_init << endl;
 
 
 	y1_ub.first=POS_INFINITY;
@@ -308,23 +320,17 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	list<IntervalVector> B; //list of discarded boxes Y
 
-
-
-	// add data required by the bisector
-	bsc.add_backtrackable(*root);
-
-	// add data required by the buffer
-	buffer.add_backtrackable(*root);
-
 	time=0;
 	Timer timer;
 	timer.start();
 
 
-
+	cout << "push root" << endl;
 	//handle_cell(*root,init_box);
 	buffer.push(root);
 	//if(_plot) py_Plotter::plot_add_box(root);
+
+	cout << "pushed" << endl;
 
 	int iter=0;
 
@@ -340,15 +346,17 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 		  if (trace >= 2) cout << buffer;
 
+		  cout << "node selection" << endl;
 			Cell *c = buffer.pop();
 			//cout << c->get<CellMOP>().ub_distance << endl;
-			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
+			if((cdata->ub_distance < eps  && !_hv) || cdata->ub_distance<=0){
 					break;
 	   	}
 
 			//if(_plot) py_Plotter::plot_del_box(c);
 
 			nb_cells++;
+			  cout << "contract" << endl;
 			contract_and_bound(*c, init_box);
 
 			if (c->box.is_empty()) {
@@ -362,10 +370,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			y2_ub.second= ndsH.lb().second;
 
 
-			pair<IntervalVector,IntervalVector>* boxes=NULL;
+			  cout << "bisection" << endl;
+			pair<Cell*,Cell*> new_cells;
 			bool atomic_box=false;
 			try {
-				boxes=new pair<IntervalVector,IntervalVector>(bsc.bisect(*c));
+				new_cells=pair<Cell*,Cell*>(bsc.bisect(*c));
 			}
 			catch (NoBisectableVariableException& ) {
 				atomic_box=true;
@@ -379,7 +388,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 				if(_hv && dist>=0.0){
 					IntervalVector points = LB.get_points(c->box[n].lb(),c->box[n+1].lb(),
-					                   -1/c->get<CellMOP>().a, c->get<CellMOP>().w_lb/c->get<CellMOP>().a);
+					                   -1/cdata->a, cdata->w_lb/cdata->a);
 					LB.addPoint(make_pair(points[0].lb(),points[1].lb()) );
 					LB.addPoint(make_pair(points[2].lb(),points[3].lb()) );
 
@@ -399,41 +408,31 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 					//py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LB.NDS2);
 				}
 
-    		if(boxes) delete boxes;
+    		if(new_cells.first){
+    			delete new_cells.first;
+    			delete new_cells.second;
+
+    		}
 				delete c; continue;
 
 		}
 
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
-		 IntervalVector left(c->box);
 		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
 				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
+       		BisectionPoint p(n, y1_ub.first, false);
+			new_cells=c->bisect(p);
 
-			 left[n]=Interval(c->box[n].lb(),y1_ub.first);
-			 c->box[n]=Interval(y1_ub.first,c->box[n].ub());
-		  }else left.set_empty();
-
-         pair<Cell*,Cell*> new_cells;
-			if(!left.is_empty())
-				  new_cells=c->bisect(left,c->box);
-			else{
-				IntervalVector bottom(c->box);
-		  	if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  &&
-		  			(c->box[n].ub()-y2_ub.first)*(c->box[n+1].ub()-y2_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ) {
-					bottom[n+1]=Interval(c->box[n+1].lb(),y2_ub.second);
-					c->box[n+1]=Interval(y2_ub.second,c->box[n+1].ub());
-				}else bottom.set_empty();
-
-				if(!bottom.is_empty())
-				  new_cells=c->bisect(bottom,c->box);
-				else
-				 new_cells=c->bisect(boxes->first,boxes->second); //originally we should do only do this
-			}
+		  }else if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  &&
+				(c->box[n].ub()-y2_ub.first)*(c->box[n+1].ub()-y2_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ) {
+			BisectionPoint p(n+1, y2_ub.second, false);
+			new_cells=c->bisect(p);
+		 }
       /****/
 
-    	delete boxes;
 			delete c; // deletes the cell.
 
+			cout << "pushing" << endl;
 			buffer.push(new_cells.first);
 			//if(_plot) py_Plotter::plot_add_box(new_cells.first);
 
@@ -557,7 +556,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		ya1 = yb1; yb1 = aux; aux = ya2; ya2 = yb2; yb2 = aux;
 	}
 
-	// m ← getSlope(n.t)
+	// m ��� getSlope(n.t)
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
 	Interval m_vertical = Interval(POS_INFINITY);

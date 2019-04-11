@@ -9,6 +9,11 @@
 #include "ibex_OptimizerMOP.h"
 #include <algorithm>    // std::min_element, std::max_element
 
+#ifndef cdata
+#define cdata ((BxpMOPData*) c->prop[BxpMOPData::id])
+#endif
+
+
 namespace ibex {
 
 
@@ -30,11 +35,11 @@ namespace ibex {
 		return cells.empty();
 	}
 
-	void DistanceSortedCellBufferMOP::push(Cell* cell) {
-		double dist=nds->distance(cell);
-		if(dist < cell->get<CellMOP>().ub_distance && !OptimizerMOP::_hv)
-			cell->get<CellMOP>().ub_distance=dist;
-		cells.push(cell);
+	void DistanceSortedCellBufferMOP::push(Cell* c) {
+		double dist=nds->distance(c);
+		if(dist < cdata->ub_distance && !OptimizerMOP::_hv)
+			cdata->ub_distance=dist;
+		cells.push(c);
 	}
 
 	Cell* DistanceSortedCellBufferMOP::pop() {
@@ -56,9 +61,9 @@ namespace ibex {
 		double dist=nds->distance(c);
 
 		//we update the distance and reinsert the element
-		while(dist < c->get<CellMOP>().ub_distance){
+		while(dist < cdata->ub_distance){
 			cells.pop();
-			c->get<CellMOP>().ub_distance=dist;
+			cdata->ub_distance=dist;
 			cells.push(c);
 			c = cells.top();
 			dist=nds->distance(c);

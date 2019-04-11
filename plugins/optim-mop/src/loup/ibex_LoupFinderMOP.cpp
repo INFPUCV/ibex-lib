@@ -96,7 +96,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 	int n=norm_sys.nb_var;
 
 	//phase 0 or 1: call to simplex
-    if(phase < nb_sol && phase<=1 && (lp_solver.default_limit_diam_box.contains(box.max_diam()))){
+    if(phase < nb_sol && phase<=1 && lp_solver.default_max_bound > box.max_diam() ){
 
 
 		lp_solver.clean_ctrs();
@@ -136,13 +136,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 
 		if (stat == LPSolver::OPTIMAL) {
 			//the linear solution is mapped to intervals
-			Vector loup_point(n);
-			lp_solver.get_primal_sol(loup_point);
-
-
-			//std::cout << " simplex result " << loup_point << std::endl;
-
-			//std::cout << box << endl;
+			Vector loup_point(lp_solver.get_primal_sol());
 
 			//correct the point
 			for(int i=0;i<box.size();i++){

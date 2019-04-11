@@ -10,7 +10,8 @@
 
 #include <set>
 #include <map>
-#include "ibex_CellMOP.h"
+#include "ibex_BxpMOPData.h"
+#include "ibex_Cell.h"
 
 using namespace std;
 namespace ibex {

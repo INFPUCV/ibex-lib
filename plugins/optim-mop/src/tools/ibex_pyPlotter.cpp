@@ -9,6 +9,10 @@
 #include "ibex_OptimizerMOP.h"
 #include <iostream>
 
+#ifndef cdata
+#define cdata ((BxpMOPData*) c->prop[BxpMOPData::id])
+#endif
+
 
 #include "ibex_OptimizerMOP.h"
 
@@ -25,23 +29,23 @@ void py_Plotter::plot_del_ub(pair<double, double> eval){
 }
 
 void py_Plotter::plot_add_lb(Cell* c){
-	std::cout << "add lb: {\"id\":" << c->get<CellMOP>().id;
+	std::cout << "add lb: {\"id\":" << cdata->id;
 	std::cout << ", 'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << ")";
 	std::cout << "}" << endl;
 
 }
 
 void py_Plotter::plot_add_box(Cell* c){
-	std::cout << "add: {\"id\":" << c->get<CellMOP>().id;
+	std::cout << "add: {\"id\":" << cdata->id;
 	std::cout << ", 'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
 	std::cout << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam();
-	std::cout << ", 'pA':(" << c->box[n].lb() <<"," <<  (((c)->get<CellMOP>().w_lb-c->box[n].lb())/(c)->get<CellMOP>().a)   << "),";
-	std::cout << "'pB':(" << (c->get<CellMOP>().w_lb-c->get<CellMOP>().a*c->box[n+1].lb()) <<"," <<  c->box[n+1].lb()  << ")";
+	std::cout << ", 'pA':(" << c->box[n].lb() <<"," <<  ((cdata->w_lb-c->box[n].lb())/cdata->a)   << "),";
+	std::cout << "'pB':(" << (cdata->w_lb-cdata->a*c->box[n+1].lb()) <<"," <<  c->box[n+1].lb()  << ")";
 	std::cout << "}" << endl;
 }
 
 void py_Plotter::plot_del_box(Cell* c){
-	std::cout << "del: {\"id\":" << c->get<CellMOP>().id;
+	std::cout << "del: {\"id\":" << cdata->id;
 	std::cout << "}" << endl;
 }
 void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector >& NDS){

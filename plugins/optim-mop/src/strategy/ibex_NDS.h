@@ -6,10 +6,10 @@
  */
 
 #include "ibex_IntervalVector.h"
-#include "ibex_CellMOP.h"
 #include "ibex_pyPlotter.h"
 #include <map>
 #include <list>
+#include "ibex_BxpMOPData.h"
 
 #ifndef OPTIM_MOP_SRC_STRATEGY_IBEX_NDS_H_
 #define OPTIM_MOP_SRC_STRATEGY_IBEX_NDS_H_
@@ -203,13 +203,12 @@ public:
 	double distance(const Cell* c){
 		int n=c->box.size();
 
-		double a = c->get<CellMOP>().a;
-		double w_lb = c->get<CellMOP>().w_lb;
-    //cout << "a:" << a << endl;
-		//cout << "w_lb:" << w_lb << endl;
 
-    double dist;
-		_trace=true;
+		double a = ((BxpMOPData*) c->prop[BxpMOPData::id])->a;
+		double w_lb = ((BxpMOPData*) c->prop[BxpMOPData::id])->w_lb;
+
+
+		double dist;
 		IntervalVector points(4);
 		if(a!=0){
 			points = get_points(c->box[n-2].lb(),c->box[n-1].lb(),-1/a, w_lb/a);
@@ -219,19 +218,7 @@ public:
 			dist= distance(points);
 		}
 
-		//nadir distance
-		double nadir_dist=0.0;
-		/*pair<double,double> lower = lb();
-		pair<double,double> nad = nadir();
-		if(c->box[n-2].lb() < lower.first)
-			nadir_dist=c->box[n-1].ub()-nad.second;
-
-		if(c->box[n-1].lb() < lower.second)
-			nadir_dist= std::max(nadir_dist, c->box[n-2].ub()-nad.first);
-		 */
-
-		_trace=false;
-		return std::max(nadir_dist,dist);
+		return std::max(0.0,dist);
 	}
 
   IntervalVector get_points(double lbx, double lby, double m=POS_INFINITY, double c=POS_INFINITY){

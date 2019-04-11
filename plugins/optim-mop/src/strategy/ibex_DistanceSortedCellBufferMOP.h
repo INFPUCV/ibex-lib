@@ -10,11 +10,14 @@
 
 
 
-#include "ibex_CellMOP.h"
 #include "ibex_CellSet.h"
 #include "ibex_NDS.h"
 #include <queue>
 #include <map>
+#include "ibex_BxpMOPData.h"
+
+#define c1data ((BxpMOPData*) c1->prop[BxpMOPData::id])
+#define c2data ((BxpMOPData*) c2->prop[BxpMOPData::id])
 
 using namespace std;
 
@@ -28,8 +31,8 @@ struct max_distance {
 
 	bool operator() (const Cell* c1, const Cell* c2){
 	   int n = c1->box.size();
-	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
-		   return (c1->get<CellMOP>().ub_distance < c2->get<CellMOP>().ub_distance);
+	   if(c1data->ub_distance != c2data->ub_distance)
+		   return (c1data->ub_distance < c2data->ub_distance);
 	   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
 	   else return false;
 	}
@@ -48,10 +51,6 @@ class DistanceSortedCellBufferMOP : public CellBufferOptim {
    void set(NDS_seg& nds) {
 		 this->nds=&nds;
 	 }
-
-   virtual void add_backtrackable(Cell& root){
-     root.add<CellMOP>();
-   }
 
   /** Flush the buffer.
    * All the remaining cells will be *deleted* */
