@@ -17,7 +17,7 @@ namespace ibex {
 //TODO: remove this recipe for the argument of the max number of iterations of the LP solver
 LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps, int nb_sol) :
 		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT, LinearizerXTaylor::INF),
-		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LPSolver::default_max_iter)),
+		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,100/*LPSolver::default_max_iter*/)),
 		goal1(goal1), goal2(goal2), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var) {
 
 	if (sys.nb_ctr>0)

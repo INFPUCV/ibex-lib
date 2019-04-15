@@ -153,17 +153,21 @@ int main(int argc, char** argv){
 	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
 	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
 	cout << "segments?: " << ((_segments)? "yes":"no") << endl;
-		cout << "hamburger?: " << ((_hamburger)? "yes":"no") << endl;
+	cout << "hamburger?: " << ((_hamburger)? "yes":"no") << endl;
 
 
 	SystemFactory fac;
 
-	for(int i=0; i<ext_sys.nb_var-2; i++ )
+	for(int i=0; i<ext_sys.nb_var-2; i++ ){
 		fac.add_var(ext_sys.args[i]);
+	}
 
 
-	for(int j=2; j<ext_sys.nb_ctr; j++ )
-		fac.add_ctr(ext_sys.ctrs[j]);
+
+	for(int j=2; j<ext_sys.nb_ctr; j++ ){
+		ExprCtr cc(ext_sys.ctrs[j].f.expr(),  ext_sys.ctrs[j].op);
+		fac.add_ctr(cc);
+	}
 
 
 	System sys(fac);

@@ -80,6 +80,15 @@ def build (bld):
 		source = bld.path.ant_glob ("main/**/*.cpp"),
 		install_path = bld.env.BINDIR,
 		)
+		
+	if bld.env.WITH_OPTIM_MOP:
+		# build optim binary
+		bld.program (
+		target = "test",
+		use = [ "ibex", "IBEXMOP" ], # add dependency on ibex library
+		source = bld.path.ant_glob ("tests/**/*.cpp"),
+		install_path = bld.env.BINDIR,
+		)
 
 ######################
 ##### benchmarks #####
