@@ -123,7 +123,6 @@ public:
 	Status optimize(const IntervalVector& init_box, double obj_init_bound=POS_INFINITY);
 
 	/**
-	/**
 	 * \brief Continue optimization.
 	 *
 	 * Load intermediate data from a COV structure, and continue optimization.
@@ -307,6 +306,20 @@ public:
 	 * only).
 	 */
 	bool extended_COV;
+
+	/**
+	 * \brief Whether anticipated upper bounding has to be applied.
+	 *
+	 * If true, the search space is not only contracted w.r.t.
+	 *         f(x) <= loup
+	 * but
+	 *         f(x) <= loup - eps
+	 * where eps is the required precision on the objective
+	 * (the cumul of absolute and relative precision).
+	 *
+	 * Default value: true.
+	 */
+	bool anticipated_upper_bounding;
 
 protected:
 	/*

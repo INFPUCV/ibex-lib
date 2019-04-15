@@ -1,34 +1,33 @@
 //============================================================================
 //                                  I B E X
-// File        : ibex_LoupFinderXTaylor.h
-// Author      : Gilles Chabert, Ignacio Araya, Bertrand Neveu
+// File        : ibex_LoupFinderDuality.h
+// Author      : Gilles Chabert, Alexandre Goldsztejn
 // Copyright   : IMT Atlantique (France)
 // License     : See the LICENSE file
-// Created     : Jul 12, 2012
-// Last Update : Jul 09, 2017
+// Created     : Mar 20, 2019
+// Last Update : Mar 29, 2019
 //============================================================================
 
-#ifndef __IBEX_LOUP_FINDER_X_TAYLOR_H__
-#define __IBEX_LOUP_FINDER_X_TAYLOR_H__
+#ifndef __IBEX_LOUP_FINDER_DUALITY_H__
+#define __IBEX_LOUP_FINDER_DUALITY_H__
 
-#include "ibex_LinearizerXTaylor.h"
 #include "ibex_LoupFinder.h"
+#include "ibex_LinearizerDuality.h"
+#include "ibex_NormalizedSystem.h"
 
 namespace ibex {
+
 /**
  * \ingroup optim
  *
- * \brief Upper-bounding algorithm based on XTaylor restriction.
+ * \brief Upper-bounding algorithm based on duality.
  *
- * The algorithm builds an inner (feasible) polytope inside the
- * current box (see #LinearizerXTaylor) and then minimizes a
- * linear approximation of the goal function on this polytope via
- * a LP solver. The resulting point is verified a posteriori to
- * be feasible (wrt nonlinear constraint) and a new "loup".
+ * This loup finder is based on a linear restriction of the NLP
+ * that does not require the expansion point to be at a corner
+ * of the input box. So, this restriction is likely to be better.
  *
- * \note Only works with inequality constraints.
  */
-class LoupFinderXTaylor : public LoupFinder {
+class LoupFinderDuality : public LoupFinder {
 public:
 
 	/**
@@ -36,7 +35,7 @@ public:
 	 *
 	 * \param sys         - The NLP problem.
 	 */
-	LoupFinderXTaylor(const System& sys);
+	LoupFinderDuality(const NormalizedSystem& sys);
 
 	/**
 	 * \brief Find a new loup in a given box.
@@ -60,24 +59,25 @@ public:
 	/**
 	 * \brief The NLP problem.
 	 */
-	const System& sys;
+	const NormalizedSystem& sys;
 
 protected:
 
+	/** Total number of variables */
+	const size_t nb_LP_var;
+
 	/** Linearization technique. */
-	LinearizerXTaylor lr;
+	LinearizerDuality lr;
 
 	/** linear solver */
 	LPSolver lp_solver;
 
-	/** Miscellaneous   for statistics */
-//	int nb_simplex;
-//	double diam_simplex;
+	/** Initialization box: set [0,+oo) once for all, for all dual variables */
+	IntervalVector init_box;
 };
 
-/*============================================ inline implementation ============================================ */
 
-inline std::pair<IntervalVector, double> LoupFinderXTaylor::find(const IntervalVector& box, const IntervalVector& loup_point, double loup) {
+inline std::pair<IntervalVector, double> LoupFinderDuality::find(const IntervalVector& box, const IntervalVector& loup_point, double loup) {
 	BoxProperties prop(box);
 	return find(box, loup_point, loup, prop);
 }
@@ -85,5 +85,4 @@ inline std::pair<IntervalVector, double> LoupFinderXTaylor::find(const IntervalV
 } /* namespace ibex */
 
 
-
-#endif /* __IBEX_LOUP_FINDER_X_TAYLOR_H__ */
+#endif /* __IBEX_LOUP_FINDER_DUALITY_H__ */
