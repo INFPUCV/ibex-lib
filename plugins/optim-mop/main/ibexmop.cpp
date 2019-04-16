@@ -101,6 +101,8 @@ int main(int argc, char** argv){
 	fac2.add_var(ext_sys.args[ext_sys.nb_var-1]);
 	fac2.add_ctr(ext_sys.args[ext_sys.nb_var-2] + a * ext_sys.args[ext_sys.nb_var-1] - w = 0);
 
+	OptimizerMOP::_server_mode=true;
+
 	OptimizerMOP::cy_contract_var= _cy_contract || _cy_contract_full;
 	OptimizerMOP::_cy_upper= _cy_contract_full;
 
@@ -130,7 +132,7 @@ int main(int argc, char** argv){
 	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
-	//if(_hv) OptimizerMOP::_eps_contract = false;
+	if(_hv || OptimizerMOP::_server_mode) OptimizerMOP::_eps_contract = false;
 
 	if(bisection=="largestfirst_noy"){
 		bisection="largestfirst";
@@ -294,12 +296,17 @@ int main(int argc, char** argv){
 	else
 	  ctcxn = ctc;
 
+
+
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
 			(_maxdist)?	OptimizerMOP::MAXDIST: (_3split)? OptimizerMOP::ALL:OptimizerMOP::MIDPOINT,	eps);
 	OptimizerMOP::_rh=rh;
-	OptimizerMOP::_hv=_hv;
+	OptimizerMOP::_hv=_hv || OptimizerMOP::_server_mode;
+
+	py_Plotter::output_file="output2.txt";
+	OptimizerMOP::instructions_file="instructions.txt";
 
   if(_y1ref){
 	  string s=_y1ref.Get();

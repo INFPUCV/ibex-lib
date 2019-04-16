@@ -1,6 +1,6 @@
 constants
-pi in [3.141592653589,3.14159265359];
-theta = -0.05 * pi;
+Pi in [3.141592653589,3.14159265359];
+theta = -0.05 * Pi;
 a = 40;
 b = 5;
 c = 1; 
@@ -27,5 +27,5 @@ end
 Constraints
 x1 = z1;
 f2(x1,x2,x3,x4,x5) = z2; 
-a * abs(sin(b*pi*(sin(theta)*(f2(x1,x2,x3,x4,x5) - e) + cos(theta)*x1)^c))^d - cos(theta)*(f2(x1,x2,x3,x4,x5) - e) + sin(theta)*x1 <= 0;
+a * abs(sin(b*Pi*(sin(theta)*(f2(x1,x2,x3,x4,x5) - e) + cos(theta)*x1)^c))^d - cos(theta)*(f2(x1,x2,x3,x4,x5) - e) + sin(theta)*x1 <= 0;
 end

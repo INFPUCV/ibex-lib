@@ -237,6 +237,8 @@ public:
 
 	static bool _hv;
 
+	static bool _server_mode;
+
 	/**
 	 * \brief Trace activation flag.
 	 */
@@ -276,6 +278,8 @@ public:
 
 	//Termination criteria for the hamburger algorithm (dist < rh*ini_dist)
 	static double _rh;
+
+	static string instructions_file;
 
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;

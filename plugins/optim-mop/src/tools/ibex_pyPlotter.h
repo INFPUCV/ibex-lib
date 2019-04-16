@@ -53,7 +53,7 @@ public:
 	static void plot_add_box(Cell* c);
 	static void plot_del_box(Cell* c);
 
-
+	static string output_file;
 
 	static int n;
 

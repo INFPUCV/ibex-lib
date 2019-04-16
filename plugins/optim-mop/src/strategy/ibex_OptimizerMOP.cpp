@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <iomanip>
 #include <iostream>
+#include <set>
 //#include "ibex_CellSet.h"
 
 #ifndef cdata
@@ -35,6 +36,8 @@ bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
 double OptimizerMOP::_rh = 0.1;
 bool OptimizerMOP::_hv=false;
+bool OptimizerMOP::_server_mode=false;
+string OptimizerMOP::instructions_file="";
 
 
 
@@ -75,7 +78,9 @@ IntervalVector OptimizerMOP::deriv_goal(const Function& goal, const IntervalVect
 
 	xz[n]=0.0;
 	xz[n+1]=0.0;
-	return goal.gradient(xz);
+	IntervalVector g(goal.gradient(xz));
+	g.resize(n);
+	return g;
 }
 
 
@@ -287,6 +292,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	nb_cells=0;
 
+
+
 	buffer.flush();
 
 	ndsH.clear();
@@ -316,6 +323,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	cout << BxpMOPData::y2_init << endl;
 
 
+
+
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
 
@@ -327,30 +336,73 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	timer.start();
 
 
-	cout << "push root" << endl;
-	//handle_cell(*root,init_box);
-	buffer.push(root);
-	//if(_plot) py_Plotter::plot_add_box(root);
+	set<Cell*> cells;
+	set<Cell*> paused_cells;
+	IntervalVector focus(2);
+	focus[0]=BxpMOPData::y1_init;
+	focus[1]=BxpMOPData::y2_init;
 
-	cout << "pushed" << endl;
+	buffer.push(root);
+	cells.insert(root);
 
 	int iter=0;
 
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-		  /*if(_plot) {
-			  cout << "iter:" << iter << endl;
-			  cout << "buffer_size:" << buffer.size() << endl;
-		  }*/
 		  iter++;
+
+		  if(_server_mode && (iter+1)%10==0){
+			  //escritura de archivos
+			  //dormir 1 segundo y lectura de instrucciones
+			  cout << "escritura de archivo" << endl;
+			  NDS_seg LBaux(LB);
+			  for(auto cc:cells)
+				  LBaux.add_lb(*cc);
+
+			  py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LBaux.NDS2);
+			  //py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			  sleep(2);
+
+
+			  string line;
+			  ifstream myfile;
+			  myfile.open(instructions_file);
+			  if (myfile.is_open()){
+				  string instruction;
+				  myfile >> instruction ;
+				  if(instruction=="change_box"){
+					  double y1_lb,y1_ub,y2_lb,y2_ub;
+					  myfile >> y1_lb >> y1_ub;
+					  myfile >> y2_lb >> y2_ub;
+					  focus[0] = Interval(y1_lb,y1_ub);
+					  focus[1] = Interval(y2_lb,y2_ub);
+
+					  for(auto cc:paused_cells)
+						  buffer.push(cc);
+
+				  }
+				  myfile.close();
+				  remove(instructions_file.c_str());
+			  }
+		  }
 
 
 		  if (trace >= 2) cout << buffer;
 
-		  cout << "node selection" << endl;
 			Cell *c = buffer.pop();
-			//cout << c->get<CellMOP>().ub_distance << endl;
+			if(_server_mode){
+				IntervalVector boxy(2);
+				boxy[0]=c->box[n];
+				boxy[1]=c->box[n+1];
+				if( !focus.intersects(c->box) ){
+					paused_cells.insert(c);
+					continue;
+				}
+			}
+
+			cells.erase(c);
+			//cout << ((BxpMOPData*) c->prop[BxpMOPData::id])->ub_distance << endl;
 			if((cdata->ub_distance < eps  && !_hv) || cdata->ub_distance<=0){
 					break;
 	   	}
@@ -358,7 +410,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//if(_plot) py_Plotter::plot_del_box(c);
 
 			nb_cells++;
-			  cout << "contract" << endl;
 			contract_and_bound(*c, init_box);
 
 			if (c->box.is_empty()) {
@@ -371,8 +422,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			y1_ub.first = ndsH.lb().first;
 			y2_ub.second= ndsH.lb().second;
 
-
-			  cout << "bisection" << endl;
 			pair<Cell*,Cell*> new_cells;
 			bool atomic_box=false;
 			try {
@@ -389,15 +438,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
     	if(dist < eps || atomic_box){
 
 				if(_hv && dist>=0.0){
-					IntervalVector points = LB.get_points(c->box[n].lb(),c->box[n+1].lb(),
-					                   -1/cdata->a, cdata->w_lb/cdata->a);
-					LB.addPoint(make_pair(points[0].lb(),points[1].lb()) );
-					LB.addPoint(make_pair(points[2].lb(),points[3].lb()) );
-
-
-					//py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LB.NDS2);
-
-					LB.addSegment(make_pair(points[0].lb(),points[1].lb()),make_pair(points[2].lb(),points[3].lb()) );
+					IntervalVector points=LB.add_lb(*c);
 
 					if(y1ref.first > points[0].lb()) y1ref.first = points[0].lb();
 					if(y1ref.first > points[2].lb()) y1ref.first = points[2].lb();
@@ -434,11 +475,12 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			delete c; // deletes the cell.
 
-			cout << "pushing" << endl;
 			buffer.push(new_cells.first);
+			cells.insert(new_cells.first);
 			//if(_plot) py_Plotter::plot_add_box(new_cells.first);
 
 			buffer.push(new_cells.second);
+			cells.insert(new_cells.second);
 
 			//if(_plot) py_Plotter::plot_add_box(new_cells.second);
 

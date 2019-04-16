@@ -18,6 +18,7 @@
 
 namespace ibex {
 
+string py_Plotter::output_file="output2.txt";
 int py_Plotter::n=0;
 
 void py_Plotter::plot_add_ub(pair<double, double> eval){
@@ -69,7 +70,7 @@ void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVecto
  map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2){
 	//cout << "print plotX2:" << NDS.size() << endl;
 	ofstream output;
-	output.open("output2.txt");
+	output.open(output_file);
 
 	output << "[";
 

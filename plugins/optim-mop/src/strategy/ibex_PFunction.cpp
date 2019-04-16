@@ -18,11 +18,7 @@ double PFunction::_min_diam=0.1; //15% of the initial diameter
 double PFunction::_eps_opt=1e-7;
 
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
-		f1(f1),f2(f2), xa(xa), xb(xb) {
-
-	cout << f1 << endl;
-	cout << f2 << endl;
-}
+		f1(f1),f2(f2), xa(xa), xb(xb) { }
 
 /**
  * convert pf.t to t in inter
@@ -73,8 +69,6 @@ Interval PFunction::deriv(const Interval& t, const Interval& m, bool minimize, f
 	}else{
 		IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
 		IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
-		cout << g2-m*g1 << endl;
-		cout << xb-xa << endl;
 		result= (g2-m*g1)*(xb-xa);
 	}
 

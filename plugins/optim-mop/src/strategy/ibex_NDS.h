@@ -134,6 +134,20 @@ public:
 	*/
 	bool addSegment(pair< double, double> p1, pair< double, double> p2);
 
+	// Agrega el lowerbound de una caja al NDS
+	IntervalVector add_lb(Cell& c){
+		int n=c.box.size()-2;
+		IntervalVector points = get_points(c.box[n].lb(),c.box[n+1].lb(),
+					-1/((BxpMOPData*) c.prop[BxpMOPData::id])->a,
+					((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a);
+
+		addPoint(make_pair(points[0].lb(),points[1].lb()) );
+		addPoint(make_pair(points[2].lb(),points[3].lb()) );
+		addSegment(make_pair(points[0].lb(),points[1].lb()),make_pair(points[2].lb(),points[3].lb()) );
+		return points;
+
+	}
+
     struct NoIntersectionException : public exception {
        const char * what () const throw () {
           return "NoIntersectionException";
