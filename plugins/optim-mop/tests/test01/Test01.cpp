@@ -16,18 +16,22 @@ using namespace std;
 using namespace ibex;
 int main(int argc, char** argv){
 
-	System ext_sys("plugins/optim/benchs/hard/ex2_1_7.bch");
+	System ext_sys("plugins/optim/benchs/hard/ex6_2_10.bch");
 	SystemFactory fac;
 
-	for(int i=0; i<ext_sys.nb_var; i++ ){
+	for(int i=0; i<ext_sys.args.size(); i++ ){
 		fac.add_var(ext_sys.args[i]);
 	}
 
 
 
-	for(int j=0; j<ext_sys.nb_ctr; j++ ){
-		ExprCtr cc(ext_sys.ctrs[j].f.expr(),  ext_sys.ctrs[j].op);
+	for(int j=2; j<ext_sys.nb_ctr; j++ ){
+		const ExprNode& e=ext_sys.f_ctrs.expr()[j];
+		ExprCtr cc(e, ext_sys.ctrs[j].op);
 		fac.add_ctr(cc);
+		//ExprCtr cc(ext_sys.ctrs[j].f.expr(),  ext_sys.ctrs[j].op);
+		//fac.add_ctr(cc);
+		delete &e;
 	}
 
 

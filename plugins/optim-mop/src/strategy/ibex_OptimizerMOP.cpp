@@ -297,6 +297,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	root->box=init_box;
 
+	root->prop.add(new BxpMOPData());
+
 	// add data required by the cell buffer
 	buffer.add_property(init_box, root->prop);
 

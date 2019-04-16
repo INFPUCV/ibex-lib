@@ -18,7 +18,11 @@ double PFunction::_min_diam=0.1; //15% of the initial diameter
 double PFunction::_eps_opt=1e-7;
 
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
-		f1(f1),f2(f2), xa(xa), xb(xb) {}
+		f1(f1),f2(f2), xa(xa), xb(xb) {
+
+	cout << f1 << endl;
+	cout << f2 << endl;
+}
 
 /**
  * convert pf.t to t in inter
@@ -69,6 +73,8 @@ Interval PFunction::deriv(const Interval& t, const Interval& m, bool minimize, f
 	}else{
 		IntervalVector g1 = OptimizerMOP::deriv_goal(f1, xt, xt.size());
 		IntervalVector g2 = OptimizerMOP::deriv_goal(f2, xt, xt.size());
+		cout << g2-m*g1 << endl;
+		cout << xb-xa << endl;
 		result= (g2-m*g1)*(xb-xa);
 	}
 
@@ -114,7 +120,7 @@ bool PFunction::newton_rcontract(const Interval& m, bool minimize, function f, I
 		point_c = eval(point_t, m, minimize, f).lb();
 	}
 
-	// TODO: no debería pasar! problema con derivada? no conservativo?
+	// TODO: no deber��a pasar! problema con derivada? no conservativo?
 	if(point_t > inter.lb() and point_c.lb() > lb ){
 		cout << "r error: point_c > lb+epsilon " << point_c << "<" << lb << endl;
 		return true;
@@ -151,7 +157,7 @@ bool PFunction::newton_lcontract(const Interval& m, bool minimize, function f, I
 		//cout << "c:" << point_c.lb() << endl;
 	}
 
-		// TODO: no debería pasar! problema con derivada? no conservativo?
+		// TODO: no deber��a pasar! problema con derivada? no conservativo?
 	if(point_t < inter.ub() and point_c.lb() > lb ){
 		cout << "l error: point_c > lb " << lb-point_c.lb() << endl;
     return true;

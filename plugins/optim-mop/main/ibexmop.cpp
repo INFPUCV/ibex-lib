@@ -158,15 +158,27 @@ int main(int argc, char** argv){
 
 	SystemFactory fac;
 
-	for(int i=0; i<ext_sys.nb_var-2; i++ ){
-		fac.add_var(ext_sys.args[i]);
+	Array<const ExprNode> symbs;
+	Array<const ExprSymbol> _x1x2;
+	for(int i=0; i<ext_sys.args.size()-2; i++ ){
+		const ExprSymbol& x=ExprSymbol::new_(ext_sys.args[i].name);
+		fac.add_var(x);
+		symbs.add(x);
+
 	}
 
 
 
 	for(int j=2; j<ext_sys.nb_ctr; j++ ){
-		ExprCtr cc(ext_sys.ctrs[j].f.expr(),  ext_sys.ctrs[j].op);
+		const ExprNode& e = ext_sys.ctrs[j].f.expr();
+		Array<const ExprSymbol> _x1x2;
+		for(int i=0;i<ext_sys.args.size()-2;i++) _x1x2.add(ext_sys.ctrs[j].f.args()[i]);
+
+		const ExprNode& new_e = ExprCopy().copy(_x1x2, symbs, e);
+		ExprCtr cc(new_e, ext_sys.ctrs[j].op);
 		fac.add_ctr(cc);
+		//delete &new_e;
+
 	}
 
 

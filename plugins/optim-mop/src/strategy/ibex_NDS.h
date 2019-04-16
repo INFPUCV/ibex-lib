@@ -203,7 +203,6 @@ public:
 	double distance(const Cell* c){
 		int n=c->box.size();
 
-
 		double a = ((BxpMOPData*) c->prop[BxpMOPData::id])->a;
 		double w_lb = ((BxpMOPData*) c->prop[BxpMOPData::id])->w_lb;
 
