@@ -37,7 +37,7 @@ namespace ibex {
 
 	void DistanceSortedCellBufferMOP::push(Cell* c) {
 		double dist=nds->distance(c);
-		if(dist < cdata->ub_distance && !OptimizerMOP::_hv)
+		if(dist < cdata->ub_distance)
 			cdata->ub_distance=dist;
 		cells.push(c);
 	}
@@ -56,9 +56,7 @@ namespace ibex {
 		Cell* c = cells.top();
 		if(!c) return NULL;
 
-		if (OptimizerMOP::_hv) return c;
-
-		double dist=nds->distance(c);
+   	double dist=nds->distance(c);
 
 		//we update the distance and reinsert the element
 		while(dist < cdata->ub_distance){

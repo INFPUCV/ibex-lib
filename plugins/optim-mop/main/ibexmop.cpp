@@ -39,23 +39,19 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy (default: NDSdist)", {'s', "search"});
 	args::ValueFlag<double> _eps(parser, "float", "the desired precision (default: 0.01)", {"eps"});
 	args::ValueFlag<double> _timelimit(parser, "float", "timelimit (default: 100)", {'t',"timelimit"});
+	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the additional constraint cy.", {"cy-contract-full"});
 	args::Flag _eps_contract(parser, "eps-contract", "Contract using eps.", {"eps-contract"});
-	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"N"});
-	args::ValueFlag<double> _epsx(parser, "float", "The minimum size of boxes", {"eps_x"});
-	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
-	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
-	args::Flag _hv(parser, "hv", "Compute the hypervolume (some components must be disactivated)", {"hv"});
-	args::ValueFlag<std::string> _y1ref(parser, "hv", "Reference interval y1 for computing HV", {"y1"});
-	args::ValueFlag<std::string> _y2ref(parser, "hv", "Reference interval y2 for computing HV", {"y2"});
-	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
+	//args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"N"});
+	//args::ValueFlag<double> _weight2(parser, "float", "Weight of the second objective (default: 0.01)", {"w2","weight2"});
+	//args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::ValueFlag<std::string> _upperbounding(parser, "string", "Upper bounding strategy (default: ub2).", {"ub"});
+	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the ub2 algorithm (dist < rh*ini_dist)", {"rh"});
+	args::Flag _server_mode(parser, "server", "Server Mode (some options are discativated).",{"server_mode"});
+	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
+	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
 
-	args::Flag _maxdist(parser, "hamburger", "Bisection in the maximum distance vector.", {"MAXsplit"});
-	args::Flag _3split(parser, "hamburger", "Trisection.", {"3split"});
-
-	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the hamburger algorithm (dist < rh*ini_dist)", {"rh"});
 
 
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
@@ -118,7 +114,8 @@ int main(int argc, char** argv){
 	string bisection= (_bisector)? _bisector.Get() : "largestfirst";
 	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
 	double eps= (_eps)? _eps.Get() : 0.01 ;
-	double eps_x= (_epsx)? _epsx.Get() : 1e-8 ;
+	double rel_eps= (_server_mode)? 0.01: 0.0;
+	double eps_x= 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
 	double eqeps= 1.e-8;
 	double rh=(_rh)? _rh.Get():0.1;
@@ -127,12 +124,12 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::_plot = _plot;
 
-	int nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 50 ;
-	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : 0.1;
-	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
+	int nb_ub_sols = 50 ;
+	OptimizerMOP::_min_ub_dist = 0.1;
+	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
-	if(_hv || OptimizerMOP::_server_mode) OptimizerMOP::_eps_contract = false;
+	if(_server_mode) OptimizerMOP::_eps_contract = false;
 
 	if(bisection=="largestfirst_noy"){
 		bisection="largestfirst";
@@ -147,13 +144,15 @@ int main(int argc, char** argv){
 	cout << "Bisector: " << bisection << endl;
 	cout << "Strategy: " << strategy << endl;
 	cout << "eps: " << eps << endl;
+	cout << "rel_eps: " << rel_eps << endl;
 	cout << "eps_x: " << eps_x << endl;
 	cout << "nb_ub_sols: " << nb_ub_sols << endl;
-	//cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
+	cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
 	cout << "plot: " <<  ((OptimizerMOP::_plot)? "yes":"no") << endl;
-	//cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
+	cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
 	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
 	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
+	cout << "eps_contract?: " << ((OptimizerMOP::_eps_contract)? "yes":"no") << endl;
 	cout << "segments?: " << ((_segments)? "yes":"no") << endl;
 	cout << "hamburger?: " << ((_hamburger)? "yes":"no") << endl;
 
@@ -168,8 +167,6 @@ int main(int argc, char** argv){
 		symbs.add(x);
 
 	}
-
-
 
 	for(int j=2; j<ext_sys.nb_ctr; j++ ){
 		const ExprNode& e = ext_sys.ctrs[j].f.expr();
@@ -301,42 +298,16 @@ int main(int argc, char** argv){
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
-			(_maxdist)?	OptimizerMOP::MAXDIST: (_3split)? OptimizerMOP::ALL:OptimizerMOP::MIDPOINT,	eps);
+			OptimizerMOP::MIDPOINT,	eps, rel_eps);
+
 	OptimizerMOP::_rh=rh;
-	OptimizerMOP::_hv=_hv || OptimizerMOP::_server_mode;
-
-	py_Plotter::output_file="output2.txt";
-	OptimizerMOP::instructions_file="instructions.txt";
-
-  if(_y1ref){
-	  string s=_y1ref.Get();
-		std::string delimiter = ",";
-		int d=s.find(delimiter);
-
-		double lb = std::stod(s.substr(0, d));
-		double ub = std::stod(s.substr(d+1, s.size()));
-
-		o.y1ref = make_pair(lb,ub);
-	}
-
-	if(_y2ref){
-	  string s=_y2ref.Get();
-		std::string delimiter = ",";
-		int d=s.find(delimiter);
-	  double lb = std::stod(s.substr(0, d));
-		double ub = std::stod(s.substr(d+1, s.size()));
-
-		o.y2ref = make_pair(lb,ub);
-	}
+	OptimizerMOP::_server_mode=_server_mode;
+	OptimizerMOP::output_file= (_output_file)? _output_file.Get():"output2.txt";
+	OptimizerMOP::instructions_file=(_instructions_file)? _instructions_file.Get():"instructions.txt";
 
 	if(strategy=="NDSdist"){
 		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o.ndsH);
 	}
-
-	//max_distance::UB= &o.get_UB();
-
-
-	//	cout << " sys.box " << sys.box << endl;
 
 	// the trace
 	o.trace=(_trace)? _trace.Get() : false;
@@ -344,7 +315,6 @@ int main(int argc, char** argv){
 	// the allowed time for search
 	o.timeout=timelimit;
 
-	cout << "problem?" << endl;
 	// the search itself
 	o.optimize(ext_sys.box);
 

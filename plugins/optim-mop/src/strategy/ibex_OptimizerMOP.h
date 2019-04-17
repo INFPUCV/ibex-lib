@@ -25,6 +25,8 @@
 #include <list>
 #include <stack>
 #include <math.h>
+#include <iostream>
+#include <unistd.h>
 
 #include "ibex_BxpMOPData.h"
 //#include "ibex_DistanceSorted.h"
@@ -116,7 +118,7 @@ public:
 	 */
 	OptimizerMOP(int n, const Function &f1,  const Function &f2,
 			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
-			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps);
+			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
 
 	/**
 	 * \brief Delete *this.
@@ -176,18 +178,6 @@ public:
 	 */
 	double get_nb_cells() const;
 
-	Interval get_hypervolume() const{
-		return ndsH.hypervolume(y1refi,y2refi);
-	}
-
-	Interval get_rdelta_hypervolume() const{
-		return (LB.hypervolume(y1refi,y2refi)-ndsH.hypervolume(y1refi,y2refi))/LB.hypervolume(y1refi,y2refi);
-	}
-
-	Interval get_delta_hypervolume() const{
-		return (LB.hypervolume(y1refi,y2refi)-ndsH.hypervolume(y1refi,y2refi));
-	}
-
 	/* =========================== Settings ============================= */
 
 	/**
@@ -231,13 +221,116 @@ public:
 	/** Required precision for the envelope */
 	double eps;
 
+	/** Required relative precision for the envelope */
+	double rel_eps;
+
 
 	/** Default precision: 0.01 */
 	static const double default_eps;
 
-	static bool _hv;
 
+  //server variables
 	static bool _server_mode;
+	static string instructions_file;
+	static string output_file;
+
+	static IntervalVector get_boxy(IntervalVector& v, int n){
+		IntervalVector boxy(2);
+		boxy[0]=v[n];
+		boxy[1]=v[n+1];
+		return boxy;
+	}
+
+	//el focus se actualiza tomando en cuenta el hull de la región factible y las soluciones encontradas
+	void update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+
+		IntervalVector new_focus(2);
+		new_focus.set_empty();
+
+		for(auto cc:cells){
+			IntervalVector boxy=get_boxy(cc->box,n);
+			if(new_focus.is_empty())
+				new_focus=boxy;
+			else new_focus|=boxy;
+		}
+
+		for(auto cc:paused_cells){
+			IntervalVector boxy=get_boxy(cc->box,n);
+			if(new_focus.is_empty())
+				new_focus=boxy;
+			else new_focus|=boxy;
+		}
+
+		focus&=new_focus;
+
+	}
+
+  //return false if the current cell is outside the focus
+	bool server_io(Cell *c, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+
+		//escritura de archivos
+		//dormir 1 segundo y lectura de instrucciones
+		cout << "escritura de archivo" << endl;
+
+		//TODO: plotear puntos en focus
+		//con las cajas restantes se COMPLETA el LB
+		NDS_seg LBaux;
+		update_focus(cells, paused_cells, focus);
+
+
+		for(auto cc:cells)	LBaux.add_lb(*cc);
+
+		for(auto cc:paused_cells) LBaux.add_lb(*cc);
+
+		//para los puntos en LBaux
+        //if(focus.contains(cur) && !focus.contains(old))
+			//imprimir(intersection between cur--old y focus) //verificar que cur no este en el borde
+        //if(!focus.contains(cur) && focus.contains(old))
+			//imprimir(intersection between cur--old y focus) //verificar que cur no este en el borde
+		//if(focus contains cur) imprimir(cur)
+
+
+		//se escribe el archivo de salida
+		py_Plotter::offline_plot(ndsH.NDS2,  &LBaux.NDS2, output_file.c_str());
+		sleep(2);
+
+    //se lee el archivo de instrucciones y se elimina
+		string line; ifstream myfile;
+		myfile.open(instructions_file);
+		if (myfile.is_open()){
+			string instruction;
+			myfile >> instruction ;
+			if(instruction=="zoom_in" || instruction=="zoom_out"){
+				double y1_lb,y1_ub,y2_lb,y2_ub;
+				myfile >> y1_lb >> y1_ub;
+				myfile >> y2_lb >> y2_ub;
+				focus[0] = Interval(y1_lb,y1_ub);
+				focus[1] = Interval(y2_lb,y2_ub);
+				cout << instruction << focus << endl;
+				if(instruction=="zoom_out" || instruction=="zoom_in"){
+					for(auto cc:paused_cells){
+						buffer.push(cc);
+						cells.insert(cc);
+					}
+					paused_cells.clear();
+				}
+
+			}
+			myfile.close();
+			remove(instructions_file.c_str());
+		}
+
+		if(!c) return false;
+
+		IntervalVector boxy(2);
+		boxy[0]=c->box[n];
+		boxy[1]=c->box[n+1];
+		if(!focus.intersects(boxy) ){
+			paused_cells.insert(c);
+			return false;
+		}else	return true;
+	}
+
 
 	/**
 	 * \brief Trace activation flag.
@@ -253,11 +346,11 @@ public:
 	 */
 	double timeout;
 
-	pair <double, double> y1ref;
-	pair <double, double> y2ref;
+	//pair <double, double> y1ref;
+	//pair <double, double> y2ref;
 
-	Interval y1refi;
-	Interval y2refi;
+	//Interval y1refi;
+	//Interval y2refi;
 
 	/* ======== Some other parameters of the solver =========== */
 
@@ -279,7 +372,7 @@ public:
 	//Termination criteria for the hamburger algorithm (dist < rh*ini_dist)
 	static double _rh;
 
-	static string instructions_file;
+
 
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;
@@ -392,9 +485,6 @@ private:
 	/* Remember return status of the last optimization. */
 	Status status;
 
-
-
-	NDS_seg LB;
 
 	/** The current non-dominated set sorted by increasing x */
 	//static map< pair <double, double>, IntervalVector, sorty2 > NDS2;

@@ -31,26 +31,22 @@ const double OptimizerMOP::default_eps=0.01;
 bool OptimizerMOP::_plot = false;
 double OptimizerMOP::_min_ub_dist = 1e-7;
 bool OptimizerMOP::_cy_upper =false;
-//bool OptimizerMOP::_hv =false;
 bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
 double OptimizerMOP::_rh = 0.1;
-bool OptimizerMOP::_hv=false;
 bool OptimizerMOP::_server_mode=false;
 string OptimizerMOP::instructions_file="";
+string OptimizerMOP::output_file="";
 
 
 
 OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder, Mode nds_mode, Mode split_mode, double eps) : n(n),
+		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
+		Mode nds_mode, Mode split_mode, double eps, double rel_eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
                 				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode), split_mode(split_mode),
-												y1ref(make_pair(POS_INFINITY,NEG_INFINITY)),
-												y2ref(make_pair(POS_INFINITY,NEG_INFINITY))
-								 {
-
-	py_Plotter::n=n;
+												rel_eps(rel_eps) {
 
 	if (trace) cout.precision(12);
 }
@@ -291,13 +287,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	status=SUCCESS;
 
 	nb_cells=0;
-
-
-
 	buffer.flush();
-
 	ndsH.clear();
-	LB.clear();
 
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
 	Cell* root=new Cell(IntervalVector(n+2));
@@ -315,15 +306,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	// add data required by the contractor
 	ctc.add_property(init_box, root->prop);
 
-
 	BxpMOPData::y1_init=eval_goal(goal1, root->box, n);
 	BxpMOPData::y2_init=eval_goal(goal2, root->box, n);
 
 	cout << BxpMOPData::y1_init << endl;
 	cout << BxpMOPData::y2_init << endl;
-
-
-
 
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
@@ -343,71 +330,43 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	focus[1]=BxpMOPData::y2_init;
 
 	buffer.push(root);
+	//cells en buffer para generar el LB
 	cells.insert(root);
 
 	int iter=0;
-
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
-		while (!buffer.empty()) {
-		  iter++;
+		while (!buffer.empty() || !paused_cells.empty()) { 		  iter++;
+			if(buffer.empty() && !_server_mode) break;
 
-		  if(_server_mode && (iter+1)%10==0){
-			  //escritura de archivos
-			  //dormir 1 segundo y lectura de instrucciones
-			  cout << "escritura de archivo" << endl;
-			  NDS_seg LBaux(LB);
-			  for(auto cc:cells)
-				  LBaux.add_lb(*cc);
+			Cell *c = NULL;
+			if(!buffer.empty()) c=buffer.pop();
 
-			  py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LBaux.NDS2);
-			  //py_Plotter::offline_plot(NULL, ndsH.NDS2);
-			  sleep(2);
+		    if( _server_mode && (iter%10==0|| c==NULL) ){
+		    	cout << "buffer size:" << buffer.size() << endl;
+		    	cout << "eps:" << eps << endl;
+				if(!server_io(c, cells, paused_cells, focus)) continue;
 
 
-			  string line;
-			  ifstream myfile;
-			  myfile.open(instructions_file);
-			  if (myfile.is_open()){
-				  string instruction;
-				  myfile >> instruction ;
-				  if(instruction=="change_box"){
-					  double y1_lb,y1_ub,y2_lb,y2_ub;
-					  myfile >> y1_lb >> y1_ub;
-					  myfile >> y2_lb >> y2_ub;
-					  focus[0] = Interval(y1_lb,y1_ub);
-					  focus[1] = Interval(y2_lb,y2_ub);
 
-					  for(auto cc:paused_cells)
-						  buffer.push(cc);
+		    }
 
-				  }
-				  myfile.close();
-				  remove(instructions_file.c_str());
-			  }
-		  }
-
-
-		  if (trace >= 2) cout << buffer;
-
-			Cell *c = buffer.pop();
-			if(_server_mode){
-				IntervalVector boxy(2);
-				boxy[0]=c->box[n];
-				boxy[1]=c->box[n+1];
-				if( !focus.intersects(c->box) ){
-					paused_cells.insert(c);
-					continue;
-				}
+			if(rel_eps>0.0){
+				eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
 			}
 
 			cells.erase(c);
-			//cout << ((BxpMOPData*) c->prop[BxpMOPData::id])->ub_distance << endl;
-			if((cdata->ub_distance < eps  && !_hv) || cdata->ub_distance<=0){
-					break;
-	   	}
 
-			//if(_plot) py_Plotter::plot_del_box(c);
+			if(cdata->ub_distance <= eps){
+				 if(_server_mode){
+					 while(!buffer.empty())
+					   paused_cells.insert(buffer.pop());
+					 cells.clear();
+					 continue;
+				 }
+
+				 break;
+			}
 
 			nb_cells++;
 			contract_and_bound(*c, init_box);
@@ -431,33 +390,22 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				atomic_box=true;
 			}
 
-
     	double dist=0.0;
-    	if(!atomic_box || _hv) dist= ndsH.distance(c);
+    	if(!atomic_box) dist=ndsH.distance(c);
 
+			//se elimina la caja
     	if(dist < eps || atomic_box){
-
-				if(_hv && dist>=0.0){
-					IntervalVector points=LB.add_lb(*c);
-
-					if(y1ref.first > points[0].lb()) y1ref.first = points[0].lb();
-					if(y1ref.first > points[2].lb()) y1ref.first = points[2].lb();
-					if(y2ref.first > points[1].lb()) y2ref.first = points[1].lb();
-					if(y2ref.first > points[3].lb()) y2ref.first = points[3].lb();
-					IntervalVector A(2);
-					A[0]=c->box[n];
-					A[1]=c->box[n+1];
-					B.push_back(A);
-					//py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LB.NDS2);
-				}
 
     		if(new_cells.first){
     			delete new_cells.first;
     			delete new_cells.second;
-
     		}
-				delete c; continue;
 
+				if(_server_mode && dist>0.0){
+					paused_cells.insert(c);
+				}else delete c;
+
+				continue;
 		}
 
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
@@ -477,12 +425,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			buffer.push(new_cells.first);
 			cells.insert(new_cells.first);
-			//if(_plot) py_Plotter::plot_add_box(new_cells.first);
 
 			buffer.push(new_cells.second);
 			cells.insert(new_cells.second);
 
-			//if(_plot) py_Plotter::plot_add_box(new_cells.second);
 
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
 			time = timer.get_time();
@@ -493,29 +439,14 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	catch (TimeOutException& ) {
 		status = TIME_OUT;
 		cout << "timeout" << endl;
-
-		//return status;
 	}
 
 
 	timer.stop();
 	time = timer.get_time();
 
-  pair<double,double> lb=ndsH.lb();
-  for(auto b:B){
-		if(b[0].lb() <= lb.first && b[1].ub() > y2ref.second)
-			y2ref.second = b[1].ub();
-		if(b[1].lb() <= lb.second && b[0].ub() > y1ref.second)
-				y1ref.second = b[0].ub();
-	}
-	y1refi = Interval(y1ref.first, y1ref.second);
-	y2refi = Interval(y2ref.first, y2ref.second);
-
-	// if(_plot) (nds_mode==POINTS)?
-	if(OptimizerMOP::_hv)
- 	   py_Plotter::offline_plot(NULL, ndsH.NDS2,  &LB.NDS2);
-	else
-	   py_Plotter::offline_plot(NULL, ndsH.NDS2);
+	if(!_server_mode)
+	   py_Plotter::offline_plot(ndsH.NDS2, NULL, "output2.txt");
 	return status;
 }
 
@@ -556,7 +487,7 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 		count++;
 
 		if(_plot) {
-			py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			py_Plotter::offline_plot(ndsH.NDS2, NULL, "output2.txt");
 			//py_Plotter::offline_plot(NULL, LB.NDS2);
 			//getchar();
 		}
@@ -689,16 +620,9 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 void OptimizerMOP::report(bool verbose) {
 
 	if (!verbose) {
-        cout << endl 	<< "time 	#nodes 		|Y|" << endl;
-		if(_hv)
-		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() << " "
-		 << ndsH.hypervolume(y1refi,y2refi) << " " << LB.hypervolume(y1refi,y2refi) << " "  <<
-		get_delta_hypervolume() << " "  << get_rdelta_hypervolume() <<
-		" --y1=" << y1refi.lb() << "," << y1refi.ub() <<
-		" --y2=" << y2refi.lb() << "," << y2refi.ub() << endl;
-		else
-			cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  " "<< get_hypervolume().ub()  << endl;
-		return;
+     cout << endl 	<< "time 	#nodes 		|Y|" << endl;
+		 cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() << endl;
+	   return;
 	}
 
 	switch(status) {

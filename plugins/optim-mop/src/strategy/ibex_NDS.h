@@ -39,7 +39,7 @@ public:
 
 
 	NDS_seg() {
-		NDS2.clear();
+		clear();
 	};
 
 	virtual ~NDS_seg() { };
@@ -210,7 +210,7 @@ public:
 	* 2) if there are no intersection it may return an exception or a point dominated by one segment
 	* TODO: revise with colinear generated examples
 	*/
-	pair<double, double> pointIntersection(pair<double, double> p0, pair<double, double> p1,
+	static pair<double, double> pointIntersection(pair<double, double> p0, pair<double, double> p1,
 			pair<double, double> p2, pair<double, double> p3);
 
   static bool _trace;
