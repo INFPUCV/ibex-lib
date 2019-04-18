@@ -79,9 +79,9 @@ namespace ibex {
 			}
 		}  	
 
-		// cout << "tamaño global: " << globalBuffer.size() << endl;
-		// cout << "tamaño current: " << currentBuffer.size() << endl;
-		// cout << "tamaño next: " << nextBuffer.size() << endl;
+		// cout << "tama��o global: " << globalBuffer.size() << endl;
+		// cout << "tama��o current: " << currentBuffer.size() << endl;
+		// cout << "tama��o next: " << nextBuffer.size() << endl;
 		//getchar();	
 	}
 
@@ -90,6 +90,7 @@ namespace ibex {
 		std::multiset <Cell*>::iterator it;
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
+		//TODO: aqui se debe aplicar non dominated sorting + crowding distance
 		if(currentBuffer.empty() && !nextBuffer.empty()){
 		//	getchar();
 			ofstream myfile;
@@ -161,8 +162,8 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tamaño next 2: " << nextBuffer.size() << endl;
-		// cout << "tamaño current 2: " << currentBuffer.size() << endl;
+		// cout << "tama��o next 2: " << nextBuffer.size() << endl;
+		// cout << "tama��o current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 

@@ -363,7 +363,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			
 			//cout << c->box[n-1] << endl;
 			//cout << c->box[n-2] << endl;
-			getchar();
+			//getchar();
 			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
 				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)!=NULL)
