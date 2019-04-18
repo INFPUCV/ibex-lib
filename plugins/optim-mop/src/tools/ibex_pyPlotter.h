@@ -32,7 +32,7 @@ public:
 	 * \brief writes a file (output.txt) to be read by the python3 program plot.py
 	 */
 	static void offline_plot(map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
-		map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2, const char* output_file);
+		map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus=NULL);
 
 };
 

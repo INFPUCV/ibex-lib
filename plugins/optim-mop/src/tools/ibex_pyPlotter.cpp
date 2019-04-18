@@ -20,23 +20,31 @@ namespace ibex {
 
 
 void py_Plotter::offline_plot(map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
- map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2, const char* output_file){
+ map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus){
 	ofstream output;
 	output.open(output_file);
 
 	output << "[";
 
 	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
-	for(;ub!=NDS.end();ub++)
-		output << "(" << ub->first.first << "," << ub->first.second << "),";
+	for(;ub!=NDS.end();ub++){
+		Vector v(2);
+		v[0]=ub->first.first; v[1]=ub->first.second;
+		if(!focus || (*focus).contains(v))
+			output << "(" << ub->first.first << "," << ub->first.second << "),";
+	}
 
   output << "]" << endl;
 
   if(NDS2){
 		output << "[";
 		ub=NDS2->begin();
-		for(;ub!=NDS2->end();ub++)
+		for(;ub!=NDS2->end();ub++){
+			Vector v(2);
+			v[0]=ub->first.first; v[1]=ub->first.second;
+			if(!focus || (*focus).contains(v))
 			output << "(" << ub->first.first << "," << ub->first.second << "),";
+		}
 
 	  output << "]" << endl;
   }else

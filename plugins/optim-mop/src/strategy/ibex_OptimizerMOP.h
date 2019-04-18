@@ -265,36 +265,36 @@ public:
 
 	}
 
-  //return false if the current cell is outside the focus
-	bool server_io(Cell *c, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
-
+	void write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 		//escritura de archivos
 		//dormir 1 segundo y lectura de instrucciones
 		cout << "escritura de archivo" << endl;
 
-		//TODO: plotear puntos en focus
-		//con las cajas restantes se COMPLETA el LB
 		NDS_seg LBaux;
+		NDS_seg UBaux=ndsH;
+
+
 		update_focus(cells, paused_cells, focus);
 
+		LBaux.addPoint(make_pair(focus[0].lb(),focus[1].ub()));
+		LBaux.addPoint(make_pair(focus[0].ub(),focus[1].lb()));
+
+		//TODO: estos puntos no son validos por lo que deberían decartarse del
+		//archivo, a no ser que existan en la solucion
+		UBaux.addPoint(make_pair(focus[0].lb(),focus[1].ub()));
+		UBaux.addPoint(make_pair(focus[0].ub(),focus[1].lb()));
 
 		for(auto cc:cells)	LBaux.add_lb(*cc);
-
 		for(auto cc:paused_cells) LBaux.add_lb(*cc);
 
-		//para los puntos en LBaux
-        //if(focus.contains(cur) && !focus.contains(old))
-			//imprimir(intersection between cur--old y focus) //verificar que cur no este en el borde
-        //if(!focus.contains(cur) && focus.contains(old))
-			//imprimir(intersection between cur--old y focus) //verificar que cur no este en el borde
-		//if(focus contains cur) imprimir(cur)
-
-
 		//se escribe el archivo de salida
-		py_Plotter::offline_plot(ndsH.NDS2,  &LBaux.NDS2, output_file.c_str());
-		sleep(2);
+		py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus);
+	}
 
-    //se lee el archivo de instrucciones y se elimina
+	void read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+
+
+		//se lee el archivo de instrucciones y se elimina
 		string line; ifstream myfile;
 		myfile.open(instructions_file);
 		if (myfile.is_open()){
@@ -320,15 +320,6 @@ public:
 			remove(instructions_file.c_str());
 		}
 
-		if(!c) return false;
-
-		IntervalVector boxy(2);
-		boxy[0]=c->box[n];
-		boxy[1]=c->box[n+1];
-		if(!focus.intersects(boxy) ){
-			paused_cells.insert(c);
-			return false;
-		}else	return true;
 	}
 
 

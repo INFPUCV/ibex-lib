@@ -330,32 +330,42 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	focus[1]=BxpMOPData::y2_init;
 
 	buffer.push(root);
-	//cells en buffer para generar el LB
 	cells.insert(root);
 
 	int iter=0;
 	try {
+		bool server_pause=false;
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty() || !paused_cells.empty()) { 		  iter++;
 			if(buffer.empty() && !_server_mode) break;
 
-			Cell *c = NULL;
-			if(!buffer.empty()) c=buffer.pop();
+			if( _server_mode && iter%10==0 ) server_pause=true;
 
-		    if( _server_mode && (iter%10==0|| c==NULL) ){
-		    	cout << "buffer size:" << buffer.size() << endl;
-		    	cout << "eps:" << eps << endl;
-				if(!server_io(c, cells, paused_cells, focus)) continue;
+			while(buffer.empty() || server_pause){
+				if(server_pause) {
+			    	cout << "buffer size:" << buffer.size() << endl;
+			    	cout << "eps:" << eps << endl;
+					write_envelope(cells, paused_cells, focus);
+				}
+				sleep(2);
+				read_instructions(cells, paused_cells, focus);
+				server_pause=false;
+			}
+			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
+
+			Cell *c = buffer.pop();
+			cells.erase(c);
 
 
-
-		    }
-
-			if(rel_eps>0.0){
-				eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
+			if(_server_mode){
+				IntervalVector boxy(2); boxy[0]=c->box[n]; boxy[1]=c->box[n+1];
+				if(!focus.intersects(boxy) ){
+					paused_cells.insert(c);
+					continue;
+				}
 			}
 
-			cells.erase(c);
+
 
 			if(cdata->ub_distance <= eps){
 				 if(_server_mode){
@@ -364,7 +374,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 					 cells.clear();
 					 continue;
 				 }
-
 				 break;
 			}
 
