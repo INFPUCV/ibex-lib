@@ -114,6 +114,7 @@ The output file (server_out) contains two lists of points representing the upper
 The input file (server_in) allows us to give instructions to the solver. For the moment two commands:
 * zoom_in y1_lb y1_ub y2_lb y2_ub
 * zoom_out y1_lb y1_ub y2_lb y2_ub
+* get_solution y1 y2   (the point y=(y1,y2) belonging to a segment, the solver returns a solution x with f(x) dominating y)
 
 For plotting the non-dominated vectors returned by the solver
 
