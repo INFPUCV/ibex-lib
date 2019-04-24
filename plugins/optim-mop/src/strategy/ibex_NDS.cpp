@@ -12,96 +12,86 @@ namespace ibex {
 	 //map< pair <double, double>, IntervalVector, sorty2 > NDS_seg::NDS2;
 	 bool NDS_seg::_trace;
 
-	bool NDS_seg::is_dominated(pair< double, double> new_p){
-		if(new_p.first == POS_INFINITY && new_p.second == POS_INFINITY) return false;
+	bool NDS_seg::is_dominated(const Vector& new_p){
+		if(new_p[0] == POS_INFINITY && new_p[1] == POS_INFINITY) return false;
 
-		std::map<pair<double, double>, IntervalVector>::iterator it1 = --NDS2.lower_bound(new_p);
-		// std::map<pair<double, double>, IntervalVector>::iterator it1 = NDS2.begin();
-		pair< double, double> point1, point2;
-		point1 = it1->first;
+		std::map<Vector, NDS_data >::iterator it1 = --NDS2.lower_bound(new_p);
+
+		Vector point1 = it1->first;
 		it1++;
-		point2 = it1->first;
+		Vector point2 = it1->first;
 
 		// Se comprueba que no sea dominado por el anterior al lower_bound (puede ocurrir)
-		if(point1.first <= new_p.first && point1.second <= new_p.second){
-			//cout << "is_dom: prev_dom" << endl;
+		if(point1[0] <= new_p[0] && point1[1] <= new_p[1])
 			return true;
-		}
+
 
 		// Se comprueba que no sea dominado por el lower_bound
-		if(point2.first <= new_p.first && point2.second <= new_p.second ){
-			//cout << "is_dom: lb_dom" << endl;
+		if(point2[0] <= new_p[0] && point2[1] <= new_p[1] )
 			return true;
-		}
-
 
 		// comprobar que no este dominado por la recta que forma los dos puntos anteriores
-		if(!(new_p.first <= point1.first && new_p.second <= point1.second ) &&
-				!(new_p.first <= point2.first && new_p.second <= point2.second)) {
+		if(!(new_p[0] <= point1[0] && new_p[1] <= point1[1] ) &&
+				!(new_p[0] <= point2[0] && new_p[1] <= point2[1])) {
 
 			//pendiente de los dos puntos
-			Interval m = (Interval(point2.second)-Interval(point1.second))/
-					(Interval(point2.first)-Interval(point1.first));
+			Interval m = (Interval(point2[1])-Interval(point1[1]))/
+					(Interval(point2[0])-Interval(point1[0]));
 
 			// se obtiene el c de la funcion de los puntos
-			Interval c = Interval(point1.second) - m*Interval(point1.first);
+			Interval c = Interval(point1[1]) - m*Interval(point1[0]);
 
 			// se obtiene el c del nuevo punto
-			Interval cEval = Interval(new_p.second) - m*Interval(new_p.first);
+			Interval cEval = Interval(new_p[1]) - m*Interval(new_p[0]);
 
-
-			if(cEval.lb() > c.ub()){
+			if(cEval.lb() > c.ub())
 				return true;
-			}
-
-
 		}
 
 		return false;
-
-	}
-
-
-	bool NDS_seg::is_dominated(vector<double>& p){
-			pair< double, double> new_p=make_pair(p[0],p[1]);
-			return NDS_seg::is_dominated(new_p);
 	}
 
 
 
-	bool NDS_seg::addSegment(pair< double, double> p1, pair< double, double> p2) {
+	bool NDS_seg::addSegment(const pair<Vector, Vector>& y1y2, const NDS_data& data) {
 	 //  cout << "add_segment:" << p1.first << "," << p1.second << " -- "	<< p2.first << "," << p2.second  <<endl;
 
-		if(p1.first == p2.first  &&  p1.second == p2.second ){
-			addPoint(p1);
+		const Vector& y1=y1y2.first;
+		const Vector& y2=y1y2.second;
+
+		if(y1y2.first == y1y2.second){
+			addPoint(y1y2.first, data);
 			return true;
 		}
 
 		//se insertan en DS2 todos los puntos que se ubican entre p1 y p2 incluyendo en anterior en y1 y el siguiente en y2
-		std::map<pair<double, double>, IntervalVector>::iterator aux, it1 = --NDS2.lower_bound(p1);
-		pair< double, double> second, point, inter_last = make_pair(NEG_INFINITY, NEG_INFINITY);
-		list< pair <double, double>> DS2;
+		std::map<Vector, NDS_data >::iterator aux, it1 = --NDS2.lower_bound(y1);
 
-		Interval m = (Interval(p1.second) - Interval(p2.second))/
-								(Interval(p1.first) - Interval(p2.first));
-		double c_ub = (Interval(p1.second) - m*Interval(p1.first)).ub();
 
-		DS2.push_back(it1->first);
+		Interval m = (Interval(y1[1]) - Interval(y2[1]))/
+								(Interval(y1[0]) - Interval(y2[0]));
+		double c_ub = (Interval(y1[1]) - m*Interval(y1[0])).ub();
+
+
+		//segmentos en el rango
+		list< pair<Vector, NDS_data> > DS2;
+
+		DS2.push_back(*it1);
 		it1++;
 
 
 		bool flagDS2 = false;
 		for(;it1 != NDS2.end();) {
 
-			if(it1->first.second < p1.second and it1->first.second < p2.second) flagDS2= true;
-			DS2.push_back(it1->first);
+			if(it1->first[1] < y1[1] and it1->first[1] < y2[1]) flagDS2= true;
+			DS2.push_back(*it1);
 			if(flagDS2) break;
 
 			//se elimina el punto si es dominado por el segmento
 
 
-			if( c_ub < (Interval(it1->first.second) - m*Interval(it1->first.first)).lb()
-			 && p1.first < it1->first.first && p2.second < it1->first.second){
+			if( c_ub < (Interval(it1->first[1]) - m*Interval(it1->first[0])).lb()
+			 && y1[0] < it1->first[0] && y2[1] < it1->first[1]){
 				aux = it1; ++aux;
 				//cout << "del:" << it1->first.first << "," << it1->first.second << endl;;
 				NDS2.erase(it1);
@@ -113,141 +103,96 @@ namespace ibex {
 		//se intersecta el segmento con los segmentos de la NDS
 		//se agregan las intersecciones en NDS
 		int intersections=0;
-		pair< double, double> prev = DS2.front();
-		for(auto second:DS2){
-			if(prev==second) continue;
+		Vector prev = DS2.front().first;
+		for(auto next:DS2){
+			if(prev==next.first) continue;
 
 			try{
-				//cout << "prev:" << prev.first << "," << prev.second << endl;
-				//cout << "second:" << second.first << "," << second.second << endl;
-				point = pointIntersection(prev, second, p1, p2);
 
-				//cout << "add:" << point.first << "," << point.second << endl;
-				NDS2.insert(make_pair(point,IntervalVector(1)));
+				Vector point = pointIntersection(prev, next.first, y1, y2);
+				NDS2.insert(make_pair(point,next.second));
 				intersections++;
 			}catch(NoIntersectionException& e) {
 			}
 
-			prev = second;
+			prev = next.first;
 		}
 
 
 
 		return (intersections>0);
-		// getchar();
-		//std::vector< pair <double, double> > curve_y;
-		//std::vector< pair <double, double> > rectaUB;
-		//py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
+
 	}
 
-	//TODO: think about how to associate the solutions to segments and points in the NDS
-	void NDS_seg::addPoint(pair< double, double> new_p) {
-		vector<double> p(2);
-		p[0]=new_p.first;
-		p[1]=new_p.second;
-
-		//cout << "add_point:" << p[0] << "," << p[1] << endl;
-        //cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
-
-		if (is_dominated(p)) return;
-		//cout << "add_point: non_dominated" << endl;
+	void NDS_seg::addPoint(const Vector& new_y, const NDS_data& data) {
+		if (is_dominated(new_y)) return;
 
 		// Removes from NDS the points dominated by p
 		// Then, adds the new point between the corresponding NDS points and adds new ones
 		// intersecting the old segments
 
-		std::map<pair<double, double>, IntervalVector>::iterator it1 = NDS2.lower_bound(new_p); // Se llega al nodo izquierdo del nodo eval, deberia estar mas arriba
-		std::map<pair<double, double>, IntervalVector>::iterator aux;
+		std::map<Vector, NDS_data >::iterator it1 = NDS2.lower_bound(new_y); // Se llega al nodo izquierdo del nodo eval, deberia estar mas arriba
+		std::map<Vector, NDS_data >::iterator aux;
 
-		pair <double, double> first_dom=it1->first;
+		Vector first_dom=it1->first;
 		it1--;
-		pair <double, double> last_dom=it1->first;
+		Vector last_dom=it1->first;
 		bool first=true;
+		NDS_data prev_data;
+		NDS_data next_data;
 		for(;it1 != NDS2.end();) {
 			// termina cuando it1 no este dentro de los rangos dominados del punto a agregar
-			if(it1->first.second < p[1]) break;
+			if(it1->first[1] < new_y[1]) break;
 
-			// comprueba si esta dominado el punto para agregarlo a DS2
-			if(p[0] <= it1->first.first and p[1] <= it1->first.second) {
+			// comprueba si esta dominado el punto
+			if(new_y[0] <= it1->first[0] && new_y[1] <= it1->first[1]) {
 				aux = it1;
 				++aux;
-				if(first) first_dom=it1->first;
+				if(first) {
+					prev_data=it1->second;
+					first_dom=it1->first;
+				}
 				first=false;
 				last_dom=it1->first;
-				//cout << "delp:" << it1->first.first << "," << it1->first.second << endl;
+				next_data = it1->second;
 				NDS2.erase(it1);
 				it1 = aux;
 			} else ++it1;
 		}
 
-		std::map<pair<double, double>, IntervalVector>::iterator it2 = --NDS2.lower_bound(new_p);
+		std::map<Vector, NDS_data >::iterator it2 = --NDS2.lower_bound(new_y);
 		it1 = it2;
 		it2++;
 
-		pair<double, double> aux_p;
+		Vector aux_y(2);
 
-		aux_p = make_pair(p[0], POS_INFINITY);
-		pair<double, double> intersection1 = pointIntersection(it1->first, first_dom, new_p, aux_p);
-		aux_p = make_pair(POS_INFINITY, p[1]);
-		pair<double, double> intersection2 = pointIntersection(last_dom, it2->first, new_p, aux_p);
-		//cout << "add_point: lp:" << (--NDS2.end())->first.first << "," << (--NDS2.end())->first.second << endl;
+		aux_y[0]=new_y[0]; aux_y[1]=POS_INFINITY;
+		Vector intersection1 = pointIntersection(it1->first, first_dom, new_y, aux_y);
+		aux_y[0]=POS_INFINITY; aux_y[1]=new_y[1];
+		Vector intersection2 = pointIntersection(last_dom, it2->first, new_y, aux_y);
+
 		// se agregan el punto y los dos obtenidos anteriormente
-		NDS2.insert(make_pair(new_p, IntervalVector(1)));
-		//cout << "addp:" << new_p.first << "," << new_p.second << endl;
-		NDS2.insert(make_pair(intersection1, IntervalVector(1)));
-		//cout << "addp:" << intersection1.first << "," << intersection1.second << endl;
-		NDS2.insert(make_pair(intersection2, IntervalVector(1)));
-		//cout << "addp:" << intersection2.first << "," << intersection2.second << endl;
+		NDS2.insert(make_pair(new_y, data));
+		NDS2.insert(make_pair(intersection1, prev_data));
+		NDS2.insert(make_pair(intersection2, next_data));
 
-
-		//std::vector< pair <double, double> > curve_y;
-		//std::vector< pair <double, double> > rectaUB;
-		//py_Plotter::offline_plot(NULL, NDS2, rectaUB, curve_y);
-		// getchar();
-
-
-	}
-
-
-  void NDS_seg::remove_infinity(pair<double, double>& p){
-		if(p.first==NEG_INFINITY) p.first=-1e20;
-		if(p.second==NEG_INFINITY) p.second=-1e20;
-		if(p.first==POS_INFINITY) p.first=1e20;
-		if(p.second==POS_INFINITY) p.second=1e20;
-	}
-
-	void NDS_seg::add_infinity(pair<double, double>& p){
-		if(p.first==-1e20) p.first=NEG_INFINITY;
-		if(p.second==-1e20) p.second=NEG_INFINITY;
-		if(p.first==1e20) p.first=POS_INFINITY;
-		if(p.second==1e20) p.second=POS_INFINITY;
 	}
 
 
 	// Returns 1 if the lines intersect, otherwise 0. In addition, if the lines
 	// intersect the intersection point may be stored in the floats i_x and i_y.
-	pair<double, double> NDS_seg::pointIntersection(pair<double, double> p0, pair<double, double> p1,
-			pair<double, double> p2, pair<double, double> p3)
+	Vector NDS_seg::pointIntersection(const Vector& p0, const Vector& p1, const Vector& p2, const Vector& p3)
 	{
-		//remove_infinity(p0);
-		//remove_infinity(p1);
-		//remove_infinity(p2);
-		//remove_infinity(p3);
 
+		double p0_x=p0[0];
+		double p0_y=p0[1];
+		double p1_x=p1[0];
+		double p1_y=p1[1];
+		double p2_x=p2[0];
+		double p2_y=p2[1];
+		double p3_x=p3[0];
+		double p3_y=p3[1];
 
-		double p0_x=p0.first;
-		double p0_y=p0.second;
-		double p1_x=p1.first;
-		double p1_y=p1.second;
-		double p2_x=p2.first;
-		double p2_y=p2.second;
-		double p3_x=p3.first;
-		double p3_y=p3.second;
-
-    /*cout << p0_x << "," << p0_y << endl;
-    cout << p1_x << "," << p1_y << endl;
-    cout << p2_x << "," << p2_y << endl;
-    cout << p3_x << "," << p3_y << endl;*/
 
 		Interval i_x, i_y;
 		pair<double,double> i ;
@@ -302,8 +247,8 @@ namespace ibex {
 			}else if((-r_y * (p_x - q_x) + r_x * (p_y - q_y)).contains(0)) {
 				//colinear
 				Interval rxr = (r_x*r_x + r_y*r_y);
-				Interval t0= (q_x-p_x)*r_x + (q_y-p_y)*r_y / (r_x*r_x + r_y*r_y); // (q − p) · r / (r · r)
-				Interval t1= t0 + s_x*r_x + s_y*r_y / (r_x*r_x + r_y*r_y); // t0 + s · r / (r · r)
+				Interval t0= (q_x-p_x)*r_x + (q_y-p_y)*r_y / (r_x*r_x + r_y*r_y); // (q ��� p) �� r / (r �� r)
+				Interval t1= t0 + s_x*r_x + s_y*r_y / (r_x*r_x + r_y*r_y); // t0 + s �� r / (r �� r)
 
 				t = Interval(0,1);
 				t &= Interval(std::min(t0.lb(),t1.lb()),std::max(t0.ub(),t1.ub()));
@@ -331,9 +276,8 @@ namespace ibex {
 			}
 		}
 
-		//add_infinity(i);
-
-		return i;
+		Vector v(2); v[0]=i.first; v[1]=i.second;
+		return v;
 
 	}
 

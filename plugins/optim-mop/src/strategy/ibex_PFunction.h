@@ -18,7 +18,7 @@ using namespace std;
 namespace ibex {
 
 /**
- * Parameterized function f(t) ← f1(xt) - m*f2(xt)
+ * Parameterized function f(t) ��� f1(xt) - m*f2(xt)
  * xt = xa + t*(xb-xa)
  */
 class PFunction{
@@ -59,6 +59,9 @@ public:
 
 	bool newton_lcontract(const Interval& m, bool minimize, function f, Interval& inter, const Interval& derivate, double lb);
 	bool newton_rcontract(const Interval& m, bool minimize, function f, Interval& inter, const Interval& derivate, double lb);
+
+	const IntervalVector& get_xa(){return xa;}
+	const IntervalVector& get_xb(){return xb;}
 
 private:
 

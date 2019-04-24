@@ -12,6 +12,7 @@
 #include <map>
 #include "ibex_BxpMOPData.h"
 #include "ibex_Cell.h"
+#include "ibex_NDS.h"
 
 using namespace std;
 namespace ibex {
@@ -31,8 +32,8 @@ public:
 	/**
 	 * \brief writes a file (output.txt) to be read by the python3 program plot.py
 	 */
-	static void offline_plot(map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
-		map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus=NULL);
+	static void offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
+		map< Vector, NDS_data, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus=NULL);
 
 };
 

@@ -94,15 +94,17 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 
 	Vector mid=box2.mid();
 	if (finder.norm_sys.is_inner(mid)){
-		ndsH.addPoint(make_pair(eval_goal(goal1,mid,n).ub(), eval_goal(goal2,mid,n).ub()));
+		Vector v(2); v[0]=eval_goal(goal1,mid,n).ub(); v[1]=eval_goal(goal2,mid,n).ub();
+		ndsH.addPoint(v, NDS_data(mid));
 	}
 
-  if(nds_mode==POINTS) {
+	if(nds_mode==POINTS) {
 		try{
-		while(true){
-			xa = finder.find(box2,box2,POS_INFINITY).first;
-			ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
-		}
+			while(true){
+				xa = finder.find(box2,box2,POS_INFINITY).first;
+				Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
+				ndsH.addPoint(v, NDS_data(xa.mid(), NULL));
+			}
 		}catch (LoupFinder::NotFound& ) {
 			return true;
 		}
@@ -118,7 +120,8 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 	try{
 		xb = finder.find(box2,box2,POS_INFINITY).first;
 	}catch (LoupFinder::NotFound& ) {
-		ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
+		Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
+		ndsH.addPoint(v, NDS_data(xa.mid(), NULL));
 		return true;
 	}
 
@@ -194,19 +197,19 @@ void OptimizerMOP::discard_generalized_monotonicty_test(IntervalVector& box, con
 
 }
 
-void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints){
+void OptimizerMOP::cy_contract2(Cell& c, list < Vector >& inpoints){
 	IntervalVector& box = c.box;
 	IntervalVector box3(box);
 	box3.resize(n+4);
 	box3[n+3] = 1.0;
 
-	pair <double, double> firstp=inpoints.front();
-	pair <double, double> lastp=inpoints.back();
+	Vector firstp=inpoints.front();
+	Vector lastp=inpoints.back();
 
 	//Pent of cy
 
 	if(firstp!=lastp)
-		box3[n+3] = (lastp.first-firstp.first)/(firstp.second-lastp.second);
+		box3[n+3] = (lastp[0]-firstp[0])/(firstp[1]-lastp[1]);
 	if(box3[n+3]==0.0 || box3[n+3]==1.0 || box3[n+3].is_empty())
 		box3[n+3] = box[n].diam()/box[n+1].diam(); // a
 
@@ -218,16 +221,16 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
    if(_cy_upper){
 			w_ub=NEG_INFINITY;
 			for(auto pmax:inpoints){
-				  if(pmax.first == POS_INFINITY || pmax.second == POS_INFINITY) {
+				  if(pmax[0] == POS_INFINITY || pmax[1] == POS_INFINITY) {
 						w_ub=POS_INFINITY;
 						break;
 					}
 
 					double ww;
 					if(_eps_contract)
-						ww = ( Interval(pmax.first)-eps + box3[n+3]*(Interval(pmax.second)-eps) ).ub();
+						ww = ( Interval(pmax[0])-eps + box3[n+3]*(Interval(pmax[1])-eps) ).ub();
 					else
-						ww = ( Interval(pmax.first) + box3[n+3]*(Interval(pmax.second)) ).ub();
+						ww = ( Interval(pmax[0]) + box3[n+3]*(Interval(pmax[1])) ).ub();
 				  if(w_ub < ww )  w_ub = ww;
 			}
 	 }
@@ -243,26 +246,26 @@ void OptimizerMOP::cy_contract2(Cell& c, list <pair <double,double> >& inpoints)
 	box.resize(n+2);
 }
 
-void OptimizerMOP::dominance_peeler2(IntervalVector& box, list <pair <double,double> >& inpoints){
+void OptimizerMOP::dominance_peeler2(IntervalVector& box, list < Vector >& inpoints){
 	/*=================Dominance peeler for NDS2 and cy =========*/
 
-	pair <double, double> firstp=inpoints.front();
-	pair <double, double> lastp=inpoints.back();
+	Vector firstp=inpoints.front();
+	Vector lastp=inpoints.back();
 
 	// contract c.box[n]
-	if(firstp.second < box[n+1].ub())
-		box[n+1] = Interval(box[n+1].lb(),firstp.second);
+	if(firstp[1] < box[n+1].ub())
+		box[n+1] = Interval(box[n+1].lb(),firstp[1]);
 
 	// contract c.box[n+1]
-	if(lastp.first < box[n].ub() )
-		box[n] = Interval(box[n].lb(), lastp.first);
+	if(lastp[0] < box[n].ub() )
+		box[n] = Interval(box[n].lb(), lastp[0]);
 
 }
 
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
-	list<pair <double,double> > inner_segments = ndsH.non_dominated_points(c.box[n].lb(), c.box[n+1].lb());
+	list< Vector > inner_segments = ndsH.non_dominated_points(ndsH.get_box_y(&c).lb());
 
 	dominance_peeler2(c.box,inner_segments);
 
@@ -387,8 +390,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			update_NDS2(c->box);
 
-			y1_ub.first = ndsH.lb().first;
-			y2_ub.second= ndsH.lb().second;
+			Vector v=ndsH.lb();
+			y1_ub.first = v[0];
+			y2_ub.second= v[1];
 
 			pair<Cell*,Cell*> new_cells;
 			bool atomic_box=false;
@@ -417,7 +421,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 		}
 
-      /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
+      /** TODO: Revisar y1_ub.second y y2_ub.first no fueron inicializados */
 		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
 				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
        		BisectionPoint p(n, y1_ub.first, false);
@@ -522,8 +526,8 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval yb2=ft_ub[1];
 
 	// add extreme points
-	ndsH.addPoint(ft_lb);
-	ndsH.addPoint(ft_ub);
+	ndsH.addPoint(ft_lb, NDS_data(pf.get_xa().mid(),pf.get_xb().mid()));
+	ndsH.addPoint(ft_ub, NDS_data(pf.get_xa().mid(),pf.get_xb().mid()));
 
 	if(nds_mode==POINTS) return false;
 
@@ -557,7 +561,8 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	}
 
 	// check if the point dominating the curve is dominated by ndsH
-	if(ndsH.is_dominated(pair<double,double>(c1_t1.first, c2_t2.first)))
+	Vector v0(2); v0[0]=c1_t1.first; v0[1]=c2_t2.first;
+	if(ndsH.is_dominated(v0))
 			return false;
 
 	// set bisection of inter
@@ -574,21 +579,26 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 		//agregar este segmento mejoro el conjunto Y'?
 		//cout << "add:(" << ((ya2-c3_t3.first)/m).ub() << "," << ya2.ub() << "); " <<  yb1.ub() << "," << (yb1*m+c3_t3.first).ub() << endl;
-		bool improve=ndsH.addSegment(make_pair(((ya2-c3_t3.first)/m).ub(),ya2.ub()),
-										make_pair(yb1.ub(),(yb1*m+c3_t3.first).ub()));
+
+		Vector v1(2); v1[0]=((ya2-c3_t3.first)/m).ub(); v1[1]=ya2.ub();
+		Vector v2(2); v2[0]=yb1.ub(); v2[1]=(yb1*m+c3_t3.first).ub();
+		bool improve=ndsH.addSegment(make_pair(v1,v2), NDS_data(pf.get_xa().mid(),pf.get_xb().mid()));
 		//py_Plotter::offline_plot(NULL, ndsH.NDS2); getchar();
 
 		if(nds_mode==HAMBURGER){
-		  IntervalVector points = ndsH.get_points(c1_t1.first,c2_t2.first,m.mid(),c4_t4.first);
-			n_t.dist= std::min(n_t.dist, ndsH.distance(points,m.mid(),c4_t4.first));
+
+			v0[0]=c1_t1.first; v0[1]=c2_t2.first;
+			pair<Vector, Vector> segment = ndsH.get_segment(v0,m.mid(),c4_t4.first);
+			n_t.dist= std::min(n_t.dist, ndsH.distance(segment.first, segment.second, m.mid(),c4_t4.first));
 		}
 
 		v.insert(c3_t3);
 		v.insert(c4_t4);
 
 	}else if(nds_mode==HAMBURGER){
-		IntervalVector points = ndsH.get_points(c1_t1.first,c2_t2.first);
-		n_t.dist= std::min(n_t.dist,ndsH.distance(points));
+		v0[0]=c1_t1.first; v0[1]=c2_t2.first;
+		pair<Vector, Vector> segment = ndsH.get_segment(v0);
+		n_t.dist= std::min(n_t.dist,ndsH.distance(segment.first, segment.second));
 	}
 
 	split_mode=MIDPOINT;
@@ -655,7 +665,7 @@ void OptimizerMOP::report(bool verbose) {
 
 	cout << " number of solutions: "  << ndsH.size() << endl;
 	for(auto ub : ndsH.NDS2)
-		 cout << "(" << ub.first.first << "," << ub.first.second << "): " << ub.second.mid() << endl;
+		 cout << "(" << ub.first[0] << "," << ub.first[1] << ")"  << endl;
 
 
 }

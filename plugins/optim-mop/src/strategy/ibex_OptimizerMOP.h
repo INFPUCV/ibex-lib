@@ -276,13 +276,12 @@ public:
 
 		update_focus(cells, paused_cells, focus);
 
-		LBaux.addPoint(make_pair(focus[0].lb(),focus[1].ub()));
-		LBaux.addPoint(make_pair(focus[0].ub(),focus[1].lb()));
-
-		//TODO: estos puntos no son validos por lo que deberían decartarse del
-		//archivo, a no ser que existan en la solucion
-		UBaux.addPoint(make_pair(focus[0].lb(),focus[1].ub()));
-		UBaux.addPoint(make_pair(focus[0].ub(),focus[1].lb()));
+		Vector v(2); v[0]=focus[0].lb(); v[1]=focus[1].ub();
+		LBaux.addPoint(v);
+		UBaux.addPoint(v);
+		v[0]=focus[0].ub(); v[1]=focus[1].lb();
+		LBaux.addPoint(v);
+		UBaux.addPoint(v);
 
 		for(auto cc:cells)	LBaux.add_lb(*cc);
 		for(auto cc:paused_cells) LBaux.add_lb(*cc);
@@ -314,6 +313,16 @@ public:
 					}
 					paused_cells.clear();
 				}
+
+			}else if(instruction=="get_solution"){
+				double y1,y2;
+				myfile >> y1 >> y2;
+				Vector y(2); y[0]=y1; y[1]=y2;
+
+				pair<Vector, NDS_data> data = ndsH.get(y);
+				cout << data.first << endl;
+				if(data.second.x1) cout << *data.second.x1 << endl;
+				if(data.second.x2) cout << *data.second.x2 << endl;
 
 			}
 			myfile.close();
@@ -397,7 +406,7 @@ protected:
 
    bool process_node(PFunction& pf, Node_t& n_t);
 
-	void cy_contract2(Cell& c, list <pair <double,double> >& inpoints);
+	void cy_contract2(Cell& c, list < Vector >& inpoints);
 
 	/**
 	 * \brief return a set of non-dominated segments in the box
@@ -429,7 +438,7 @@ protected:
 	 * Adaptation of dominance_peeler to NDS2
 	 * Returns the set of non-dominated segments in box
 	 */
-	void dominance_peeler2(IntervalVector &box, list <pair <double,double> >& inpoints);
+	void dominance_peeler2(IntervalVector &box, list < Vector >& inpoints);
 
     /**
      *  \brief returns true if the facet orthogonal to the i direction of the box is feasible.

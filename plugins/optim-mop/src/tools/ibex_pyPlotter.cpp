@@ -7,6 +7,7 @@
 
 #include "ibex_pyPlotter.h"
 #include "ibex_OptimizerMOP.h"
+
 #include <iostream>
 
 #ifndef cdata
@@ -19,19 +20,17 @@
 namespace ibex {
 
 
-void py_Plotter::offline_plot(map< pair <double, double>, IntervalVector, struct sorty2 >& NDS,
- map< pair <double, double>, IntervalVector, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus){
+void py_Plotter::offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
+ map< Vector, NDS_data, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus){
 	ofstream output;
 	output.open(output_file);
 
 	output << "[";
 
-	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
+	map< Vector, NDS_data > :: iterator ub=NDS.begin();
 	for(;ub!=NDS.end();ub++){
-		Vector v(2);
-		v[0]=ub->first.first; v[1]=ub->first.second;
-		if(!focus || (*focus).contains(v))
-			output << "(" << ub->first.first << "," << ub->first.second << "),";
+		if(!focus || (*focus).contains(ub->first))
+			output << "(" << ub->first[0] << "," << ub->first[1] << "),";
 	}
 
   output << "]" << endl;
@@ -40,10 +39,8 @@ void py_Plotter::offline_plot(map< pair <double, double>, IntervalVector, struct
 		output << "[";
 		ub=NDS2->begin();
 		for(;ub!=NDS2->end();ub++){
-			Vector v(2);
-			v[0]=ub->first.first; v[1]=ub->first.second;
-			if(!focus || (*focus).contains(v))
-			output << "(" << ub->first.first << "," << ub->first.second << "),";
+			if(!focus || (*focus).contains(ub->first))
+				output << "(" << ub->first[0] << "," << ub->first[1] << "),";
 		}
 
 	  output << "]" << endl;
