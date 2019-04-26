@@ -41,6 +41,19 @@ struct max_distanceBeam {
 
 };
 
+struct objective_sort {
+
+
+	bool operator() (const Cell* c1, const Cell* c2){
+
+	    int n = c1->box.size();
+	    if (c1->box[n-2].lb() < c2->box[n-2].lb()) return true;
+	    return false;
+
+	}
+
+};
+
 
 // struct min_distanceBeam {
 
@@ -61,6 +74,9 @@ struct max_distanceBeam {
  */
 class BeamSearchBufferMOP : public CellBufferOptim {
  public:
+
+
+	static int CurrentSize;
 
    static int nextBufferSize;
    static int nn;
@@ -121,6 +137,9 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 
     //TODO: quizas convenga usar una lista
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
+
+    //para guardar los non dominated sets temporalmente
+    mutable std::set <Cell*, objective_sort> aux;
 
   NDS_seg* nds;
 

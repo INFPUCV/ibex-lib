@@ -13,6 +13,7 @@
 namespace ibex { 
 
 	int BeamSearchBufferMOP::nextBufferSize = 4;
+	int BeamSearchBufferMOP::CurrentSize = 4;
 	int BeamSearchBufferMOP::nn = 0;
 
 	void BeamSearchBufferMOP::flush() {
@@ -79,9 +80,9 @@ namespace ibex {
 			}
 		}  	
 
-		// cout << "tama��o global: " << globalBuffer.size() << endl;
-		// cout << "tama��o current: " << currentBuffer.size() << endl;
-		// cout << "tama��o next: " << nextBuffer.size() << endl;
+		// cout << "tama������o global: " << globalBuffer.size() << endl;
+		// cout << "tama������o current: " << currentBuffer.size() << endl;
+		// cout << "tama������o next: " << nextBuffer.size() << endl;
 		//getchar();	
 	}
 
@@ -162,8 +163,8 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tama��o next 2: " << nextBuffer.size() << endl;
-		// cout << "tama��o current 2: " << currentBuffer.size() << endl;
+		// cout << "tama������o next 2: " << nextBuffer.size() << endl;
+		// cout << "tama������o current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 
