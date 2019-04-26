@@ -89,7 +89,6 @@ IntervalVector PFunction::get_point(const Interval& t) const{
 void PFunction::get_curve_y(std::vector< pair <double, double> >& curve_y ){
 	Interval a;
 	IntervalVector interVector = IntervalVector(2);
-	double value;
 	int max_iterations = 100;
 	for(int i=0;i <= max_iterations; i++) {
 		a = Interval((double) i/max_iterations);
@@ -167,6 +166,28 @@ bool PFunction::newton_lcontract(const Interval& m, bool minimize, function f, I
 	}
 
 	return true;
+}
+
+
+Vector* PFunction::find_feasible(Vector& y, double eps){
+	stack<Interval> T;
+
+	T.push(Interval(0,1));
+
+	while(!T.empty()) {
+		Interval t = T.top(); T.pop();
+		double tmid = t.mid();
+
+		if( eval(tmid, Interval(), false, F1).ub() < y[0] + eps && eval(tmid, Interval(), false, F2).ub() < y[1] + eps)
+			return new Vector(get_point(tmid).mid());
+		else{
+			if(t.diam()>eps){
+				T.push(Interval(t.lb(), tmid));
+				T.push(Interval(tmid, t.ub()));
+			}
+		}
+	}
+	return NULL;
 }
 
 pair<double, double> PFunction::optimize(const Interval& m, bool minimize, function f, double max_c, Interval init){

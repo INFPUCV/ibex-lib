@@ -390,6 +390,7 @@ public:
 
 	pair<Vector, NDS_data> get(const Vector& y){
 		auto it=NDS2.lower_bound(y);
+		it--;
 		return *it;
 	}
 

@@ -103,7 +103,7 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 			while(true){
 				xa = finder.find(box2,box2,POS_INFINITY).first;
 				Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
-				ndsH.addPoint(v, NDS_data(xa.mid(), NULL));
+				ndsH.addPoint(v, NDS_data(xa.mid()));
 			}
 		}catch (LoupFinder::NotFound& ) {
 			return true;
@@ -121,7 +121,7 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 		xb = finder.find(box2,box2,POS_INFINITY).first;
 	}catch (LoupFinder::NotFound& ) {
 		Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
-		ndsH.addPoint(v, NDS_data(xa.mid(), NULL));
+		ndsH.addPoint(v, NDS_data(xa.mid()));
 		return true;
 	}
 

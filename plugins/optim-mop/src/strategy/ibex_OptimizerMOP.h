@@ -324,6 +324,14 @@ public:
 				if(data.second.x1) cout << *data.second.x1 << endl;
 				if(data.second.x2) cout << *data.second.x2 << endl;
 
+				PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
+
+				Vector* v=pf.find_feasible(y, 1e-8);
+				if(v){
+					cout << v << ": (" << eval_goal(goal1, *v, v->size()) << ","  <<  eval_goal(goal2, *v, v->size()) << ")" << endl;
+					delete v;
+				}
+
 			}
 			myfile.close();
 			remove(instructions_file.c_str());

@@ -51,6 +51,11 @@ public:
 	void get_curve_y(std::vector< pair <double, double> >& curve_y );
 
 	/**
+	 * \brief find a point t', such that f1(t) < y[0]+eps and f2(t) < y[1]+eps
+	 */
+	Vector* find_feasible(Vector& y, double eps);
+
+	/**
 	 * \brief minimize/maximize the function pf: f1(t)+w*f2(t)
 	 * returning the lb/ub of its evaluation (c) and the best solution found t and its
 	 * input m, minimize, max_c=max_value
