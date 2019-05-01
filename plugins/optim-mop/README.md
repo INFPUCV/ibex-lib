@@ -107,14 +107,14 @@ git checkout -t origin/mop-server
 
 ## Run an example (server mode):
 
-    ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/tan.txt --cy-contract-full --eps=0.01 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
+    ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/tan.txt --cy-contract-full --eps_r=0.01 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
 
-The output file (server_out) contains two lists of points representing the upper and the lower envelope for the optimal solutions.
+The output file (server_out) contains two lists of points (segments) representing an upper and lower envelope for the optimal solutions.
 
 The input file (server_in) allows us to give instructions to the solver. For the moment two commands:
 * zoom_in y1_lb y1_ub y2_lb y2_ub
 * zoom_out y1_lb y1_ub y2_lb y2_ub
-* get_solution y1 y2   (the point y=(y1,y2) belonging to a segment, the solver returns a solution x with f(x) dominating y)
+* get_solution output_file y1 y2  (the point y=(y1,y2) belonging to a segment, the solver create a file output_file with a solution vector x and its image f(x) which dominates y)
 
 For plotting the non-dominated vectors returned by the solver
 
