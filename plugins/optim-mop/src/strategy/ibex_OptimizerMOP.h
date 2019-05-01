@@ -315,22 +315,40 @@ public:
 				}
 
 			}else if(instruction=="get_solution"){
+				string output_file;
 				double y1,y2;
+				myfile >> output_file;
 				myfile >> y1 >> y2;
+
+
 				Vector y(2); y[0]=y1; y[1]=y2;
 
 				pair<Vector, NDS_data> data = ndsH.get(y);
-				cout << data.first << endl;
+				cout << "y:" << data.first << endl;
 				if(data.second.x1) cout << *data.second.x1 << endl;
 				if(data.second.x2) cout << *data.second.x2 << endl;
 
-				PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
-
-				Vector* v=pf.find_feasible(y, 1e-8);
-				if(v){
-					cout << v << ": (" << eval_goal(goal1, *v, v->size()) << ","  <<  eval_goal(goal2, *v, v->size()) << ")" << endl;
-					delete v;
+				Vector* v=NULL;
+				Vector realy(2);
+				if(!data.second.x2 || data.second.x1 == data.second.x2){
+					realy[0]=eval_goal(goal1, *data.second.x1, data.second.x1->size()).ub();
+					realy[1]=eval_goal(goal2, *data.second.x1, data.second.x1->size()).ub();
+					if( realy[0] < y[0] + eps && realy[1] < y[1] + eps)
+					  v=new Vector(*data.second.x1);
+				}else{
+					PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
+					v=pf.find_feasible(y, 1e-8);
 				}
+
+				ofstream output;
+				output.open(output_file);
+				if(v){
+					realy[0]=eval_goal(goal1, *v, v->size()).ub();
+					realy[1]=eval_goal(goal2, *v, v->size()).ub();
+					output << *v << endl;
+					output << realy << endl;
+					delete v;
+				}else output << "not found" << endl;
 
 			}
 			myfile.close();

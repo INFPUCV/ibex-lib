@@ -525,9 +525,9 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval yb1=ft_ub[0];
 	Interval yb2=ft_ub[1];
 
-	// add extreme points
-	ndsH.addPoint(ft_lb, NDS_data(pf.get_xa().mid(),pf.get_xb().mid()));
-	ndsH.addPoint(ft_ub, NDS_data(pf.get_xa().mid(),pf.get_xb().mid()));
+	// sólo agrega información asociada al punto factible
+	ndsH.addPoint(ft_lb, NDS_data(pf.get_xa().mid()));
+	ndsH.addPoint(ft_ub, NDS_data(pf.get_xb().mid()));
 
 	if(nds_mode==POINTS) return false;
 

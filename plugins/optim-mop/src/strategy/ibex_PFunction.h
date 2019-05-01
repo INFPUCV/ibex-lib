@@ -79,6 +79,7 @@ private:
 	static double _min_diam;
 	static double _eps_opt;
 
+  mutable function last_f;
 	mutable unordered_map<double, Interval> evals;
 };
 

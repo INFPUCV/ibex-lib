@@ -54,7 +54,6 @@ namespace ibex {
 
 
 	bool NDS_seg::addSegment(const pair<Vector, Vector>& y1y2, const NDS_data& data) {
-	 //  cout << "add_segment:" << p1.first << "," << p1.second << " -- "	<< p2.first << "," << p2.second  <<endl;
 
 		const Vector& y1=y1y2.first;
 		const Vector& y2=y1y2.second;
@@ -64,7 +63,7 @@ namespace ibex {
 			return true;
 		}
 
-		//se insertan en DS2 todos los puntos que se ubican entre p1 y p2 incluyendo en anterior en y1 y el siguiente en y2
+		//se insertan en DS2 todos los puntos que se ubican entre y1 y y2 incluyendo el anterior a y1 y el siguiente a y2
 		std::map<Vector, NDS_data >::iterator aux, it1 = --NDS2.lower_bound(y1);
 
 
@@ -75,25 +74,20 @@ namespace ibex {
 
 		//segmentos en el rango
 		list< pair<Vector, NDS_data> > DS2;
-
 		DS2.push_back(*it1);
 		it1++;
 
-
-		bool flagDS2 = false;
 		for(;it1 != NDS2.end();) {
 
-			if(it1->first[1] < y1[1] and it1->first[1] < y2[1]) flagDS2= true;
 			DS2.push_back(*it1);
-			if(flagDS2) break;
+			if(it1->first[1] < y1[1] && it1->first[1] < y2[1]){
+				 break;
+			 }
 
 			//se elimina el punto si es dominado por el segmento
-
-
 			if( c_ub < (Interval(it1->first[1]) - m*Interval(it1->first[0])).lb()
 			 && y1[0] < it1->first[0] && y2[1] < it1->first[1]){
 				aux = it1; ++aux;
-				//cout << "del:" << it1->first.first << "," << it1->first.second << endl;;
 				NDS2.erase(it1);
 				it1 = aux;
 
@@ -103,22 +97,26 @@ namespace ibex {
 		//se intersecta el segmento con los segmentos de la NDS
 		//se agregan las intersecciones en NDS
 		int intersections=0;
-		Vector prev = DS2.front().first;
+		pair<Vector, NDS_data> prev = DS2.front();
 		for(auto next:DS2){
-			if(prev==next.first) continue;
+			if(prev.first==next.first) continue; //esto ocurre la primera vez
 
 			try{
+				double m2=-1e100;
+				if(prev.first[0]-next.first[0]!=0)
+				   m2=(prev.first[1]-next.first[1])/(prev.first[0]-next.first[0]);
 
-				Vector point = pointIntersection(prev, next.first, y1, y2);
-				NDS2.insert(make_pair(point,next.second));
+				Vector point = pointIntersection(prev.first, next.first, y1, y2);
+				if(m2<m.mid())
+				   NDS2.insert(make_pair(point,prev.second));
+				else
+				   NDS2.insert(make_pair(point,data));
 				intersections++;
-			}catch(NoIntersectionException& e) {
-			}
+			}catch(NoIntersectionException& e) {  }
 
-			prev = next.first;
+			prev.first = next.first;
+			prev.second = next.second;
 		}
-
-
 
 		return (intersections>0);
 
@@ -173,7 +171,7 @@ namespace ibex {
 
 		// se agregan el punto y los dos obtenidos anteriormente
 		NDS2.insert(make_pair(new_y, data));
-		NDS2.insert(make_pair(intersection1, prev_data));
+		NDS2.insert(make_pair(intersection1, NDS_data()));
 		NDS2.insert(make_pair(intersection2, next_data));
 
 	}

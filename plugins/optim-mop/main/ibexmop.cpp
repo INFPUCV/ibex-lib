@@ -54,7 +54,6 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
 
 
-
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag _plot(parser, "plot", "Save a file to be plotted by plot.py.", {"plot"});

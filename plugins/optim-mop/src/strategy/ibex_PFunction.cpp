@@ -18,7 +18,7 @@ double PFunction::_min_diam=0.1; //15% of the initial diameter
 double PFunction::_eps_opt=1e-7;
 
 PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
-		f1(f1),f2(f2), xa(xa), xb(xb) { }
+		f1(f1),f2(f2), xa(xa), xb(xb), last_f(F1) { }
 
 /**
  * convert pf.t to t in inter
@@ -35,9 +35,10 @@ void PFunction::contract_curve(const Interval& t) {
 }
 
 Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize, function f) const{
-	if(evals.find(t.mid()) != evals.end()){
+	/*if(last_f==f && evals.find(t.mid()) != evals.end()){
 		return evals.at(t.mid());
 	}
+	last_f=f;*/
 
 	IntervalVector xt = xa+t*(xb-xa);
 	Interval result;
@@ -171,16 +172,19 @@ bool PFunction::newton_lcontract(const Interval& m, bool minimize, function f, I
 
 Vector* PFunction::find_feasible(Vector& y, double eps){
 	stack<Interval> T;
-
+	evals.clear();
 	T.push(Interval(0,1));
 
 	while(!T.empty()) {
 		Interval t = T.top(); T.pop();
 		double tmid = t.mid();
 
-		if( eval(tmid, Interval(), false, F1).ub() < y[0] + eps && eval(tmid, Interval(), false, F2).ub() < y[1] + eps)
+    if( eval(tmid, Interval(), false, F1).ub() < y[0] + eps && eval(tmid, Interval(), false, F2).ub() < y[1] + eps)
 			return new Vector(get_point(tmid).mid());
 		else{
+			Interval a = eval(t, Interval(), false, F1);
+			Interval b = eval(t, Interval(), false, F2);
+			if(a.lb() > y[0] + eps || b.lb() > y[1] + eps) continue;
 			if(t.diam()>eps){
 				T.push(Interval(t.lb(), tmid));
 				T.push(Interval(tmid, t.ub()));
