@@ -7,6 +7,7 @@
 
 #include "ibex_BeamSearchBufferMOP.h"
 #include "ibex_OptimizerMOP.h"
+#include "ibex_NDS.h"
 #include <algorithm>    // std::min_element, std::max_element
 
 
@@ -112,7 +113,7 @@ namespace ibex {
 			c2=c;
 
 			while(!nextBuffer.empty()){
-
+				
 				//it = nextBuffer.begin();
 				//double distNextBegin = nds->distance(*nextBuffer.begin());
 				//cout << "distancia primero: " << distNextBegin << endl;
@@ -129,7 +130,14 @@ namespace ibex {
 				nextBuffer.erase(nextBuffer.begin());
 
 			}
-			myfile.close();	
+			myfile.close();
+
+			if(!currentBuffer.empty()){
+				//intento de hv
+				c = currentBuffer.top();
+				cout << prueba.hypervolume(c->box[nn-1],c->box[nn-2]) << endl;
+			}
+
 		}
 		
 		//Si current y next estan vacios, se popea del global

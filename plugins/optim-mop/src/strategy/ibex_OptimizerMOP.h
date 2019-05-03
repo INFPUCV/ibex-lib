@@ -400,7 +400,11 @@ private:
 
 	/** Number of cells pushed into the heap (which passed through the contractors) */
 	int nb_cells;
+	
 
+	int flag;
+	int sol;
+	int total;
 };
 
 inline OptimizerMOP::Status OptimizerMOP::get_status() const { return status; }

@@ -13,6 +13,7 @@
 #include "ibex_CellMOP.h"
 #include "ibex_CellSet.h"
 #include "ibex_NDS.h"
+#include "ibex_OptimizerMOP.h"
 #include <queue>
 #include <map>
 
@@ -120,7 +121,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	//mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > nextBuffer;
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
 
-  NDS_seg* nds;
+  NDS_seg* nds,prueba;
 
   private:
 	int cont = 0, iter = 0, cantBeam = 0;

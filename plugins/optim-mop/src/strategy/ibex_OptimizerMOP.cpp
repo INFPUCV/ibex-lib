@@ -92,6 +92,7 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 	Vector mid=box2.mid();
 	if (finder.norm_sys.is_inner(mid)){
 		ndsH.addPoint(make_pair(eval_goal(goal1,mid,n).ub(), eval_goal(goal2,mid,n).ub()));
+		flag=1;
 	}
 
   if(nds_mode==POINTS) {
@@ -99,8 +100,10 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 		while(true){
 			xa = finder.find(box2,box2,POS_INFINITY).first;
 			ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
+			flag=1;
 		}
 		}catch (LoupFinder::NotFound& ) {
+			if(flag==1)sol++;
 			return true;
 		}
 	}
@@ -116,10 +119,12 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 		xb = finder.find(box2,box2,POS_INFINITY).first;
 	}catch (LoupFinder::NotFound& ) {
 		ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
+		sol++;
 		return true;
 	}
 
 	hamburger(xa, xb);
+	if(flag==1)sol++;
 	return true;
 
 }
@@ -284,6 +289,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	status=SUCCESS;
 
 	nb_cells=0;
+	flag=0;
+	total=0;
+	sol=0;
 
 	buffer.flush();
 
@@ -360,10 +368,12 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			//cout << "pop en main" << endl;
 			Cell *c = buffer.pop();
+
+			//cout << ndsH.hypervolume(c->box[n-1].ub(),c->box[n-2].ub()) << endl;
 			
 			//cout << c->box[n-1] << endl;
 			//cout << c->box[n-2] << endl;
-			getchar();
+			//getchar();
 			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
 				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)!=NULL)
@@ -404,6 +414,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
     	double dist=0.0;
     	if(!atomic_box || _hv) dist= ndsH.distance(c);
 
+		//se actualiza lower bound
     	if(dist < eps || atomic_box){
 
 				if(_hv && dist>=0.0){
@@ -692,6 +703,7 @@ void OptimizerMOP::report(bool verbose) {
 		" --y2=" << y2refi.lb() << "," << y2refi.ub() << endl;
 		else
 			cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  " "<< get_hypervolume().ub()  << endl;
+			cout << "porcentaje de cajas con solución: " << (sol*100)/nb_cells << endl;
 		return;
 	}
 
