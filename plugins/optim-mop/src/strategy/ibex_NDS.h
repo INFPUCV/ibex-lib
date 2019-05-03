@@ -87,6 +87,7 @@ public:
 		Interval hv=0.0;
 		double prev1=y1.lb();
 		double prev2=y2.ub();
+
 		for(auto ndp:NDS2){
 			if(ndp.first.first == NEG_INFINITY) continue;
 			if(ndp.first.second == NEG_INFINITY) continue;
@@ -97,7 +98,6 @@ public:
 			if(next1 > prev1){
 				Interval hvv=(Interval(next1)-prev1)*( (y2.ub()	-Interval(prev2))  +  (Interval(prev2)-next2)/2.0);
 				hv+=hvv;
-
 			}
 
 			if(next1>=prev1 && next2<=prev2){

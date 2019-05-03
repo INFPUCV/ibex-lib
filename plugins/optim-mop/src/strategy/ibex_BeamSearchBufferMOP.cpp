@@ -37,7 +37,7 @@ namespace ibex {
 	}
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
-		
+		if(global_hv) cout << "global:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
         double dist=nds->distance(cell);
 		std::multiset <Cell*>::iterator it;
 
@@ -80,18 +80,21 @@ namespace ibex {
 			}
 		}  	
 
-		// cout << "tamaño global: " << globalBuffer.size() << endl;
-		// cout << "tamaño current: " << currentBuffer.size() << endl;
-		// cout << "tamaño next: " << nextBuffer.size() << endl;
+		// cout << "tama��o global: " << globalBuffer.size() << endl;
+		// cout << "tama��o current: " << currentBuffer.size() << endl;
+		// cout << "tama��o next: " << nextBuffer.size() << endl;
 		//getchar();	
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
+		global_hv=false;
+
 		Cell *c = NULL, *c2 = NULL;
 		std::multiset <Cell*>::iterator it;
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
+
 		//	getchar();
 			ofstream myfile;
 			myfile.open ("cajasCurrent.txt");
@@ -134,8 +137,9 @@ namespace ibex {
 
 			if(!currentBuffer.empty()){
 				//intento de hv
+				depth++;
 				c = currentBuffer.top();
-				cout << prueba.hypervolume(c->box[nn-1],c->box[nn-2]) << endl;
+				cout <<  nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
 			}
 
 		}
@@ -148,12 +152,17 @@ namespace ibex {
 			myfile4.open("global.txt");
 
 			c = globalBuffer.top();
+			global_hv=true;
+
 
 			myfile4 << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
 			myfile4.close();
 
 			
 			globalBuffer.pop();
+			cout << "depth:" << depth << endl;
+			depth=0;
+			cout << "inicial:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
 			//cantBeam++;
 			//cout << "BeamSearch: " << cantBeam << endl;
 			//int p = c->get<CellMOP>().depth;
@@ -169,8 +178,8 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tamaño next 2: " << nextBuffer.size() << endl;
-		// cout << "tamaño current 2: " << currentBuffer.size() << endl;
+		// cout << "tama��o next 2: " << nextBuffer.size() << endl;
+		// cout << "tama��o current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 
