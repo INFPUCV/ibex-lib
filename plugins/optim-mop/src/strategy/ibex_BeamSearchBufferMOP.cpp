@@ -7,13 +7,14 @@
 
 #include "ibex_BeamSearchBufferMOP.h"
 #include "ibex_OptimizerMOP.h"
+#include "ibex_CrowdingDistance.cpp"
 #include <algorithm>    // std::min_element, std::max_element
 
 
 namespace ibex { 
 
 	int BeamSearchBufferMOP::nextBufferSize = 4;
-	int BeamSearchBufferMOP::CurrentSize = 4;
+	int BeamSearchBufferMOP::currentSize = 4;
 	int BeamSearchBufferMOP::nn = 0;
 
 	void BeamSearchBufferMOP::flush() {
@@ -114,7 +115,7 @@ namespace ibex {
 			c2=c;
 
 			while(!nextBuffer.empty()){
-
+				getCrowdingDistance(nextBuffer);
 				//it = nextBuffer.begin();
 				//double distNextBegin = nds->distance(*nextBuffer.begin());
 				//cout << "distancia primero: " << distNextBegin << endl;

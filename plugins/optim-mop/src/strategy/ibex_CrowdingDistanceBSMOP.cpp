@@ -13,6 +13,7 @@
 namespace ibex { 
 
 	int CrowdingDistanceBSMOP::nextBufferSize = 4;
+	int CrowdingDistanceBSMOP::currentBufferSize = 4;
 	int CrowdingDistanceBSMOP::nn = 0;
 
 	void CrowdingDistanceBSMOP::flush() {
