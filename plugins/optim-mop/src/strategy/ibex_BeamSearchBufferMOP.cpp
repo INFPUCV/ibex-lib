@@ -15,6 +15,7 @@ namespace ibex {
 
 	int BeamSearchBufferMOP::nextBufferSize = 4;
 	int BeamSearchBufferMOP::nn = 0;
+	double aux=0,aux2=0,mejora=0;
 
 	void BeamSearchBufferMOP::flush() {
 		while (!globalBuffer.empty()) {
@@ -37,7 +38,8 @@ namespace ibex {
 	}
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
-		if(global_hv) cout << "global:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
+		//al imprimir aqui se muestra dos veces porque al bisectarse la caja se hacen dos push seguidos
+		if(global_hv) cout << "hv global:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl; global_hv=false;
         double dist=nds->distance(cell);
 		std::multiset <Cell*>::iterator it;
 
@@ -138,8 +140,19 @@ namespace ibex {
 			if(!currentBuffer.empty()){
 				//intento de hv
 				depth++;
-				c = currentBuffer.top();
-				cout <<  nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
+				aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+				//cout <<  aux << endl;
+				if(aux2!=0){
+					mejora=((aux*100)/aux2)-100;
+					if(mejora>=0){
+						cout << "aumento en " << mejora << "%" << endl;
+					}else{
+						cout << "disminuyo en " << mejora << "%" << endl;
+						getchar();
+					}
+				}
+				aux2=aux;
+
 			}
 
 		}
@@ -160,9 +173,9 @@ namespace ibex {
 
 			
 			globalBuffer.pop();
-			cout << "depth:" << depth << endl;
-			depth=0;
-			cout << "inicial:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
+			//cout << "depth:" << depth << endl;
+			//depth=0;
+			//cout << "inicial:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
 			//cantBeam++;
 			//cout << "BeamSearch: " << cantBeam << endl;
 			//int p = c->get<CellMOP>().depth;
