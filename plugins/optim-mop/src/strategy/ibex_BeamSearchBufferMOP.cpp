@@ -15,7 +15,7 @@ namespace ibex {
 
 	int BeamSearchBufferMOP::nextBufferSize = 4;
 	int BeamSearchBufferMOP::nn = 0;
-	double aux=0,aux2=0,mejora=0;
+
 
 	void BeamSearchBufferMOP::flush() {
 		while (!globalBuffer.empty()) {
@@ -39,7 +39,13 @@ namespace ibex {
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
 		//al imprimir aqui se muestra dos veces porque al bisectarse la caja se hacen dos push seguidos
-		if(global_hv) cout << "hv global:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl; global_hv=false;
+		if(global_hv) {
+			aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+			initial_reduction=aux-aux2;
+
+			cout << "hv global:" << initial_reduction << endl; global_hv=false;
+
+		}
         double dist=nds->distance(cell);
 		std::multiset <Cell*>::iterator it;
 
@@ -51,7 +57,7 @@ namespace ibex {
 		}
  
         //primera iteracion
-        if(globalBuffer.empty() && nextBuffer.empty() && cont==0){
+        if(globalBuffer.empty() && nextBuffer.empty() && /*currentBuffer.empty()*/ cont==0){
 			
 			globalBuffer.push(cell);
 			//se cambia el valor del flag cont para no entrar nuevamente
@@ -82,9 +88,9 @@ namespace ibex {
 			}
 		}  	
 
-		// cout << "tama��o global: " << globalBuffer.size() << endl;
-		// cout << "tama��o current: " << currentBuffer.size() << endl;
-		// cout << "tama��o next: " << nextBuffer.size() << endl;
+		// cout << "tama������o global: " << globalBuffer.size() << endl;
+		// cout << "tama������o current: " << currentBuffer.size() << endl;
+		// cout << "tama������o next: " << nextBuffer.size() << endl;
 		//getchar();	
 	}
 
@@ -142,10 +148,17 @@ namespace ibex {
 				depth++;
 				aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 				//cout <<  aux << endl;
-				if(aux2!=0){
-					mejora=((aux*100)/aux2)-100;
+				if(aux-aux2!=0){
+
+					if(initial_reduction==0){
+						initial_reduction=aux-aux2;
+
+					}
+
+					double mejora=(aux-aux2)/initial_reduction;
+
 					if(mejora>=0){
-						cout << "aumento en " << mejora << "%" << endl;
+						cout << depth << ": aumento en " << mejora << endl;
 					}else{
 						cout << "disminuyo en " << mejora << "%" << endl;
 						getchar();
@@ -159,7 +172,9 @@ namespace ibex {
 		
 		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
-			
+			depth=0;
+			aux2=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+
 			// Reset de archivo
 			ofstream myfile4;
 			myfile4.open("global.txt");
@@ -191,8 +206,8 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tama��o next 2: " << nextBuffer.size() << endl;
-		// cout << "tama��o current 2: " << currentBuffer.size() << endl;
+		// cout << "tama������o next 2: " << nextBuffer.size() << endl;
+		// cout << "tama������o current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 

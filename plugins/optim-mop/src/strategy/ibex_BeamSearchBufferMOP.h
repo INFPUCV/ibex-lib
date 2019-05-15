@@ -132,6 +132,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 
   private:
 	int cont = 0, iter = 0, cantBeam = 0;
+	double aux=0,aux2=0,initial_reduction=0.0;
 };
 
 
