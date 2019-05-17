@@ -5,44 +5,24 @@
  */
 
 #include <iostream>
-#include <set>
-#include <iterator>
-#include <algorithm>
-#include <limits>
-#include "ibex_CellMOP.h"
-#include "ibex_CellSet.h"
-#include "ibex_BeamSearchBufferMOP.h"
+#include "ibex_CrowdingDistance.h"
 
-#define INF std::numeric_limits<double>::infinity();
 
 namespace ibex{
 
+    //Struct that contains Cell and crowding distance
     typedef struct CDBox{
         Cell* C;
-        int rank;
         double crowding_distance;
     } CDBox;
 
-    struct crowding_distanceBeam {
-        bool operator() (const Cell* c1, const Cell* c2){
-            int n = c1->box.size();
-            if(c1->box[n-2].lb() <= c2->box[n-2].lb() && c1->box[n-1].lb() <= c2->box[n-1].lb()) return true;
-            else return false;
-        }
-    };
+    int NyuCrowdingDistance::currentBuffer = 4;
 
-    struct sortByCrowdingDistance{
-        bool operator()(const CDBox* c1, const CDBox* c2){
-            if(c1.crowding_distance <= c2.crowding_distance) return true;
-            else return false;
-        }
-
-    }
-
-
-    void getCrowdingDistance(std::multiset nextBuffer){
-        std::multiset<Cell*, crowding_distanceBeam> cdBuffer;
-        std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
+    std::multiset<Cell*, max_distanceBeam> NyuCrowdingDistance::getCrowdingDistance(std::multiset nextBuffer){
+        //Leaving these commented out, we are now working as an object!!!
+        //std::multiset<Cell*, crowding_distanceBeam> cdBuffer;
+        //std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
+        std::multiset<Cell*, max_distanceBeam> ret; //Returning set
 
         //First, we insert nextBuffer items into cdBuffer, which we will use to insert into
         //cdSet, which will be the one we will use to insert into the current Buffer.
@@ -51,34 +31,43 @@ namespace ibex{
         for(std::multiset<Cell*, max_distanceBeam>::iterator it = nextBuffer.begin(); 
         it != nextBuffer.end(); it++)
         {
-            cdBuffer.insert(*it);
+            NyuCrowdingDistance::cdBuffer.insert(*it);
         }
 
-        for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = cdBuffer.begin();
-        it != cdBuffer.end(); it++)
+        for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = NyuCrowdingDistance::cdBuffer.begin();
+        it != NyuCrowdingDistance::cdBuffer.end(); it++)
         {
 
             CDBox* cdBox= (CDBox*)malloc(sizeof(CDBox));
             cdBox->C = *it;
             //If they are the first/last one, set their Crowding Distances to Infinite
-            if(it == cdBuffer.begin || it == cdBuffer.end()){
+            if(it == NyuCrowdingDistance::cdBuffer.begin || it == NyuCrowdingDistance::cdBuffer.end()){
                 cdBox.crowding_distance = INF;
             }
             else{ //If not, then calculate them.
                 int n = it->box.size();
-                Cell* first = (Cell*)cdBuffer.end();
-                Cell* last = (Cell*)cdBuffer.begin();
+                Cell* first = (Cell*)NyuCrowdingDistance::cdBuffer.end();
+                Cell* last = (Cell*)NyuCrowdingDistance::cdBuffer.begin();
 
-                //TODO: where the fuck do i get the objective numbers from!?
-                cdBox.crowding_distance = it->box[n-2].lb() - it->box[n-1].lb()
-                cdBox.crowding_distance /= (first->box[first->box.size()].lb() - last->box[0].lb());
+                /* Here we calculate the crowding distance. We won't use a for, since we already know that there's only 2 objectives (y1, y2)*/
+                //Primer Objetivo
+                cdBox.crowding_distance += ((CDBox*)(std::prev(it))->box[n-1].lb() - ((CDBox*)(std::next(it))->box[n-1].lb()))/((first->box[first->box.size()].lb() - last->box[first->box.size()].lb()));
+                //Segundo objetivo
+                cdBox.crowding_distance += ((CDBox*)(std::prev(it))->box[n].lb() - ((CDBox*)(std::next(it))->box[n].lb()))/((first->box[first->box.size()].lb() - last->box[first->box.size()].lb()));
             }
 
             //Inserts the CDBox node into the set
-            cdSet.insert(cdBox);
+            NyuCrowdingDistance::cdSet.insert(cdBox);
             std::cout << cdBox.crowding_distance << endl; //%temp%
         }
         getchar(); //%temp%
-        //TODO: Return a set with X amount of Cells.
+        
+        //Returns a set with a size of -currentBuffer- Cells. The first -currentBuffer- cells in cdBuffer get returned (First and last + currentBuffer-2 other ones)
+        std::multiset<Cell*, max_distanceBeam>::iterator it = NyuCrowdingDistance::cdBuffer.begin();
+        for(i = 0; i<NyuCrowdingDistance::currentBuffer; i++){
+            ret.insert(((CDBox*)(it)).C);
+            it++;
+        }
+        return ret;
     }
 }
