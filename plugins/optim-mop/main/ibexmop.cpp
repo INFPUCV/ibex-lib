@@ -55,7 +55,7 @@ int main(int argc, char** argv){
 	args::Flag _segments(parser, "segments", "NDS defined by line segments instead of points.", {"SEGMENTS"});
 	args::Flag _hamburger(parser, "hamburger", "NDS defined by line segments (hamburger).", {"HAMBURGER"});
 
-	args::ValueFlag<int> _nSize(parser, "int", "nextBuffer size (default: 4)", {"nSize"});
+	args::ValueFlag<int> _nSize(parser, "int", "nextBuffer size (default: 8)", {"nSize"});
 
 	args::Flag _maxdist(parser, "hamburger", "Bisection in the maximum distance vector.", {"MAXsplit"});
 	args::Flag _3split(parser, "hamburger", "Trisection.", {"3split"});
@@ -126,7 +126,7 @@ int main(int argc, char** argv){
 	double eqeps= 1.e-8;
 	double rh=(_rh)? _rh.Get():0.1;
 	
-	int nSize= (_nSize)? _nSize.Get() : 4 ;
+	int nSize= (_nSize)? _nSize.Get() : 8 ;
 
 	OptimizerMOP::_plot = _plot;
 
@@ -202,8 +202,6 @@ int main(int argc, char** argv){
 	  buffer = new DistanceSortedCellBufferMOP;
 	else if(strategy=="BS")
 	  buffer = new BeamSearchBufferMOP;
-	else if(strategy=="crowdingBS")
-		buffer = new CrowdingDistanceBSMOP;
 	
 
 	BeamSearchBufferMOP::nextBufferSize = nSize;
@@ -327,10 +325,6 @@ int main(int argc, char** argv){
 
 	if(strategy=="BS"){
 		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH);
-	}
-
-	if(strategy=="crowdingBS"){
-		dynamic_cast<CrowdingDistanceBSMOP*>(buffer)->set(o.ndsH);
 	}
 
 

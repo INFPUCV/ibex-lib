@@ -12,9 +12,17 @@
 #include <algorithm>
 #include <limits>
 
-#define INF std::numeric_limits<double>::infinity();
+
 
 namespace ibex {
+
+	//Struct that contains Cell and crowding distance
+	typedef struct CDBox{
+		Cell* C;
+		double crowding_distance;
+	} CDBox;
+
+
 
     //Ordena por objetivo y1, y2
     struct crowding_distanceBeam {
@@ -27,7 +35,7 @@ namespace ibex {
 
     struct sortByCrowdingDistance{
         bool operator()(const CDBox* c1, const CDBox* c2){
-            if(c1.crowding_distance <= c2.crowding_distance) return true;
+            if(c1->crowding_distance <= c2->crowding_distance) return true;
             else return false;
         }
 
@@ -35,14 +43,12 @@ namespace ibex {
 
     class NyuCrowdingDistance : public CellBufferOptim{
         public:
-            static int currentBuffer;
-            mutable std::multiset<Cell*, crowding_distanceBeam> cdBuffer;
-            mutable std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
+    	static std::multiset<Cell*,max_distanceBeam> getCrowdingDistance(std::multiset<Cell*, max_distanceBeam>& nextBuffer, int currentBuffer);
 
-            std::multiset getCrowdingDistance(std::multiset nextBuffer);
-
-    }
+    };
 
 
 
 }
+
+#endif
