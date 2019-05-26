@@ -6,19 +6,35 @@ factors = 1 0.833 0.665 0.5 0.2 0.1
 sig_gain = 1.2
 max_seeds = 1
 min_seeds = 1
-algo_names = std2 bs2 
+algo_names = std3 bs3 bs4 bs5 
 #innerpoly20 cy cy-full eps-ctc ndist
 
-[std2]
+[std3]
 exec = "../../../__build__/plugins/optim-mop/ibexmop"
 params = _INSTANCE --eps-contract --nb_ub_sols=10 --cy-contract-full -t _MAXTIME
 outputpos_boxes = 0
 outputpos_times = 0
 
-[bs2]
-tuning_param = SIZEBS
-tuning_values = 0 2 4 8
+[bs3]
+tuning_param = ERRORBS
+tuning_values = 0.1 0.5 1
 exec = "../../../__build__/plugins/optim-mop/ibexmop"
-params = _INSTANCE --eps-contract --nb_ub_sols=10 --cy-contract-full -t _MAXTIME --search=BS --nSize=_SIZEBS
+params = _INSTANCE --eps-contract --nb_ub_sols=10 --cy-contract-full -t _MAXTIME --search=BS --nSize=0 --bsError=_ERRORBS
+outputpos_boxes = 0
+outputpos_times = 0
+
+[bs4]
+tuning_param = ERRORBS
+tuning_values = 0.1 0.5 1
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params = _INSTANCE --eps-contract --nb_ub_sols=10 --cy-contract-full -t _MAXTIME --search=BS --nSize=4 --bsError=_ERRORBS
+outputpos_boxes = 0
+outputpos_times = 0
+
+[bs5]
+tuning_param = ERRORBS
+tuning_values = 0.1 0.5 1
+exec = "../../../__build__/plugins/optim-mop/ibexmop"
+params = _INSTANCE --eps-contract --nb_ub_sols=10 --cy-contract-full -t _MAXTIME --search=BS --nSize=8 --bsError=_ERRORBS
 outputpos_boxes = 0
 outputpos_times = 0

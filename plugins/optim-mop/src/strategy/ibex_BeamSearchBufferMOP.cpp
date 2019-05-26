@@ -14,6 +14,9 @@
 namespace ibex { 
 
 	int BeamSearchBufferMOP::nextBufferSize = 4;
+
+	double BeamSearchBufferMOP::errorBS = 0.5;
+
 	int BeamSearchBufferMOP::nn = 0;
 
 
@@ -38,12 +41,13 @@ namespace ibex {
 	}
 
 	void BeamSearchBufferMOP::push(Cell* cell) {
-		//al imprimir aqui se muestra dos veces porque al bisectarse la caja se hacen dos push seguidos
+		
 		if(global_hv) {
 			aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 			initial_reduction=aux-aux2;
 
-			cout << "hv global:" << initial_reduction << endl; global_hv=false;
+			//cout << "hv global:" << initial_reduction << endl; 
+			global_hv=false;
 
 		}
         double dist=nds->distance(cell);
@@ -56,7 +60,8 @@ namespace ibex {
 			cell->get<CellMOP>().ub_distance=dist;
 		}
  
-        //primera iteracion
+        //primera iteracion, se usa un flag porque para la segunda iteracion vuelven a estar todos vacios, por lo que en vez
+		//de hacer el push en el next, lo vuelve a hacer en el global
         if(globalBuffer.empty() && nextBuffer.empty() && /*currentBuffer.empty()*/ cont==0){
 			
 			globalBuffer.push(cell);
@@ -95,6 +100,7 @@ namespace ibex {
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
+		//quizas este se puede eliminar
 		global_hv=false;
 
 		Cell *c = NULL, *c2 = NULL;
@@ -102,8 +108,7 @@ namespace ibex {
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-
-		//	getchar();
+			//	getchar();
 			ofstream myfile;
 			myfile.open ("cajasCurrent.txt");
 			// Reset de archivo
@@ -122,7 +127,6 @@ namespace ibex {
 			c=*nextBuffer.begin();
 			++c;
 			c2=c;
-
 			while(!nextBuffer.empty()){
 				
 				//it = nextBuffer.begin();
@@ -145,23 +149,44 @@ namespace ibex {
 
 			if(!currentBuffer.empty()){
 				//intento de hv
+				//aux2 es antes de trabajar la caja y aux despues de trabajar la caja
 				depth++;
+				depthTotal=depthTotal+depth;
 				aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 				//cout <<  aux << endl;
 				if(aux-aux2!=0){
 
 					if(initial_reduction==0){
+						//por que no entro?
+						//cout << "no entro nunca aqui" << endl;
 						initial_reduction=aux-aux2;
 
 					}
 
 					double mejora=(aux-aux2)/initial_reduction;
 
-					if(mejora>=0){
-						cout << depth << ": aumento en " << mejora << endl;
+					if(mejora>=errorBS){
+						//cout << depth << ": aumento en " << mejora << endl;
 					}else{
-						cout << "disminuyo en " << mejora << "%" << endl;
-						getchar();
+						if(!currentBuffer.empty()){
+							while(!currentBuffer.empty()){
+				
+								globalBuffer.push(currentBuffer.top());
+								currentBuffer.pop();
+
+							}
+						}
+						//en teoria nunca entro aqui
+						if(!nextBuffer.empty()){
+							while(!nextBuffer.empty()){
+				
+								c=*nextBuffer.begin();
+								globalBuffer.push(*nextBuffer.begin());
+					
+								nextBuffer.erase(nextBuffer.begin());
+
+							}
+						}
 					}
 				}
 				aux2=aux;
@@ -191,7 +216,14 @@ namespace ibex {
 			//cout << "depth:" << depth << endl;
 			//depth=0;
 			//cout << "inicial:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
-			//cantBeam++;
+			cantBeam++;
+			//cout << "cant beam: " << cantBeam << " DEPTH TOTAL: " << depthTotal << endl;
+			if(cantBeam!=0 && depthTotal!=0){
+				depthPromedio=depthTotal/cantBeam;
+				//cout << depthPromedio << endl;
+				*pruebaprom=depthPromedio;
+			} 
+
 			//cout << "BeamSearch: " << cantBeam << endl;
 			//int p = c->get<CellMOP>().depth;
 			//cout << "Profundidad: " << p << endl;

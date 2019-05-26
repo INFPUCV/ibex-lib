@@ -68,10 +68,12 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	}
 
    static int nextBufferSize;
+   static double errorBS;
    static int nn;
 
-   void set(NDS_seg& nds) {
+   void set(NDS_seg& nds, int& pruebaprom) {
 		 this->nds=&nds;
+		 this->pruebaprom=&pruebaprom;
 	 }
 
    virtual void add_backtrackable(Cell& root){
@@ -126,9 +128,10 @@ class BeamSearchBufferMOP : public CellBufferOptim {
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
 
   NDS_seg* nds;
+  int* pruebaprom;
 
   bool global_hv;
-  int depth;
+  int depth=0, depthTotal=0, depthPromedio=0;
 
   private:
 	int cont = 0, iter = 0, cantBeam = 0;

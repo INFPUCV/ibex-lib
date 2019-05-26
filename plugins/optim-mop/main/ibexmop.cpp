@@ -57,6 +57,8 @@ int main(int argc, char** argv){
 
 	args::ValueFlag<int> _nSize(parser, "int", "nextBuffer size (default: 4)", {"nSize"});
 
+	args::ValueFlag<double> _bsError(parser, "float", "condition to finish one level of beam search (default: 0.5)", {"bsError"});
+
 	args::Flag _maxdist(parser, "hamburger", "Bisection in the maximum distance vector.", {"MAXsplit"});
 	args::Flag _3split(parser, "hamburger", "Trisection.", {"3split"});
 
@@ -127,6 +129,8 @@ int main(int argc, char** argv){
 	double rh=(_rh)? _rh.Get():0.1;
 	
 	int nSize= (_nSize)? _nSize.Get() : 4 ;
+
+	double bsError= (_bsError)? _bsError.Get() : 0.5 ;
 
 	OptimizerMOP::_plot = _plot;
 
@@ -204,9 +208,11 @@ int main(int argc, char** argv){
 	  buffer = new BeamSearchBufferMOP;
 	else if(strategy=="crowdingBS")
 		buffer = new CrowdingDistanceBSMOP;
-	
 
 	BeamSearchBufferMOP::nextBufferSize = nSize;
+
+  BeamSearchBufferMOP::errorBS = bsError;
+
 	BeamSearchBufferMOP::nn = sys.nb_var;
 
 	// Build the bisection heuristic
@@ -326,7 +332,7 @@ int main(int argc, char** argv){
 	}
 
 	if(strategy=="BS"){
-		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH);
+		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH,o.depthPrint);
 	}
 
 	if(strategy=="crowdingBS"){

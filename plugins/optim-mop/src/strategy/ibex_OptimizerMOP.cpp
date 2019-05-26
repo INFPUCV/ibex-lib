@@ -13,6 +13,7 @@
 #include "ibex_NoBisectableVariableException.h"
 #include "ibex_Backtrackable.h"
 #include "ibex_OptimData.h"
+#include "ibex_BeamSearchBufferMOP.h"
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
@@ -693,7 +694,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 void OptimizerMOP::report(bool verbose) {
 
-	if (!verbose) {
+	/*if (!verbose) {
         cout << endl 	<< "time 	#nodes 		|Y|" << endl;
 		if(_hv)
 		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() << " "
@@ -704,6 +705,12 @@ void OptimizerMOP::report(bool verbose) {
 		else
 			cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  " "<< get_hypervolume().ub()  << endl;
 			cout << "porcentaje de cajas con solución: " << (sol*100)/nb_cells << endl;
+		return;
+	}*/
+
+	if(!verbose){
+		cout << endl 	<< "time 	#nodes 		|Y|       depthProm" << endl;
+		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() << " " << depthPrint << endl;
 		return;
 	}
 
