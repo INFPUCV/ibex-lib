@@ -38,8 +38,10 @@ namespace ibex{
 
             CDBox* cdBox= (CDBox*)malloc(sizeof(CDBox));
             cdBox->C = *it;
+
             //If they are the first/last one, set their Crowding Distances to Infinite
-            if(it == cdBuffer.begin() || next(it) == cdBuffer.end()){
+            if(*it == *cdBuffer.begin() || *next(it) == *cdBuffer.end()){
+                std::cout << "SAME" << endl;
                 cdBox->crowding_distance = std::numeric_limits<double>::infinity();
             }
             else{ //If not, then calculate them.
@@ -57,19 +59,18 @@ namespace ibex{
 
             //Inserts the CDBox node into the set
             cdSet.insert(cdBox);
-            std::cout << cdBox->crowding_distance << endl; //%temp%
         }
-        getchar(); //%temp%
         
         //Returns a set with a size of -currentBuffer- Cells. The first -currentBuffer- cells in cdBuffer get returned (First and last + currentBuffer-2 other ones)
         int i=0;
         for(auto cdbox: cdSet){
         	ret.insert(cdbox->C);
+            nextBuffer.erase(cdbox->C); //Elimina la cell del nextBuffer, ya que solo interesa que este en el return!
+            std::cout << i << ": " << cdbox->crowding_distance << " and " << cdbox->C->box[cdbox->C->box.size()] << endl;
         	i++;
-        	if(i==currentBuffer) break;
+        	if(i>=currentBuffer) break;
         }
-
-
+        getchar();
         return ret;
     }
 }

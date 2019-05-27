@@ -114,24 +114,56 @@ namespace ibex {
 			c2=c;
 
 			while(!nextBuffer.empty()){
-				NyuCrowdingDistance::getCrowdingDistance(nextBuffer,4); //al current
-				//las que quedan en nextBuffer pasan al global
+				//if(nextBuffer.size() > 2){
+					std::cout << "BEGIN: " << endl;
+					auto auxBuffer = NyuCrowdingDistance::getCrowdingDistance(nextBuffer,nextBufferSize); //al current
+					std::cout << "getCrowdingDistance done" << endl;
+					if(!auxBuffer.empty()){
+						std::cout << "auxBuffer not empty" << endl;
+						for(auto cell : auxBuffer){
+							currentBuffer.push(cell);
+						}
+						std::cout << "EOAB" << endl;
+						//las que quedan en nextBuffer pasan al global
+						std::cout << "nextBuffer not empty" << endl;
+						for(auto cell : nextBuffer){
+							globalBuffer.push(cell);
+						}
+						std::cout << "EONB" << endl;
+					}
+					//it = nextBuffer.begin();
+					//double distNextBegin = nds->distance(*nextBuffer.begin());
+					//cout << "distancia primero: " << distNextBegin << endl;
+					/*if(nextBuffer.size()>1){
+						it++;
+						double distNextEnd = nds->distance(*it);
+						//cout << "distancia siguiente: " << distNextEnd << endl;
+					}*/
+					
+					//Old Stuff o-o
+					/* *c=*nextBuffer.begin();
+					c=*nextBuffer.begin();
+					std::cout << "DUMP? 1" << endl;
+					currentBuffer.push(*nextBuffer.begin());
+					std::cout << "DUMP? 2" << endl;
 
-				//it = nextBuffer.begin();
-				//double distNextBegin = nds->distance(*nextBuffer.begin());
-				//cout << "distancia primero: " << distNextBegin << endl;
-				/*if(nextBuffer.size()>1){
-					it++;
-					double distNextEnd = nds->distance(*it);
-					//cout << "distancia siguiente: " << distNextEnd << endl;
+					myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
+					std::cout << c->box[nn-1] << "\n" << c->box[nn-2] << "\n" << endl;
+		
+
+					nextBuffer.erase(nextBuffer.begin());
+					std::cout << "EOALL" << endl << endl;*/
+				//}
+				/*else{
+					c=*nextBuffer.begin();
+					//std::cout << "DUMP? 1" << endl;
+					currentBuffer.push(*nextBuffer.begin());
+					//std::cout << "DUMP? 2" << endl;
+					//for(auto cell : nextBuffer){
+					//	globalBuffer.push(cell);
+					//}
+					myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
 				}*/
-				c=*nextBuffer.begin();
-				currentBuffer.push(*nextBuffer.begin());
-
-				myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-	
-				nextBuffer.erase(nextBuffer.begin());
-
 			}
 			myfile.close();	
 		}
