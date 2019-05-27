@@ -357,7 +357,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-			py_Plotter::offline_plot(NULL, ndsH.NDS2);
+			//py_Plotter::offline_plot(NULL, ndsH.NDS2);
 			//getchar();
 		  /*if(_plot) {
 			  cout << "iter:" << iter << endl;
@@ -370,6 +370,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//cout << "pop en main" << endl;
 			Cell *c = buffer.pop();
 
+			//cout <<  c->get<CellMOP>().ub_distance << ":" << c->box << endl;
+
+			//b plugins/optim-mop/src/strategy/ibex_OptimizerMOP.cpp:379
 			//cout << ndsH.hypervolume(c->box[n-1].ub(),c->box[n-2].ub()) << endl;
 			
 			//cout << c->box[n-1] << endl;
@@ -606,7 +609,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		ya1 = yb1; yb1 = aux; aux = ya2; ya2 = yb2; yb2 = aux;
 	}
 
-	// m ← getSlope(n.t)
+	// m ��� getSlope(n.t)
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
 	Interval m_vertical = Interval(POS_INFINITY);
@@ -704,7 +707,7 @@ void OptimizerMOP::report(bool verbose) {
 		" --y2=" << y2refi.lb() << "," << y2refi.ub() << endl;
 		else
 			cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  " "<< get_hypervolume().ub()  << endl;
-			cout << "porcentaje de cajas con solución: " << (sol*100)/nb_cells << endl;
+			cout << "porcentaje de cajas con soluci��n: " << (sol*100)/nb_cells << endl;
 		return;
 	}*/
 

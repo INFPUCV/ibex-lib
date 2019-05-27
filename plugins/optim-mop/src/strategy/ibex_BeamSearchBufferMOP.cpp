@@ -93,9 +93,9 @@ namespace ibex {
 			}
 		}  	
 
-		// cout << "tama������o global: " << globalBuffer.size() << endl;
-		// cout << "tama������o current: " << currentBuffer.size() << endl;
-		// cout << "tama������o next: " << nextBuffer.size() << endl;
+		// cout << "tama������������������o global: " << globalBuffer.size() << endl;
+		// cout << "tama������������������o current: " << currentBuffer.size() << endl;
+		// cout << "tama������������������o next: " << nextBuffer.size() << endl;
 		//getchar();	
 	}
 
@@ -201,33 +201,25 @@ namespace ibex {
 			aux2=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 
 			// Reset de archivo
-			ofstream myfile4;
-			myfile4.open("global.txt");
+			//ofstream myfile4;
+			//myfile4.open("global.txt");
 
-			c = globalBuffer.top();
+			c=top();
+			//c = globalBuffer.top();
 			global_hv=true;
 
 
-			myfile4 << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-			myfile4.close();
+			//myfile4 << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
+			//myfile4.close();
 
 			
 			globalBuffer.pop();
-			//cout << "depth:" << depth << endl;
-			//depth=0;
-			//cout << "inicial:" << nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid() << endl;
+
 			cantBeam++;
-			//cout << "cant beam: " << cantBeam << " DEPTH TOTAL: " << depthTotal << endl;
 			if(cantBeam!=0 && depthTotal!=0){
 				depthPromedio=depthTotal/cantBeam;
-				//cout << depthPromedio << endl;
 				*pruebaprom=depthPromedio;
 			} 
-
-			//cout << "BeamSearch: " << cantBeam << endl;
-			//int p = c->get<CellMOP>().depth;
-			//cout << "Profundidad: " << p << endl;
-			//getchar();
 					
 		}else if(!currentBuffer.empty()){
 			//si current tiene elementos, siempre se sacan de current
@@ -238,22 +230,21 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tama������o next 2: " << nextBuffer.size() << endl;
-		// cout << "tama������o current 2: " << currentBuffer.size() << endl;
+		// cout << "tama������������������o next 2: " << nextBuffer.size() << endl;
+		// cout << "tama������������������o current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 
-  int counter1=0;
 	Cell* BeamSearchBufferMOP::top() const {
 
 		Cell* c = globalBuffer.top();
-		if(!c) return NULL;
 
 		if (OptimizerMOP::_hv) return c;
 
 		double dist=nds->distance(c);
 
 		//we update the distance and reinsert the element
+
 		while(dist < c->get<CellMOP>().ub_distance){
 			globalBuffer.pop();
 			c->get<CellMOP>().ub_distance=dist;
@@ -262,7 +253,7 @@ namespace ibex {
 			dist=nds->distance(c);
 		}
 
-    	counter1 ++;
+
 		//cout << counter1  <<":" <<  c->get<CellMOP>().ub_distance << endl;
 
 		return c;

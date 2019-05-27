@@ -29,15 +29,11 @@ struct max_distanceBeam {
 
 
 	bool operator() (const Cell* c1, const Cell* c2){
-	    int n = c1->box.size();
-	    if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
+	   int n = c1->box.size();
+	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
 		   return (c1->get<CellMOP>().ub_distance < c2->get<CellMOP>().ub_distance);
-	    else if(c1->get<CellMOP>().ub_distance == c2->get<CellMOP>().ub_distance)
-	   		return (c1->get<CellMOP>().depth > c2->get<CellMOP>().depth);
-		else if(c1->get<CellMOP>().ub_distance == c2->get<CellMOP>().ub_distance && c1->get<CellMOP>().depth == c2->get<CellMOP>().depth)
-	   		return (c1->get<CellMOP>().id < c2->get<CellMOP>().id);
-	    else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
-	    else return false;
+	   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
+	   else return false;
 	}
 
 };
