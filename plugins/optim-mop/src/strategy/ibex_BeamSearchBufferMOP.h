@@ -139,7 +139,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
 
     //para guardar los non dominated sets temporalmente
-    mutable std::set <Cell*, objective_sort> aux;
+    //mutable std::set <Cell*, objective_sort> aux;
 
   NDS_seg* nds;
 
