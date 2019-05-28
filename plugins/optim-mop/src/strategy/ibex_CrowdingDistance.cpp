@@ -12,31 +12,13 @@ using namespace std;
 namespace ibex{
 
 
-    //std::multiset<Cell*, max_distanceBeam> NyuCrowdingDistance::getCrowdingDistance(
     void NyuCrowdingDistance::getCrowdingDistance(
         std::multiset<Cell*, max_distanceBeam>& nextBuffer,
         std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& currentBuffer, 
         std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > globalBuffer,
         int currentBufferSize){
 
-        //std::multiset<Cell*, crowding_distanceBeam> cdBuffer;
         std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
-
-        //Leaving these commented out, we are now working as an object!!!
-        //std::multiset<Cell*, crowding_distanceBeam> cdBuffer;
-        //std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
-        //std::multiset<Cell*, max_distanceBeam> ret; //Returning set
-
-        //First, we insert nextBuffer items into cdBuffer, which we will use to insert into
-        //cdSet, which will be the one we will use to insert into the current Buffer.
-        //AKA: Sort(Solution,Objective)
-        //TODO: Optimize this, use less structures
-        /*for(std::multiset<Cell*, max_distanceBeam>::iterator it = nextBuffer.begin(); 
-        it != nextBuffer.end(); it++)
-        {
-            cdBuffer.insert(*it);
-        }*/
-
         for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = nextBuffer.begin();
         it != nextBuffer.end(); it++)
         {
@@ -68,6 +50,8 @@ namespace ibex{
         
         //Returns a set with a size of -currentBuffer- Cells. The first -currentBuffer- cells in cdBuffer get returned (First and last + currentBuffer-2 other ones)
         int i=0;
+
+        //Here, we are going to insert the 8 cells with the highest crowding distance, and insert them into currentBuffer.
         for(auto cdbox: cdSet){
             currentBuffer.push(cdbox->C);
             nextBuffer.erase(cdbox->C); //Elimina la cell del nextBuffer, ya que solo interesa que este en el return!
@@ -75,6 +59,8 @@ namespace ibex{
         	i++;
         	if(i>=currentBufferSize) break;
         }
+
+        //Since the top 8 are removed from the nextBuffer, we move nextBuffer into globalBuffer.
         if(!nextBuffer.empty()){
             for(auto cell : nextBuffer){
                 globalBuffer.push(cell);
@@ -82,6 +68,5 @@ namespace ibex{
             }
         }
         //getchar();
-        //return currentBuffer;
     }
 }

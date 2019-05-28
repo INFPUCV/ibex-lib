@@ -117,39 +117,32 @@ namespace ibex {
 				std::cout << "BEGIN: " << endl;
 				NyuCrowdingDistance::getCrowdingDistance(nextBuffer, currentBuffer, globalBuffer, nextBufferSize); //al current
 				std::cout << "getCrowdingDistance done" << endl;
-				//Esto ahora sucede dentro de getCrowdingDistancce
-				/*if(!auxBuffer.empty()){
-					std::cout << "auxBuffer not empty" << endl;
-					for(auto cell : auxBuffer){
-						currentBuffer.push(cell);
-					}
-					std::cout << "EOAB" << endl;
-					//las que quedan en nextBuffer pasan al global
-					std::cout << "nextBuffer not empty" << endl;
-					for(auto cell : nextBuffer){
-						globalBuffer.push(cell);
-					}
-					std::cout << "EONB" << endl;
-				}*/
 			}
 
 			while(!nextBuffer.empty()){
-				it = nextBuffer.begin();
-				double distNextBegin = nds->distance(*nextBuffer.begin());
-				//cout << "distancia primero: " << distNextBegin << endl;
-				if(nextBuffer.size()>1){
-						it++;
-						double distNextEnd = nds->distance(*it);
-						//cout << "distancia siguiente: " << distNextEnd << endl;
+				if(nextBuffer.size() >= nextBufferSize){
+					std::cout << "BEGIN: " << endl;
+					NyuCrowdingDistance::getCrowdingDistance(nextBuffer, currentBuffer, globalBuffer, nextBufferSize); //al current
+					std::cout << "getCrowdingDistance done" << endl;
+				}	
+				else{
+					it = nextBuffer.begin();
+					double distNextBegin = nds->distance(*nextBuffer.begin());
+					//cout << "distancia primero: " << distNextBegin << endl;
+					if(nextBuffer.size()>1){
+							it++;
+							double distNextEnd = nds->distance(*it);
+							//cout << "distancia siguiente: " << distNextEnd << endl;
+					}
+					c=*nextBuffer.begin();
+					currentBuffer.push(*nextBuffer.begin());
+
+					myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
+					std::cout << c->box[nn-1] << "\n" << c->box[nn-2] << "\n" << endl;
+		
+
+					nextBuffer.erase(nextBuffer.begin());
 				}
-				c=*nextBuffer.begin();
-				currentBuffer.push(*nextBuffer.begin());
-
-				myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-				std::cout << c->box[nn-1] << "\n" << c->box[nn-2] << "\n" << endl;
-	
-
-				nextBuffer.erase(nextBuffer.begin());
 			}
 
 			myfile.close();	
