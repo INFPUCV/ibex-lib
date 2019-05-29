@@ -15,7 +15,7 @@ namespace ibex{
     void NyuCrowdingDistance::getCrowdingDistance(
         std::multiset<Cell*, max_distanceBeam>& nextBuffer,
         std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& currentBuffer, 
-        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > globalBuffer,
+        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& globalBuffer,
         int currentBufferSize){
 
         std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
@@ -55,7 +55,8 @@ namespace ibex{
         for(auto cdbox: cdSet){
             currentBuffer.push(cdbox->C);
             nextBuffer.erase(cdbox->C); //Elimina la cell del nextBuffer, ya que solo interesa que este en el return!
-            std::cout << i << ": " << cdbox->crowding_distance << " and " << cdbox->C->box[cdbox->C->box.size()] << endl;
+            std::cout << i << ", " << cdbox->crowding_distance << ", "
+            		<< cdbox->C->box[cdbox->C->box.size()-1].lb() << "," << cdbox->C->box[cdbox->C->box.size()-2].lb()<< endl;
         	i++;
         	if(i>=currentBufferSize) break;
         }

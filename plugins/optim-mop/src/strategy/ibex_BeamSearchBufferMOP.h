@@ -76,9 +76,9 @@ class BeamSearchBufferMOP : public CellBufferOptim {
  public:
 
 
-	static int CurrentSize;
+	//static int CurrentSize;
 
-   static int nextBufferSize;
+   static int currentBufferMaxSize;
    static int nn;
 
    void set(NDS_seg& nds) {

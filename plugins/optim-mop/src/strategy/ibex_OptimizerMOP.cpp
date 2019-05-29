@@ -349,22 +349,13 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
 			py_Plotter::offline_plot(NULL, ndsH.NDS2);
-			//getchar();
-		  /*if(_plot) {
-			  cout << "iter:" << iter << endl;
-			  cout << "buffer_size:" << buffer.size() << endl;
-		  }*/
-		  iter++;
 
-		  if (trace >= 2) cout << buffer;
+		    iter++;
 
-			//cout << "pop en main" << endl;
+		    if (trace >= 2) cout << buffer;
+
 			Cell *c = buffer.pop();
 			
-			//cout << c->box[n-1] << endl;
-			//cout << c->box[n-2] << endl;
-			//getchar();
-			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
 				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)!=NULL)
 					break;
@@ -372,24 +363,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 					delete c;
 					continue;
 				}
-
 	   		}
-			
-
-			//if(_plot) py_Plotter::plot_del_box(c);
-
-			nb_cells++;
-			contract_and_bound(*c, init_box);
-			if (c->box.is_empty()) {
-				delete c;
-				continue;
-			}
-
-			update_NDS2(c->box);
-
-			y1_ub.first = ndsH.lb().first;
-			y2_ub.second= ndsH.lb().second;
-
 
 			pair<IntervalVector,IntervalVector>* boxes=NULL;
 			bool atomic_box=false;
@@ -462,21 +436,35 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
       /****/
 
-    	delete boxes;
+    	    delete boxes;
 			delete c; // deletes the cell.
 
-	//		cout << "pusheo la primera" << endl;
-			buffer.push(new_cells.first);
-	//		cout << new_cells.first->box[n-1] << endl;
-	//		cout << new_cells.first->box[n-2] << endl;
-			//if(_plot) py_Plotter::plot_add_box(new_cells.first);
 
-	//		cout << "pusheo la segunda" << endl;
-			buffer.push(new_cells.second);
-	//		cout << new_cells.second->box[n-1] << endl;
-	//		cout << new_cells.second->box[n-2] << endl;
+			c=new_cells.first;
 
-			//if(_plot) py_Plotter::plot_add_box(new_cells.second);
+			nb_cells++;
+			contract_and_bound(*c, init_box);
+			if (c->box.is_empty())
+				delete c;
+			else{
+			    update_NDS2(c->box);
+			    buffer.push(c);
+			}
+
+			c=new_cells.second;
+
+			nb_cells++;
+			contract_and_bound(*c, init_box);
+			if (c->box.is_empty())
+				delete c;
+			else{
+				update_NDS2(c->box);
+				buffer.push(c);
+			}
+
+			y1_ub.first = ndsH.lb().first;
+			y2_ub.second= ndsH.lb().second;
+
 
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
 			time = timer.get_time();

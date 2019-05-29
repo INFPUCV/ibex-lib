@@ -13,7 +13,7 @@
 
 namespace ibex { 
 
-	int BeamSearchBufferMOP::nextBufferSize = 8;
+	int BeamSearchBufferMOP::currentBufferMaxSize = 8;
 	int BeamSearchBufferMOP::nn = 0;
 
 	void BeamSearchBufferMOP::flush() {
@@ -59,31 +59,9 @@ namespace ibex {
 			
 			nextBuffer.insert(cell);
 			Cell* c=NULL;
-			//Si el NextBuffer sobrepasa la capacidad maxima, se borran y se mueven al global
-			//cout << "size next antes while: " << nextBuffer.size() << endl;
-			if(nextBuffer.size() > nextBufferSize){
-				ofstream myfile;
-				myfile.open ("cajasDescartadas.txt", std::ios_base::app);
-				while(nextBuffer.size()> nextBufferSize && currentBuffer.empty()){
-					
-					c=*nextBuffer.begin();
-					globalBuffer.push(*nextBuffer.begin());
 
-					// Guardando archivo 
-					myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-					nextBuffer.erase(nextBuffer.begin());
-
-					// cout << "size next en while: " << nextBuffer.size() << endl;
-					// cout << "size global en while: " << globalBuffer.size() << endl;
-				}
-				myfile.close();	
-			}
 		}  	
 
-		// cout << "tama������o global: " << globalBuffer.size() << endl;
-		// cout << "tama������o current: " << currentBuffer.size() << endl;
-		// cout << "tama������o next: " << nextBuffer.size() << endl;
-		//getchar();	
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
@@ -93,59 +71,23 @@ namespace ibex {
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		//TODO: aqui se debe aplicar non dominated sorting + crowding distance
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-		//	getchar();
-			ofstream myfile;
-			myfile.open ("cajasCurrent.txt");
-			// Reset de archivo
-			ofstream myfile2;
-			myfile2.open("puntos.txt");
-			myfile2.close();
-			// Reset de archivo
-			ofstream myfile3;
-			myfile3.open("cajasDescartadas.txt");
-			myfile3.close();
-			// Reset de archivo
-			ofstream myfile5;
-			myfile5.open("global.txt");
-			myfile5.close();
 
 			c=*nextBuffer.begin();
 			++c;
 			c2=c;
 
-			if(nextBuffer.size() <= nextBufferSize){
+			while(!nextBuffer.empty()){
 				std::cout << "BEGIN: " << endl;
-				NyuCrowdingDistance::getCrowdingDistance(nextBuffer, currentBuffer, globalBuffer, nextBufferSize); //al current
+				for(auto c:nextBuffer) cout << c->box[c->box.size()-1].lb() << "," << c->box[c->box.size()-2].lb() << endl;
+
+				NyuCrowdingDistance::getCrowdingDistance(nextBuffer, currentBuffer, globalBuffer, currentBufferMaxSize); //al current
+
+
+
 				std::cout << "getCrowdingDistance done" << endl;
 			}
 
-			while(!nextBuffer.empty()){
-				if(nextBuffer.size() >= nextBufferSize){
-					std::cout << "BEGIN: " << endl;
-					NyuCrowdingDistance::getCrowdingDistance(nextBuffer, currentBuffer, globalBuffer, nextBufferSize); //al current
-					std::cout << "getCrowdingDistance done" << endl;
-				}	
-				else{
-					it = nextBuffer.begin();
-					double distNextBegin = nds->distance(*nextBuffer.begin());
-					//cout << "distancia primero: " << distNextBegin << endl;
-					if(nextBuffer.size()>1){
-							it++;
-							double distNextEnd = nds->distance(*it);
-							//cout << "distancia siguiente: " << distNextEnd << endl;
-					}
-					c=*nextBuffer.begin();
-					currentBuffer.push(*nextBuffer.begin());
 
-					myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-					std::cout << c->box[nn-1] << "\n" << c->box[nn-2] << "\n" << endl;
-		
-
-					nextBuffer.erase(nextBuffer.begin());
-				}
-			}
-
-			myfile.close();	
 		}
 		
 		//Si current y next estan vacios, se popea del global

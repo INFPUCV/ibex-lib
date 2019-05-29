@@ -47,7 +47,7 @@ namespace ibex {
             static void getCrowdingDistance(
                 std::multiset<Cell*, max_distanceBeam>& nextBuffer, 
                 std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& currentBuffer, 
-                std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > globalBuffer,
+                std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& globalBuffer,
                 int currentBufferSize);
 
     };

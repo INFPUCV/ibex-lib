@@ -204,7 +204,7 @@ int main(int argc, char** argv){
 	  buffer = new BeamSearchBufferMOP;
 	
 
-	BeamSearchBufferMOP::nextBufferSize = nSize;
+	BeamSearchBufferMOP::currentBufferMaxSize = nSize;
 	BeamSearchBufferMOP::nn = sys.nb_var;
 
 	// Build the bisection heuristic
