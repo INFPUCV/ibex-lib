@@ -299,7 +299,7 @@ public:
 
 	// Hamburger
 	NDS_seg ndsH;
-	int depthPrint;
+	double depthPrint;
 
 protected:
 

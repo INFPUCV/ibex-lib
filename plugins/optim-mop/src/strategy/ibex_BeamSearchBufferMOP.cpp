@@ -44,7 +44,9 @@ namespace ibex {
 		
 		if(global_hv) {
 			aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+
 			initial_reduction=aux-aux2;
+			cout << initial_reduction << endl;
 
 			//cout << "hv global:" << initial_reduction << endl; 
 			global_hv=false;
@@ -93,9 +95,9 @@ namespace ibex {
 			}
 		}  	
 
-		// cout << "tama������������������o global: " << globalBuffer.size() << endl;
-		// cout << "tama������������������o current: " << currentBuffer.size() << endl;
-		// cout << "tama������������������o next: " << nextBuffer.size() << endl;
+		// cout << "tama������������������������������������������������������o global: " << globalBuffer.size() << endl;
+		// cout << "tama������������������������������������������������������o current: " << currentBuffer.size() << endl;
+		// cout << "tama������������������������������������������������������o next: " << nextBuffer.size() << endl;
 		//getchar();	
 	}
 
@@ -108,6 +110,8 @@ namespace ibex {
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
+			depth++;
+			depthTotal++;//=depthTotal+depth;
 			//	getchar();
 			ofstream myfile;
 			myfile.open ("cajasCurrent.txt");
@@ -150,8 +154,8 @@ namespace ibex {
 			if(!currentBuffer.empty()){
 				//intento de hv
 				//aux2 es antes de trabajar la caja y aux despues de trabajar la caja
-				depth++;
-				depthTotal=depthTotal+depth;
+
+
 				aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 				//cout <<  aux << endl;
 				if(aux-aux2!=0){
@@ -162,11 +166,13 @@ namespace ibex {
 						initial_reduction=aux-aux2;
 
 					}
+					double a=initial_reduction;
+					initial_reduction = std::max(initial_reduction,1e-3);
 
 					double mejora=(aux-aux2)/initial_reduction;
 
-					if(mejora>=errorBS){
-						//cout << depth << ": aumento en " << mejora << endl;
+					if(mejora>=errorBS || aux-aux2==a){
+						cout << depth << ": aumento en " << mejora << "(" <<aux-aux2<< ")" << endl;
 					}else{
 						if(!currentBuffer.empty()){
 							while(!currentBuffer.empty()){
@@ -188,7 +194,10 @@ namespace ibex {
 							}
 						}
 					}
+				}else{
+					cout << currentBuffer.top()->box << endl;
 				}
+
 				aux2=aux;
 
 			}
@@ -216,9 +225,11 @@ namespace ibex {
 			globalBuffer.pop();
 
 			cantBeam++;
+
 			if(cantBeam!=0 && depthTotal!=0){
-				depthPromedio=depthTotal/cantBeam;
+				depthPromedio=depthTotal/(double)cantBeam;
 				*pruebaprom=depthPromedio;
+				//cout << *pruebaprom <<endl;
 			} 
 					
 		}else if(!currentBuffer.empty()){
@@ -230,8 +241,8 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tama������������������o next 2: " << nextBuffer.size() << endl;
-		// cout << "tama������������������o current 2: " << currentBuffer.size() << endl;
+		// cout << "tama������������������������������������������������������o next 2: " << nextBuffer.size() << endl;
+		// cout << "tama������������������������������������������������������o current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 

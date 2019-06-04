@@ -67,7 +67,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
    static double errorBS;
    static int nn;
 
-   void set(NDS_seg& nds, int& pruebaprom) {
+   void set(NDS_seg& nds, double& pruebaprom) {
 		 this->nds=&nds;
 		 this->pruebaprom=&pruebaprom;
 	 }
@@ -124,10 +124,11 @@ class BeamSearchBufferMOP : public CellBufferOptim {
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
 
   NDS_seg* nds;
-  int* pruebaprom;
+  double* pruebaprom;
 
   bool global_hv;
-  int depth=0, depthTotal=0, depthPromedio=0;
+  int depth=0, depthTotal=0;
+  double depthPromedio=0;
 
   private:
 	int cont = 0, iter = 0, cantBeam = 0;

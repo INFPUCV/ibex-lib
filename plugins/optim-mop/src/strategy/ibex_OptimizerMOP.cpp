@@ -449,6 +449,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		}
 
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
+    	/*
 		 IntervalVector left(c->box);
 		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
 				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
@@ -456,10 +457,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			 left[n]=Interval(c->box[n].lb(),y1_ub.first);
 			 c->box[n]=Interval(y1_ub.first,c->box[n].ub());
 		  }else left.set_empty();
-
-	//	 cout << "bisecto" << endl;
+*/
          pair<Cell*,Cell*> new_cells;
-			if(!left.is_empty())
+	/*		if(!left.is_empty())
 				  new_cells=c->bisect(left,c->box);
 			else{
 				IntervalVector bottom(c->box);
@@ -472,9 +472,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				
 				if(!bottom.is_empty())
 				  new_cells=c->bisect(bottom,c->box);
-				else
+				else*/
 				 new_cells=c->bisect(boxes->first,boxes->second); //originally we should do only do this
-			}
+			//}
       /****/
 
     	delete boxes;
@@ -609,7 +609,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		ya1 = yb1; yb1 = aux; aux = ya2; ya2 = yb2; yb2 = aux;
 	}
 
-	// m ��� getSlope(n.t)
+	// m ��������� getSlope(n.t)
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
 	Interval m_vertical = Interval(POS_INFINITY);
@@ -707,7 +707,7 @@ void OptimizerMOP::report(bool verbose) {
 		" --y2=" << y2refi.lb() << "," << y2refi.ub() << endl;
 		else
 			cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  " "<< get_hypervolume().ub()  << endl;
-			cout << "porcentaje de cajas con soluci��n: " << (sol*100)/nb_cells << endl;
+			cout << "porcentaje de cajas con soluci������n: " << (sol*100)/nb_cells << endl;
 		return;
 	}*/
 
