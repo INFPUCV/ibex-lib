@@ -48,7 +48,14 @@ namespace ibex {
                 std::multiset<Cell*, max_distanceBeam>& nextBuffer, 
                 std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& currentBuffer, 
                 std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& globalBuffer,
-                int currentBufferSize);
+                //int currentBufferSize,
+                int returnSize);
+
+            static bool isDominated(Cell* a, Cell* c);
+
+
+            static void removeDominated(std::multiset<Cell*, max_distanceBeam>& nextBuffer,
+                                        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& globalBuffer);
 
     };
 

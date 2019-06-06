@@ -77,14 +77,35 @@ namespace ibex {
 			c2=c;
 
 			while(!nextBuffer.empty()){
+				NyuCrowdingDistance::removeDominated(nextBuffer, currentBuffer);
 				std::cout << "BEGIN: " << endl;
 				for(auto c:nextBuffer) cout << c->box[c->box.size()-1].lb() << "," << c->box[c->box.size()-2].lb() << endl;
-
-				NyuCrowdingDistance::getCrowdingDistance(nextBuffer, currentBuffer, globalBuffer, currentBufferMaxSize); //al current
-
-
-
-				std::cout << "getCrowdingDistance done" << endl;
+				//if(nextBuffer.size() >= nextBufferSize){
+				int sizeDiffMax = currentBufferMaxSize - currentBuffer.size();
+				if(currentBuffer.size() + nextBuffer.size() > currentBufferMaxSize){
+					//Revisar si cae al menos 1.
+					if(sizeDiffMax > 0 ){
+						std::cout << "=== BEGIN: ===" << endl;
+						NyuCrowdingDistance::getCrowdingDistance(nextBuffer, 
+																										currentBuffer, 
+																										globalBuffer, 
+																										sizeDiffMax); //al current
+						std::cout << "=== getCrowdingDistance done ===" << endl;
+					}
+					else{ //Si no, todos se van al global. (Sobrantes)
+						for(auto cell : nextBuffer){
+              globalBuffer.push(cell);
+              nextBuffer.erase(cell);
+            }
+					}
+				}
+				else{
+					//Si no, pasan todos.
+					for(auto cell : nextBuffer){
+						currentBuffer.push(cell);
+						nextBuffer.erase(cell);
+					}
+				}
 			}
 
 

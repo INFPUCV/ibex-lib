@@ -1,5 +1,5 @@
 /*      Crowding Distance Implementation
- *                  v0.0
+ *                  v1.0.1
  *  
  *              Author: Nyuku
  */
@@ -16,7 +16,12 @@ namespace ibex{
         std::multiset<Cell*, max_distanceBeam>& nextBuffer,
         std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& currentBuffer, 
         std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& globalBuffer,
-        int currentBufferSize){
+        //int currentBufferSize,
+        int returnSize
+        ){
+
+        //First, we take out the dominated ones.
+        //removeDominated(nextBuffer, currentBuffer); //We do this now in the BeamSearchBufferMOP Class.
 
         std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
         for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = nextBuffer.begin();
@@ -32,7 +37,7 @@ namespace ibex{
                 cdBox->crowding_distance = std::numeric_limits<double>::infinity();
             }
             else{ //If not, then calculate them.
-                int n = (*it)->box.size();
+                 int n = (*it)->box.size();
                 Cell* first = *nextBuffer.begin();
                 Cell* last = *prev(nextBuffer.end());
 
@@ -58,10 +63,10 @@ namespace ibex{
             std::cout << i << ", " << cdbox->crowding_distance << ", "
             		<< cdbox->C->box[cdbox->C->box.size()-1].lb() << "," << cdbox->C->box[cdbox->C->box.size()-2].lb()<< endl;
         	i++;
-        	if(i>=currentBufferSize) break;
+        	if(i==returnSize) break;
         }
 
-        //Since the top 8 are removed from the nextBuffer, we move nextBuffer into globalBuffer.
+        //Since the top X are removed from the nextBuffer, we move nextBuffer into globalBuffer. (leftovers)
         if(!nextBuffer.empty()){
             for(auto cell : nextBuffer){
                 globalBuffer.push(cell);
@@ -70,4 +75,28 @@ namespace ibex{
         }
         //getchar();
     }
+
+    bool NyuCrowdingDistance::isDominated(Cell* a, Cell* b){
+        int n = a->box.size();
+        return (a->box[n-1].lb() <= b->box[n-1].lb() && a->box[n-2].lb() <= b->box[n-2].lb());
+    }
+
+    //Removes the dominated cells from nextBuffers and adds them into globalBuffer.
+    void NyuCrowdingDistance::removeDominated(
+    std::multiset<Cell*, max_distanceBeam>& nextBuffer,
+    std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam >& globalBuffer
+    ){
+        //std::multiset<Cell*, max_distanceBeam> nextBufferCopy;
+        //Here we take the dominateds out of nextBuffer and insert them into globalBuffer.
+        for(auto a : nextBuffer){
+            for(auto b : nextBuffer){
+                if(a != b && isDominated(a, b)){
+                    globalBuffer.push(a);
+                    nextBuffer.erase(a);
+                }
+            }
+        }
+    }
+
+
 }
