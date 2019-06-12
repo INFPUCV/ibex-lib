@@ -108,6 +108,8 @@ git checkout -t origin/mop-server
 ## Run an example (server mode):
 
     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/tan.txt --cy-contract-full --eps_r=0.01 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
+    
+    ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt --cy-contract-full --eps_r=0.001 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
 
 The output file (server_out) contains two lists of points (segments) representing an upper and lower envelope for the optimal solutions.
 
