@@ -241,7 +241,7 @@ public:
 		return boxy;
 	}
 
-	//el focus se actualiza tomando en cuenta el hull de la región factible y las soluciones encontradas
+	//el focus se actualiza tomando en cuenta el hull de la regi��n factible y las soluciones encontradas
 	void update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 
 		IntervalVector new_focus(2);
@@ -287,7 +287,7 @@ public:
 		for(auto cc:paused_cells) LBaux.add_lb(*cc);
 
 		//se escribe el archivo de salida
-		py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus);
+		py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), /*&focus*/ NULL);
 	}
 
 	void read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
