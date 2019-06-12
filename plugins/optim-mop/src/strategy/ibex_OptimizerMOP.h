@@ -276,12 +276,14 @@ public:
 
 		update_focus(cells, paused_cells, focus);
 
+		/*
 		Vector v(2); v[0]=focus[0].lb(); v[1]=focus[1].ub();
 		LBaux.addPoint(v);
 		UBaux.addPoint(v);
 		v[0]=focus[0].ub(); v[1]=focus[1].lb();
 		LBaux.addPoint(v);
 		UBaux.addPoint(v);
+		*/
 
 		for(auto cc:cells)	LBaux.add_lb(*cc);
 		for(auto cc:paused_cells) LBaux.add_lb(*cc);
