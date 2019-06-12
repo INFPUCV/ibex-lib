@@ -287,7 +287,12 @@ public:
 		for(auto cc:paused_cells) LBaux.add_lb(*cc);
 
 		//se escribe el archivo de salida
-		py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), /*&focus*/ NULL);
+		IntervalVector focus2(2);
+		focus2[0]=BxpMOPData::y1_init;
+		focus2[1]=BxpMOPData::y2_init;
+		update_focus(cells, paused_cells, focus2);
+
+		py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
 	}
 
 	void read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
