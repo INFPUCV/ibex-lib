@@ -313,8 +313,8 @@ public:
 				focus[0] = Interval(y1_lb,y1_ub);
 				focus[1] = Interval(y2_lb,y2_ub);
 				if(instruction == "zoom_out")
-				{		focus2[0]=BxpMOPData::y1_init;
-						focus2[1]=BxpMOPData::y2_init;}
+				{		focus[0]=BxpMOPData::y1_init;
+						focus[1]=BxpMOPData::y2_init;}
 
 				cout << instruction << focus << endl;
 				if(instruction=="zoom_out" || instruction=="zoom_in"){
