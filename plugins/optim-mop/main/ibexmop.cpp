@@ -57,7 +57,7 @@ int main(int argc, char** argv){
 
 	args::ValueFlag<int> _nSize(parser, "int", "nextBuffer size (default: 4)", {"nSize"});
 
-	args::ValueFlag<double> _bsError(parser, "float", "condition to finish one level of beam search (default: 0.5)", {"bsError"});
+	args::ValueFlag<double> _bsTolerance(parser, "float", "tolerance condition to finish one level of beam search (default: 0.5)", {"bsTolerance"});
 
 	args::Flag _maxdist(parser, "hamburger", "Bisection in the maximum distance vector.", {"MAXsplit"});
 	args::Flag _3split(parser, "hamburger", "Trisection.", {"3split"});
@@ -130,7 +130,7 @@ int main(int argc, char** argv){
 	
 	int nSize= (_nSize)? _nSize.Get() : 4 ;
 
-	double bsError= (_bsError)? _bsError.Get() : 0.5 ;
+	double bsTolerance= (_bsTolerance)? _bsTolerance.Get() : 0.5 ;
 
 	OptimizerMOP::_plot = _plot;
 
@@ -205,13 +205,9 @@ int main(int argc, char** argv){
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
 	else if(strategy=="BS")
-	  buffer = new BeamSearchBufferMOP;
+	  buffer = new BeamSearchBufferMOP(nSize,bsTolerance);
 	else if(strategy=="crowdingBS")
 		buffer = new CrowdingDistanceBSMOP;
-
-	BeamSearchBufferMOP::nextBufferSize = nSize;
-
-  BeamSearchBufferMOP::errorBS = bsError;
 
 	BeamSearchBufferMOP::nn = sys.nb_var;
 

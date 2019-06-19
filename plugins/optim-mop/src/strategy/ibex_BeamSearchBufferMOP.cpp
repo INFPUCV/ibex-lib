@@ -13,13 +13,8 @@
 
 namespace ibex { 
 
-	int BeamSearchBufferMOP::nextBufferSize = 4;
-
-	double BeamSearchBufferMOP::errorBS = 0.5;
-
 	int BeamSearchBufferMOP::nn = 0;
 
-	double BeamSearchBufferMOP::errorBS2=errorBS;
 
 	void BeamSearchBufferMOP::flush() {
 		while (!globalBuffer.empty()) {
@@ -51,7 +46,6 @@ namespace ibex {
 
 			//cout << "hv global:" << initial_reduction << endl; 
 			global_hv=false;
-			errorBS=errorBS2;
 
 		}
         double dist=nds->distance(cell);
@@ -160,20 +154,16 @@ namespace ibex {
 				//cout <<  aux << endl;
 				if(aux-aux2!=0){
 					
-					if(initial_reduction==0){
-	
-						initial_reduction=aux-aux2;
-
-					}
-					double a=initial_reduction;
-					initial_reduction = std::max(initial_reduction,1e-3);
+					if(initial_reduction==0) initial_reduction=aux-aux2;
 
 					double mejora=(aux-aux2)/initial_reduction;
 
-					if(mejora>=errorBS || aux-aux2==a){
-						//cout << depth << ": aumento en " << mejora << "(" <<aux-aux2<< ")" << endl;
+					if(mejora>=bs_tolerance*mejor_mejora || aux-aux2==initial_reduction){
+						if(mejora>mejor_mejora) mejor_mejora=mejora;
 
-						errorBS=mejora;
+
+					//if(mejora>=errorBS || aux-aux2==initial_reduction){
+						//errorBS=mejora;
 
 					}else{
 						if(!currentBuffer.empty()){
@@ -209,6 +199,7 @@ namespace ibex {
 		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
 			depth=0;
+			mejor_mejora=0;
 			aux2=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 
 			// Reset de archivo
@@ -243,8 +234,8 @@ namespace ibex {
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tama������������������������������������������������������o next 2: " << nextBuffer.size() << endl;
-		// cout << "tama������������������������������������������������������o current 2: " << currentBuffer.size() << endl;
+		// cout << "tama������������������������������������������������������������������������������������������������������������������������������������������������������������������o next 2: " << nextBuffer.size() << endl;
+		// cout << "tama������������������������������������������������������������������������������������������������������������������������������������������������������������������o current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 

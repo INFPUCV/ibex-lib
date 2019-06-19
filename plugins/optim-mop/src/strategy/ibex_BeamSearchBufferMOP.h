@@ -59,12 +59,14 @@ struct max_distanceBeam {
 class BeamSearchBufferMOP : public CellBufferOptim {
  public:
 
-	BeamSearchBufferMOP() : CellBufferOptim(), depth(0){
+	BeamSearchBufferMOP(int nextBufferSize, double bs_tolerance) : CellBufferOptim(),
+	depth(0), nextBufferSize(nextBufferSize), bs_tolerance(bs_tolerance){
 
 	}
 
-   static int nextBufferSize;
-   static double errorBS,errorBS2;
+   int nextBufferSize=4;
+   double bs_tolerance=0.5;
+
    static int nn;
 
    void set(NDS_seg& nds, double& pruebaprom, int&depthMayor) {
@@ -124,10 +126,10 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	//mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > nextBuffer;
     mutable std::multiset <Cell*, max_distanceBeam> nextBuffer;
 
-  NDS_seg* nds;
-  double* pruebaprom;
+  NDS_seg* nds=NULL;
+  double* pruebaprom=NULL;
 
-  bool global_hv;
+  bool global_hv=false;
   int* depthMayor=0;
   int depth=0, depthTotal=0;
   double depthPromedio=0;
@@ -135,6 +137,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
   private:
 	int cont = 0, iter = 0, cantBeam = 0;
 	double aux=0,aux2=0,initial_reduction=0.0;
+	double mejor_mejora=0.0;
 };
 
 
