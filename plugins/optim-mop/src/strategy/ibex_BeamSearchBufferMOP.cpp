@@ -19,6 +19,7 @@ namespace ibex {
 
 	int BeamSearchBufferMOP::nn = 0;
 
+	double BeamSearchBufferMOP::errorBS2=errorBS;
 
 	void BeamSearchBufferMOP::flush() {
 		while (!globalBuffer.empty()) {
@@ -46,10 +47,11 @@ namespace ibex {
 			aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 
 			initial_reduction=aux-aux2;
-			cout << initial_reduction << endl;
+			//cout << initial_reduction << endl;
 
 			//cout << "hv global:" << initial_reduction << endl; 
 			global_hv=false;
+			errorBS=errorBS2;
 
 		}
         double dist=nds->distance(cell);
@@ -93,12 +95,7 @@ namespace ibex {
 				}
 				myfile.close();	
 			}
-		}  	
-
-		// cout << "tama������������������������������������������������������o global: " << globalBuffer.size() << endl;
-		// cout << "tama������������������������������������������������������o current: " << currentBuffer.size() << endl;
-		// cout << "tama������������������������������������������������������o next: " << nextBuffer.size() << endl;
-		//getchar();	
+		}  		
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
@@ -111,6 +108,9 @@ namespace ibex {
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
 			depth++;
+			if(depth>*depthMayor){
+				*depthMayor=depth;
+			}
 			depthTotal++;//=depthTotal+depth;
 			//	getchar();
 			ofstream myfile;
@@ -159,10 +159,9 @@ namespace ibex {
 				aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 				//cout <<  aux << endl;
 				if(aux-aux2!=0){
-
+					
 					if(initial_reduction==0){
-						//por que no entro?
-						//cout << "no entro nunca aqui" << endl;
+	
 						initial_reduction=aux-aux2;
 
 					}
@@ -172,7 +171,10 @@ namespace ibex {
 					double mejora=(aux-aux2)/initial_reduction;
 
 					if(mejora>=errorBS || aux-aux2==a){
-						cout << depth << ": aumento en " << mejora << "(" <<aux-aux2<< ")" << endl;
+						//cout << depth << ": aumento en " << mejora << "(" <<aux-aux2<< ")" << endl;
+
+						errorBS=mejora;
+
 					}else{
 						if(!currentBuffer.empty()){
 							while(!currentBuffer.empty()){
@@ -194,9 +196,9 @@ namespace ibex {
 							}
 						}
 					}
-				}else{
+				}/*else{
 					cout << currentBuffer.top()->box << endl;
-				}
+				}*/
 
 				aux2=aux;
 

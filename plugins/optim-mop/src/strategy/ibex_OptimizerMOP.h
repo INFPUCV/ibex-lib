@@ -300,6 +300,8 @@ public:
 	// Hamburger
 	NDS_seg ndsH;
 	double depthPrint;
+	int depthMayor;
+	static bool bs;
 
 protected:
 

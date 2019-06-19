@@ -64,12 +64,13 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	}
 
    static int nextBufferSize;
-   static double errorBS;
+   static double errorBS,errorBS2;
    static int nn;
 
-   void set(NDS_seg& nds, double& pruebaprom) {
+   void set(NDS_seg& nds, double& pruebaprom, int&depthMayor) {
 		 this->nds=&nds;
 		 this->pruebaprom=&pruebaprom;
+		 this->depthMayor=&depthMayor;
 	 }
 
    virtual void add_backtrackable(Cell& root){
@@ -127,6 +128,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
   double* pruebaprom;
 
   bool global_hv;
+  int* depthMayor=0;
   int depth=0, depthTotal=0;
   double depthPromedio=0;
 

@@ -34,6 +34,7 @@ bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
 double OptimizerMOP::_rh = 0.1;
 bool OptimizerMOP::_hv=false;
+bool OptimizerMOP::bs=false;
 
 
 
@@ -449,32 +450,39 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		}
 
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
-    	/*
-		 IntervalVector left(c->box);
-		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
-				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
+	  pair<Cell*,Cell*> new_cells;
 
-			 left[n]=Interval(c->box[n].lb(),y1_ub.first);
-			 c->box[n]=Interval(y1_ub.first,c->box[n].ub());
-		  }else left.set_empty();
-*/
-         pair<Cell*,Cell*> new_cells;
-	/*		if(!left.is_empty())
-				  new_cells=c->bisect(left,c->box);
-			else{
-				IntervalVector bottom(c->box);
-		  	if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  &&
-		  			(c->box[n].ub()-y2_ub.first)*(c->box[n+1].ub()-y2_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ) {
-					bottom[n+1]=Interval(c->box[n+1].lb(),y2_ub.second);
-					c->box[n+1]=Interval(y2_ub.second,c->box[n+1].ub());
-				}else bottom.set_empty();
+	  //se hace una comprobacion de que búsqueda se está utilizando
+    	/*if(!bs){
+			IntervalVector left(c->box);
+			if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
+					(c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
 
-				
-				if(!bottom.is_empty())
-				  new_cells=c->bisect(bottom,c->box);
-				else*/
-				 new_cells=c->bisect(boxes->first,boxes->second); //originally we should do only do this
-			//}
+				left[n]=Interval(c->box[n].lb(),y1_ub.first);
+				c->box[n]=Interval(y1_ub.first,c->box[n].ub());
+			}else left.set_empty();
+
+			
+				if(!left.is_empty())
+					new_cells=c->bisect(left,c->box);
+				else{
+					IntervalVector bottom(c->box);
+				if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  &&
+						(c->box[n].ub()-y2_ub.first)*(c->box[n+1].ub()-y2_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ) {
+						bottom[n+1]=Interval(c->box[n+1].lb(),y2_ub.second);
+						c->box[n+1]=Interval(y2_ub.second,c->box[n+1].ub());
+					}else bottom.set_empty();
+
+					
+					if(!bottom.is_empty())
+					new_cells=c->bisect(bottom,c->box);
+					else
+					new_cells=c->bisect(boxes->first,boxes->second); //originally we should do only do this
+				}
+		}else{*/
+			new_cells=c->bisect(boxes->first,boxes->second);
+		//}
+
       /****/
 
     	delete boxes;
@@ -712,8 +720,8 @@ void OptimizerMOP::report(bool verbose) {
 	}*/
 
 	if(!verbose){
-		cout << endl 	<< "time 	#nodes 		|Y|       depthProm" << endl;
-		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() << " " << depthPrint << endl;
+		cout << endl 	<< "time 	#nodes 		|Y|       depthProm        depthMayor" << endl;
+		cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() << " " << depthPrint << " " << depthMayor << endl;
 		return;
 	}
 

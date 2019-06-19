@@ -332,7 +332,8 @@ int main(int argc, char** argv){
 	}
 
 	if(strategy=="BS"){
-		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH,o.depthPrint);
+		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH,o.depthPrint,o.depthMayor);
+		OptimizerMOP::bs=true;
 	}
 
 	if(strategy=="crowdingBS"){

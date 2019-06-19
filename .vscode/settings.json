@@ -39,6 +39,7 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "cstdarg": "cpp",
-        "cstddef": "cpp"
+        "cstddef": "cpp",
+        "cinttypes": "cpp"
     }
 }
