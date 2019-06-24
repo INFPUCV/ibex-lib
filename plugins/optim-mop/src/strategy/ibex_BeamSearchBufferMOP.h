@@ -65,9 +65,12 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 	}
 
    int nextBufferSize=4;
+   int nextBufferSizeAux=0;
    double bs_tolerance=0.5;
+   int T=1;
 
    static int nn;
+   int iterBS=0;
 
    void set(NDS_seg& nds, double& pruebaprom, int&depthMayor) {
 		 this->nds=&nds;
@@ -88,6 +91,8 @@ class BeamSearchBufferMOP : public CellBufferOptim {
 
   /** Return true if the buffer is empty. */
   bool empty() const;
+
+  void bsPerformance(int iter);
 
   /** push a new cell on the stack. */
   void push(Cell* cell);
@@ -130,12 +135,13 @@ class BeamSearchBufferMOP : public CellBufferOptim {
   double* pruebaprom=NULL;
 
   bool global_hv=false;
+  bool bs_performance=false;
   int* depthMayor=0;
   int depth=0, depthTotal=0;
   double depthPromedio=0;
 
   private:
-	int cont = 0, iter = 0, cantBeam = 0;
+	int cont = 0, cantBeam = 0;
 	double aux=0,aux2=0,initial_reduction=0.0;
 	double mejor_mejora=0.0;
 };

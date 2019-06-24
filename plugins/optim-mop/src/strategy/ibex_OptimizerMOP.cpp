@@ -364,6 +364,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			  cout << "iter:" << iter << endl;
 			  cout << "buffer_size:" << buffer.size() << endl;
 		  }*/
+		  //cout << "iter en optimizer: " << iter << endl;
 		  iter++;
 
 		  if (trace >= 2) cout << buffer;

@@ -329,6 +329,7 @@ int main(int argc, char** argv){
 
 	if(strategy=="BS"){
 		dynamic_cast<BeamSearchBufferMOP*>(buffer)->set(o.ndsH,o.depthPrint,o.depthMayor);
+		//booleano para saber si que metodo de biseccion usar
 		OptimizerMOP::bs=true;
 	}
 

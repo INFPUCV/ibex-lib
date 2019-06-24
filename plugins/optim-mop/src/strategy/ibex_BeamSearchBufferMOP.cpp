@@ -32,6 +32,10 @@ namespace ibex {
 		return (globalBuffer.size()+currentBuffer.size()+nextBuffer.size());
 	}
 
+	void BeamSearchBufferMOP::bsPerformance(int iter){
+
+	}
+
 	bool BeamSearchBufferMOP::empty() const {
 		return (globalBuffer.empty() && currentBuffer.empty() && nextBuffer.empty());
 	}
@@ -72,7 +76,19 @@ namespace ibex {
 			Cell* c=NULL;
 			//Si el NextBuffer sobrepasa la capacidad maxima, se borran y se mueven al global
 			//cout << "size next antes while: " << nextBuffer.size() << endl;
-			if(nextBuffer.size() > nextBufferSize){
+
+			//y si es bueno pero no se alcanza a llenar nunca el nextbuffer???
+			//tengo dudas
+			//cout << "iter en bs: " << iterBS << endl;
+			//cout << T << endl;
+			//cout << iterBS%T << endl;
+			if(iterBS%T==0){
+				nextBufferSizeAux=nextBufferSize;
+			}else{
+				nextBufferSizeAux=0;
+			}
+
+			if(nextBuffer.size() > nextBufferSizeAux){
 				ofstream myfile;
 				myfile.open ("cajasDescartadas.txt", std::ios_base::app);
 				while(nextBuffer.size()> nextBufferSize && currentBuffer.empty()){
@@ -93,6 +109,9 @@ namespace ibex {
 	}
 
 	Cell* BeamSearchBufferMOP::pop() {
+
+		//cout << iterBS << endl;
+		iterBS++;
 		//quizas este se puede eliminar
 		global_hv=false;
 
@@ -159,13 +178,16 @@ namespace ibex {
 					double mejora=(aux-aux2)/initial_reduction;
 
 					if(mejora>=bs_tolerance*mejor_mejora || aux-aux2==initial_reduction){
+
 						if(mejora>mejor_mejora) mejor_mejora=mejora;
 
+						T=1;
 
 					//if(mejora>=errorBS || aux-aux2==initial_reduction){
 						//errorBS=mejora;
 
 					}else{
+						T=T*2;
 						if(!currentBuffer.empty()){
 							while(!currentBuffer.empty()){
 				
