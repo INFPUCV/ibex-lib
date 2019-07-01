@@ -89,7 +89,7 @@ namespace ibex {
 						NyuCrowdingDistance::getCrowdingDistance(nextBuffer, 
 																										currentBuffer, 
 																										globalBuffer, 
-																										sizeDiffMax); //al current
+																										currentBufferMaxSize); //al current
 						std::cout << "=== getCrowdingDistance done ===" << endl;
 					}
 					else{ //Si no, todos se van al global. (Sobrantes)
