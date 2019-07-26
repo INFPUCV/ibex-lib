@@ -192,7 +192,11 @@ namespace ibex {
 						//errorBS=mejora;
 
 					}else{
-						if(!bs_performance) T=T*2;
+						if(!bs_performance){
+							if(T<4611686018427387904){
+								T=T*2;
+							}
+						}
 
 						if(!currentBuffer.empty()){
 							while(!currentBuffer.empty()){

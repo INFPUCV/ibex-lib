@@ -67,7 +67,7 @@ class BeamSearchBufferMOP : public CellBufferOptim {
    int nextBufferSize=4;
    int nextBufferSizeAux=0;
    double bs_tolerance=0.5;
-   int T=1;
+   long int T=1;
 
    static int nn;
    int iterBS=0;

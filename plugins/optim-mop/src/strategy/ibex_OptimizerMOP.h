@@ -18,6 +18,7 @@
 #include "ibex_CtcKhunTucker.h"
 #include "ibex_DistanceSortedCellBufferMOP.h"
 #include "ibex_BeamSearchBufferMOP.h"
+#include "ibex_CrowdingDistanceBSMOP.h"
 #include "ibex_pyPlotter.h"
 #include "ibex_PFunction.h"
 #include "ibex_NDS.h"

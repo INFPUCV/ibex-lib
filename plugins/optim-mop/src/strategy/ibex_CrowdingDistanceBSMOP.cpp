@@ -7,13 +7,14 @@
 
 #include "ibex_CrowdingDistanceBSMOP.h"
 #include "ibex_OptimizerMOP.h"
+#include "ibex_NDS.h"
 #include <algorithm>    // std::min_element, std::max_element
 
 
 namespace ibex { 
 
-	int CrowdingDistanceBSMOP::nextBufferSize = 4;
 	int CrowdingDistanceBSMOP::nn = 0;
+
 
 	void CrowdingDistanceBSMOP::flush() {
 		while (!globalBuffer.empty()) {
@@ -31,12 +32,26 @@ namespace ibex {
 		return (globalBuffer.size()+currentBuffer.size()+nextBuffer.size());
 	}
 
+	void CrowdingDistanceBSMOP::bsPerformance(int iter){
+
+	}
+
 	bool CrowdingDistanceBSMOP::empty() const {
 		return (globalBuffer.empty() && currentBuffer.empty() && nextBuffer.empty());
 	}
 
 	void CrowdingDistanceBSMOP::push(Cell* cell) {
 		
+		if(global_hv) {
+			aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+
+			initial_reduction=aux-aux2;
+			//cout << initial_reduction << endl;
+
+			//cout << "hv global:" << initial_reduction << endl; 
+			global_hv=false;
+
+		}
         double dist=nds->distance(cell);
 		std::multiset <Cell*>::iterator it;
 
@@ -47,8 +62,9 @@ namespace ibex {
 			cell->get<CellMOP>().ub_distance=dist;
 		}
  
-        //primera iteracion
-        if(globalBuffer.empty() && nextBuffer.empty() && cont==0){
+        //primera iteracion, se usa un flag porque para la segunda iteracion vuelven a estar todos vacios, por lo que en vez
+		//de hacer el push en el next, lo vuelve a hacer en el global
+        if(globalBuffer.empty() && nextBuffer.empty() && /*currentBuffer.empty()*/ cont==0){
 			
 			globalBuffer.push(cell);
 			//se cambia el valor del flag cont para no entrar nuevamente
@@ -56,127 +72,213 @@ namespace ibex {
 		
 		}else{
 			
+			//next no tiene tamaño maximo
 			nextBuffer.insert(cell);
 			Cell* c=NULL;
-			//Si el NextBuffer sobrepasa la capacidad maxima, se borran y se mueven al global
-			//cout << "size next antes while: " << nextBuffer.size() << endl;
-			if(nextBuffer.size() > nextBufferSize){
-				ofstream myfile;
-				myfile.open ("cajasDescartadas.txt", std::ios_base::app);
-				while(nextBuffer.size()> nextBufferSize && currentBuffer.empty()){
-					
-					c=*nextBuffer.begin();
-					globalBuffer.push(*nextBuffer.begin());
 
-					// Guardando archivo 
-					myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-					nextBuffer.erase(nextBuffer.begin());
-
-					// cout << "size next en while: " << nextBuffer.size() << endl;
-					// cout << "size global en while: " << globalBuffer.size() << endl;
-				}
-				myfile.close();	
-			}
-		}  	
-
-		// cout << "tamaño global: " << globalBuffer.size() << endl;
-		// cout << "tamaño current: " << currentBuffer.size() << endl;
-		// cout << "tamaño next: " << nextBuffer.size() << endl;
-		//getchar();	
+			//cout << "iter en bs: " << iterBS << endl;
+			//cout << T << endl;
+			//cout << iterBS%T << endl;
+			/*if(iterBS%T==0){
+				currentBufferSizeAux=currentBufferMaxSize;
+			}else{
+				currentBufferSizeAux=0;
+			}*/
+		}  		
 	}
 
 	Cell* CrowdingDistanceBSMOP::pop() {
+
+		//cout << iterBS << endl;
+		iterBS++;
+		//quizas este se puede eliminar
+		global_hv=false;
+
 		Cell *c = NULL, *c2 = NULL;
 		std::multiset <Cell*>::iterator it;
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty()){
-		//	getchar();
-			ofstream myfile;
-			myfile.open ("cajasCurrent.txt");
-			// Reset de archivo
-			ofstream myfile2;
-			myfile2.open("puntos.txt");
-			myfile2.close();
-			// Reset de archivo
-			ofstream myfile3;
-			myfile3.open("cajasDescartadas.txt");
-			myfile3.close();
-			// Reset de archivo
-			ofstream myfile5;
-			myfile5.open("global.txt");
-			myfile5.close();
+			depth++;
+			if(depth>*depthMayor){
+				*depthMayor=depth;
+			}
+			depthTotal++;//=depthTotal+depth;
+			//	getchar();
 
 			c=*nextBuffer.begin();
 			++c;
 			c2=c;
-
 			while(!nextBuffer.empty()){
+				if(crowding){
 
-				//it = nextBuffer.begin();
-				//double distNextBegin = nds->distance(*nextBuffer.begin());
-				//cout << "distancia primero: " << distNextBegin << endl;
-				/*if(nextBuffer.size()>1){
-					it++;
-					double distNextEnd = nds->distance(*it);
-					//cout << "distancia siguiente: " << distNextEnd << endl;
+					if(nextBuffer.size()>4)removeDominated(nextBuffer, globalBuffer);
+					std::cout << "BEGIN: " << endl;
+					for(auto c:nextBuffer) cout << c->box[c->box.size()-1].lb() << "," << c->box[c->box.size()-2].lb() << endl;
+					//if(nextBuffer.size() >= nextBufferSize){
+					int sizeDiffMax = currentBufferMaxSize - currentBuffer.size();
+					//getchar();
+					if(currentBuffer.size() + nextBuffer.size() > currentBufferMaxSize){
+						//Revisar si cae al menos 1.
+						if(sizeDiffMax > 0 ){
+							std::cout << "=== BEGIN: ===" << endl;
+							getCrowdingDistance(nextBuffer, 
+																											currentBuffer, 
+																											globalBuffer, 
+																											currentBufferMaxSize); //al current
+							std::cout << "=== getCrowdingDistance done ===" << endl;
+						}
+						else{ //Si no, todos se van al global. (Sobrantes)
+							while(!nextBuffer.empty()){
+								c=*nextBuffer.begin();
+								globalBuffer.push(*nextBuffer.begin());
+								nextBuffer.erase(nextBuffer.begin());
+							}
+							/*for(auto cell : nextBuffer){
+								globalBuffer.push(cell);
+								nextBuffer.erase(cell);
+								cout << "sad2" << endl;
+							}*/
+							//cout << "salida for2" << endl;
+							//cout << nextBuffer.size() << endl;
+						}
+					}
+					else{
+						//Si no, pasan todos.
+						while(!nextBuffer.empty()){
+								c=*nextBuffer.begin();
+								currentBuffer.push(*nextBuffer.begin());
+								nextBuffer.erase(nextBuffer.begin());
+							}
+						/*for(auto cell : nextBuffer){
+							currentBuffer.push(cell);
+							nextBuffer.erase(cell);
+							cout << "sad" << endl;
+						}*/
+						//cout << "salida for" << endl;
+						//cout << nextBuffer.size() << endl;
+					}
+				}else{
+					while(currentBuffer.size()<=currentBufferMaxSize){
+						c=*nextBuffer.begin();
+						currentBuffer.push(*nextBuffer.begin());
+						nextBuffer.erase(nextBuffer.begin());
+					}
+				}
+			}
+
+
+
+			//*****esto quizas puede quedar igual
+			if(!currentBuffer.empty()){
+				//intento de hv
+				//aux2 es antes de trabajar la caja y aux despues de trabajar la caja
+
+
+				aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+				//cout <<  aux << endl;
+				if(aux-aux2!=0){
+					
+					if(initial_reduction==0) initial_reduction=aux-aux2;
+
+					double mejora=(aux-aux2)/initial_reduction;
+
+					if(mejora>=bs_tolerance*mejor_mejora || aux-aux2==initial_reduction){
+
+						if(mejora>mejor_mejora) {
+							if(mejor_mejora!=0.0) {T=1; bs_performance=true;}
+							else bs_performance=false;
+
+							mejor_mejora=mejora;
+						}
+
+
+
+					//if(mejora>=errorBS || aux-aux2==initial_reduction){
+						//errorBS=mejora;
+
+					}else{
+						if(!bs_performance){
+							if(T<4611686018427387904){
+								T=T*2;
+							}
+						}
+
+						if(!currentBuffer.empty()){
+							while(!currentBuffer.empty()){
+				
+								globalBuffer.push(currentBuffer.top());
+								currentBuffer.pop();
+
+							}
+						}
+						//en teoria nunca entro aqui
+						if(!nextBuffer.empty()){
+							while(!nextBuffer.empty()){
+				
+								c=*nextBuffer.begin();
+								globalBuffer.push(*nextBuffer.begin());
+					
+								nextBuffer.erase(nextBuffer.begin());
+
+							}
+						}
+					}
+				}/*else{
+					cout << currentBuffer.top()->box << endl;
 				}*/
-				c=*nextBuffer.begin();
-				currentBuffer.push(*nextBuffer.begin());
 
-				myfile << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-	
-				nextBuffer.erase(nextBuffer.begin());
+				aux2=aux;
 
 			}
-			myfile.close();	
+
 		}
 		
 		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
-			
-			// Reset de archivo
-			ofstream myfile4;
-			myfile4.open("global.txt");
+			depth=0;
+			mejor_mejora=0;
+			aux2=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 
-			c = globalBuffer.top();
 
-			myfile4 << c->box[nn-1] << "\n" << c->box[nn-2] << "\n";
-			myfile4.close();
-
+			c=top();
+			//c = globalBuffer.top();
+			global_hv=true;
 			
 			globalBuffer.pop();
-			//cantBeam++;
-			//cout << "BeamSearch: " << cantBeam << endl;
-			//int p = c->get<CellMOP>().depth;
-			//cout << "Profundidad: " << p << endl;
-			//getchar();
+
+			cantBeam++;
+
+			if(cantBeam!=0 && depthTotal!=0){
+				depthPromedio=depthTotal/(double)cantBeam;
+				*pruebaprom=depthPromedio;
+				//cout << *pruebaprom <<endl;
+			} 
 					
 		}else if(!currentBuffer.empty()){
 			//si current tiene elementos, siempre se sacan de current
 			c = currentBuffer.top();
 			currentBuffer.pop();
+			//cout << "llego aca? " << currentBuffer.size() << endl;
 
 		}else{
 			cout << "error" << endl;
 		 	exit;
 		} 
-		// cout << "tamaño next 2: " << nextBuffer.size() << endl;
-		// cout << "tamaño current 2: " << currentBuffer.size() << endl;
 		return c;
 	}
 
-  int counter2=0;
+	//no deberia ser mas complejo que solo hacerlo con el global?
 	Cell* CrowdingDistanceBSMOP::top() const {
 
 		Cell* c = globalBuffer.top();
-		if(!c) return NULL;
 
 		if (OptimizerMOP::_hv) return c;
 
 		double dist=nds->distance(c);
 
 		//we update the distance and reinsert the element
+
 		while(dist < c->get<CellMOP>().ub_distance){
 			globalBuffer.pop();
 			c->get<CellMOP>().ub_distance=dist;
@@ -185,10 +287,93 @@ namespace ibex {
 			dist=nds->distance(c);
 		}
 
-    	counter2 ++;
-		//cout << counter2  <<":" <<  c->get<CellMOP>().ub_distance << endl;
+
+		//cout << counter1  <<":" <<  c->get<CellMOP>().ub_distance << endl;
 
 		return c;
 	}
+
+	void CrowdingDistanceBSMOP::getCrowdingDistance(
+        std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
+        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer, 
+        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
+        int currentBufferMaxSize
+        ){
+
+        int returnSize = currentBufferMaxSize - currentBuffer.size();
+        int i = 0; //%TEMP% Used just to print stuff
+        //First, we take out the dominated ones.
+        //removeDominated(nextBuffer, currentBuffer); //We do this now in the BeamSearchBufferMOP Class.
+        while(returnSize>0){
+            std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
+            for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = nextBuffer.begin();
+            it != nextBuffer.end(); 
+            it++)
+            {
+
+                CDBox* cdBox= (CDBox*)malloc(sizeof(CDBox));
+                cdBox->C = *it;
+
+                //If they are the first/last one, set their Crowding Distances to Infinite
+                if(*it == *nextBuffer.begin() || *next(it) == *nextBuffer.end()){
+                    cdBox->crowding_distance = std::numeric_limits<double>::infinity();
+                }
+                else{ //If not, then calculate them.
+                    int n = (*it)->box.size();
+                    Cell* first = *nextBuffer.begin();
+                    Cell* last = *prev(nextBuffer.end());
+
+
+                    // Here we calculate the crowding distance. We won't use a for, since we already know that there's only 2 objectives (y1, y2)
+                    //Primer Objetivo
+                    cdBox->crowding_distance += ((*std::prev(it))->box[n-1].lb() - (*std::next(it))->box[n-1].lb())/((first->box[n-1].lb() - last->box[n-1].lb()));
+                    //Segundo objetivo
+                    cdBox->crowding_distance += ((*std::prev(it))->box[n-2].lb() - (*std::next(it))->box[n-2].lb())/((first->box[n-2].lb() - last->box[n-2].lb()));
+                }
+
+                //Inserts the CDBox node into the set
+                cdSet.insert(cdBox);
+            }
+            
+            //Here we return the first element in the multiset, we do this 'returnSize' times, we calculate the crowding distance every time we do the loop.
+            CDBox* cdbox = *(cdSet.begin());
+            currentBuffer.push(cdbox->C);
+            nextBuffer.erase(cdbox->C);
+            std::cout << i << ", " << cdbox->crowding_distance << ", "
+                    << cdbox->C->box[cdbox->C->box.size()-1].lb() << "," << cdbox->C->box[cdbox->C->box.size()-2].lb()<< endl;
+            i++;
+            returnSize--;
+        }
+        //Since the top X are removed from the nextBuffer, we move nextBuffer into globalBuffer. (leftovers)
+        if(!nextBuffer.empty()){
+            for(auto cell : nextBuffer){
+                globalBuffer.push(cell);
+                nextBuffer.erase(cell);
+            }
+        }
+        //getchar();
+    }
+
+    bool CrowdingDistanceBSMOP::isDominated(Cell* a, Cell* b){
+        int n = a->box.size();
+        return (a->box[n-1].lb() <= b->box[n-1].lb() && a->box[n-2].lb() <= b->box[n-2].lb());
+    }
+
+    //Removes the dominated cells from nextBuffers and adds them into globalBuffer.
+    void CrowdingDistanceBSMOP::removeDominated(
+    std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
+    std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer
+    ){
+        //std::multiset<Cell*, max_distanceBeam> nextBufferCopy;
+        //Here we take the dominateds out of nextBuffer and insert them into globalBuffer.
+        for(auto a : nextBuffer){
+            for(auto b : nextBuffer){
+                if(a != b && isDominated(a, b)){
+                    globalBuffer.push(a);
+                    nextBuffer.erase(a);
+                }
+            }
+        }
+    }
 
 } // end namespace ibex

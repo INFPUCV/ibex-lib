@@ -55,7 +55,7 @@ int main(int argc, char** argv){
 	args::Flag _segments(parser, "segments", "NDS defined by line segments instead of points.", {"SEGMENTS"});
 	args::Flag _hamburger(parser, "hamburger", "NDS defined by line segments (hamburger).", {"HAMBURGER"});
 
-	args::ValueFlag<int> _nSize(parser, "int", "nextBuffer size (default: 4)", {"nSize"});
+	args::ValueFlag<int> _cSize(parser, "int", "currentBuffer size (default: 4)", {"cSize"});
 
 	args::ValueFlag<double> _bsTolerance(parser, "float", "tolerance condition to finish one level of beam search (default: 0.5)", {"bsTolerance"});
 
@@ -128,7 +128,7 @@ int main(int argc, char** argv){
 	double eqeps= 1.e-8;
 	double rh=(_rh)? _rh.Get():0.1;
 	
-	int nSize= (_nSize)? _nSize.Get() : 4 ;
+	int cSize= (_cSize)? _cSize.Get() : 4 ;
 
 	double bsTolerance= (_bsTolerance)? _bsTolerance.Get() : 0.5 ;
 
@@ -154,7 +154,7 @@ int main(int argc, char** argv){
 	cout << "Bisector: " << bisection << endl;
 	cout << "Strategy: " << strategy << endl;
 	if(strategy=="BS"||strategy=="crowdingBS"){
-		cout << "nextBuffer size: " << nSize << endl;
+		cout << "currentBuffer size: " << cSize << endl;
 	}
 	//cout << "eps: " << eps << endl;
 	//cout << "eps_x: " << eps_x << endl;
@@ -205,9 +205,9 @@ int main(int argc, char** argv){
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
 	else if(strategy=="BS")
-	  buffer = new BeamSearchBufferMOP(nSize,bsTolerance);
+	  buffer = new BeamSearchBufferMOP(cSize,bsTolerance);
 	else if(strategy=="crowdingBS")
-		buffer = new CrowdingDistanceBSMOP;
+		buffer = new CrowdingDistanceBSMOP(cSize,bsTolerance,true);
 
 	BeamSearchBufferMOP::nn = sys.nb_var;
 
@@ -334,7 +334,7 @@ int main(int argc, char** argv){
 	}
 
 	if(strategy=="crowdingBS"){
-		dynamic_cast<CrowdingDistanceBSMOP*>(buffer)->set(o.ndsH);
+		dynamic_cast<CrowdingDistanceBSMOP*>(buffer)->set(o.ndsH,o.depthPrint,o.depthMayor);
 	}
 
 

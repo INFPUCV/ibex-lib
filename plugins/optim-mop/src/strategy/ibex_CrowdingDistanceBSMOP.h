@@ -1,5 +1,5 @@
 /*
- * ibex_CROWDINGDISTANCEBSMOP.h
+ * ibex_CrowdingDistanceBSMOP.h
  *
  *  Created on: 20 oct. 2017
  *      Author: matias y pablo
@@ -13,6 +13,7 @@
 #include "ibex_CellMOP.h"
 #include "ibex_CellSet.h"
 #include "ibex_NDS.h"
+#include "ibex_OptimizerMOP.h"
 #include <queue>
 #include <map>
 
@@ -24,30 +25,56 @@ namespace ibex {
 /**
  * Criteria for bi-objective problems
  */
-struct max_distanceBeamBS {
+
+
+//Struct that contains Cell and crowding distance
+	typedef struct CDBox{
+		Cell* C;
+		double crowding_distance;
+	} CDBox;
+
+
+
+    //Ordena por objetivo y1, y2
+    struct crowding_distanceBeam {
+        bool operator() (const Cell* c1, const Cell* c2){
+            int n = c1->box.size();
+            if(c1->box[n-2].lb() <= c2->box[n-2].lb() && c1->box[n-1].lb() <= c2->box[n-1].lb()) return true;
+            else return false;
+        }
+    };
+
+    struct sortByCrowdingDistance{
+        bool operator()(const CDBox* c1, const CDBox* c2){
+            if(c1->crowding_distance <= c2->crowding_distance) return true;
+            else return false;
+        }
+
+    };
+
+
+struct max_distanceCrowding {
 
 
 	bool operator() (const Cell* c1, const Cell* c2){
-	    int n = c1->box.size();
-	    if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
+	   int n = c1->box.size();
+	   if(c1->get<CellMOP>().ub_distance != c2->get<CellMOP>().ub_distance)
 		   return (c1->get<CellMOP>().ub_distance < c2->get<CellMOP>().ub_distance);
-	    else if(c1->get<CellMOP>().ub_distance == c2->get<CellMOP>().ub_distance)
-	   		return (c1->get<CellMOP>().depth > c2->get<CellMOP>().depth);
-		else if(c1->get<CellMOP>().ub_distance == c2->get<CellMOP>().ub_distance && c1->get<CellMOP>().depth == c2->get<CellMOP>().depth)
-	   		return (c1->get<CellMOP>().id < c2->get<CellMOP>().id);
-	    else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
-	    else return false;
+	   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
+	   else return false;
 	}
 
 };
 
-struct crowding_distanceBeam {
+struct objective_sort {
 
 
 	bool operator() (const Cell* c1, const Cell* c2){
+
 	    int n = c1->box.size();
-		if(c1->box[n-2].lb() <= c2->box[n-2].lb() && c1->box[n-1].lb() <= c2->box[n-1].lb()) return true;
-	    else return false;
+	    if (c1->box[n-2].lb() < c2->box[n-2].lb()) return true;
+	    return false;
+
 	}
 
 };
@@ -72,11 +99,42 @@ struct crowding_distanceBeam {
 class CrowdingDistanceBSMOP : public CellBufferOptim {
  public:
 
-   static int nextBufferSize;
-   static int nn;
+	//RECORDAR CAMBIAR NEXTBUFFERSIZE POR CURRENTBUFFERMAXSIZE (EN EL MAIN), TAMBIEN CON EL AUXILIAR
+	CrowdingDistanceBSMOP(int currentBufferMaxSize, double bs_tolerance, bool crowding) : CellBufferOptim(),
+	depth(0), currentBufferMaxSize(currentBufferMaxSize), bs_tolerance(bs_tolerance), crowding(crowding){
 
-   void set(NDS_seg& nds) {
+	}
+
+   int currentBufferMaxSize=8;
+   int currentBufferSizeAux=0;
+   double bs_tolerance=0.5;
+   int T=1;
+   bool crowding=false;
+
+   static int nn;
+   int iterBS=0;
+    
+        //static std::multiset<Cell*,max_distanceBeam> getCrowdingDistance(
+    static void getCrowdingDistance(
+        std::multiset<Cell*, max_distanceCrowding>& nextBuffer, 
+        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer, 
+        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
+        //int currentBufferSize,
+        int returnSize);
+
+    static bool isDominated(Cell* a, Cell* c);
+
+
+    static void removeDominated(std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
+                                std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer);
+
+
+
+
+   void set(NDS_seg& nds, double& pruebaprom, int&depthMayor) {
 		 this->nds=&nds;
+		 this->pruebaprom=&pruebaprom;
+		 this->depthMayor=&depthMayor;
 	 }
 
    virtual void add_backtrackable(Cell& root){
@@ -93,6 +151,8 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
   /** Return true if the buffer is empty. */
   bool empty() const;
 
+  void bsPerformance(int iter);
+
   /** push a new cell on the stack. */
   void push(Cell* cell);
 
@@ -107,7 +167,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
 	*
 	*/
   virtual double minimum() const {
-	  cout << "CROWDINGDISTANCEBSMOP::minimum is not implemented" << endl;
+	  cout << "BeamSearchBufferMOP::minimum is not implemented" << endl;
 	  exit(0);
 	  return 0.0;
   }
@@ -116,7 +176,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
 	 * \brief Contract the buffer using the UB
 	 */
 	virtual void contract(double loup){
-		  cout << "CROWDINGDISTANCEBSMOP::contract is not implemented" << endl;
+		  cout << "BeamSearchBufferMOP::contract is not implemented" << endl;
 		  exit(0);
 	}
 
@@ -125,20 +185,30 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
 	 * A heap data structure for keeping the cells sorted by distance
 	 */
 
-	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeamBS > globalBuffer;
-    mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeamBS > currentBuffer;
+	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding > globalBuffer;
+    mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding > currentBuffer;
 	//mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > nextBuffer;
-    mutable std::multiset <Cell*, crowding_distanceBeam> nextBuffer;
+    mutable std::multiset <Cell*, max_distanceCrowding> nextBuffer;
 
-  NDS_seg* nds;
+  NDS_seg* nds=NULL;
+  double* pruebaprom=NULL;
+
+  bool global_hv=false;
+  bool bs_performance=false;
+  int* depthMayor=0;
+  int depth=0, depthTotal=0;
+  double depthPromedio=0;
 
   private:
-	int cont = 0, iter = 0, cantBeam = 0;
+	int cont = 0, cantBeam = 0;
+	double aux=0,aux2=0,initial_reduction=0.0;
+	double mejor_mejora=0.0;
 };
 
 
 
 
 
+
 } // end namespace ibex
-#endif //  /* OPTIM_SRC_STRATEGY_IBEX_CROWDINGDISTANCEBSMOP_H_ */
+#endif //  /* OPTIM_SRC_STRATEGY_IBEX_BeamSearchBufferMOP_H_ */

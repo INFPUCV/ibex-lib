@@ -17,7 +17,7 @@ outputpos_times = 0
 
 [bs0]
 exec = "../../../__build__/plugins/optim-mop/ibexmop"
-params = _INSTANCE --eps-contract --cy-contract-full -t _MAXTIME --search=BS --nSize=0
+params = _INSTANCE --eps-contract --cy-contract-full -t _MAXTIME --search=BS --cSize=0
 outputpos_boxes = 0
 outputpos_times = 0
 
@@ -25,7 +25,7 @@ outputpos_times = 0
 tuning_param = ERRORBS
 tuning_values = 0.5 0.75 1 1.25
 exec = "../../../__build__/plugins/optim-mop/ibexmop"
-params = _INSTANCE --eps-contract --cy-contract-full -t _MAXTIME --search=BS --nSize=4 --bsTolerance=_ERRORBS
+params = _INSTANCE --eps-contract --cy-contract-full -t _MAXTIME --search=BS --cSize=4 --bsTolerance=_ERRORBS
 outputpos_boxes = 0
 outputpos_times = 0
 
@@ -33,6 +33,6 @@ outputpos_times = 0
 tuning_param = ERRORBS
 tuning_values = 0.5 0.75 1 1.25
 exec = "../../../__build__/plugins/optim-mop/ibexmop"
-params = _INSTANCE --eps-contract --cy-contract-full -t _MAXTIME --search=BS --nSize=8 --bsTolerance=_ERRORBS
+params = _INSTANCE --eps-contract --cy-contract-full -t _MAXTIME --search=BS --cSize=8 --bsTolerance=_ERRORBS
 outputpos_boxes = 0
 outputpos_times = 0

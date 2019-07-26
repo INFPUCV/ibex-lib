@@ -14,6 +14,7 @@
 #include "ibex_Backtrackable.h"
 #include "ibex_OptimData.h"
 #include "ibex_BeamSearchBufferMOP.h"
+#include "ibex_CrowdingDistanceBSMOP.h"
 #include <float.h>
 #include <stdlib.h>
 #include <iomanip>
@@ -391,21 +392,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	   		}
 			
-
 			//if(_plot) py_Plotter::plot_del_box(c);
-
-			nb_cells++;
-			contract_and_bound(*c, init_box);
-			if (c->box.is_empty()) {
-				delete c;
-				continue;
-			}
-
-			update_NDS2(c->box);
-
-			y1_ub.first = ndsH.lb().first;
-			y2_ub.second= ndsH.lb().second;
-
 
 			pair<IntervalVector,IntervalVector>* boxes=NULL;
 			bool atomic_box=false;
@@ -489,18 +476,30 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
     	delete boxes;
 			delete c; // deletes the cell.
 
-	//		cout << "pusheo la primera" << endl;
-			buffer.push(new_cells.first);
-	//		cout << new_cells.first->box[n-1] << endl;
-	//		cout << new_cells.first->box[n-2] << endl;
-			//if(_plot) py_Plotter::plot_add_box(new_cells.first);
+			c=new_cells.first;
 
-	//		cout << "pusheo la segunda" << endl;
-			buffer.push(new_cells.second);
-	//		cout << new_cells.second->box[n-1] << endl;
-	//		cout << new_cells.second->box[n-2] << endl;
+			nb_cells++;
+			contract_and_bound(*c, init_box);
+			if (c->box.is_empty())
+				delete c;
+			else{
+			    update_NDS2(c->box);
+			    buffer.push(c);
+			}
 
-			//if(_plot) py_Plotter::plot_add_box(new_cells.second);
+			c=new_cells.second;
+
+			nb_cells++;
+			contract_and_bound(*c, init_box);
+			if (c->box.is_empty())
+				delete c;
+			else{
+				update_NDS2(c->box);
+				buffer.push(c);
+			}
+
+			y1_ub.first = ndsH.lb().first;
+			y2_ub.second= ndsH.lb().second;
 
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
 			time = timer.get_time();
