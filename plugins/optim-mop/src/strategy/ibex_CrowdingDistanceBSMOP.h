@@ -125,6 +125,9 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
     static bool isDominated(Cell* a, Cell* c);
 
 
+    static void extractNonDominated(
+    	    std::multiset<Cell*, max_distanceCrowding>& nextBuffer, list< std::multiset<Cell*, max_distanceCrowding>::iterator >& nonDominated);
+
     static void removeDominated(std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
                                 std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer);
 

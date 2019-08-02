@@ -72,7 +72,7 @@ namespace ibex {
 		
 		}else{
 			
-			//next no tiene tamaño maximo
+			//next no tiene tama��o maximo
 			nextBuffer.insert(cell);
 			Cell* c=NULL;
 
@@ -374,6 +374,26 @@ namespace ibex {
         return (a->box[n-1].lb() <= b->box[n-1].lb() && a->box[n-2].lb() <= b->box[n-2].lb());
     }
 
+    //Mueve los elementos no dominados de nextBuffer a nonDominated
+    void CrowdingDistanceBSMOP::extractNonDominated(
+    std::multiset<Cell*, max_distanceCrowding>& nextBuffer, list< std::multiset<Cell*, max_distanceCrowding>::iterator >& nonDominated){
+
+    	std::multiset<Cell*, max_distanceCrowding>::iterator it=nextBuffer.begin();
+
+
+        for(; it!=nextBuffer.end(); it++){
+        	Cell* a=*it;
+        	bool dominated=false;
+            for(auto b : nextBuffer){
+                if(a != b && isDominated(a, b)){
+                	dominated=true;
+                	break;
+                }
+            }
+            if(!dominated) nonDominated.push_back(it);
+        }
+    }
+
     //Removes the dominated cells from nextBuffers and adds them into globalBuffer.
     void CrowdingDistanceBSMOP::removeDominated(
     std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
@@ -381,6 +401,8 @@ namespace ibex {
     ){
         std::multiset<Cell*, max_distanceCrowding> nextBufferCopy;
         //Here we take the dominateds out of nextBuffer and insert them into globalBuffer.
+
+
         for(auto a : nextBuffer){
             for(auto b : nextBuffer){
                 if(a != b && isDominated(a, b)){
