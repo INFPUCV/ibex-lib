@@ -117,9 +117,13 @@ namespace ibex {
 					for(auto c:nextBuffer) cout << c->box[c->box.size()-1].lb() << "," << c->box[c->box.size()-2].lb() << endl;
 					//if(nextBuffer.size() >= nextBufferSize){
 					int sizeDiffMax = currentBufferMaxSize - currentBuffer.size();
+					cout << currentBuffer.size() + nextBuffer.size()<< endl;
 					//getchar();
 					if(currentBuffer.size() + nextBuffer.size() > currentBufferMaxSize){
 						//Revisar si cae al menos 1.
+						cout << sizeDiffMax << endl;
+						//getchar();
+						cout << "se cae aqui1" << endl;
 						if(sizeDiffMax > 0 ){
 							std::cout << "=== BEGIN: ===" << endl;
 							getCrowdingDistance(nextBuffer, 
@@ -134,14 +138,10 @@ namespace ibex {
 								globalBuffer.push(*nextBuffer.begin());
 								nextBuffer.erase(nextBuffer.begin());
 							}
-							/*for(auto cell : nextBuffer){
-								globalBuffer.push(cell);
-								nextBuffer.erase(cell);
-								cout << "sad2" << endl;
-							}*/
 							//cout << "salida for2" << endl;
 							//cout << nextBuffer.size() << endl;
 						}
+						cout << "se cae aqui2" << endl;
 					}
 					else{
 						//Si no, pasan todos.
@@ -149,12 +149,7 @@ namespace ibex {
 								c=*nextBuffer.begin();
 								currentBuffer.push(*nextBuffer.begin());
 								nextBuffer.erase(nextBuffer.begin());
-							}
-						/*for(auto cell : nextBuffer){
-							currentBuffer.push(cell);
-							nextBuffer.erase(cell);
-							cout << "sad" << endl;
-						}*/
+						}
 						//cout << "salida for" << endl;
 						//cout << nextBuffer.size() << endl;
 					}
@@ -167,7 +162,7 @@ namespace ibex {
 				}
 			}
 
-
+			cout << "se cae aqui3" << endl;
 
 			//*****esto quizas puede quedar igual
 			if(!currentBuffer.empty()){
@@ -233,9 +228,11 @@ namespace ibex {
 			}
 
 		}
+		cout << "se cae aqui4" << endl;
 		
 		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
+			cout << "se cae aqui5" << endl;
 			depth=0;
 			mejor_mejora=0;
 			aux2=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
@@ -244,9 +241,14 @@ namespace ibex {
 			c=top();
 			//c = globalBuffer.top();
 			global_hv=true;
-			
+			cout << "se cae aqui6" << endl;
+
+			//AQUI SE CAE
+			cout << globalBuffer.size() << endl;
 			globalBuffer.pop();
 
+			cout << "se cae aqui7" << endl;
+			
 			cantBeam++;
 
 			if(cantBeam!=0 && depthTotal!=0){
@@ -256,6 +258,7 @@ namespace ibex {
 			} 
 					
 		}else if(!currentBuffer.empty()){
+			cout << "se cae aqui8" << endl;
 			//si current tiene elementos, siempre se sacan de current
 			c = currentBuffer.top();
 			currentBuffer.pop();
@@ -263,19 +266,28 @@ namespace ibex {
 
 		}else{
 			cout << "error" << endl;
-		 	exit;
 		} 
+		cout << "se cae aqui9" << endl;
 		return c;
 	}
 
 	//no deberia ser mas complejo que solo hacerlo con el global?
 	Cell* CrowdingDistanceBSMOP::top() const {
-
+		cout << "se cae aqui top1" << endl;
 		Cell* c = globalBuffer.top();
+
+		cout << "se cae aqui top2" << endl;
 
 		if (OptimizerMOP::_hv) return c;
 
+		cout << "se cae aqui top3" << endl;
+		cout << globalBuffer.size() << endl;
+
+		cout << "TOP C " << *c << endl;
+		//AQUI SE CAE
 		double dist=nds->distance(c);
+
+		cout << "se cae aqui top4" << endl;
 
 		//we update the distance and reinsert the element
 
@@ -287,6 +299,7 @@ namespace ibex {
 			dist=nds->distance(c);
 		}
 
+		cout << "se cae aqui top5" << endl;
 
 		//cout << counter1  <<":" <<  c->get<CellMOP>().ub_distance << endl;
 
@@ -300,6 +313,7 @@ namespace ibex {
         int currentBufferMaxSize
         ){
 
+		Cell *c = NULL;	
         int returnSize = currentBufferMaxSize - currentBuffer.size();
         int i = 0; //%TEMP% Used just to print stuff
         //First, we take out the dominated ones.
@@ -346,10 +360,11 @@ namespace ibex {
         }
         //Since the top X are removed from the nextBuffer, we move nextBuffer into globalBuffer. (leftovers)
         if(!nextBuffer.empty()){
-            for(auto cell : nextBuffer){
-                globalBuffer.push(cell);
-                nextBuffer.erase(cell);
-            }
+			while(!nextBuffer.empty()){
+				c=*nextBuffer.begin();
+				globalBuffer.push(*nextBuffer.begin());
+				nextBuffer.erase(nextBuffer.begin());
+			}
         }
         //getchar();
     }
@@ -364,7 +379,7 @@ namespace ibex {
     std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
     std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer
     ){
-        //std::multiset<Cell*, max_distanceBeam> nextBufferCopy;
+        std::multiset<Cell*, max_distanceCrowding> nextBufferCopy;
         //Here we take the dominateds out of nextBuffer and insert them into globalBuffer.
         for(auto a : nextBuffer){
             for(auto b : nextBuffer){

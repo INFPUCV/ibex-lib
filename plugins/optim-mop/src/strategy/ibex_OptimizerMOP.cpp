@@ -100,11 +100,11 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 
   if(nds_mode==POINTS) {
 		try{
-		while(true){
-			xa = finder.find(box2,box2,POS_INFINITY).first;
-			ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
-			flag=1;
-		}
+			while(true){
+				xa = finder.find(box2,box2,POS_INFINITY).first;
+				ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
+				flag=1;
+			}
 		}catch (LoupFinder::NotFound& ) {
 			if(flag==1)sol++;
 			return true;
@@ -113,14 +113,13 @@ bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
 
 	try{
 		xa = finder.find(box2,box2,POS_INFINITY).first;
-
-	}catch (LoupFinder::NotFound& ) {
+	}catch (LoupFinder::NotFound&){
 		return false;
 	}
 
 	try{
 		xb = finder.find(box2,box2,POS_INFINITY).first;
-	}catch (LoupFinder::NotFound& ) {
+	}catch (LoupFinder::NotFound&){
 		ndsH.addPoint(make_pair(eval_goal(goal1,xa,n).ub(), eval_goal(goal2,xa,n).ub()));
 		sol++;
 		return true;
@@ -344,15 +343,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	myfile2 << "[" << "0" << root->box[n-2].ub() << "]" << endl;
 	myfile2.close();
 
-	//cout << n << endl;	
-	//cout << root->box.size() << endl;	
 	//getchar();
 
 	//handle_cell(*root,init_box);
-//	cout << "pusheo root" << endl;	
 	buffer.push(root);
-//	cout << root->box[n-1] << endl;
-//	cout << root->box[n-2] << endl;
 	//if(_plot) py_Plotter::plot_add_box(root);
 
 	int iter=0;
@@ -365,12 +359,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			  cout << "iter:" << iter << endl;
 			  cout << "buffer_size:" << buffer.size() << endl;
 		  }*/
-		  //cout << "iter en optimizer: " << iter << endl;
 		  iter++;
 
 		  if (trace >= 2) cout << buffer;
 
-			//cout << "pop en main" << endl;
 			Cell *c = buffer.pop();
 
 			//cout <<  c->get<CellMOP>().ub_distance << ":" << c->box << endl;
@@ -378,8 +370,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//b plugins/optim-mop/src/strategy/ibex_OptimizerMOP.cpp:379
 			//cout << ndsH.hypervolume(c->box[n-1].ub(),c->box[n-2].ub()) << endl;
 			
-			//cout << c->box[n-1] << endl;
-			//cout << c->box[n-2] << endl;
 			//getchar();
 			//cout << c->get<CellMOP>().ub_distance << endl;
 			if((c->get<CellMOP>().ub_distance < eps  && !_hv) || c->get<CellMOP>().ub_distance<=0){
@@ -675,15 +665,15 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	else if(split_mode==MAXDIST){
 		double vv;
 		if(v.size()>0){
-          double c=(ya2-m*ya1).mid();
-		  double min_dist=POS_INFINITY;
-		  for(auto point:v){
-			double dist=std::abs(point.first-c);
-			 if(dist<min_dist){
-				 min_dist=dist;
-				 vv=point.second;
-			 }
-		  }
+        	double c=(ya2-m*ya1).mid();
+			double min_dist=POS_INFINITY;
+			for(auto point:v){
+				double dist=std::abs(point.first-c);
+			 	if(dist<min_dist){
+					min_dist=dist;
+					vv=point.second;
+			 	}
+		  	}
 		}else{
 			if(std::min(ya1.mid(),yb1.mid()) - c1_t1.first < std::min(ya2.mid(),yb2.mid()) - c2_t2.first )
 				vv=c2_t2.second;

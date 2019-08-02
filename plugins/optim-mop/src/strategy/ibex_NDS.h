@@ -201,14 +201,16 @@ public:
 
   static bool _trace;
 	double distance(const Cell* c){
+		cout << *c << endl;
 		int n=c->box.size();
 
+		//JUSTO AQUI SE CAE
 		double a = c->get<CellMOP>().a;
 		double w_lb = c->get<CellMOP>().w_lb;
-    //cout << "a:" << a << endl;
+    	//cout << "a:" << a << endl;
 		//cout << "w_lb:" << w_lb << endl;
 
-    double dist;
+    	double dist;
 		_trace=true;
 		IntervalVector points(4);
 		if(a!=0){
