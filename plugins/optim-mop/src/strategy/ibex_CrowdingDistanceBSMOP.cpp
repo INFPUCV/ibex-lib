@@ -313,10 +313,43 @@ namespace ibex {
         int currentBufferMaxSize
         ){
 
+		while(true){
+			int returnSize = currentBufferMaxSize - currentBuffer.size();
+
+			list< std::multiset<Cell*, max_distanceCrowding>::iterator > nonDominated;
+			extractNonDominated(nextBuffer, nonDominated);
+
+			if(nonDominated.size() < returnSize){
+				for(auto el:nonDominated){
+					currentBuffer.push(*el);
+					nextBuffer.erase(el);
+				}
+			}else{
+
+
+				std::multiset<Cell*, max_distanceCrowding>::iterator it= nextBuffer.begin();
+				for(;it!= nextBuffer.end(); it++){
+					if(nonDominated.find(it)==nonDominated.end()){
+
+					}
+					if()
+				}
+
+				for(auto el:nonDominated){
+					currentBuffer.push(*el);
+					nextBuffer.erase(el);
+				}
+			}
+		}
+
+
 		Cell *c = NULL;	
-        int returnSize = currentBufferMaxSize - currentBuffer.size();
+
         int i = 0; //%TEMP% Used just to print stuff
         //First, we take out the dominated ones.
+
+
+
         //removeDominated(nextBuffer, currentBuffer); //We do this now in the BeamSearchBufferMOP Class.
         while(returnSize>0){
             std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
@@ -408,6 +441,7 @@ namespace ibex {
                 if(a != b && isDominated(a, b)){
                     globalBuffer.push(a);
                     nextBuffer.erase(a);
+                    break;
                 }
             }
         }
