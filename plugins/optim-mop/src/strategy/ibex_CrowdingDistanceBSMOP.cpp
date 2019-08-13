@@ -351,8 +351,11 @@ namespace ibex {
 
 
         //removeDominated(nextBuffer, currentBuffer); //We do this now in the BeamSearchBufferMOP Class.
+		std::multiset<CDBox*, sortByCrowdingDistance> cdSet;  //We now declare this before the while
         while(returnSize>0){
-            std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
+            
+			cdSet.clear(); //We clear cdSet each iteration.
+
             for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = nextBuffer.begin();
             it != nextBuffer.end(); 
             it++)
@@ -382,24 +385,52 @@ namespace ibex {
                 cdSet.insert(cdBox);
             }
             
+			//////////////////////////////
+			//OLD METHOD:
             //Here we return the first element in the multiset, we do this 'returnSize' times, we calculate the crowding distance every time we do the loop.
-            CDBox* cdbox = *(cdSet.begin());
+            /*CDBox* cdbox = *(cdSet.begin());
             currentBuffer.push(cdbox->C);
-            nextBuffer.erase(cdbox->C);
+            nextBuffer.erase(cdbox->C);*/
+			//////////////////////////////
+
+			/* New Method:
+			*	We "remove" only the last (lowest Crowding Distance)
+			*	and then it's sent into the globalBuffer.
+			*/
+			CDBox* cdbox = *(--cdSet.end());
+			globalBuffer.insert(cdbox->C); //Inserts the cell into the global Buffer.
+
             std::cout << i << ", " << cdbox->crowding_distance << ", "
                     << cdbox->C->box[cdbox->C->box.size()-1].lb() << "," << cdbox->C->box[cdbox->C->box.size()-2].lb()<< endl;
             i++;
-            returnSize--;
+
+            returnSize--; //If the returnSize == 0, then the cdSet isn't cleared.
         }
+		//If we have stuff in the cdSet, it means that we need to put them into the nextBuffer!
+		//Since the lowest crowding distance ones are already in the globalBuffer, we won't need to remove them from here. We will just have to add stuff into the nextBuffer.
+		while(!cdSet.empty()){
+			CDBox* cdbox = *(cdSet.begin());
+			currentBuffer.push(cdbox->C);
+			cdSet.erase(cdSet.begin());
+		}
+		//After putting everything into the currentBuffer, we clear cdSet.
+		cdSet.clear(); //I'm not sure if this deletes the pointers from everything, TODO: CHECK that.
+
+
+		/////////////////////////////OLD:
+		//We don't need this anymore, since the worse ones are being deleted in the loop that iterates though the nextBuffer.
         //Since the top X are removed from the nextBuffer, we move nextBuffer into globalBuffer. (leftovers)
-        if(!nextBuffer.empty()){
+        /*if(!nextBuffer.empty()){
 			while(!nextBuffer.empty()){
 				c=*nextBuffer.begin();
 				globalBuffer.push(*nextBuffer.begin());
 				nextBuffer.erase(nextBuffer.begin());
 			}
-        }
+        }*/
+		//////////////////////////////
         //getchar();
+
+
     }
 
     bool CrowdingDistanceBSMOP::isDominated(Cell* a, Cell* b){
