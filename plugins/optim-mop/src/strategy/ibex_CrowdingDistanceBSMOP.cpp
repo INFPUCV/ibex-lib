@@ -463,19 +463,19 @@ namespace ibex {
     std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
     std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer
     ){
-        std::multiset<Cell*, max_distanceCrowding> nextBufferCopy;
+        //std::multiset<Cell*, max_distanceCrowding> nextBufferCopy;
         //Here we take the dominateds out of nextBuffer and insert them into globalBuffer.
 
+		for(auto itA = nextBuffer.begin(); itA != nextBuffer.end(); ++itA){
+			for(auto itB = nextBuffer.begin(); itB != nextBuffer.end(); ++itB){
+				if(itA != itB && isDominated(*itA, *itB)){
+					globalBuffer.push(*itA);
+					nextBuffer.erase(*itA++);
+					break;
+				}
+			}
+		}
 
-        for(auto a : nextBuffer){
-            for(auto b : nextBuffer){
-                if(a != b && isDominated(a, b)){
-                    globalBuffer.push(a);
-                    nextBuffer.erase(a);
-                    break;
-                }
-            }
-        }
     }
 
 } // end namespace ibex
