@@ -105,6 +105,10 @@ git checkout -t origin/mop-server
  + ub1
  + ub2
 
+## Run an example:
+
+     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt  --cy-contract-full --eps-contract --ub=ub2 --eps=0.0001
+
 ## Run an example (server mode):
 
     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/tan.txt --cy-contract-full --eps_r=0.01 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
