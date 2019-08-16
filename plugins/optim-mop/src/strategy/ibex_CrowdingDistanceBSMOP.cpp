@@ -87,6 +87,7 @@ namespace ibex {
 		}  		
 	}
 
+	//NDS + crowding distance se realiza cuando no hay elementos en el currentBuffer
 	Cell* CrowdingDistanceBSMOP::pop() {
 
 		//cout << iterBS << endl;
@@ -121,38 +122,9 @@ namespace ibex {
 					int sizeDiffMax = currentBufferMaxSize - currentBuffer.size();
 					//cout << currentBuffer.size() + nextBuffer.size()<< endl;
 					//getchar();
-					if(currentBuffer.size() + nextBuffer.size() > currentBufferMaxSize){
-						//Revisar si cae al menos 1.
-						//cout << sizeDiffMax << endl;
-						//getchar();
-						if(sizeDiffMax > 0 ){
-							std::cout << "=== BEGIN: ===" << endl;
-							getCrowdingDistance(nextBuffer, 
-																											currentBuffer, 
-																											globalBuffer, 
-																											currentBufferMaxSize); //al current
-							std::cout << "=== getCrowdingDistance done ===" << endl;
-						}
-						else{ //Si no, todos se van al global. (Sobrantes) //Esto tambien se hace en la funcion del crowding (CREO)
-							while(!nextBuffer.empty()){
-								c=*nextBuffer.begin();
-								globalBuffer.push(*nextBuffer.begin());
-								nextBuffer.erase(nextBuffer.begin());
-							}
-							//cout << "salida for2" << endl;
-							//cout << nextBuffer.size() << endl;
-						}
-					}
-					else{
-						//Si no, pasan todos.
-						while(!nextBuffer.empty()){
-								c=*nextBuffer.begin();
-								currentBuffer.push(*nextBuffer.begin());
-								nextBuffer.erase(nextBuffer.begin());
-						}
-						//cout << "salida for" << endl;
-						//cout << nextBuffer.size() << endl;
-					}
+
+					nonDominatedSort(nextBuffer,currentBuffer, globalBuffer, currentBufferMaxSize); //al current
+
 				}else{
 					while(currentBuffer.size()<=currentBufferMaxSize){
 						c=*nextBuffer.begin();
@@ -289,71 +261,28 @@ namespace ibex {
 		return c;
 	}
 
-	void CrowdingDistanceBSMOP::getCrowdingDistance(
-        std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
-        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer, 
-        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
-        int currentBufferMaxSize
-        ){
-		
-		int returnSize = currentBufferMaxSize - currentBuffer.size();
-		while(true){
-			int returnSize = currentBufferMaxSize - currentBuffer.size();
-
-			list< std::multiset<Cell*, max_distanceCrowding>::iterator > nonDominated;
-			std::list< std::multiset<Cell*, max_distanceCrowding>::iterator >::iterator findIter;
-			extractNonDominated(nextBuffer, nonDominated);
-
-			//Si la cantidad de no dominados es menor o igual que el tamaño disponible del current, se pasan todos y se borran del next buffer
-			if(nonDominated.size() < returnSize){
-				for(auto el:nonDominated){
-					currentBuffer.push(*el);
-					nextBuffer.erase(el);
-				}
-				//sino, en el conjunto no dominado extraído, hay que realizar el crowding distance hasta tener la cantidad 
-				//que necesitamos, los sobrantes se van al global	
-			}else{
-
-				std::multiset<Cell*, max_distanceCrowding>::iterator it= nextBuffer.begin();
-
-				//Se eliminan los elementos dominados de nextbuffer
-				for(;it!= nextBuffer.end();){
-					//retorna un iterador apuntando al elemento igual,
-					//si no lo encuentra, retorna un iterador apuntando al ultimo elemento
-					findIter = std::find(nonDominated.begin(), nonDominated.end(), *it);
-					if(*findIter==nextBuffer.end()){
-						globalBuffer.push(*it);
-						it = nextBuffer.erase(it);
-					}else{
-						++it;
-					}
-				}
-
-				//AQUI SE DEBERIA REALIZAR EL CROWDING DISTANCE
-
-				for(auto el:nonDominated){
-					currentBuffer.push(*el);
-					nextBuffer.erase(el);
-				}
-			}
-		}
-
+	void CrowdingDistanceBSMOP::crowdingDistance(
+	        std::multiset<Cell*, max_distanceCrowding>& nonDominated,
+	        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer,
+	        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
+	        int currentBufferMaxSize
+	        ){
 
 		Cell *c = NULL;	
 
         int i = 0; //%TEMP% Used just to print stuff
         //First, we take out the dominated ones.
 
-
+        int returnSize=currentBufferMaxSize - currentBuffer.size();
 
         //removeDominated(nextBuffer, currentBuffer); //We do this now in the BeamSearchBufferMOP Class.
 		std::multiset<CDBox*, sortByCrowdingDistance> cdSet;  //We now declare this before the while
-        while(returnSize>0){
+        while(returnSize>0 && nonDominated.size()>0){
             
 			cdSet.clear(); //We clear cdSet each iteration.
 
-            for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = nextBuffer.begin();
-            it != nextBuffer.end(); 
+            for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = nonDominated.begin();
+            it != nonDominated.end();
             it++)
             {
 
@@ -361,13 +290,13 @@ namespace ibex {
                 cdBox->C = *it;
 
                 //If they are the first/last one, set their Crowding Distances to Infinite
-                if(*it == *nextBuffer.begin() || *next(it) == *nextBuffer.end()){
+                if(*it == *nonDominated.begin() || *next(it) == *nonDominated.end()){
                     cdBox->crowding_distance = std::numeric_limits<double>::infinity();
                 }
                 else{ //If not, then calculate them.
                     int n = (*it)->box.size();
-                    Cell* first = *nextBuffer.begin();
-                    Cell* last = *prev(nextBuffer.end());
+                    Cell* first = *nonDominated.begin();
+                    Cell* last = *prev(nonDominated.end());
 
 
                     // Here we calculate the crowding distance. We won't use a for, since we already know that there's only 2 objectives (y1, y2)
@@ -414,20 +343,47 @@ namespace ibex {
 		cdSet.clear(); //I'm not sure if this deletes the pointers from everything, TODO: CHECK that.
 
 
-		/////////////////////////////OLD:
-		//We don't need this anymore, since the worse ones are being deleted in the loop that iterates though the nextBuffer.
-        //Since the top X are removed from the nextBuffer, we move nextBuffer into globalBuffer. (leftovers)
-        /*if(!nextBuffer.empty()){
-			while(!nextBuffer.empty()){
-				c=*nextBuffer.begin();
-				globalBuffer.push(*nextBuffer.begin());
-				nextBuffer.erase(nextBuffer.begin());
-			}
-        }*/
-		//////////////////////////////
-        //getchar();
+
+	}
+
+	void CrowdingDistanceBSMOP::nonDominatedSort(
+        std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
+        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer,
+        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
+        int currentBufferMaxSize
+        ){
+
+		int returnSize = currentBufferMaxSize - currentBuffer.size();
+
+		//nonDominatedSort
+
+		//1. en cada iteracion se extraen los nodos no dominados del nextBuffer y se guardan en nonDominated
+		//2. se verifica que los no dominados quepan en currentBuffer, si caben se vuelve a 1
+		//3. Si no caben se llama al crowdingDistance para filtrar el nonDominated
+		while(returnSize>0 && nextBuffer.size()>0){
+
+			std::multiset<Cell*, max_distanceCrowding> nonDominated;
+			std::list< std::multiset<Cell*, max_distanceCrowding>::iterator >::iterator findIter;
+			extractNonDominated(nextBuffer, nonDominated);
+
+			//Si la cantidad de no dominados es menor o igual que el tamaño disponible del current, se pasan todos y se borran del next buffer
+			if(nonDominated.size() < returnSize){
+				for(auto el:nonDominated)
+					currentBuffer.push(el);
+
+				//sino, en el conjunto no dominado extraído, hay que realizar el crowding distance hasta tener la cantidad
+				//que necesitamos, los sobrantes se van al global
+			}else
+				crowdingDistance(nonDominated,currentBuffer,globalBuffer,currentBufferMaxSize);
 
 
+			returnSize = currentBufferMaxSize - currentBuffer.size();
+		}
+
+		for(auto el:nextBuffer)
+			globalBuffer.push(el);
+
+		nextBuffer.clear();
     }
 
     bool CrowdingDistanceBSMOP::isDominated(Cell* a, Cell* b){
@@ -438,12 +394,12 @@ namespace ibex {
     //Mueve los elementos no dominados de nextBuffer a nonDominated
 	//se podria mandar como parametro el tamaño que admite el current
     void CrowdingDistanceBSMOP::extractNonDominated(
-    std::multiset<Cell*, max_distanceCrowding>& nextBuffer, list< std::multiset<Cell*, max_distanceCrowding>::iterator >& nonDominated){
+    std::multiset<Cell*, max_distanceCrowding>& nextBuffer, std::multiset<Cell*, max_distanceCrowding>& nonDominated){
 
     	std::multiset<Cell*, max_distanceCrowding>::iterator it=nextBuffer.begin();
 
 
-        for(; it!=nextBuffer.end(); it++){
+        for(; it!=nextBuffer.end(); ){
         	Cell* a=*it;
         	bool dominated=false;
             for(auto b : nextBuffer){
@@ -452,7 +408,12 @@ namespace ibex {
                 	break;
                 }
             }
-            if(!dominated) nonDominated.push_back(it);
+
+            if(!dominated){
+            	nonDominated.insert(*it);
+            	it = nextBuffer.erase(it);
+            }else
+            	it++;
         }
     }
 

@@ -115,18 +115,26 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
    int iterBS=0;
     
         //static std::multiset<Cell*,max_distanceBeam> getCrowdingDistance(
-    static void getCrowdingDistance(
-        std::multiset<Cell*, max_distanceCrowding>& nextBuffer, 
-        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer, 
-        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
-        //int currentBufferSize,
-        int returnSize);
+   void crowdingDistance(
+   	        std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
+   	        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer,
+   	        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
+   	        int currentBufferMaxSize
+   	        );
 
     static bool isDominated(Cell* a, Cell* c);
 
 
-    static void extractNonDominated(
-    	    std::multiset<Cell*, max_distanceCrowding>& nextBuffer, list< std::multiset<Cell*, max_distanceCrowding>::iterator >& nonDominated);
+
+    void nonDominatedSort(
+            std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
+            std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& currentBuffer,
+            std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
+            int currentBufferMaxSize
+            );
+
+    void extractNonDominated(
+        std::multiset<Cell*, max_distanceCrowding>& nextBuffer, std::multiset<Cell*, max_distanceCrowding>& nonDominated);
 
     static void removeDominated(std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
                                 std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer);
