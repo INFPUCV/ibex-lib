@@ -201,7 +201,6 @@ public:
 
   static bool _trace;
 	double distance(const Cell* c){
-		cout << *c << endl;
 		int n=c->box.size();
 
 		//JUSTO AQUI SE CAE

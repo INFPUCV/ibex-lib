@@ -80,7 +80,7 @@ namespace ibex {
 			//y si es bueno pero no se alcanza a llenar nunca el nextbuffer???
 			//tengo dudas
 			//cout << "iter en bs: " << iterBS << endl;
-			//cout << T << endl;
+			cout << T << endl;
 			//cout << iterBS%T << endl;
 			if(iterBS%T==0){
 				nextBufferSizeAux=nextBufferSize;
@@ -192,8 +192,8 @@ namespace ibex {
 						//errorBS=mejora;
 
 					}else{
-						if(!bs_performance && nextBufferSize!=0){
-								T=T*2;
+						if(!bs_performance && nextBufferSizeAux!=0){
+							T=T*2;
 						}
 
 						if(!currentBuffer.empty()){
