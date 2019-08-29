@@ -383,7 +383,7 @@ namespace ibex {
 		nextBuffer.clear();
     }
 
-    bool CrowdingDistanceBSMOP::isDominated(Cell* a, Cell* b){
+    bool CrowdingDistanceBSMOP::dominates(Cell* a, Cell* b){
         int n = a->box.size();
         return (a->box[n-1].lb() <= b->box[n-1].lb() && a->box[n-2].lb() <= b->box[n-2].lb());
     }
@@ -409,7 +409,7 @@ namespace ibex {
         	Cell* a=*it;
         	bool dominated=false;
             for(auto b : nextBuffer){
-                if(a != b && isDominated(a, b)){
+                if(a != b && dominates(b, a)){
                 	dominated=true;
                 	break;
                 }
@@ -437,24 +437,6 @@ namespace ibex {
 
     }
 
-    //Removes the dominated cells from nextBuffers and adds them into globalBuffer.
-    void CrowdingDistanceBSMOP::removeDominated(
-    std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
-    std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer
-    ){
-        //std::multiset<Cell*, max_distanceCrowding> nextBufferCopy;
-        //Here we take the dominateds out of nextBuffer and insert them into globalBuffer.
 
-		for(auto itA = nextBuffer.begin(); itA != nextBuffer.end(); ++itA){
-			for(auto itB = nextBuffer.begin(); itB != nextBuffer.end(); ++itB){
-				if(itA != itB && isDominated(*itA, *itB)){
-					globalBuffer.push(*itA);
-					nextBuffer.erase(*itA++);
-					break;
-				}
-			}
-		}
-
-    }
 
 } // end namespace ibex
