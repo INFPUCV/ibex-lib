@@ -92,8 +92,6 @@ namespace ibex {
 
 		//cout << iterBS << endl;
 		iterBS++;
-		//quizas este se puede eliminar
-		global_hv=false;
 
 		Cell *c = NULL, *c2 = NULL;
 		std::multiset <Cell*>::iterator it;
@@ -116,9 +114,11 @@ namespace ibex {
 
 					//Esto ahora no se usa, se utiliza el nonDominatedSorting en la funcion del crowding distance
 					//if(nextBuffer.size()>4)removeDominated(nextBuffer, globalBuffer);
+
 					std::cout << "BEGIN: " << endl;
 					for(auto c:nextBuffer) cout << c->box[c->box.size()-1].lb() << "," << c->box[c->box.size()-2].lb() << endl;
 					//if(nextBuffer.size() >= nextBufferSize){
+
 					int sizeDiffMax = currentBufferMaxSize - currentBuffer.size();
 					//cout << currentBuffer.size() + nextBuffer.size()<< endl;
 					//getchar();
@@ -135,7 +135,7 @@ namespace ibex {
 			}
 
 			//*****esto quizas puede quedar igual
-			if(!currentBuffer.empty()){
+			/*if(!currentBuffer.empty()){
 				//intento de hv
 				//aux2 es antes de trabajar la caja y aux despues de trabajar la caja
 
@@ -187,13 +187,11 @@ namespace ibex {
 							}
 						}
 					}
-				}/*else{
-					cout << currentBuffer.top()->box << endl;
-				}*/
+				}
 
 				aux2=aux;
 
-			}
+			}*/
 
 		}
 		
@@ -209,10 +207,9 @@ namespace ibex {
 			//c = globalBuffer.top();
 			global_hv=true;
 
-			//AQUI SE CAE
 			cout << globalBuffer.size() << endl;
+			//AQUI SE CAE
 			globalBuffer.pop();
-			
 			cantBeam++;
 
 			if(cantBeam!=0 && depthTotal!=0){
@@ -241,11 +238,11 @@ namespace ibex {
 
 		if (OptimizerMOP::_hv) return c;
 
+		cout << "aqui es" << endl;
 		cout << globalBuffer.size() << endl;
 
 		//AQUI SE CAE
 		double dist=nds->distance(c);
-
 		//we update the distance and reinsert the element
 
 		while(dist < c->get<CellMOP>().ub_distance){
@@ -323,7 +320,7 @@ namespace ibex {
 			*	and then it's sent into the globalBuffer.
 			*/
 			CDBox* cdbox = *(--cdSet.end());
-			//en global se usa push
+
 			globalBuffer.push(cdbox->C); //Inserts the cell into the global Buffer.
 
             std::cout << i << ", " << cdbox->crowding_distance << ", "
@@ -393,11 +390,17 @@ namespace ibex {
 
     //Mueve los elementos no dominados de nextBuffer a nonDominated
 	//se podria mandar como parametro el tamaño que admite el current
+
+	//Por lo que estoy viendo, se pasan siempre todas las cajas del next al nonDominated
     void CrowdingDistanceBSMOP::extractNonDominated(
     std::multiset<Cell*, max_distanceCrowding>& nextBuffer, std::multiset<Cell*, max_distanceCrowding>& nonDominated){
 
     	std::multiset<Cell*, max_distanceCrowding>::iterator it=nextBuffer.begin();
 
+		cout << "nextbuffer: " << endl;
+		for(auto b : nextBuffer){
+            cout << b->box[nn-1] << "\n" << b->box[nn-2] << "\n";
+        }
 
         for(; it!=nextBuffer.end(); ){
         	Cell* a=*it;
@@ -415,6 +418,18 @@ namespace ibex {
             }else
             	it++;
         }
+
+		cout << "nondominated: " << endl;
+		for(auto b : nonDominated){
+            cout << b->box[nn-1] << "\n" << b->box[nn-2] << "\n";
+        }
+
+		cout << "nextbuffer (de nuevo): " << endl;
+		for(auto b : nextBuffer){
+            cout << b->box[nn-1] << "\n" << b->box[nn-2] << "\n";
+        }
+		cout << nextBuffer.size() << endl;
+
     }
 
     //Removes the dominated cells from nextBuffers and adds them into globalBuffer.
