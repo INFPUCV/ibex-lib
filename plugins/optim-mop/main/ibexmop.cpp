@@ -209,7 +209,7 @@ int main(int argc, char** argv){
 	else if(strategy=="crowdingBS")
 		buffer = new CrowdingDistanceBSMOP(cSize,bsTolerance,true);
 
-	BeamSearchBufferMOP::nn = sys.nb_var;
+	//CrowdingDistanceBSMOP::nn = sys.nb_var;
 
 	// Build the bisection heuristic
 	// --------------------------

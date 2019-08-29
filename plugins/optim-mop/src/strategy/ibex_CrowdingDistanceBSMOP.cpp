@@ -13,7 +13,7 @@
 
 namespace ibex { 
 
-	int CrowdingDistanceBSMOP::nn = 0;
+//	int CrowdingDistanceBSMOP::nn = 0;
 
 
 	void CrowdingDistanceBSMOP::flush() {
@@ -72,7 +72,7 @@ namespace ibex {
 		
 		}else{
 			
-			//next no tiene tama��o maximo
+			//next no tiene tama������o maximo
 			nextBuffer.insert(cell);
 			Cell* c=NULL;
 
@@ -363,12 +363,12 @@ namespace ibex {
 			std::list< std::multiset<Cell*, max_distanceCrowding>::iterator >::iterator findIter;
 			extractNonDominated(nextBuffer, nonDominated);
 
-			//Si la cantidad de no dominados es menor o igual que el tamaño disponible del current, se pasan todos y se borran del next buffer
+			//Si la cantidad de no dominados es menor o igual que el tama��o disponible del current, se pasan todos y se borran del next buffer
 			if(nonDominated.size() < returnSize){
 				for(auto el:nonDominated)
 					currentBuffer.push(el);
 
-				//sino, en el conjunto no dominado extraído, hay que realizar el crowding distance hasta tener la cantidad
+				//sino, en el conjunto no dominado extra��do, hay que realizar el crowding distance hasta tener la cantidad
 				//que necesitamos, los sobrantes se van al global
 			}else
 				crowdingDistance(nonDominated,currentBuffer,globalBuffer,currentBufferMaxSize);
@@ -389,17 +389,20 @@ namespace ibex {
     }
 
     //Mueve los elementos no dominados de nextBuffer a nonDominated
-	//se podria mandar como parametro el tamaño que admite el current
+	//se podria mandar como parametro el tama��o que admite el current
 
 	//Por lo que estoy viendo, se pasan siempre todas las cajas del next al nonDominated
     void CrowdingDistanceBSMOP::extractNonDominated(
     std::multiset<Cell*, max_distanceCrowding>& nextBuffer, std::multiset<Cell*, max_distanceCrowding>& nonDominated){
 
+
+
     	std::multiset<Cell*, max_distanceCrowding>::iterator it=nextBuffer.begin();
 
 		cout << "nextbuffer: " << endl;
 		for(auto b : nextBuffer){
-            cout << b->box[nn-1] << "\n" << b->box[nn-2] << "\n";
+			int n = b->box.size();
+            cout << b->box[n-1] << "\n" << b->box[n-2] << "\n";
         }
 
         for(; it!=nextBuffer.end(); ){
@@ -421,12 +424,14 @@ namespace ibex {
 
 		cout << "nondominated: " << endl;
 		for(auto b : nonDominated){
-            cout << b->box[nn-1] << "\n" << b->box[nn-2] << "\n";
+			int n = b->box.size();
+            cout << b->box[n-1] << "\n" << b->box[n-2] << "\n";
         }
 
 		cout << "nextbuffer (de nuevo): " << endl;
 		for(auto b : nextBuffer){
-            cout << b->box[nn-1] << "\n" << b->box[nn-2] << "\n";
+			int n = b->box.size();
+            cout << b->box[n-1] << "\n" << b->box[n-2] << "\n";
         }
 		cout << nextBuffer.size() << endl;
 

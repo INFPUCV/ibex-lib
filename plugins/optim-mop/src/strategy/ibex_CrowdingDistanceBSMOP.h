@@ -111,7 +111,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
    int T=1;
    bool crowding=false;
 
-   static int nn;
+   //static int nn;
    int iterBS=0;
     
         //static std::multiset<Cell*,max_distanceBeam> getCrowdingDistance(
