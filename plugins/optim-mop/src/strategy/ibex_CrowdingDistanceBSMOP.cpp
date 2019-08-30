@@ -109,11 +109,7 @@ namespace ibex {
 			++c;
 			c2=c;
 			while(!nextBuffer.empty()){
-				if(crowding){
-					
-
-					//Esto ahora no se usa, se utiliza el nonDominatedSorting en la funcion del crowding distance
-					//if(nextBuffer.size()>4)removeDominated(nextBuffer, globalBuffer);
+				if(crowding && nextBuffer.size()>currentBufferMaxSize){
 
 					std::cout << "BEGIN: " << endl;
 					for(auto c:nextBuffer) cout << c->box[c->box.size()-1].lb() << "," << c->box[c->box.size()-2].lb() << endl;
@@ -126,7 +122,7 @@ namespace ibex {
 					nonDominatedSort(nextBuffer,currentBuffer, globalBuffer, currentBufferMaxSize); //al current
 
 				}else{
-					while(currentBuffer.size()<=currentBufferMaxSize){
+					while(!nextBuffer.empty()){
 						c=*nextBuffer.begin();
 						currentBuffer.push(*nextBuffer.begin());
 						nextBuffer.erase(nextBuffer.begin());
@@ -207,6 +203,7 @@ namespace ibex {
 			//c = globalBuffer.top();
 			global_hv=true;
 
+			cout << "aqui" << endl;
 			cout << globalBuffer.size() << endl;
 			//AQUI SE CAE
 			globalBuffer.pop();
@@ -271,7 +268,7 @@ namespace ibex {
         //First, we take out the dominated ones.
 
         int returnSize=currentBufferMaxSize - currentBuffer.size();
-
+		cout << "crow1" << endl;
         //removeDominated(nextBuffer, currentBuffer); //We do this now in the BeamSearchBufferMOP Class.
 		std::multiset<CDBox*, sortByCrowdingDistance> cdSet;  //We now declare this before the while
         while(returnSize>0 && nonDominated.size()>0){
@@ -285,7 +282,7 @@ namespace ibex {
 
                 CDBox* cdBox= (CDBox*)malloc(sizeof(CDBox));
                 cdBox->C = *it;
-
+				cout << "crow2" << endl;
                 //If they are the first/last one, set their Crowding Distances to Infinite
                 if(*it == *nonDominated.begin() || *next(it) == *nonDominated.end()){
                     cdBox->crowding_distance = std::numeric_limits<double>::infinity();
@@ -306,7 +303,7 @@ namespace ibex {
                 //Inserts the CDBox node into the set
                 cdSet.insert(cdBox);
             }
-            
+            cout << "crow3" << endl;
 			//////////////////////////////
 			//OLD METHOD:
             //Here we return the first element in the multiset, we do this 'returnSize' times, we calculate the crowding distance every time we do the loop.
@@ -319,12 +316,13 @@ namespace ibex {
 			*	We "remove" only the last (lowest Crowding Distance)
 			*	and then it's sent into the globalBuffer.
 			*/
-			CDBox* cdbox = *(--cdSet.end());
-
-			globalBuffer.push(cdbox->C); //Inserts the cell into the global Buffer.
-
-            std::cout << i << ", " << cdbox->crowding_distance << ", "
-                    << cdbox->C->box[cdbox->C->box.size()-1].lb() << "," << cdbox->C->box[cdbox->C->box.size()-2].lb()<< endl;
+			CDBox* last = *(--cdSet.end());
+			Cell* worst = last->C;
+			cout << "crow4" << endl;
+			globalBuffer.push(worst); //Inserts the cell into the global Buffer.
+			cout << "crow5" << endl;
+            std::cout << i << ", " << last->crowding_distance << ", "
+                    << last->C->box[last->C->box.size()-1].lb() << "," << last->C->box[last->C->box.size()-2].lb()<< endl;
             i++;
 
             returnSize--; //If the returnSize == 0, then the cdSet isn't cleared.
@@ -364,14 +362,15 @@ namespace ibex {
 			extractNonDominated(nextBuffer, nonDominated);
 
 			//Si la cantidad de no dominados es menor o igual que el tama��o disponible del current, se pasan todos y se borran del next buffer
-			if(nonDominated.size() < returnSize){
+			if(nonDominated.size() < returnSize && nonDominated.size()>0){
 				for(auto el:nonDominated)
 					currentBuffer.push(el);
 
 				//sino, en el conjunto no dominado extra��do, hay que realizar el crowding distance hasta tener la cantidad
 				//que necesitamos, los sobrantes se van al global
-			}else
+			}else{
 				crowdingDistance(nonDominated,currentBuffer,globalBuffer,currentBufferMaxSize);
+			}
 
 
 			returnSize = currentBufferMaxSize - currentBuffer.size();
@@ -385,7 +384,8 @@ namespace ibex {
 
     bool CrowdingDistanceBSMOP::dominates(Cell* a, Cell* b){
         int n = a->box.size();
-        return (a->box[n-1].lb() <= b->box[n-1].lb() && a->box[n-2].lb() <= b->box[n-2].lb());
+		int m = b->box.size();
+        return (a->box[n-1].lb() <= b->box[m-1].lb() && a->box[n-2].lb() <= b->box[m-2].lb());
     }
 
     //Mueve los elementos no dominados de nextBuffer a nonDominated
@@ -399,41 +399,50 @@ namespace ibex {
 
     	std::multiset<Cell*, max_distanceCrowding>::iterator it=nextBuffer.begin();
 
-		cout << "nextbuffer: " << endl;
+		/*cout << "nextbuffer: " << endl;
 		for(auto b : nextBuffer){
 			int n = b->box.size();
             cout << b->box[n-1] << "\n" << b->box[n-2] << "\n";
-        }
+        }*/
 
         for(; it!=nextBuffer.end(); ){
         	Cell* a=*it;
         	bool dominated=false;
             for(auto b : nextBuffer){
+				int x = a->box.size();
+				int y = b->box.size();
+				cout << "A: " << a->box[x-1].lb() << " , " << a->box[x-2].lb() << "\n";
+				cout << "B: " << b->box[y-1].lb() << " , " << b->box[y-2].lb() << "\n";
                 if(a != b && dominates(b, a)){
-                	dominated=true;
+					cout << "dominated true" << endl;
+					//getchar();
+                	dominated=true; 
                 	break;
                 }
+				//getchar();
             }
 
             if(!dominated){
             	nonDominated.insert(*it);
             	it = nextBuffer.erase(it);
-            }else
+            }else{
             	it++;
+			}
         }
 
 		cout << "nondominated: " << endl;
 		for(auto b : nonDominated){
 			int n = b->box.size();
-            cout << b->box[n-1] << "\n" << b->box[n-2] << "\n";
+            cout << b->box[n-1].lb() << " , " << b->box[n-2].lb() << "\n";
         }
 
 		cout << "nextbuffer (de nuevo): " << endl;
 		for(auto b : nextBuffer){
 			int n = b->box.size();
-            cout << b->box[n-1] << "\n" << b->box[n-2] << "\n";
+            cout << b->box[n-1].lb() << " , " << b->box[n-2].lb() << "\n";
         }
 		cout << nextBuffer.size() << endl;
+		//getchar();
 
     }
 
