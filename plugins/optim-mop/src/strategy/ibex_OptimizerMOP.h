@@ -270,10 +270,10 @@ public:
 		ofstream output;
 		output.open( (output_file+".state").c_str());
 		switch(sstatus){
-			case STAND_BY: output << "STAND_BY" << endl;
-			case SEARCH: output << "SEARCH" << endl;
-			case FOCUS_SEARCH: output << "FOCUS_SEARCH" << endl;
-			case FINISHED: output << "FINISHED" << endl;
+			case STAND_BY: output << "STAND_BY" << endl; break;
+			case SEARCH: output << "SEARCH" << endl; break;
+			case FOCUS_SEARCH: output << "FOCUS_SEARCH" << endl; break;
+			case FINISHED: output << "FINISHED" << endl; break;
 		}
 		output.close();
 	}
