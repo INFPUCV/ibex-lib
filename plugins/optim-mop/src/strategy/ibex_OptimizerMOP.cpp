@@ -354,7 +354,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				}
 				sleep(2);
 				read_instructions(cells, paused_cells, focus);
-				write_status(cdata->ub_distance/focus.max_diam());
+				write_status(cdata->ub_distance);
 				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty())) exit(0);
 				if(buffer.empty()) sstatus = REACHED_PRECISION;
 				server_pause=false;
