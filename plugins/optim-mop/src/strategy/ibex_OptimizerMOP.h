@@ -365,7 +365,7 @@ public:
 
 			}
 			myfile.close();
-			remove(instructions_file.c_str());
+			rename(instructions_file.c_str(), (instructions_file+".old").c_str());
 		}
 
 	}
