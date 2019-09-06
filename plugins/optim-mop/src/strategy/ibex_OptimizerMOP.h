@@ -380,6 +380,12 @@ public:
 
 			}else if(instruction=="pause"){
 				 sstatus=STAND_BY;
+			 }else if(instruction=="continue"){
+				 if(focus[0]==BxpMOPData::y1_init &&
+ 						focus[1]==BxpMOPData::y2_init)
+							sstatus=SEARCH;
+				 else
+				      sstatus=FOCUS_SEARCH;
 			}else if(instruction=="finish"){
 				 sstatus=FINISHED;
 			}
