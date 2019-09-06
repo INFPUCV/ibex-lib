@@ -92,7 +92,7 @@ public:
 
 	typedef enum {POINTS, SEGMENTS, HAMBURGER, /* splitting strategies */ MIDPOINT, MAXDIST, ALL} Mode;
 
-  typedef enum {STAND_BY, SEARCH, FOCUS_SEARCH, FINISHED} ServerStatus;
+  typedef enum {STAND_BY_FOCUS, STAND_BY_SEARCH, REACHED_PRECISION, SEARCH, FOCUS_SEARCH, FINISHED} ServerStatus;
 
 	/**
 	 *  \brief Create an optimizer.
@@ -266,15 +266,18 @@ public:
 	}
 
 
-  void write_state(){
+  void write_status(double rel_prec){
 		ofstream output;
 		output.open( (output_file+".state").c_str());
 		switch(sstatus){
-			case STAND_BY: output << "STAND_BY" << endl; break;
-			case SEARCH: output << "SEARCH" << endl; break;
-			case FOCUS_SEARCH: output << "FOCUS_SEARCH" << endl; break;
-			case FINISHED: output << "FINISHED" << endl; break;
+			case STAND_BY_SEARCH:
+			case STAND_BY_FOCUS: output << "STAND_BY" ; break;
+			case REACHED_PRECISION: output << "REACHED_PRECISION" ; break;
+			case SEARCH: output << "SEARCH" ; break;
+			case FOCUS_SEARCH: output << "FOCUS_SEARCH" ; break;
+			case FINISHED: output << "FINISHED" ; break;
 		}
+		output << "," << rel_prec*100 << endl;
 		output.close();
 	}
  	void write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
@@ -379,13 +382,11 @@ public:
 				}else output << "not found" << endl;
 
 			}else if(instruction=="pause"){
-				 sstatus=STAND_BY;
+				 if(sstatus==SEARCH) sstatus=STAND_BY_SEARCH;
+         else if(sstatus=FOCUS_SEARCH) sstatus=STAND_BY_FOCUS;
 			 }else if(instruction=="continue"){
-				 if(focus[0]==BxpMOPData::y1_init &&
- 						focus[1]==BxpMOPData::y2_init)
-							sstatus=SEARCH;
-				 else
-				      sstatus=FOCUS_SEARCH;
+				 if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
+         else if(sstatus=STAND_BY_FOCUS) sstatus=FOCUS_SEARCH;
 			}else if(instruction=="finish"){
 				 sstatus=FINISHED;
 			}

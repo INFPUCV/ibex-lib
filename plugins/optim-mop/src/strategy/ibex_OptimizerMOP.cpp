@@ -343,19 +343,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		while (!buffer.empty() || !paused_cells.empty()) { 		  iter++;
 			if(buffer.empty() && !_server_mode) break;
 
-			if( _server_mode && iter%10==0 ) server_pause=true;
-
-			while(buffer.empty() || sstatus==STAND_BY || server_pause){
-				if(server_pause) {
-			    	cout << "buffer size:" << buffer.size() << endl;
-			    	cout << "eps:" << eps << endl;
-					write_envelope(cells, paused_cells, focus);
-				}
-				sleep(2);
-				read_instructions(cells, paused_cells, focus);
-				write_state();
-				server_pause=false;
-			}
 			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
 
 			Cell *c = buffer.pop();
@@ -380,6 +367,21 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 					 continue;
 				 }
 				 break;
+			}
+
+      //if( _server_mode) server_io();
+			if( _server_mode && iter%10==0 ) server_pause=true;
+			while(buffer.empty() || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
+				if(server_pause) {
+			    	cout << "buffer size:" << buffer.size() << endl;
+			    	cout << "eps:" << eps << endl;
+					write_envelope(cells, paused_cells, focus);
+				}
+				sleep(2);
+				read_instructions(cells, paused_cells, focus);
+				write_status(cdata->ub_distance/focus.max_diam());
+				if(sstatus == FINISHED) exit(0);
+				server_pause=false;
 			}
 
 			nb_cells++;
@@ -422,19 +424,6 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 				continue;
 		}
-
-      /** TODO: Revisar y1_ub.second y y2_ub.first no fueron inicializados */
-		  if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
-				  (c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
-       		BisectionPoint p(n, y1_ub.first, false);
-			new_cells=c->bisect(p);
-
-		  }else if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  &&
-				(c->box[n].ub()-y2_ub.first)*(c->box[n+1].ub()-y2_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ) {
-			BisectionPoint p(n+1, y2_ub.second, false);
-			new_cells=c->bisect(p);
-		 }
-      /****/
 
 			delete c; // deletes the cell.
 
