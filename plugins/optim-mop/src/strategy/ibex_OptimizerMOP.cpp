@@ -343,11 +343,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		while (!buffer.empty() || !paused_cells.empty()) { 		  iter++;
 			if(buffer.empty() && !_server_mode) break;
 
-			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
-
-			Cell *c = buffer.pop();
-			cells.erase(c);
-
+      Cell *c = buffer.top();
 			//if( _server_mode) server_io();
 			if( _server_mode && iter%10==0 ) server_pause=true;
 			while(buffer.empty() || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
@@ -364,6 +360,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
 
+			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
+
+			buffer.pop();
+			cells.erase(c);
 
 
 			if(_server_mode){
