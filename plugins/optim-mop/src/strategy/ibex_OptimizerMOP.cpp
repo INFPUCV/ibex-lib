@@ -346,7 +346,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
       Cell *c = buffer.top();
 			//if( _server_mode) server_io();
 			if( _server_mode && iter%10==0 ) server_pause=true;
-			while(buffer.empty() || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
+			while(buffer.empty() || sstatus==REACHED_PRECISION || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
 				if(server_pause) {
 			    	cout << "buffer size:" << buffer.size() << endl;
 			    	cout << "eps:" << eps << endl;
