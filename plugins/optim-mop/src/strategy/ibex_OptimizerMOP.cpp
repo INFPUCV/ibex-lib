@@ -348,6 +348,23 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			Cell *c = buffer.pop();
 			cells.erase(c);
 
+			//if( _server_mode) server_io();
+			if( _server_mode && iter%10==0 ) server_pause=true;
+			while(buffer.empty() || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
+				if(server_pause) {
+			    	cout << "buffer size:" << buffer.size() << endl;
+			    	cout << "eps:" << eps << endl;
+					write_envelope(cells, paused_cells, focus);
+				}
+				sleep(2);
+				read_instructions(cells, paused_cells, focus);
+				write_status(cdata->ub_distance/focus.max_diam());
+				if(sstatus == FINISHED) exit(0);
+				server_pause=false;
+			}
+
+
+
 
 			if(_server_mode){
 				IntervalVector boxy(2); boxy[0]=c->box[n]; boxy[1]=c->box[n+1];
@@ -369,20 +386,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				 break;
 			}
 
-      //if( _server_mode) server_io();
-			if( _server_mode && iter%10==0 ) server_pause=true;
-			while(buffer.empty() || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
-				if(server_pause) {
-			    	cout << "buffer size:" << buffer.size() << endl;
-			    	cout << "eps:" << eps << endl;
-					write_envelope(cells, paused_cells, focus);
-				}
-				sleep(2);
-				read_instructions(cells, paused_cells, focus);
-				write_status(cdata->ub_distance/focus.max_diam());
-				if(sstatus == FINISHED) exit(0);
-				server_pause=false;
-			}
+
 
 			nb_cells++;
 			contract_and_bound(*c, init_box);
