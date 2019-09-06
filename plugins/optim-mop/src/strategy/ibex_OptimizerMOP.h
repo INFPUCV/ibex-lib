@@ -343,6 +343,7 @@ public:
 						cells.insert(cc);
 					}
 					paused_cells.clear();
+					max_dist_eps=NEG_INFINITY;
 				}
 
 			}else if(instruction=="get_solution"){
@@ -442,7 +443,8 @@ public:
 	//Termination criteria for the hamburger algorithm (dist < rh*ini_dist)
 	static double _rh;
 
-
+  //max distance of cells rejected by eps-close
+  double max_dist_eps;
 
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;

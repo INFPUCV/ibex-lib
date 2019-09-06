@@ -335,6 +335,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	buffer.push(root);
 	cells.insert(root);
+  max_dist_eps = NEG_INFINITY;
 
 	int iter=0;
 	try {
@@ -354,7 +355,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				}
 				sleep(2);
 				read_instructions(cells, paused_cells, focus);
-				write_status(cdata->ub_distance);
+				write_status(std::max(max_dist_eps,cdata->ub_distance));
 				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty())) exit(0);
 				if(buffer.empty()) sstatus = REACHED_PRECISION;
 				server_pause=false;
@@ -379,8 +380,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			if(cdata->ub_distance <= eps){
 				 if(_server_mode){
-					 while(!buffer.empty())
+					 while(!buffer.empty()){
 					   paused_cells.insert(buffer.pop());
+						 if(max_dist_eps<cdata->ub_distance) max_dist_eps=cdata->ub_distance;
+					 }
 					 cells.clear();
 					 continue;
 				 }
