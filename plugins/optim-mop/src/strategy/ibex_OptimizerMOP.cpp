@@ -288,6 +288,7 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	status=SUCCESS;
+	sstatus=SEARCH;
 
 	nb_cells=0;
 	buffer.flush();
@@ -344,7 +345,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			if( _server_mode && iter%10==0 ) server_pause=true;
 
-			while(buffer.empty() || server_pause){
+			while(buffer.empty() || sstatus==STAND_BY || server_pause){
 				if(server_pause) {
 			    	cout << "buffer size:" << buffer.size() << endl;
 			    	cout << "eps:" << eps << endl;
@@ -352,6 +353,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				}
 				sleep(2);
 				read_instructions(cells, paused_cells, focus);
+				write_state();
 				server_pause=false;
 			}
 			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;

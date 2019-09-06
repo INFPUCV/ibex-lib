@@ -92,7 +92,7 @@ public:
 
 	typedef enum {POINTS, SEGMENTS, HAMBURGER, /* splitting strategies */ MIDPOINT, MAXDIST, ALL} Mode;
 
-
+  typedef enum {STAND_BY, SEARCH, FOCUS_SEARCH, FINISHED} ServerStatus;
 
 	/**
 	 *  \brief Create an optimizer.
@@ -265,7 +265,19 @@ public:
 
 	}
 
-	void write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+
+  void write_state(){
+		ofstream output;
+		output.open( (output_file+".state").c_str());
+		switch(sstatus){
+			case STAND_BY: output << "STAND_BY" << endl;
+			case SEARCH: output << "SEARCH" << endl;
+			case FOCUS_SEARCH: output << "FOCUS_SEARCH" << endl;
+			case FINISHED: output << "FINISHED" << endl;
+		}
+		output.close();
+	}
+ 	void write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 		//escritura de archivos
 		//dormir 1 segundo y lectura de instrucciones
 		cout << "escritura de archivo" << endl;
@@ -307,6 +319,9 @@ public:
 			string instruction;
 			myfile >> instruction ;
 			if(instruction=="zoom_in" || instruction=="zoom_out"){
+        if(instruction=="zoom_in") sstatus=FOCUS_SEARCH;
+				if(instruction=="zoom_out") sstatus=SEARCH;
+
 				double y1_lb,y1_ub,y2_lb,y2_ub;
 				myfile >> y1_lb >> y1_ub;
 				myfile >> y2_lb >> y2_ub;
@@ -363,9 +378,18 @@ public:
 					delete v;
 				}else output << "not found" << endl;
 
+			}else if(instruction=="pause"){
+				 sstatus=STAND_BY;
+			}else if(instruction=="finish"){
+				 sstatus=FINISHED;
 			}
+
 			myfile.close();
 			rename(instructions_file.c_str(), (instructions_file+".old").c_str());
+
+
+
+
 		}
 
 	}
@@ -523,6 +547,8 @@ private:
 
 	/* Remember return status of the last optimization. */
 	Status status;
+
+	ServerStatus sstatus;
 
 
 	/** The current non-dominated set sorted by increasing x */
