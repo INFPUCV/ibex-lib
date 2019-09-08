@@ -253,21 +253,24 @@ void OptimizerMOP::dominance_peeler2(IntervalVector& box, list < Vector >& inpoi
 	Vector lastp=inpoints.back();
 
 	// contract c.box[n]
-	if(firstp[1] < box[n+1].ub())
-		box[n+1] = Interval(box[n+1].lb(),firstp[1]);
+	if(firstp[1] < box[1].ub())
+		box[1] = Interval(box[1].lb(),firstp[1]);
 
 	// contract c.box[n+1]
-	if(lastp[0] < box[n].ub() )
-		box[n] = Interval(box[n].lb(), lastp[0]);
+	if(lastp[0] < box[0].ub() )
+		box[0] = Interval(box[0].lb(), lastp[0]);
 
 }
 
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
-	list< Vector > inner_segments = ndsH.non_dominated_points(ndsH.get_box_y(&c).lb());
+  IntervalVector boxy=ndsH.get_box_y(&c);
+	list< Vector > inner_segments = ndsH.non_dominated_points(boxy.lb());
 
-	dominance_peeler2(c.box,inner_segments);
+	dominance_peeler2(boxy,inner_segments);
+	c.box[n]=boxy[0];
+  c.box[n+1]=boxy[1];
 
 	//discard_generalized_monotonicty_test(c.box, init_box);
 
@@ -370,7 +373,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			if(_server_mode){
 				IntervalVector boxy(2); boxy[0]=c->box[n]; boxy[1]=c->box[n+1];
-				if(!focus.intersects(boxy) ){
+				list< Vector > inner_segments = ndsH.non_dominated_points(focus.lb());
+				dominance_peeler2(focus,inner_segments);
+
+				if(focus[0].ub()<boxy[0].lb() || focus[1].ub()<boxy[1].lb() ){
 					paused_cells.insert(c);
 					continue;
 				}

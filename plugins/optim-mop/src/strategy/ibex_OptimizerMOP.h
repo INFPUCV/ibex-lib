@@ -372,15 +372,23 @@ public:
 					v=pf.find_feasible(y, 1e-8);
 				}
 
-				ofstream output;
+				ofstream output, output_tmp;
 				output.open(output_file);
+				output_tmp.open("output.tmp");
 				if(v){
 					realy[0]=eval_goal(goal1, *v, v->size()).ub();
 					realy[1]=eval_goal(goal2, *v, v->size()).ub();
 					output << *v << endl;
 					output << realy << endl;
+					output_tmp << *v << endl;
+					output_tmp << realy << endl;
 					delete v;
-				}else output << "not found" << endl;
+				}else {
+					output << "not found" << endl;
+					output_tmp << "not found" << endl;
+				}
+				output.close();
+				output_tmp.close();
 
 			}else if(instruction=="pause"){
 				 if(sstatus==SEARCH) sstatus=STAND_BY_SEARCH;
