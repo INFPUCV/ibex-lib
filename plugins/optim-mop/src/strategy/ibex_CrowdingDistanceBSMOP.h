@@ -111,7 +111,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
    double bs_tolerance=0.5;
    int T=1;
    bool crowding=false;
-   int bs_level=0;
+   static int bs_level;
    int max_level=0;
 
    //static int nn;

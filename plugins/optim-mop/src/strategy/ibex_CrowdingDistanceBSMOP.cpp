@@ -11,9 +11,10 @@
 #include <algorithm>    // std::min_element, std::max_element
 
 
+
 namespace ibex { 
 
-//	int CrowdingDistanceBSMOP::nn = 0;
+	int CrowdingDistanceBSMOP::bs_level=0;
 
 
 	void CrowdingDistanceBSMOP::flush() {
@@ -44,7 +45,7 @@ namespace ibex {
 		
 		if(bs_level==0) {
 			
-			hv=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+			//hv=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 			initial_reduction=hv-hv0;
 			//cout << initial_reduction << endl;
 
@@ -102,65 +103,6 @@ namespace ibex {
 				}
 			}
 
-			//*****esto quizas puede quedar igual
-			/*if(!currentBuffer.empty()){
-				//intento de hv
-				//aux2 es antes de trabajar la caja y aux despues de trabajar la caja
-
-
-				aux=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
-				//cout <<  aux << endl;
-				if(aux-aux2!=0){
-					
-					if(initial_reduction==0) initial_reduction=aux-aux2;
-
-					double mejora=(aux-aux2)/initial_reduction;
-
-					if(mejora>=bs_tolerance*mejor_mejora || aux-aux2==initial_reduction){
-
-						if(mejora>mejor_mejora) {
-							if(mejor_mejora!=0.0) {T=1; bs_performance=true;}
-							else bs_performance=false;
-
-							mejor_mejora=mejora;
-						}
-
-
-
-					//if(mejora>=errorBS || aux-aux2==initial_reduction){
-						//errorBS=mejora;
-
-					}else{
-						if(!bs_performance && currentBufferSizeAux!=0){
-							T=T*2;
-						}
-
-						if(!currentBuffer.empty()){
-							while(!currentBuffer.empty()){
-				
-								globalBuffer.push(currentBuffer.top());
-								currentBuffer.pop();
-
-							}
-						}
-						//en teoria nunca entro aqui
-						if(!nextBuffer.empty()){
-							while(!nextBuffer.empty()){
-				
-								c=*nextBuffer.begin();
-								globalBuffer.push(*nextBuffer.begin());
-					
-								nextBuffer.erase(nextBuffer.begin());
-
-							}
-						}
-					}
-				}
-
-				aux2=aux;
-
-			}*/
-
 		}
 		
 		//Si current y next estan vacios, se popea del global
@@ -168,7 +110,7 @@ namespace ibex {
 
 			depth=0;
 			mejor_mejora=0;
-			hvE=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
+			//hvE=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 
 			mejora=hvE-hv0;
 			/*if(mejora>0 && initial_reduction/mejora){
@@ -185,13 +127,13 @@ namespace ibex {
 
 			c=top();
 			//c = globalBuffer.top();
+
 			bs_level=0;
 			iterBS++;
+			//hv0=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 
-			hv0=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 
 
-			//AQUI SE CAE
 			globalBuffer.pop();
 			cantBeam++;
 			if(cantBeam!=0 && depthTotal!=0){
@@ -216,8 +158,8 @@ namespace ibex {
 
 		if (OptimizerMOP::_hv) return c;
 
-		cout << "aqui es" << endl;
-		cout << globalBuffer.size() << endl;
+		//cout << "aqui es" << endl;
+		//cout << globalBuffer.size() << endl;
 
 		//AQUI SE CAE
 		double dist=nds->distance(c);
@@ -253,13 +195,13 @@ namespace ibex {
 			std::multiset<Cell*, max_distanceCrowding> nonDominated;
 			extractNonDominated(nextBuffer, nonDominated);
 
-			//Si la cantidad de no dominados es menor o igual que el tama��o disponible del current, se pasan todos y se borran del next buffer
+			//Si la cantidad de no dominados es menor o igual que el tama������o disponible del current, se pasan todos y se borran del next buffer
 			if(nonDominated.size()>0 && (nonDominated.size()+currentBuffer.size())<=currentBufferMaxSize){
 				for(auto el:nonDominated)
 					currentBuffer.push(el);
 
 				nonDominated.clear();
-				//sino, en el conjunto no dominado extra��do, hay que realizar el crowding distance hasta tener la cantidad
+				//sino, en el conjunto no dominado extra������do, hay que realizar el crowding distance hasta tener la cantidad
 				//que necesitamos, los sobrantes se van al global
 			}else{
 				crowdingDistance(nonDominated,currentBuffer,globalBuffer,currentBufferMaxSize);
@@ -333,92 +275,61 @@ namespace ibex {
 
         while(nonDominated.size()>currentBufferMaxSize && nonDominated.size()>0){
             
-			cdSet.clear(); //We clear cdSet each iteration.
+			//cdSet.clear(); //We clear cdSet each iteration.
+			std::multiset<Cell*, crowding_distanceBeam>::iterator erase_it = nonDominated.end();
+
             for(std::multiset<Cell*, crowding_distanceBeam>::iterator it = nonDominated.begin();
             it != nonDominated.end();
             it++)
             {
+            	double min_cd=POS_INFINITY;
 
-                CDBox* cdBox= (CDBox*)malloc(sizeof(CDBox));
-                cdBox->C = *it;
+                //CDBox* cdBox= (CDBox*)malloc(sizeof(CDBox)); new CDBox();
+                //cdBox->C = *it;
+            	double crowding_distance=0.0;
+
                 //If they are the first/last one, set their Crowding Distances to Infinite
                 if(*it == *nonDominated.begin() || *next(it) == *nonDominated.end()){
-                    cdBox->crowding_distance = std::numeric_limits<double>::infinity();
+                    crowding_distance = POS_INFINITY; //std::numeric_limits<double>::infinity();
                 }
                 else{ //If not, then calculate them.
                     int n = (*it)->box.size();
                     Cell* first = *nonDominated.begin();
                     Cell* last = *prev(nonDominated.end());
 
-
                     // Here we calculate the crowding distance. We won't use a for, since we already know that there's only 2 objectives (y1, y2)
                     //Primer Objetivo
-                    cdBox->crowding_distance += ((*std::prev(it))->box[n-1].lb() - (*std::next(it))->box[n-1].lb())/((first->box[n-1].lb() - last->box[n-1].lb()));
+                    crowding_distance += ((*std::prev(it))->box[n-1].lb() - (*std::next(it))->box[n-1].lb())/((first->box[n-1].lb() - last->box[n-1].lb()));
                     //Segundo objetivo
-                    cdBox->crowding_distance += ((*std::prev(it))->box[n-2].lb() - (*std::next(it))->box[n-2].lb())/((first->box[n-2].lb() - last->box[n-2].lb()));
+                    crowding_distance += ((*std::prev(it))->box[n-2].lb() - (*std::next(it))->box[n-2].lb())/((first->box[n-2].lb() - last->box[n-2].lb()));
+                }
+
+                if(min_cd >= crowding_distance){
+                	min_cd=crowding_distance;
+                	erase_it = it;
                 }
 
                 //Inserts the CDBox node into the set
-                cdSet.insert(cdBox);
+                //cdSet.insert(cdBox);
             }
-			//////////////////////////////
-			//OLD METHOD:
-            //Here we return the first element in the multiset, we do this 'returnSize' times, we calculate the crowding distance every time we do the loop.
-            /*CDBox* cdbox = *(cdSet.begin());
-            currentBuffer.push(cdbox->C);
-            nextBuffer.erase(cdbox->C);*/
-			//////////////////////////////
 
-			/* New Method:
-			*	We "remove" only the last (lowest Crowding Distance)
-			*	and then it's sent into the globalBuffer.
-			*/
-
-			cout << "nondominated size antes " << nonDominated.size() << endl;
-			CDBox* cdBox = *(cdSet.begin());
-			cout << "crow4" << endl;
-			globalBuffer.push(cdBox->C); //Inserts the cell into the global Buffer.
-			std::multiset<CDBox*, sortByCrowdingDistance>::iterator it=cdSet.begin();
-			int flag=0;
-
-			for(; it!=cdSet.end(); ){
-        		CDBox* a=*it;
-				for(auto b : nonDominated){
-					if(a->C == b){
-						//getchar();
-						flag=1;
-						nonDominated.erase(b);
-						break;
-					}
-					//getchar();
-				}
-
-				if(flag==1){
-					break;
-				}else{
-					it++;
-				}
-     		}
-
-			cout << "nondominated size despues " << nonDominated.size() << endl;
-			cout << "crow5" << endl;
-			getchar();
+            //cout << "nondominated size antes " << nonDominated.size() << endl;
+            globalBuffer.push(*erase_it);
+            nonDominated.erase(erase_it);
+			//cout << "nondominated size despues " << nonDominated.size() << endl;
+			//getchar();
             //std::cout << i << ", " << cdBox->crowding_distance << ", "
               //      << cdBox->C->box[cdBox->C->box.size()-1].lb() << "," << cdBox->C->box[cdBox->C->box.size()-2].lb()<< endl;
             //i++;
 
             returnSize--; //If the returnSize == 0, then the cdSet isn't cleared.
         }
-		//If we have stuff in the cdSet, it means that we need to put them into the nextBuffer!
+		//If we have stuff in the nonDominated, it means that we need to put them into the nextBuffer!
 		//Since the lowest crowding distance ones are already in the globalBuffer, we won't need to remove them from here. We will just have to add stuff into the nextBuffer.
-		while(!cdSet.empty()){
-			CDBox* cdbox = *(cdSet.begin());
-			currentBuffer.push(cdbox->C);
-			cdSet.erase(cdSet.begin());
+		while(!nonDominated.empty()){
+			currentBuffer.push(*nonDominated.begin());
+			nonDominated.erase(nonDominated.begin());
 		}
-		//After putting everything into the currentBuffer, we clear cdSet.
-		cdSet.clear(); //I'm not sure if this deletes the pointers from everything, TODO: CHECK that.
-		nonDominated.clear();
 
 
 	}

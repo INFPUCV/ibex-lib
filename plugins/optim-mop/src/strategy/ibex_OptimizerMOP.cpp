@@ -353,8 +353,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	try {
 		/** Criterio de termino: todas los nodos filtrados*/
 		while (!buffer.empty()) {
-			//py_Plotter::offline_plot(NULL, ndsH.NDS2);
-			//getchar();
+
 		  /*if(_plot) {
 			  cout << "iter:" << iter << endl;
 			  cout << "buffer_size:" << buffer.size() << endl;
@@ -364,6 +363,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		  if (trace >= 2) cout << buffer;
 
 			Cell *c = buffer.pop();
+
+			if (CrowdingDistanceBSMOP::bs_level==0) {
+				py_Plotter::offline_plot(NULL, ndsH.NDS2);
+				getchar();
+			}
 
 			//cout <<  c->get<CellMOP>().ub_distance << ":" << c->box << endl;
 
@@ -430,36 +434,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
       /** Improvement for avoiding big boxes when lb1 < y1_ub or lb2< y2_ub*/
 	  pair<Cell*,Cell*> new_cells;
 
-	  //se hace una comprobacion de que búsqueda se está utilizando
-    	/*if(!bs){
-			IntervalVector left(c->box);
-			if(c->box[n].lb() < y1_ub.first && c->box[n].ub() > y1_ub.first &&
-					(c->box[n].ub()-y1_ub.first)*(c->box[n+1].ub()-y1_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ){
-
-				left[n]=Interval(c->box[n].lb(),y1_ub.first);
-				c->box[n]=Interval(y1_ub.first,c->box[n].ub());
-			}else left.set_empty();
-
-			
-				if(!left.is_empty())
-					new_cells=c->bisect(left,c->box);
-				else{
-					IntervalVector bottom(c->box);
-				if(c->box[n+1].lb() < y2_ub.second && c->box[n+1].ub() > y2_ub.second  &&
-						(c->box[n].ub()-y2_ub.first)*(c->box[n+1].ub()-y2_ub.second) <  (c->box[n].diam())*(c->box[n+1].diam()) ) {
-						bottom[n+1]=Interval(c->box[n+1].lb(),y2_ub.second);
-						c->box[n+1]=Interval(y2_ub.second,c->box[n+1].ub());
-					}else bottom.set_empty();
-
-					
-					if(!bottom.is_empty())
-					new_cells=c->bisect(bottom,c->box);
-					else
-					new_cells=c->bisect(boxes->first,boxes->second); //originally we should do only do this
-				}
-		}else{*/
-			new_cells=c->bisect(boxes->first,boxes->second);
-		//}
+	  new_cells=c->bisect(boxes->first,boxes->second);
 
       /****/
 
@@ -607,7 +582,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 		ya1 = yb1; yb1 = aux; aux = ya2; ya2 = yb2; yb2 = aux;
 	}
 
-	// m ��������� getSlope(n.t)
+	// m ��������������������������� getSlope(n.t)
 	Interval m = (yb2-ya2)/(yb1-ya1);
 	Interval m_horizontal = Interval(0);
 	Interval m_vertical = Interval(POS_INFINITY);
@@ -705,7 +680,7 @@ void OptimizerMOP::report(bool verbose) {
 		" --y2=" << y2refi.lb() << "," << y2refi.ub() << endl;
 		else
 			cout << get_time() << " " << get_nb_cells() << " " << ndsH.size() <<  " "<< get_hypervolume().ub()  << endl;
-			cout << "porcentaje de cajas con soluci������n: " << (sol*100)/nb_cells << endl;
+			cout << "porcentaje de cajas con soluci������������������n: " << (sol*100)/nb_cells << endl;
 		return;
 	}*/
 
