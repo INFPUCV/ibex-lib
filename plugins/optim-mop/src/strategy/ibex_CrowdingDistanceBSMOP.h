@@ -31,6 +31,7 @@ namespace ibex {
 	typedef struct CDBox{
 		Cell* C;
 		double crowding_distance;
+        int size=0;
 	} CDBox;
 
 
@@ -110,6 +111,8 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
    double bs_tolerance=0.5;
    int T=1;
    bool crowding=false;
+   int bs_level=0;
+   int max_level=0;
 
    //static int nn;
    int iterBS=0;
@@ -202,7 +205,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
   NDS_seg* nds=NULL;
   double* pruebaprom=NULL;
 
-  bool global_hv=false;
+  bool bs_state=false;
   bool bs_performance=false;
   int* depthMayor=0;
   int depth=0, depthTotal=0;
@@ -210,7 +213,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
 
   private:
 	int cont = 0, cantBeam = 0;
-	double aux=0,aux2=0,initial_reduction=0.0;
+	double hv=0,hv0=0,hvE=0,initial_reduction=0.0,mejora=0;
 	double mejor_mejora=0.0;
 };
 

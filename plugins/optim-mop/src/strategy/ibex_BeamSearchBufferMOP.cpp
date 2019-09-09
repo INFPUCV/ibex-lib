@@ -146,7 +146,7 @@ namespace ibex {
 			c2=c;
 			while(!nextBuffer.empty()){
 				
-				//it = nextBuffer.begin();
+				it = nextBuffer.begin();
 				//double distNextBegin = nds->distance(*nextBuffer.begin());
 				//cout << "distancia primero: " << distNextBegin << endl;
 				/*if(nextBuffer.size()>1){
