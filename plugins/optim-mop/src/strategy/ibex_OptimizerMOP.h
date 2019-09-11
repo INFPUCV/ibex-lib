@@ -178,70 +178,17 @@ public:
 	 */
 	double get_nb_cells() const;
 
-	/* =========================== Settings ============================= */
+	/*
+    * \brief Update the focus of solution
+    *
+    * This take in count the hull of the region and the found solutions
+    *
+    * Inputs:
+    *    \param cells 				   a
+    *    \param paused_cells		   a
+    *    \param focus 				   a
+    */
 
-	/**
-	 * \brief Number of variables.
-	 */
-	const int n;
-
-	/**
-	 * \brief Objective functions
-	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
-	 * evaluate them we have to set z1 and z2 to [0,0].
-	 */
-	const Function& goal1;
-	const Function& goal2;
-
-	/**
-	 * \brief Contractor for the extended system.
-	 *
-	 * The extended system:
-	 * (y=f(x), g_1(x)<=0,...,g_m(x)<=0).
-	 */
-	Ctc& ctc;
-
-	/**
-	 * \brief Bisector.
-	 *
-	 * Must work on extended boxes.
-	 */
-	Bsc& bsc;
-
-	/**
-	 * Cell buffer.
-	 */
-	CellBuffer& buffer;
-
-	/**
-	 * \brief LoupFinder
-	 */
-	LoupFinderMOP& finder;
-
-	/** Required precision for the envelope */
-	double eps;
-
-	/** Required relative precision for the envelope */
-	double rel_eps;
-
-
-	/** Default precision: 0.01 */
-	static const double default_eps;
-
-
-  //server variables
-	static bool _server_mode;
-	static string instructions_file;
-	static string output_file;
-
-	static IntervalVector get_boxy(IntervalVector& v, int n){
-		IntervalVector boxy(2);
-		boxy[0]=v[n];
-		boxy[1]=v[n+1];
-		return boxy;
-	}
-
-	//el focus se actualiza tomando en cuenta el hull de la regi��n factible y las soluciones encontradas
 	void update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 
 		IntervalVector new_focus(2);
@@ -265,8 +212,17 @@ public:
 
 	}
 
+	/*
+    * \brief 
+    *
+    *
+    * Inputs:
+    *    \param cells 				   a
+    *    \param paused_cells		   a
+    *    \param focus 				   a
+    */
 
-  void write_status(double rel_prec){
+  	void write_status(double rel_prec){
 		ofstream output;
 		output.open( (output_file+".state").c_str());
 		switch(sstatus){
@@ -280,6 +236,18 @@ public:
 		output << "," << rel_prec*100 << endl;
 		output.close();
 	}
+
+	/*
+    * \brief Print the region of solutions
+    *
+    * 
+    *
+    * Inputs:
+    *    \param cells 				   a
+    *    \param paused_cells		   a
+    *    \param focus 				   a
+    */
+
  	void write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 		//escritura de archivos
 		//dormir 1 segundo y lectura de instrucciones
@@ -311,6 +279,17 @@ public:
 
 		py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
 	}
+
+	/*
+    * \brief Read the instruccions of work
+    *
+    * after reading a instruction, this delete it from the file
+    *
+    * Inputs:
+    *    \param cells 				   a
+    *    \param paused_cells		   a
+    *    \param focus 				   a
+    */
 
 	void read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 
@@ -409,6 +388,71 @@ public:
 		}
 
 	}
+
+	/* =========================== Settings ============================= */
+
+	/**
+	 * \brief Number of variables.
+	 */
+	const int n;
+
+	/**
+	 * \brief Objective functions
+	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
+	 * evaluate them we have to set z1 and z2 to [0,0].
+	 */
+	const Function& goal1;
+	const Function& goal2;
+
+	/**
+	 * \brief Contractor for the extended system.
+	 *
+	 * The extended system:
+	 * (y=f(x), g_1(x)<=0,...,g_m(x)<=0).
+	 */
+	Ctc& ctc;
+
+	/**
+	 * \brief Bisector.
+	 *
+	 * Must work on extended boxes.
+	 */
+	Bsc& bsc;
+
+	/**
+	 * Cell buffer.
+	 */
+	CellBuffer& buffer;
+
+	/**
+	 * \brief LoupFinder
+	 */
+	LoupFinderMOP& finder;
+
+	/** Required precision for the envelope */
+	double eps;
+
+	/** Required relative precision for the envelope */
+	double rel_eps;
+
+
+	/** Default precision: 0.01 */
+	static const double default_eps;
+
+
+  //server variables
+	static bool _server_mode;
+	static string instructions_file;
+	static string output_file;
+
+	static IntervalVector get_boxy(IntervalVector& v, int n){
+		IntervalVector boxy(2);
+		boxy[0]=v[n];
+		boxy[1]=v[n+1];
+		return boxy;
+	}
+
+	
 
 
 	/**
