@@ -139,7 +139,7 @@ public:
 	 *         TIMEOUT             if time is out.
 	 *
 	 */
-	Status optimize(const IntervalVector& init_box);
+	virtual Status optimize(const IntervalVector& init_box);
 
 	/* =========================== Output ============================= */
 
