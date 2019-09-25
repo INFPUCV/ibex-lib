@@ -32,6 +32,79 @@ OptimizerMOP_S::OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
 
 }
 
+
+void OptimizerMOP_S::zoom(bool out, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus, ifstream& myfile){
+	sstatus=FOCUS_SEARCH;
+	double y1_lb,y1_ub,y2_lb,y2_ub;
+	myfile >> y1_lb >> y1_ub;
+	myfile >> y2_lb >> y2_ub;
+	focus[0] = Interval(y1_lb,y1_ub);
+	focus[1] = Interval(y2_lb,y2_ub);
+
+	if(out){
+		focus[0]=BxpMOPData::y1_init;
+		focus[1]=BxpMOPData::y2_init;
+		update_focus(cells, paused_cells, focus);
+	}
+
+	for(auto cc:paused_cells){
+		buffer.push(cc);
+		cells.insert(cc);
+	}
+	paused_cells.clear();
+	max_dist_eps=NEG_INFINITY;
+}
+
+void OptimizerMOP_S::get_solution(ifstream& myfile){
+
+	string output_file;
+	double y1,y2;
+	myfile >> output_file;
+	myfile >> y1 >> y2;
+
+
+	Vector y(2); y[0]=y1; y[1]=y2;
+
+	pair<Vector, NDS_data> data = ndsH.get(y);
+	cout << "y:" << data.first << endl;
+	if(data.second.x1) cout << *data.second.x1 << endl;
+	if(data.second.x2) cout << *data.second.x2 << endl;
+
+	Vector* v=NULL;
+	Vector realy(2);
+	if(!data.second.x2 || data.second.x1 == data.second.x2){
+		realy[0]=eval_goal(goal1, *data.second.x1, data.second.x1->size()).ub();
+		realy[1]=eval_goal(goal2, *data.second.x1, data.second.x1->size()).ub();
+		if( realy[0] < y[0] + eps && realy[1] < y[1] + eps)
+		  v=new Vector(*data.second.x1);
+	}else{
+		PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
+		v=pf.find_feasible(y, 1e-8);
+	}
+
+	ofstream output, output_tmp;
+	output.open(output_file,ios_base::app);
+	output_tmp.open("output.tmp");
+	if(v){
+		realy[0]=eval_goal(goal1, *v, v->size()).ub();
+		realy[1]=eval_goal(goal2, *v, v->size()).ub();
+		output << *v << endl;
+		output << realy << endl;
+		output_tmp << *v << endl;
+		output_tmp << realy << endl;
+		delete v;
+	}else {
+		output << "not found" << endl;
+		output_tmp << "not found" << endl;
+	}
+	output.close();
+	output_tmp.close();
+
+
+}
+
+
+
 void OptimizerMOP_S::read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 
 
@@ -40,92 +113,27 @@ void OptimizerMOP_S::read_instructions(set<Cell*>& cells, set<Cell*>& paused_cel
 	myfile.open(instructions_file);
 	if (myfile.is_open()){
 		string instruction;
-		myfile >> instruction ;
-		if(instruction=="zoom_in" || instruction=="zoom_out"){
-    if(instruction=="zoom_in") sstatus=FOCUS_SEARCH;
-			if(instruction=="zoom_out") sstatus=SEARCH;
+		while(!myfile.eof()){
+			myfile >> instruction ;
+			if(instruction=="zoom_in" || instruction=="zoom_out"){
+				zoom(instruction == "zoom_out", cells, paused_cells, focus, myfile);
 
-			double y1_lb,y1_ub,y2_lb,y2_ub;
-			myfile >> y1_lb >> y1_ub;
-			myfile >> y2_lb >> y2_ub;
-			focus[0] = Interval(y1_lb,y1_ub);
-			focus[1] = Interval(y2_lb,y2_ub);
-			if(instruction == "zoom_out")
-			{		focus[0]=BxpMOPData::y1_init;
-					focus[1]=BxpMOPData::y2_init;
-					update_focus(cells, paused_cells, focus);
+			}else if(instruction=="get_solution"){
+				get_solution(myfile);
+
+			}else if(instruction=="pause"){
+				 if(sstatus==SEARCH) sstatus=STAND_BY_SEARCH;
+				 else if(sstatus==FOCUS_SEARCH) sstatus=STAND_BY_FOCUS;
+			}else if(instruction=="continue"){
+				 if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
+				 else if(sstatus==STAND_BY_FOCUS) sstatus=FOCUS_SEARCH;
+			}else if(instruction=="finish"){
+				 sstatus=FINISHED;
 			}
-
-			cout << instruction << focus << endl;
-			if(instruction=="zoom_out" || instruction=="zoom_in"){
-				for(auto cc:paused_cells){
-					buffer.push(cc);
-					cells.insert(cc);
-				}
-				paused_cells.clear();
-				max_dist_eps=NEG_INFINITY;
-			}
-
-		}else if(instruction=="get_solution"){
-			string output_file;
-			double y1,y2;
-			myfile >> output_file;
-			myfile >> y1 >> y2;
-
-
-			Vector y(2); y[0]=y1; y[1]=y2;
-
-			pair<Vector, NDS_data> data = ndsH.get(y);
-			cout << "y:" << data.first << endl;
-			if(data.second.x1) cout << *data.second.x1 << endl;
-			if(data.second.x2) cout << *data.second.x2 << endl;
-
-			Vector* v=NULL;
-			Vector realy(2);
-			if(!data.second.x2 || data.second.x1 == data.second.x2){
-				realy[0]=eval_goal(goal1, *data.second.x1, data.second.x1->size()).ub();
-				realy[1]=eval_goal(goal2, *data.second.x1, data.second.x1->size()).ub();
-				if( realy[0] < y[0] + eps && realy[1] < y[1] + eps)
-				  v=new Vector(*data.second.x1);
-			}else{
-				PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
-				v=pf.find_feasible(y, 1e-8);
-			}
-
-			ofstream output, output_tmp;
-			output.open(output_file);
-			output_tmp.open("output.tmp");
-			if(v){
-				realy[0]=eval_goal(goal1, *v, v->size()).ub();
-				realy[1]=eval_goal(goal2, *v, v->size()).ub();
-				output << *v << endl;
-				output << realy << endl;
-				output_tmp << *v << endl;
-				output_tmp << realy << endl;
-				delete v;
-			}else {
-				output << "not found" << endl;
-				output_tmp << "not found" << endl;
-			}
-			output.close();
-			output_tmp.close();
-
-		}else if(instruction=="pause"){
-			 if(sstatus==SEARCH) sstatus=STAND_BY_SEARCH;
-     else if(sstatus=FOCUS_SEARCH) sstatus=STAND_BY_FOCUS;
-		 }else if(instruction=="continue"){
-			 if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
-     else if(sstatus=STAND_BY_FOCUS) sstatus=FOCUS_SEARCH;
-		}else if(instruction=="finish"){
-			 sstatus=FINISHED;
 		}
 
 		myfile.close();
 		rename(instructions_file.c_str(), (instructions_file+".old").c_str());
-
-
-
-
 	}
 
 }
@@ -137,7 +145,6 @@ void OptimizerMOP_S::write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells,
 
 	NDS_seg LBaux;
 	NDS_seg UBaux=ndsH;
-
 
 	update_focus(cells, paused_cells, focus);
 
@@ -167,17 +174,6 @@ void OptimizerMOP_S::write_status(double rel_prec){
 	output << "," << rel_prec*100 << endl;
 	output.close();
 }
-
-/*
-* \brief Update the focus of solution
-*
-* This take in count the hull of the region and the found solutions
-*
-* Inputs:
-*    \param cells 				   a
-*    \param paused_cells		   a
-*    \param focus 				   a
-*/
 
 void OptimizerMOP_S::update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
 

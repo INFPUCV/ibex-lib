@@ -83,6 +83,10 @@ public:
 	void update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus);
 
 
+	void zoom(bool out, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus, ifstream& myfile);
+
+	void get_solution(ifstream& myfile);
+
   //server variables
 	static string instructions_file;
 	static string output_file;
