@@ -225,7 +225,7 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 	try {
 		bool server_pause=false;
 		while (!buffer.empty() || !paused_cells.empty()) {
-
+			iter++;
 			Cell *c = buffer.top();
 
 			if(iter%10==0) server_pause=true;
