@@ -221,8 +221,6 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 	focus[0]=BxpMOPData::y1_init;
 	focus[1]=BxpMOPData::y2_init;
 
-	cells.insert(root);
-
 	int iter = 0;
 	try {
 		bool server_pause=false;
