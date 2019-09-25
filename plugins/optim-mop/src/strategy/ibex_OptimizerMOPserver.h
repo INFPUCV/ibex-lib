@@ -69,6 +69,20 @@ public:
 	void read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus);
 
 
+	/*
+    * \brief Update the focus of solution
+    *
+    * This take in count the hull of the region and the found solutions
+    *
+    * Inputs:
+    *    \param cells 				   a
+    *    \param paused_cells		   a
+    *    \param focus 				   a
+    */
+
+	void update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus);
+
+
   //server variables
 	static string instructions_file;
 	static string output_file;

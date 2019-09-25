@@ -168,6 +168,41 @@ void OptimizerMOP_S::write_status(double rel_prec){
 	output.close();
 }
 
+/*
+* \brief Update the focus of solution
+*
+* This take in count the hull of the region and the found solutions
+*
+* Inputs:
+*    \param cells 				   a
+*    \param paused_cells		   a
+*    \param focus 				   a
+*/
+
+void OptimizerMOP_S::update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+
+	IntervalVector new_focus(2);
+	new_focus.set_empty();
+
+	for(auto cc:cells){
+		IntervalVector boxy=get_boxy(cc->box,n);
+		if(new_focus.is_empty())
+			new_focus=boxy;
+		else new_focus|=boxy;
+	}
+
+	for(auto cc:paused_cells){
+		IntervalVector boxy=get_boxy(cc->box,n);
+		if(new_focus.is_empty())
+			new_focus=boxy;
+		else new_focus|=boxy;
+	}
+
+	focus&=new_focus;
+
+}
+
+
 OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) {
 
 	sstatus=SEARCH;
