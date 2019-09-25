@@ -34,9 +34,7 @@ bool OptimizerMOP::_cy_upper =false;
 bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
 double OptimizerMOP::_rh = 0.1;
-bool OptimizerMOP::_server_mode=false;
-string OptimizerMOP::instructions_file="";
-string OptimizerMOP::output_file="";
+
 
 
 
@@ -81,7 +79,7 @@ IntervalVector OptimizerMOP::deriv_goal(const Function& goal, const IntervalVect
 
 
 
-bool OptimizerMOP::update_NDS2(const IntervalVector& box) {
+bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 
 	//We attempt to find two feasible points which minimize both objectives
 	//and the middle point between them
@@ -288,17 +286,14 @@ void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
 }
 
-OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
-
-	status=SUCCESS;
-	sstatus=SEARCH;
+void OptimizerMOP::pre_optimize(const IntervalVector& init_box, Cell* root){
+	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
+	root->box=init_box;
+	root->prop.add(new BxpMOPData());
 
 	nb_cells=0;
 	buffer.flush();
 	ndsH.clear();
-
-	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
-	Cell* root=new Cell(IntervalVector(n+2));
 
 	root->box=init_box;
 
@@ -322,81 +317,50 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
 
-
-	list<IntervalVector> B; //list of discarded boxes Y
-
 	time=0;
+
+	buffer.push(root);
+
+    max_dist_eps = NEG_INFINITY;
+}
+
+OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
+
+	status=SUCCESS;
+
+	Cell* root=new Cell(IntervalVector(n+2));
+	pre_optimize(init_box, root);
+
 	Timer timer;
 	timer.start();
 
-
 	set<Cell*> cells;
-	set<Cell*> paused_cells;
+	cells.insert(root);
+
 	IntervalVector focus(2);
 	focus[0]=BxpMOPData::y1_init;
 	focus[1]=BxpMOPData::y2_init;
 
-	buffer.push(root);
-	cells.insert(root);
-  max_dist_eps = NEG_INFINITY;
 
-	int iter=0;
 	try {
 		bool server_pause=false;
-		/** Criterio de termino: todas los nodos filtrados*/
-		while (!buffer.empty() || !paused_cells.empty()) { 		  iter++;
-			if(buffer.empty() && !_server_mode) break;
+		while (!buffer.empty()) {
 
-      Cell *c = buffer.top();
-			//if( _server_mode) server_io();
-			if( _server_mode && iter%10==0 ) server_pause=true;
-			while(buffer.empty() || sstatus==REACHED_PRECISION || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
-				if(server_pause) {
-			    	cout << "buffer size:" << buffer.size() << endl;
-			    	cout << "eps:" << eps << endl;
-					write_envelope(cells, paused_cells, focus);
-				}
-				sleep(2);
-				read_instructions(cells, paused_cells, focus);
-				write_status(std::max(max_dist_eps,cdata->ub_distance));
-				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty())) exit(0);
-				if(buffer.empty()) sstatus = REACHED_PRECISION;
-				server_pause=false;
-			}
+			if(buffer.empty()) break;
 
+			Cell *c = buffer.top();
 
 			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
 
 			buffer.pop();
 			cells.erase(c);
 
-
-			if(_server_mode){
-				IntervalVector boxy(2); boxy[0]=c->box[n]; boxy[1]=c->box[n+1];
-				list< Vector > inner_segments = ndsH.non_dominated_points(focus.lb());
-				dominance_peeler2(focus,inner_segments);
-
-				if(focus[0].ub()<boxy[0].lb() || focus[1].ub()<boxy[1].lb() ){
-					paused_cells.insert(c);
-					continue;
-				}
-			}
-
-
-
 			if(cdata->ub_distance <= eps){
-				 if(_server_mode){
-					 while(!buffer.empty()){
-					   paused_cells.insert(buffer.pop());
-						 if(max_dist_eps<cdata->ub_distance) max_dist_eps=cdata->ub_distance;
-					 }
-					 cells.clear();
-					 continue;
-				 }
-				 break;
+				delete c;
+
+				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)) break;
+				else continue;
 			}
-
-
 
 			nb_cells++;
 			contract_and_bound(*c, init_box);
@@ -406,11 +370,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				continue;
 			}
 
-			update_NDS2(c->box);
-
-			Vector v=ndsH.lb();
-			y1_ub.first = v[0];
-			y2_ub.second= v[1];
+			upper_bounding(c->box);
 
 			pair<Cell*,Cell*> new_cells;
 			bool atomic_box=false;
@@ -421,23 +381,22 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				atomic_box=true;
 			}
 
-    	double dist=0.0;
-    	if(!atomic_box) dist=ndsH.distance(c);
+			double dist=0.0;
+			if(!atomic_box) dist=ndsH.distance(c);
 
 			//se elimina la caja
-    	if(dist < eps || atomic_box){
+			if(dist < eps || atomic_box){
 
-    		if(new_cells.first){
-    			delete new_cells.first;
-    			delete new_cells.second;
-    		}
+				if(new_cells.first){
+					delete new_cells.first;
+					delete new_cells.second;
+				}
 
-				if(_server_mode && dist>0.0){
-					paused_cells.insert(c);
-				}else delete c;
+			delete c;
 
-				continue;
-		}
+			continue;
+
+			}
 
 			delete c; // deletes the cell.
 
@@ -463,8 +422,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	timer.stop();
 	time = timer.get_time();
 
-	if(!_server_mode)
-	   py_Plotter::offline_plot(ndsH.NDS2, NULL, "output2.txt");
+	py_Plotter::offline_plot(ndsH.NDS2, NULL, "output2.txt");
 	return status;
 }
 

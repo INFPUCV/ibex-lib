@@ -92,7 +92,6 @@ public:
 
 	typedef enum {POINTS, SEGMENTS, HAMBURGER, /* splitting strategies */ MIDPOINT, MAXDIST, ALL} Mode;
 
-  typedef enum {STAND_BY_FOCUS, STAND_BY_SEARCH, REACHED_PRECISION, SEARCH, FOCUS_SEARCH, FINISHED} ServerStatus;
 
 	/**
 	 *  \brief Create an optimizer.
@@ -124,6 +123,9 @@ public:
 	 * \brief Delete *this.
 	 */
 	virtual ~OptimizerMOP();
+
+
+	void pre_optimize(const IntervalVector& init_box, Cell* root);
 
 	/**
 	 * \brief Run the optimization.
@@ -212,182 +214,6 @@ public:
 
 	}
 
-	/*
-    * \brief 
-    *
-    *
-    * Inputs:
-    *    \param cells 				   a
-    *    \param paused_cells		   a
-    *    \param focus 				   a
-    */
-
-  	void write_status(double rel_prec){
-		ofstream output;
-		output.open( (output_file+".state").c_str());
-		switch(sstatus){
-			case STAND_BY_SEARCH:
-			case STAND_BY_FOCUS: output << "STAND_BY" ; break;
-			case REACHED_PRECISION: output << "REACHED_PRECISION" ; break;
-			case SEARCH: output << "SEARCH" ; break;
-			case FOCUS_SEARCH: output << "FOCUS_SEARCH" ; break;
-			case FINISHED: output << "FINISHED" ; break;
-		}
-		output << "," << rel_prec*100 << endl;
-		output.close();
-	}
-
-	/*
-    * \brief Print the region of solutions
-    *
-    * 
-    *
-    * Inputs:
-    *    \param cells 				   a
-    *    \param paused_cells		   a
-    *    \param focus 				   a
-    */
-
- 	void write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
-		//escritura de archivos
-		//dormir 1 segundo y lectura de instrucciones
-		cout << "escritura de archivo" << endl;
-
-		NDS_seg LBaux;
-		NDS_seg UBaux=ndsH;
-
-
-		update_focus(cells, paused_cells, focus);
-
-		/*
-		Vector v(2); v[0]=focus[0].lb(); v[1]=focus[1].ub();
-		LBaux.addPoint(v);
-		UBaux.addPoint(v);
-		v[0]=focus[0].ub(); v[1]=focus[1].lb();
-		LBaux.addPoint(v);
-		UBaux.addPoint(v);
-		*/
-
-		for(auto cc:cells)	LBaux.add_lb(*cc);
-		for(auto cc:paused_cells) LBaux.add_lb(*cc);
-
-		//se escribe el archivo de salida
-		IntervalVector focus2(2);
-		focus2[0]=BxpMOPData::y1_init;
-		focus2[1]=BxpMOPData::y2_init;
-		update_focus(cells, paused_cells, focus2);
-
-		py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
-	}
-
-	/*
-    * \brief Read the instruccions of work
-    *
-    * after reading a instruction, this delete it from the file
-    *
-    * Inputs:
-    *    \param cells 				   a
-    *    \param paused_cells		   a
-    *    \param focus 				   a
-    */
-
-	void read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
-
-
-		//se lee el archivo de instrucciones y se elimina
-		string line; ifstream myfile;
-		myfile.open(instructions_file);
-		if (myfile.is_open()){
-			string instruction;
-			myfile >> instruction ;
-			if(instruction=="zoom_in" || instruction=="zoom_out"){
-        if(instruction=="zoom_in") sstatus=FOCUS_SEARCH;
-				if(instruction=="zoom_out") sstatus=SEARCH;
-
-				double y1_lb,y1_ub,y2_lb,y2_ub;
-				myfile >> y1_lb >> y1_ub;
-				myfile >> y2_lb >> y2_ub;
-				focus[0] = Interval(y1_lb,y1_ub);
-				focus[1] = Interval(y2_lb,y2_ub);
-				if(instruction == "zoom_out")
-				{		focus[0]=BxpMOPData::y1_init;
-						focus[1]=BxpMOPData::y2_init;
-						update_focus(cells, paused_cells, focus);
-				}
-
-				cout << instruction << focus << endl;
-				if(instruction=="zoom_out" || instruction=="zoom_in"){
-					for(auto cc:paused_cells){
-						buffer.push(cc);
-						cells.insert(cc);
-					}
-					paused_cells.clear();
-					max_dist_eps=NEG_INFINITY;
-				}
-
-			}else if(instruction=="get_solution"){
-				string output_file;
-				double y1,y2;
-				myfile >> output_file;
-				myfile >> y1 >> y2;
-
-
-				Vector y(2); y[0]=y1; y[1]=y2;
-
-				pair<Vector, NDS_data> data = ndsH.get(y);
-				cout << "y:" << data.first << endl;
-				if(data.second.x1) cout << *data.second.x1 << endl;
-				if(data.second.x2) cout << *data.second.x2 << endl;
-
-				Vector* v=NULL;
-				Vector realy(2);
-				if(!data.second.x2 || data.second.x1 == data.second.x2){
-					realy[0]=eval_goal(goal1, *data.second.x1, data.second.x1->size()).ub();
-					realy[1]=eval_goal(goal2, *data.second.x1, data.second.x1->size()).ub();
-					if( realy[0] < y[0] + eps && realy[1] < y[1] + eps)
-					  v=new Vector(*data.second.x1);
-				}else{
-					PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
-					v=pf.find_feasible(y, 1e-8);
-				}
-
-				ofstream output, output_tmp;
-				output.open(output_file);
-				output_tmp.open("output.tmp");
-				if(v){
-					realy[0]=eval_goal(goal1, *v, v->size()).ub();
-					realy[1]=eval_goal(goal2, *v, v->size()).ub();
-					output << *v << endl;
-					output << realy << endl;
-					output_tmp << *v << endl;
-					output_tmp << realy << endl;
-					delete v;
-				}else {
-					output << "not found" << endl;
-					output_tmp << "not found" << endl;
-				}
-				output.close();
-				output_tmp.close();
-
-			}else if(instruction=="pause"){
-				 if(sstatus==SEARCH) sstatus=STAND_BY_SEARCH;
-         else if(sstatus=FOCUS_SEARCH) sstatus=STAND_BY_FOCUS;
-			 }else if(instruction=="continue"){
-				 if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
-         else if(sstatus=STAND_BY_FOCUS) sstatus=FOCUS_SEARCH;
-			}else if(instruction=="finish"){
-				 sstatus=FINISHED;
-			}
-
-			myfile.close();
-			rename(instructions_file.c_str(), (instructions_file+".old").c_str());
-
-
-
-
-		}
-
-	}
 
 	/* =========================== Settings ============================= */
 
@@ -440,11 +266,6 @@ public:
 	static const double default_eps;
 
 
-  //server variables
-	static bool _server_mode;
-	static string instructions_file;
-	static string output_file;
-
 	static IntervalVector get_boxy(IntervalVector& v, int n){
 		IntervalVector boxy(2);
 		boxy[0]=v[n];
@@ -496,7 +317,7 @@ public:
 	static double _rh;
 
   //max distance of cells rejected by eps-close
-  double max_dist_eps;
+   double max_dist_eps;
 
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;
@@ -528,7 +349,7 @@ protected:
 	 */
 	void hamburger(const IntervalVector& aIV, const IntervalVector& bIV);
 
-   bool process_node(PFunction& pf, Node_t& n_t);
+    bool process_node(PFunction& pf, Node_t& n_t);
 
 	void cy_contract2(Cell& c, list < Vector >& inpoints);
 
@@ -593,11 +414,8 @@ protected:
 	 * <li> add the segment to NDS
 	 * </ul>
 	 */
-	bool update_NDS2(const IntervalVector& box);
+	bool upper_bounding(const IntervalVector& box);
 
-
-
-private:
 
 
 
@@ -609,7 +427,6 @@ private:
 	/* Remember return status of the last optimization. */
 	Status status;
 
-	ServerStatus sstatus;
 
 
 	/** The current non-dominated set sorted by increasing x */
