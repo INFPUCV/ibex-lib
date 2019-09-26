@@ -359,15 +359,20 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			  cout << "buffer_size:" << buffer.size() << endl;
 		  }*/
 		  iter++;
+		  if(iter%10==0){
+				cout << iter << endl;
+				py_Plotter::offline_plot(NULL, ndsH.NDS2);
+				getchar();
+			}
 
 		  if (trace >= 2) cout << buffer;
 
 			Cell *c = buffer.pop();
 
-			if (CrowdingDistanceBSMOP::bs_level==0) {
+			/*if (CrowdingDistanceBSMOP::bs_level==0) {
 				py_Plotter::offline_plot(NULL, ndsH.NDS2);
-				getchar();
-			}
+				//getchar();
+			}*/
 
 			//cout <<  c->get<CellMOP>().ub_distance << ":" << c->box << endl;
 

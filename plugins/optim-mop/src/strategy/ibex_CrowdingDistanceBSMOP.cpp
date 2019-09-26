@@ -48,6 +48,13 @@ namespace ibex {
 			//hv=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
 			initial_reduction=hv-hv0;
 			//cout << initial_reduction << endl;
+			ofstream myfile;
+			int n = cell->box.size();
+  			myfile.open ("global.txt");//, std::ios_base::app);
+			myfile << cell->box[n-1] << "\n" << cell->box[n-2] << "\n";
+			myfile.close();
+
+			//getchar();
 
 		}
 
@@ -105,6 +112,20 @@ namespace ibex {
 
 		}
 		
+		if(bs_level>10){
+			while(!nextBuffer.empty()){
+				c=*nextBuffer.begin();
+				globalBuffer.push(*nextBuffer.begin());
+				nextBuffer.erase(nextBuffer.begin());
+			}
+			while(!currentBuffer.empty()){
+
+				globalBuffer.push(currentBuffer.top());
+				currentBuffer.pop();
+
+			}
+		}
+
 		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
 
@@ -158,10 +179,6 @@ namespace ibex {
 
 		if (OptimizerMOP::_hv) return c;
 
-		//cout << "aqui es" << endl;
-		//cout << globalBuffer.size() << endl;
-
-		//AQUI SE CAE
 		double dist=nds->distance(c);
 		//we update the distance and reinsert the element
 
