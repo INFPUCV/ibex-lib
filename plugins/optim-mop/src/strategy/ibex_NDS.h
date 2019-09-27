@@ -65,7 +65,13 @@ public:
 };
 
 /**
- * \brief Segment based non-dominated set
+ * \brief Not Dominated Segments (ibexMOP).
+ *
+ * This class is an implementation of the elements that are identified as not dominated
+ * The segments are identified as points
+ *
+ * \remark In all the comments of this class, "NDS" means "Non Dominated Set"
+ * related to the objectives f1 and f2
  */
 class NDS_seg {
 public:

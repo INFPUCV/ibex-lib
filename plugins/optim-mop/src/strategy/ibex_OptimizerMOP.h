@@ -54,15 +54,35 @@ static bool sort_using_middle_than(double u, double v)
   return fabs(u-0.5) < fabs(v-0.5);
 }
 
+/**
+ * \brief Node_data
+ *
+ * This class is an assistant of the global optimization algorith
+ *
+ */
 
 
 class Node_t{
 public:
-	Node_t(Interval t, double dist) : t(t), dist(dist) { }
 
+	/**
+	 * \brief create the node
+	 * 
+	 * Inputs:
+	 *	\param t 		   		   the interval of points contained in the node
+	 *	\param dist 			   a
+	 *
+	 */
+	
+	Node_t(Interval t, double dist) : t(t), dist(dist) { }
+	/**
+	 * \brief compare 2 nodes based on the dist of both
+	 */
 	friend bool operator<(const Node_t& n1, const Node_t& n2){
 		return n1.dist < n2.dist;
 	}
+
+	/* =========================== Settings ============================= */
 
 	Interval t;
 	set<double> b;
@@ -98,14 +118,14 @@ public:
 	 *  \brief Create an optimizer.
 	 *
 	 * Inputs:
-	 *   \param n        - number of variables of the <b>original system</b>
-	 *   \param f1	     - the objective function f1
-     *	 \param f2       - the objective function f2
-	 *   \param ctc      - contractor for <b>extended<b> boxes (of size n+2)
-	 *   \param bsc      - bisector for <b>extended<b> boxes (of size n+2)
-	 *   \param buffer   - buffer for <b>extended<b> boxes (of size n+2)
-	 *   \param finder   - the finder of ub solutions
-	 *   \param eps	     - the required precision
+	 *   \param n        		   number of variables of the <b>original system</b>
+	 *   \param f1	       		   the objective function f1
+     *	 \param f2       		   the objective function f2
+	 *   \param ctc       		   contractor for <b>extended<b> boxes (of size n+2)
+	 *   \param bsc       		   bisector for <b>extended<b> boxes (of size n+2)
+	 *   \param buffer    		   buffer for <b>extended<b> boxes (of size n+2)
+	 *   \param finder    		   the finder of ub solutions
+	 *   \param eps	      		   the required precision
 	 *
 
 	 *
@@ -389,6 +409,21 @@ public:
 
 	}
 
+	/*
+    * \brief Get the box of potential solutions
+    *
+    * Inputs:
+    *    \param v 				       a
+    *    \param n		               a
+    */
+
+	static IntervalVector get_boxy(IntervalVector& v, int n){
+		IntervalVector boxy(2);
+		boxy[0]=v[n];
+		boxy[1]=v[n+1];
+		return boxy;
+	}
+
 	/* =========================== Settings ============================= */
 
 	/**
@@ -445,15 +480,7 @@ public:
 	static string instructions_file;
 	static string output_file;
 
-	static IntervalVector get_boxy(IntervalVector& v, int n){
-		IntervalVector boxy(2);
-		boxy[0]=v[n];
-		boxy[1]=v[n+1];
-		return boxy;
-	}
-
 	
-
 
 	/**
 	 * \brief Trace activation flag.
@@ -500,7 +527,6 @@ public:
 
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;
-
 	Mode split_mode;
 
 
@@ -524,7 +550,7 @@ public:
 protected:
 
 	/**
-	 * Hamburger Algorithm
+	 * \brief Hamburger Algorithm
 	 */
 	void hamburger(const IntervalVector& aIV, const IntervalVector& bIV);
 
@@ -532,11 +558,7 @@ protected:
 
 	void cy_contract2(Cell& c, list < Vector >& inpoints);
 
-	/**
-	 * \brief return a set of non-dominated segments in the box
-	 */
-	//list<pair <double,double> > non_dominated_segments(IntervalVector& box);
-
+	
 	/**
 	 * \brief return the first and last points dominating the lb of the box
 	 */
@@ -599,7 +621,7 @@ protected:
 
 private:
 
-
+	/* ======== Some other parameters of the solver =========== */
 
 	/**
 	 * min feasible value found for each objective
