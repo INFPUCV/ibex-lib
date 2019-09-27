@@ -47,12 +47,8 @@ int main(int argc, char** argv){
 	//args::ValueFlag<double> _weight2(parser, "float", "Weight of the second objective (default: 0.01)", {"w2","weight2"});
 	//args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
-	args::ValueFlag<std::string> _upperbounding(parser, "string", "Upper bounding strategy (default: ub2).", {"ub"});
+	args::ValueFlag<std::string> _upperbounding(parser, "string", "Upper bounding strategy (no|ub1|ub2) (default: no).", {"ub"});
 	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the ub2 algorithm (dist < rh*ini_dist)", {"rh"});
-	args::Flag _server_mode(parser, "server", "Server Mode (some options are discativated).",{"server_mode"});
-	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
-	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
-
 
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
@@ -97,8 +93,6 @@ int main(int argc, char** argv){
 	fac2.add_var(ext_sys.args[ext_sys.nb_var-1]);
 	fac2.add_ctr(ext_sys.args[ext_sys.nb_var-2] + a * ext_sys.args[ext_sys.nb_var-1] - w = 0);
 
-	OptimizerMOP::_server_mode=true;
-
 	OptimizerMOP::cy_contract_var= _cy_contract || _cy_contract_full;
 	OptimizerMOP::_cy_upper= _cy_contract_full;
 
@@ -114,7 +108,7 @@ int main(int argc, char** argv){
 	string bisection= (_bisector)? _bisector.Get() : "largestfirst";
 	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
 	double eps= (_eps)? _eps.Get() : 0.01 ;
-	double rel_eps= (_server_mode && !_eps_r)? 0.01: ((_eps_r)? _eps_r.Get() : 0.0 );
+	double rel_eps= (_eps_r)? _eps_r.Get() : 0.0 ;
 	double eps_x= 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
 	double eqeps= 1.e-8;
@@ -129,7 +123,6 @@ int main(int argc, char** argv){
 	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
-	if(_server_mode) OptimizerMOP::_eps_contract = false;
 
 	if(bisection=="largestfirst_noy"){
 		bisection="largestfirst";
@@ -195,11 +188,7 @@ int main(int argc, char** argv){
 	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f, 1e-8, nb_ub_sols);
 
 	CellBufferOptim* buffer;
-	if(strategy=="OC1")
-	  buffer = new CellSet<OC1>;
-	else if(strategy=="OC2")
-	  buffer = new CellSet<OC2>;
-	else if(strategy=="OC3")
+	if(strategy=="OC3")
 	  buffer = new CellSet<OC3>;
 	else if(strategy=="OC4")
 	  buffer = new CellSet<OC4>;
@@ -296,47 +285,28 @@ int main(int argc, char** argv){
 
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-			(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
-			OptimizerMOP::MIDPOINT,	eps, rel_eps);
+	OptimizerMOP* o;
+	o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
+					(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+					OptimizerMOP::MIDPOINT,	eps, rel_eps);
 
-	OptimizerMOP::_rh=rh;
-	OptimizerMOP::_server_mode=_server_mode;
-	OptimizerMOP::output_file= (_output_file)? _output_file.Get():"output2.txt";
-	OptimizerMOP::instructions_file=(_instructions_file)? _instructions_file.Get():"instructions.txt";
 
 	if(strategy=="NDSdist"){
-		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o.ndsH);
+		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
 	}
 
 	// the trace
-	o.trace=(_trace)? _trace.Get() : false;
+	o->trace=(_trace)? _trace.Get() : false;
 
 	// the allowed time for search
-	o.timeout=timelimit;
+	o->timeout=timelimit;
 
 	// the search itself
-	o.optimize(ext_sys.box);
+	o->optimize(ext_sys.box);
 
 
 	// printing the results
-	o.report(verbose);
-
-
-
-/*
-	delete bs;
-	delete buffer;
-	delete _ext_sys;
-	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn") {
-		delete lr;
-	    delete ctcxn;
-	    delete cxn;
-	    delete cxn_poly;
-	    delete cxn_compo;
-	}
-
-*/
+	o->report(verbose);
 
 	return 0;
 
