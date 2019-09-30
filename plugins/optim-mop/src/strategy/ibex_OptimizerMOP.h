@@ -269,22 +269,6 @@ public:
 	static const double default_eps;
 
 
-<<<<<<< HEAD
-  //server variables
-	static bool _server_mode;
-	static string instructions_file;
-	static string output_file;
-
-	
-=======
-	static IntervalVector get_boxy(IntervalVector& v, int n){
-		IntervalVector boxy(2);
-		boxy[0]=v[n];
-		boxy[1]=v[n+1];
-		return boxy;
-	}
-
->>>>>>> e82f83d024803d9211a0cb2907abce9a8c6d7faa
 
 	/**
 	 * \brief Trace activation flag.
