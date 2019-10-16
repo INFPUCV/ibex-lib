@@ -155,21 +155,45 @@ int main(int argc, char** argv){
 	cout << "hamburger?: " << ((_hamburger)? "yes":"no") << endl;
 
 
+	//Obtain num objective function from variables
+	int nFuncObj = 0;
+	for(int i=0; i<ext_sys.args.size(); i++){
+		string aux(ext_sys.args[i].name);
+		//check if variable contain z (reference to objective function) and count it!
+		if(aux.find("z")==0) nFuncObj++;
+		//cout <<"ext_sys.args["<<i<<"].name = "<< ext_sys.args[i].name << "\n";
+	}
+//	cout<<"num funciones objetivos "<<nFuncObj<<"\n";
+//	cout<<"ext_sys.args.size() "<<ext_sys.args.size()<<"\n";
+//	cout <<"ext_sys.nb_ctr "<<ext_sys.nb_ctr<<"\n";
+//	cout <<"\n";
+
+	//Create Array of objective function
+	Array<const Function> f;
+	f.resize(nFuncObj);
+	//Add every objective function into Array of Objective functions
+	for(int j=0 ;j<nFuncObj;j++){
+		f.set_ref(j, ext_sys.ctrs[j].f);
+		//cout<<"objective function = "<<f[j]<<"\n";
+	}
+
+
 	SystemFactory fac;
 
+	//Add variables into fac (exclude variables associated with function objectives)
 	Array<const ExprNode> symbs;
 	Array<const ExprSymbol> _x1x2;
-	for(int i=0; i<ext_sys.args.size()-2; i++ ){
+	for(int i=0; i<ext_sys.args.size()-nFuncObj; i++ ){
 		const ExprSymbol& x=ExprSymbol::new_(ext_sys.args[i].name);
 		fac.add_var(x);
 		symbs.add(x);
 
 	}
 
-	for(int j=2; j<ext_sys.nb_ctr; j++ ){
+	for(int j=nFuncObj; j<ext_sys.nb_ctr; j++ ){
 		const ExprNode& e = ext_sys.ctrs[j].f.expr();
 		Array<const ExprSymbol> _x1x2;
-		for(int i=0;i<ext_sys.args.size()-2;i++) _x1x2.add(ext_sys.ctrs[j].f.args()[i]);
+		for(int i=0;i<ext_sys.args.size()-nFuncObj;i++) _x1x2.add(ext_sys.ctrs[j].f.args()[i]);
 
 		const ExprNode& new_e = ExprCopy().copy(_x1x2, symbs, e);
 		ExprCtr cc(new_e, ext_sys.ctrs[j].op);
@@ -190,7 +214,7 @@ int main(int argc, char** argv){
 	box[sys.nb_var]=0;
 	box[sys.nb_var+1]=0;
 
-	LoupFinderMOP finder(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f, 1e-8, nb_ub_sols);
+	LoupFinderMOP finder(sys,f, 1e-8, nb_ub_sols);
 
 	CellBufferOptim* buffer;
 	if(strategy=="OC3")
@@ -292,16 +316,26 @@ int main(int argc, char** argv){
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP* o;
 	if(!_server_mode){
+		/*
 		o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-					(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
-					OptimizerMOP::MIDPOINT,	eps, rel_eps);
-	}else{
-		o = new OptimizerMOP_S(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
 							OptimizerMOP::MIDPOINT,	eps, rel_eps);
+		*/
+		o = new OptimizerMOP(sys.nb_var, f, *ctcxn,*bs,*buffer,finder,
+						(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+						OptimizerMOP::MIDPOINT,	eps, rel_eps);
+
+	}else{
+		/*o = new OptimizerMOP_S(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
+							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+							OptimizerMOP::MIDPOINT,	eps, rel_eps);
+
+
+
 		OptimizerMOP_S::_rh=rh;
 		OptimizerMOP_S::output_file= (_output_file)? _output_file.Get():"output2.txt";
 		OptimizerMOP_S::instructions_file=(_instructions_file)? _instructions_file.Get():"instructions.txt";
+		*/
 	}
 
 
