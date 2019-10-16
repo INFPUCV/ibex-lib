@@ -34,21 +34,43 @@ bool OptimizerMOP::_cy_upper =false;
 bool OptimizerMOP::cy_contract_var = false;
 bool OptimizerMOP::_eps_contract = false;
 double OptimizerMOP::_rh = 0.1;
+int OptimizerMOP::nb_ObjFunc = 5; //MAKE NUMBER OF OBJECTIVE FUNCTION WIP
 
 
 
 
-OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
+
+/*OLD CONSTRUCTOR, only OptimizerMOPserver use it for something... WIP
+ *
+ */
+//OptimizerMOP::OptimizerMOP(int n, const Function &f1,  const Function &f2,
+//		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
+//		Mode nds_mode, Mode split_mode, double eps, double rel_eps) : n(n),
+//                				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
+//								goals(f1),
+//								finder(finder), trace(false), timeout(-1), status(SUCCESS),
+//                				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode), split_mode(split_mode),
+//												rel_eps(rel_eps) {
+//
+//	cout<<"entra en el antiguo constructor de OptimizerMOP\n";
+//
+//	if (trace) cout.precision(12);
+//}
+
+/*NEW CONSTRUCTOR,
+ * WIP to adapt goals, eliminate goal1 and goal2
+ *
+ */
+OptimizerMOP::OptimizerMOP(int n,Array<const Function> fObj,
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
 		Mode nds_mode, Mode split_mode, double eps, double rel_eps) : n(n),
-                				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
-								finder(finder), trace(false), timeout(-1), status(SUCCESS),
+                				ctc(ctc), bsc(bsc), buffer(buffer),
+								goals(fObj), finder(finder), trace(false), timeout(-1), status(SUCCESS),
                 				time(0), nb_cells(0), eps(eps), nds_mode(nds_mode), split_mode(split_mode),
-												rel_eps(rel_eps) {
+												rel_eps(rel_eps){
 
 	if (trace) cout.precision(12);
 }
-
 
 OptimizerMOP::~OptimizerMOP() {
 
@@ -92,7 +114,9 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 
 	Vector mid=box2.mid();
 	if (finder.norm_sys.is_inner(mid)){
-		Vector v(2); v[0]=eval_goal(goal1,mid,n).ub(); v[1]=eval_goal(goal2,mid,n).ub();
+		//Vector v(2); v[0]=eval_goal(goal1,mid,n).ub(); v[1]=eval_goal(goal2,mid,n).ub();
+		Vector v(goals.size());
+		for(int i=0; i<goals.size(); i++) v[i] = eval_goal(goals[i], mid, n).ub();
 		ndsH.addPoint(v, NDS_data(mid));
 	}
 
@@ -100,7 +124,10 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 		try{
 			while(true){
 				xa = finder.find(box2,box2,POS_INFINITY).first;
-				Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
+				//Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
+				Vector v(goals.size());
+				v[0]=eval_goal(goals[0],xa,n).ub();
+				v[1]=eval_goal(goals[1],xa,n).ub();
 				ndsH.addPoint(v, NDS_data(xa.mid()));
 			}
 		}catch (LoupFinder::NotFound& ) {
@@ -118,7 +145,8 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 	try{
 		xb = finder.find(box2,box2,POS_INFINITY).first;
 	}catch (LoupFinder::NotFound& ) {
-		Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
+		//Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
+		Vector v(goals.size()); v[0]=eval_goal(goals[0],xa,n).ub(); v[1]=eval_goal(goals[1],xa,n).ub();
 		ndsH.addPoint(v, NDS_data(xa.mid()));
 		return true;
 	}
@@ -129,9 +157,12 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 
 }
 
+//Funtion is not executed (already commented in branch and bound method)
 void OptimizerMOP::discard_generalized_monotonicty_test(IntervalVector& box, const IntervalVector& initbox){
-	IntervalVector grad_f1= goal1.gradient(box);
-	IntervalVector grad_f2= goal2.gradient(box);
+//	IntervalVector grad_f1= goal1.gradient(box);
+//	IntervalVector grad_f2= goal2.gradient(box);
+	IntervalVector grad_f1= goals[0].gradient(box);
+	IntervalVector grad_f2= goals[1].gradient(box);
 
 	IntervalVector new_box(box);
 
@@ -260,44 +291,69 @@ void OptimizerMOP::dominance_peeler2(IntervalVector& box, list < Vector >& inpoi
 
 }
 
+/*
+ * Retorna un vector de intervalos de la caja de variables (cell) asociada con las funciones objetivos
+ *
+ * Eg:
+ * 	Variables x1, x2, x3, z1, z2, z3, z4 		(4 objectives function)
+ *
+ * 	cell box = ([0, 5] ; [0, 3] ; [0, 3] ; [0, 62.55000000000001] ; [1, 50] ; [0, 8] ; [-3, 3])
+ * 	box_y = ([0, 62.55000000000001] ; [1, 50] ; [0, 8] ; [-3, 3])
+ */
+IntervalVector OptimizerMOP::get_box_y(IntervalVector &box){
+	IntervalVector box_y(goals.size());
+	int n=box.size()-goals.size();
+	for(int i=0; i< goals.size(); i++) box_y[i]=box[n+i];
+	return box_y;
+}
+
+void OptimizerMOP::set_box_y(IntervalVector &box, IntervalVector &box_y){
+	for(int i=0; i<box_y.size(); i++)box[n+i] = box_y[i];
+//	cout<<"box = "<<box<<endl<<"\n";
+}
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
-  IntervalVector boxy=ndsH.get_box_y(&c);
+	//Obtain box from cell (atm boxy only works on 2 objectives functions)
+	IntervalVector boxy=get_box_y(c.box);
+	std::cout<<"boxy = "<<boxy<<endl;
+	//WIP---
 	list< Vector > inner_segments = ndsH.non_dominated_points(boxy.lb());
 
+	//WIP---
 	dominance_peeler2(boxy,inner_segments);
-	c.box[n]=boxy[0];
-  c.box[n+1]=boxy[1];
+
+	set_box_y(c.box, boxy);
 
 	//discard_generalized_monotonicty_test(c.box, init_box);
 
 	if (c.box.is_empty()) return;
 
-	if(cy_contract_var)
+	if(cy_contract_var){
 			cy_contract2(c,inner_segments);
-	else
+	}else{
+			//Apply contraction with acidhc4 or hc4 on the box
 			ctc.contract(c.box);
-
-
+	}
 	if (c.box.is_empty()) return;
 
 
 
 }
 
+//WIP add array of goals
 void OptimizerMOP::pre_optimize(const IntervalVector& init_box, Cell* root){
 	//the box in cells have the n original variables plus the two objective variables (y1 and y2)
-	root->box=init_box;
-	root->prop.add(new BxpMOPData());
+//	root->box=init_box;
+//	root->prop.add(new BxpMOPData());
 
 	nb_cells=0;
 	buffer.flush();
 	ndsH.clear();
-
+	MOPData = new BxpMOPData();
+	//MOPData = new BxpMOPData();
 	root->box=init_box;
-
-	root->prop.add(new BxpMOPData());
+	root->prop.add(MOPData);
 
 	// add data required by the cell buffer
 	buffer.add_property(init_box, root->prop);
@@ -308,14 +364,29 @@ void OptimizerMOP::pre_optimize(const IntervalVector& init_box, Cell* root){
 	// add data required by the contractor
 	ctc.add_property(init_box, root->prop);
 
-	BxpMOPData::y1_init=eval_goal(goal1, root->box, n);
-	BxpMOPData::y2_init=eval_goal(goal2, root->box, n);
 
-	cout << BxpMOPData::y1_init << endl;
-	cout << BxpMOPData::y2_init << endl;
+//	BxpMOPData::y1_init=eval_goal(goals[0], root->box, n);
+//	BxpMOPData::y2_init=eval_goal(goals[1], root->box, n);
+
+	//Evaluate every objective function into initial domains value of original variables
+	for(int i=0; i<goals.size();i++){
+		Interval goal_evaluation = eval_goal(goals[i], root->box, n);
+		MOPData->yn_init.put(i, goal_evaluation);
+		//BxpMOPData::yn_init.put(i, goal_evaluation);
+	}
+
+//	cout << BxpMOPData::y1_init << endl;
+//	cout << BxpMOPData::y2_init << endl;
+
 
 	y1_ub.first=POS_INFINITY;
 	y2_ub.second=POS_INFINITY;
+
+	//Init min feasible value for each objective
+	double inf = POS_INFINITY;
+	yn_ub.resize(goals.size());
+	for(int i=0; i<goals.size();i++) yn_ub.set_ref(i,inf);
+
 
 	time=0;
 
@@ -324,23 +395,26 @@ void OptimizerMOP::pre_optimize(const IntervalVector& init_box, Cell* root){
     max_dist_eps = NEG_INFINITY;
 }
 
+//WIP to add goals
 OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	status=SUCCESS;
 
-	Cell* root=new Cell(IntervalVector(n+2));
+	//the box in cells have the n original variables plus the objective variables (y1, y2, ..., yn)
+	//Cell* root=new Cell(IntervalVector(n+2);
+	Cell* root=new Cell(IntervalVector(n+goals.size()));
 	pre_optimize(init_box, root);
-
 	Timer timer;
 	timer.start();
-
 	set<Cell*> cells;
 	cells.insert(root);
 
-	IntervalVector focus(2);
-	focus[0]=BxpMOPData::y1_init;
-	focus[1]=BxpMOPData::y2_init;
-
+	IntervalVector focus(goals.size());
+	//Set focus, utilizado en OptimizerMOPserver, pyPlotter y en el calculo de eps cuando rel_eps>0
+	for(int i=0; i<goals.size();i++) {
+		//focus[i] = BxpMOPData::yn_init.operator [](i);
+		focus[i] = MOPData->yn_init.operator [](i);
+	}
 
 	try {
 		bool server_pause=false;
@@ -350,11 +424,13 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			Cell *c = buffer.top();
 
-			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
+			std::cout <<"-----------------------\nCurrent box cell"<<c->box<<endl;
+			//if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
 
 			buffer.pop();
 			cells.erase(c);
 
+			//if lower bound distance of cell is lower than eps (Discard box)
 			if(cdata->ub_distance <= eps){
 				delete c;
 
@@ -363,12 +439,15 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			}
 
 			nb_cells++;
+
+			//WIP for dominance Peeler and ndsh.nondominatedPoints
 			contract_and_bound(*c, init_box);
 
 			if (c->box.is_empty()) {
 				delete c;
 				continue;
 			}
+			std::cout <<"Current box cell contracted"<<c->box<<endl;
 
 			upper_bounding(c->box);
 
@@ -434,7 +513,8 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 	IntervalVector xb=bIV;
 	double dist0=POS_INFINITY;
 
-	PFunction pf(goal1, goal2, xa, xb);
+	//PFunction pf(goal1, goal2, xa, xb);
+	PFunction pf(goals[0], goals[1], xa, xb);
 
 	Node_t n_init (Interval(0,1), POS_INFINITY);
 	std::priority_queue<Node_t, vector<Node_t> > n;
