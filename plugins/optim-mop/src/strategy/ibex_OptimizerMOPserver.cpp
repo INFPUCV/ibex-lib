@@ -25,12 +25,12 @@ namespace ibex {
 string OptimizerMOP_S::instructions_file="";
 string OptimizerMOP_S::output_file="";
 
-OptimizerMOP_S::OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
-		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
-		Mode nds_mode, Mode split_mode, double eps, double rel_eps) :
-		OptimizerMOP(n, f1, f2, ctc, bsc, buffer, finder, nds_mode, split_mode, eps, rel_eps), sstatus(STAND_BY_SEARCH){
-
-}
+//OptimizerMOP_S::OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
+//		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
+//		Mode nds_mode, Mode split_mode, double eps, double rel_eps) :
+//		OptimizerMOP(n, f1, f2, ctc, bsc, buffer, finder, nds_mode, split_mode, eps, rel_eps), sstatus(STAND_BY_SEARCH){
+//
+//}
 
 
 void OptimizerMOP_S::zoom(bool out, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus, ifstream& myfile){
@@ -42,8 +42,8 @@ void OptimizerMOP_S::zoom(bool out, set<Cell*>& cells, set<Cell*>& paused_cells,
 	focus[1] = Interval(y2_lb,y2_ub);
 
 	if(out){
-		focus[0]=BxpMOPData::y1_init;
-		focus[1]=BxpMOPData::y2_init;
+		//focus[0]=BxpMOPData::y1_init;
+		//focus[1]=BxpMOPData::y2_init;
 		update_focus(cells, paused_cells, focus);
 	}
 
@@ -73,21 +73,21 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
 	Vector* v=NULL;
 	Vector realy(2);
 	if(!data.second.x2 || data.second.x1 == data.second.x2){
-		realy[0]=eval_goal(goal1, *data.second.x1, data.second.x1->size()).ub();
-		realy[1]=eval_goal(goal2, *data.second.x1, data.second.x1->size()).ub();
+		//realy[0]=eval_goal(goal1, *data.second.x1, data.second.x1->size()).ub();
+		//realy[1]=eval_goal(goal2, *data.second.x1, data.second.x1->size()).ub();
 		if( realy[0] < y[0] + eps && realy[1] < y[1] + eps)
 		  v=new Vector(*data.second.x1);
 	}else{
-		PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
-		v=pf.find_feasible(y, 1e-8);
+		//PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
+		//v=pf.find_feasible(y, 1e-8);
 	}
 
 	ofstream output, output_tmp;
 	output.open(output_file,ios_base::app);
 	output_tmp.open("output.tmp");
 	if(v){
-		realy[0]=eval_goal(goal1, *v, v->size()).ub();
-		realy[1]=eval_goal(goal2, *v, v->size()).ub();
+		//realy[0]=eval_goal(goal1, *v, v->size()).ub();
+		//realy[1]=eval_goal(goal2, *v, v->size()).ub();
 		output << *v << endl;
 		output << realy << endl;
 		output_tmp << *v << endl;
@@ -153,8 +153,8 @@ void OptimizerMOP_S::write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells,
 
 	//se escribe el archivo de salida
 	IntervalVector focus2(2);
-	focus2[0]=BxpMOPData::y1_init;
-	focus2[1]=BxpMOPData::y2_init;
+//	focus2[0]=BxpMOPData::y1_init;
+//	focus2[1]=BxpMOPData::y2_init;
 	update_focus(cells, paused_cells, focus2);
 
 	py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
@@ -214,8 +214,8 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 	cells.insert(root);
 
 	IntervalVector focus(2);
-	focus[0]=BxpMOPData::y1_init;
-	focus[1]=BxpMOPData::y2_init;
+//	focus[0]=BxpMOPData::y1_init;
+//	focus[1]=BxpMOPData::y2_init;
 
 	int iter = 0;
 	try {
