@@ -18,9 +18,9 @@ public:
 
     typedef enum {STAND_BY_FOCUS, STAND_BY_SEARCH, REACHED_PRECISION, SEARCH, FOCUS_SEARCH, FINISHED} ServerStatus;
 
-	OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
-			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
+//	OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
+//			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
+//			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
 
 	virtual ~OptimizerMOP_S() { }
 
