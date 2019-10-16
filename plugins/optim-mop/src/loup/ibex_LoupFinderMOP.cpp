@@ -9,29 +9,50 @@
 #include "ibex_PdcHansenFeasibility.h"
 #include "ibex_FncActivation.h"
 
+//#include "ibex_OptimizerMOP.h"//Para acceder a el numero de funciones objetivos del problema WIP
+
 
 namespace ibex {
 
  double LoupFinderMOP::_weight2=0.0;
 
 //TODO: remove this recipe for the argument of the max number of iterations of the LP solver
-LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps, int nb_sol) :
-		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT, LinearizerXTaylor::INF),
-		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,100/*LPSolver::default_max_iter*/)),
-		goal1(goal1), goal2(goal2), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var) {
+//LoupFinderMOP::LoupFinderMOP(const System& sys, const Array<const Function> goals, double eqeps, int nb_sol) :
+//		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT, LinearizerXTaylor::INF),
+//		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,100/*LPSolver::default_max_iter*/)),
+//		goal1(goal1), goal2(goal2), goals(goals), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var) {
+//
+//	if (sys.nb_ctr>0)
+//		// ==== check if the system contains equalities ====
+//		for (int i=0; i<sys.f_ctrs.image_dim(); i++) {
+//			if (sys.ops[i]==EQ) {
+//				(bool&) has_equality = true;
+//				break;
+//			}
+//		}
+//
+////	nb_simplex=0;
+////	diam_simplex=0;
+//}
 
-	if (sys.nb_ctr>0)
-		// ==== check if the system contains equalities ====
-		for (int i=0; i<sys.f_ctrs.image_dim(); i++) {
-			if (sys.ops[i]==EQ) {
-				(bool&) has_equality = true;
-				break;
-			}
-		}
 
-//	nb_simplex=0;
-//	diam_simplex=0;
-}
+ LoupFinderMOP::LoupFinderMOP(const System& sys, const Array<const Function> goals, double eqeps, int nb_sol) :
+ 		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT, LinearizerXTaylor::INF),
+ 		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,100/*LPSolver::default_max_iter*/)),
+ 		goals(goals), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var) {
+
+ 	if (sys.nb_ctr>0)
+ 		// ==== check if the system contains equalities ====
+ 		for (int i=0; i<sys.f_ctrs.image_dim(); i++) {
+ 			if (sys.ops[i]==EQ) {
+ 				(bool&) has_equality = true;
+ 				break;
+ 			}
+ 		}
+
+ //	nb_simplex=0;
+ //	diam_simplex=0;
+ }
 
 bool LoupFinderMOP::ub_correction(Vector p, IntervalVector& res){
     //if(!norm_sys.is_inner(p)) return false;
@@ -103,11 +124,18 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 		lp_solver.set_bounds(box);
 
 		IntervalVector box2(box);
-		box2.resize(n+2);
-		box2[n]=0.0; box2[n+1]=0.0;
+		//box2.resize(n+2);
+		box2.resize(n+goals.size());
+		box2[n]=0.0; box2[n+1]=0.0; //CHECK LATER
+//		IntervalVector ig= (phase==0 && (nb_sol>1 || rand()%2==0))?
+//				(goal1.gradient(box2.mid())+ _weight2*goal2.gradient(box2.mid())) :
+//				(goal2.gradient(box2.mid())+ _weight2*goal1.gradient(box2.mid()));
+
 		IntervalVector ig= (phase==0 && (nb_sol>1 || rand()%2==0))?
-				(goal1.gradient(box2.mid())+ _weight2*goal2.gradient(box2.mid())) :
-				(goal2.gradient(box2.mid())+ _weight2*goal1.gradient(box2.mid()));
+						(goals[0].gradient(box2.mid())+ _weight2*goals[1].gradient(box2.mid())) :
+						(goals[1].gradient(box2.mid())+ _weight2*goals[0].gradient(box2.mid()));
+
+
 
 		if (ig.is_empty()){ // unfortunately, at the midpoint the function is not differentiable
 			phase = 0;
