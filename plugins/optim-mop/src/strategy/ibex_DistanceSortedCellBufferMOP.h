@@ -95,7 +95,7 @@ class DistanceSortedCellBufferMOP : public CellBufferOptim {
 	 */
 	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distance > cells;
 
-  NDS_seg* nds;
+    NDS_seg* nds;
 
 };
 
