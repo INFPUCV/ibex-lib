@@ -15,6 +15,7 @@
 #include "ibex_Interval.h"
 #include "ibex_ExtendedSystem.h"
 #include "ibex_Map.h"
+//#include "ibex_BcpMOPData_StaticInit.h"
 
 namespace ibex {
 
@@ -57,12 +58,35 @@ public:
 	/**
 	 * The evaluation of the objective f1 with the initial box
 	 */
-	static Interval y1_init;
+//	static Interval y1_init;
 
 	/**
 	 * The evaluation of the objective f2 with the initial box
 	 */
-	static Interval y2_init;
+//	static Interval y2_init;
+
+
+
+
+	/**
+	 *  The evaluation of every objective function fn with the initial box
+	*/
+
+//	static IntervalVector yn_init;
+//
+//	static class _init
+//	{
+//	public:
+//		_init(int num){
+//			yn_init.resize(num);
+//			for(int i=0; i<num; i++){
+//				yn_init.set_empty();
+//			}
+//		}
+//	}_initializer;
+
+	IntervalVector yn_init;
+
 
     /**unique identifier for comparisons*/
     int idd;
@@ -78,6 +102,8 @@ public:
 
 	/** Distance of the box to the current non dominated set  */
 	double ub_distance;
+
+	static Interval get_y1();
 
 protected:
 
