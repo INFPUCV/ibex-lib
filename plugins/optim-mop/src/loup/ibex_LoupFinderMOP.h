@@ -47,7 +47,10 @@ public:
 	 * \param goal1
 	 * \param goal2
 	 */
-	LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, double eqeps=NormalizedSystem::default_eps_h, int nb_sol=50);
+
+	//LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, const Array<const Function> goals, double eqeps=NormalizedSystem::default_eps_h, int nb_sol=50);
+
+	LoupFinderMOP(const System& sys, const Array<const Function> goals, double eqeps=NormalizedSystem::default_eps_h, int nb_sol=50);
 
 
 	/**
@@ -113,12 +116,18 @@ protected:
 	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
 	 * evaluate them we have to set z1 and z2 to [0,0].
 	 */
-	const Function& goal1;
+	//const Function& goal1;
 
 	/**
 	 * \brief Objective function f2
 	 */
-	const Function& goal2;
+	//const Function& goal2;
+
+	/*
+	 * Array of objective funcion fn
+	 */
+	const Array<const Function> goals;
+
 
 	/**
 	 * \brief True iff there is an equality.
