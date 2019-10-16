@@ -159,6 +159,7 @@ public:
 	}
 
 
+
 	static IntervalVector get_box_y(const Cell* c){
 		IntervalVector boxy(2);
 		int n=c->box.size()-2;
@@ -214,7 +215,6 @@ public:
 	//returns a list of points non-dominated by lb
 	list< Vector > non_dominated_points(const Vector& lb){
 		list < Vector > inpoints;
-
 		Vector firstp(2);
 		Vector lastp(2);
 
