@@ -70,6 +70,7 @@ public:
 };
 
 
+
 /**
  * \brief Global biObjetive Optimizer (ibexMOP).
  *
@@ -115,9 +116,17 @@ public:
 	 * We are assuming that the objective variables are n and n+1
 	 *
 	 */
-	OptimizerMOP(int n, const Function &f1,  const Function &f2,
-			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
-			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
+//
+//	OptimizerMOP(int n, const Function &f1,  const Function &f2,
+//			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
+//			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
+
+
+
+	OptimizerMOP(int n, Array<const Function> f,
+				Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
+				Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
+
 
 	/**
 	 * \brief Delete *this.
@@ -192,8 +201,13 @@ public:
 	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
 	 * evaluate them we have to set z1 and z2 to [0,0].
 	 */
-	const Function& goal1;
-	const Function& goal2;
+//	const Function& goal1;
+//	const Function& goal2;
+
+	const Array<const Function> goals;
+
+	BxpMOPData *MOPData;
+
 
 	/**
 	 * \brief Contractor for the extended system.
@@ -231,6 +245,7 @@ public:
 	static const double default_eps;
 
 
+	//MOPServer use this function...
 	static IntervalVector get_boxy(IntervalVector& v, int n){
 		IntervalVector boxy(2);
 		boxy[0]=v[n];
@@ -238,7 +253,9 @@ public:
 		return boxy;
 	}
 
-	
+	IntervalVector get_box_y(IntervalVector &box);
+
+	void set_box_y(IntervalVector &box, IntervalVector &box_y);
 
 
 	/**
@@ -280,6 +297,9 @@ public:
 
 	//Termination criteria for the hamburger algorithm (dist < rh*ini_dist)
 	static double _rh;
+
+	//Number of objective function
+	static int nb_ObjFunc;
 
   //max distance of cells rejected by eps-close
    double max_dist_eps;
@@ -388,6 +408,12 @@ protected:
 	 * min feasible value found for each objective
 	 */
     pair <double, double> y1_ub, y2_ub;
+
+
+    /*
+    * min feasible value found for each objective
+    */
+    Array<double> yn_ub;
 
 	/* Remember return status of the last optimization. */
 	Status status;
