@@ -59,8 +59,11 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
 
 	string output_file;
 	double y1,y2;
+	string y1_str, y2_str;
 	myfile >> output_file;
-	myfile >> y1 >> y2;
+	myfile >> y1_str >> y2_str;
+	y1 = stod(y1_str);
+	y2 = stod(y2_str);
 
 
 	Vector y(2); y[0]=y1; y[1]=y2;
@@ -88,6 +91,7 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
 	if(v){
 		realy[0]=eval_goal(goal1, *v, v->size()).ub();
 		realy[1]=eval_goal(goal2, *v, v->size()).ub();
+    output << y1_str << " " << y2_str << endl;
 		output << *v << endl;
 		output << realy << endl;
 		output_tmp << *v << endl;
@@ -118,7 +122,7 @@ void OptimizerMOP_S::read_instructions(set<Cell*>& cells, set<Cell*>& paused_cel
 			if(instruction=="zoom_in" || instruction=="zoom_out"){
 				zoom(instruction == "zoom_out", cells, paused_cells, focus, myfile);
 
-			}else if(instruction=="get_solution"){
+			}else if(instruction=="upper_envelope"){
 				get_solution(myfile);
 
 			}else if(instruction=="pause"){
@@ -209,6 +213,8 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 	Timer timer;
 	timer.start();
 
+	Timer timer_stand_by;
+
 	set<Cell*> cells;
 	set<Cell*> paused_cells;
 	cells.insert(root);
@@ -226,15 +232,21 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 
 			if(iter%10==0) server_pause=true;
 			while(buffer.empty() || sstatus==REACHED_PRECISION || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
+        if (sstatus == SEARCH || sstatus== FOCUS_SEARCH) timer_stand_by.restart();
 				if(server_pause) {
 			    	cout << "buffer size:" << buffer.size() << endl;
 			    	cout << "eps:" << eps << endl;
-					write_envelope(cells, paused_cells, focus);
+						write_envelope(cells, paused_cells, focus);
 				}
-				sleep(2);
+				sleep(4);
 				read_instructions(cells, paused_cells, focus);
 				write_status(std::max(max_dist_eps,cdata->ub_distance));
-				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty())) exit(0);
+
+				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty()) || timer_stand_by.get_time()>1000 ){
+					 sstatus = FINISHED;
+					 write_status(std::max(max_dist_eps,cdata->ub_distance));
+					 exit(0);
+				}
 				if(buffer.empty()) sstatus = REACHED_PRECISION;
 				server_pause=false;
 			}
@@ -325,6 +337,7 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 	}
 	catch (TimeOutException& ) {
 		status = TIME_OUT;
+
 		cout << "timeout" << endl;
 	}
 
