@@ -33,15 +33,28 @@ OptimizerMOP_S::OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
 }
 
 
-void OptimizerMOP_S::zoom(bool out, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus, ifstream& myfile){
-	sstatus=FOCUS_SEARCH;
-	double y1_lb,y1_ub,y2_lb,y2_ub;
-	myfile >> y1_lb >> y1_ub;
-	myfile >> y2_lb >> y2_ub;
-	focus[0] = Interval(y1_lb,y1_ub);
-	focus[1] = Interval(y2_lb,y2_ub);
+void OptimizerMOP_S::zoom(string instruction, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus, ifstream& myfile){
 
-	if(out){
+	focus[0]=BxpMOPData::y1_init;
+	focus[1]=BxpMOPData::y2_init;
+
+	double y1_lb,y1_ub,y2_lb,y2_ub;
+
+	if(instruction != "aspiration_level"){
+		myfile >> y1_lb >> y1_ub;
+	  myfile >> y2_lb >> y2_ub;
+		focus[0] = Interval(y1_lb,y1_ub);
+		focus[1] = Interval(y2_lb,y2_ub);
+	}else{
+		myfile >> y1_ub >> y2_ub;
+		focus[0] = Interval(focus[0].lb(),y1_ub);
+		focus[1] = Interval(focus[1].lb(),y2_ub);
+	}
+
+
+
+
+	if(instruction == "zoom_out"){
 		focus[0]=BxpMOPData::y1_init;
 		focus[1]=BxpMOPData::y2_init;
 		update_focus(cells, paused_cells, focus);
@@ -52,7 +65,7 @@ void OptimizerMOP_S::zoom(bool out, set<Cell*>& cells, set<Cell*>& paused_cells,
 		cells.insert(cc);
 	}
 	paused_cells.clear();
-	max_dist_eps=NEG_INFINITY;
+
 }
 
 void OptimizerMOP_S::get_solution(ifstream& myfile){
@@ -62,6 +75,7 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
 	string y1_str, y2_str;
 	myfile >> output_file;
 	myfile >> y1_str >> y2_str;
+	cout << y1_str << "," << y2_str << endl;
 	y1 = stod(y1_str);
 	y2 = stod(y2_str);
 
@@ -69,19 +83,21 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
 	Vector y(2); y[0]=y1; y[1]=y2;
 
 	pair<Vector, NDS_data> data = ndsH.get(y);
-	cout << "y:" << data.first << endl;
-	if(data.second.x1) cout << *data.second.x1 << endl;
-	if(data.second.x2) cout << *data.second.x2 << endl;
+	//cout << "y:" << data.first << endl;
+	if(data.second.n>0) cout << data.second.x1 << endl;
+	if(data.second.n>1) cout << data.second.x2 << endl;
 
 	Vector* v=NULL;
 	Vector realy(2);
-	if(!data.second.x2 || data.second.x1 == data.second.x2){
-		realy[0]=eval_goal(goal1, *data.second.x1, data.second.x1->size()).ub();
-		realy[1]=eval_goal(goal2, *data.second.x1, data.second.x1->size()).ub();
+	if(data.second.n==0) {cout << "data.second.n=0, error?" << endl; exit(0); }
+
+	if(data.second.n==1 || data.second.x1 == data.second.x2){
+		realy[0]=eval_goal(goal1, data.second.x1, data.second.x1.size()).ub();
+		realy[1]=eval_goal(goal2, data.second.x1, data.second.x1.size()).ub();
 		if( realy[0] < y[0] + eps && realy[1] < y[1] + eps)
-		  v=new Vector(*data.second.x1);
+		  v=new Vector(data.second.x1);
 	}else{
-		PFunction pf(goal1, goal2, *data.second.x1, *data.second.x2);
+		PFunction pf(goal1, goal2, data.second.x1, data.second.x2);
 		v=pf.find_feasible(y, 1e-8);
 	}
 
@@ -94,10 +110,15 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
     output << y1_str << " " << y2_str << endl;
 		output << *v << endl;
 		output << realy << endl;
+		output_tmp << y1_str << " " << y2_str << endl;
 		output_tmp << *v << endl;
 		output_tmp << realy << endl;
+		cout << y1_str << " " << y2_str << endl;
+		cout << *v << endl;
+		cout << realy << endl;
 		delete v;
 	}else {
+		output << y1_str << " " << y2_str << endl;
 		output << "not found" << endl;
 		output_tmp << "not found" << endl;
 	}
@@ -110,21 +131,28 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
 
 
 void OptimizerMOP_S::read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
-
-
 	//se lee el archivo de instrucciones y se elimina
 	string line; ifstream myfile;
 	myfile.open(instructions_file);
 	if (myfile.is_open()){
 		string instruction;
-		while(!myfile.eof()){
-			myfile >> instruction ;
-			if(instruction=="zoom_in" || instruction=="zoom_out"){
-				zoom(instruction == "zoom_out", cells, paused_cells, focus, myfile);
+		while(myfile >> instruction){
+			cout << instruction << endl;
+			if(instruction=="zoom_in" || instruction=="zoom_out" || instruction == "aspiration_level"){
+				zoom(instruction, cells, paused_cells, focus, myfile);
+				if(instruction=="zoom_in" || instruction == "aspiration_level") sstatus=FOCUS_SEARCH;
+				else{
+					if(sstatus = STAND_BY_FOCUS) sstatus==STAND_BY_SEARCH;
+					if(sstatus = FOCUS_SEARCH) sstatus==SEARCH;
+				}
 
 			}else if(instruction=="upper_envelope"){
 				get_solution(myfile);
 
+			}else if(instruction=="save"){
+				string filename;
+				myfile >> filename;
+				save_state_in_file(filename, cells, paused_cells);
 			}else if(instruction=="pause"){
 				 if(sstatus==SEARCH) sstatus=STAND_BY_SEARCH;
 				 else if(sstatus==FOCUS_SEARCH) sstatus=STAND_BY_FOCUS;
@@ -160,7 +188,7 @@ void OptimizerMOP_S::write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells,
 	focus2[0]=BxpMOPData::y1_init;
 	focus2[1]=BxpMOPData::y2_init;
 	update_focus(cells, paused_cells, focus2);
-
+	cout << 3 << endl;
 	py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
 }
 
@@ -175,7 +203,7 @@ void OptimizerMOP_S::write_status(double rel_prec){
 		case FOCUS_SEARCH: output << "FOCUS_SEARCH" ; break;
 		case FINISHED: output << "FINISHED" ; break;
 	}
-	output << "," << rel_prec*100 << endl;
+	output << "," << rel_prec << endl;
 	output.close();
 }
 
@@ -202,35 +230,69 @@ void OptimizerMOP_S::update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, I
 
 }
 
+OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box, string filename) {
 
-OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) {
+	nb_cells=0;
+	buffer.flush();
+	ndsH.clear();
 
-	sstatus=SEARCH;
-
-	Cell* root=new Cell(IntervalVector(n+2));
-	pre_optimize(init_box, root);
-
-	Timer timer;
-	timer.start();
-
-	Timer timer_stand_by;
+	y1_ub.first=POS_INFINITY;
+	y2_ub.second=POS_INFINITY;
+	time=0;
 
 	set<Cell*> cells;
-	set<Cell*> paused_cells;
-	cells.insert(root);
+
+	load_state_from_file(filename, init_box, cells);
+
+
+	for(auto c:cells){
+		buffer.push(c);
+	}
 
 	IntervalVector focus(2);
 	focus[0]=BxpMOPData::y1_init;
 	focus[1]=BxpMOPData::y2_init;
 
-	int iter = 0;
+	set<Cell*> paused_cells;
+	update_focus(cells, paused_cells, focus);
+	cout << focus << endl;
+
+  sstatus=SEARCH;
+	return _optimize(cells, init_box, focus);
+
+}
+
+OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) {
+	Cell* root=new Cell(IntervalVector(n+2));
+	pre_optimize(init_box, root);
+	set<Cell*> cells;
+	cells.insert(root);
+  sstatus=SEARCH;
+
+	IntervalVector focus(2);
+	focus[0]=BxpMOPData::y1_init;
+	focus[1]=BxpMOPData::y2_init;
+
+	return _optimize(cells, init_box, focus);
+}
+
+
+OptimizerMOP_S::Status OptimizerMOP_S::_optimize(set<Cell*>& cells, const IntervalVector& init_box, IntervalVector& focus) {
+
+	Timer timer;
+	timer.start();
+
+	Timer timer_stand_by;
+	set<Cell*> paused_cells;
+
+	double current_precision = POS_INFINITY;
+
+	int iter = 1;
 	try {
 		bool server_pause=false;
 		while (!buffer.empty() || !paused_cells.empty()) {
-			iter++;
-			Cell *c = buffer.top();
-
-			if(iter%10==0) server_pause=true;
+			cout << 2 << endl;
+			if(iter%5==0) server_pause=true;
 			while(buffer.empty() || sstatus==REACHED_PRECISION || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
         if (sstatus == SEARCH || sstatus== FOCUS_SEARCH) timer_stand_by.restart();
 				if(server_pause) {
@@ -238,24 +300,28 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 			    	cout << "eps:" << eps << endl;
 						write_envelope(cells, paused_cells, focus);
 				}
-				sleep(4);
+				sleep(2);
 				read_instructions(cells, paused_cells, focus);
-				write_status(std::max(max_dist_eps,cdata->ub_distance));
+				write_status(current_precision);
 
 				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty()) || timer_stand_by.get_time()>1000 ){
 					 sstatus = FINISHED;
-					 write_status(std::max(max_dist_eps,cdata->ub_distance));
+					 write_status(current_precision);
 					 exit(0);
 				}
 				if(buffer.empty()) sstatus = REACHED_PRECISION;
-				server_pause=false;
+				server_pause=false; iter++;
 			}
+			cout <<4 << endl;
+			Cell *c = buffer.top();
 
+			current_precision=cdata->ub_distance;
+			buffer.pop();
+			cells.erase(c);
 
 			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
 
-			buffer.pop();
-			cells.erase(c);
+
 
 
 			//server stuff
@@ -267,16 +333,12 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 				paused_cells.insert(c);
 				continue;
 			}
-
-
-
-
+			cout << cdata->ub_distance << endl;
 			if(cdata->ub_distance <= eps){
 				 //server stuff: the cell is paused
-				 while(!buffer.empty()){
+				 while(!buffer.empty())
 				   paused_cells.insert(buffer.pop());
-				   if(max_dist_eps<cdata->ub_distance) max_dist_eps=cdata->ub_distance;
-				 }
+
 				 cells.clear();
 				 continue;
 				 //break;
@@ -285,6 +347,8 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 
 
 			nb_cells++;
+			iter++;
+
 			contract_and_bound(*c, init_box);
 
 			if (c->box.is_empty()) {
@@ -292,11 +356,13 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 				continue;
 			}
 
+
 			upper_bounding(c->box);
 
 			pair<Cell*,Cell*> new_cells;
 			bool atomic_box=false;
 			try {
+				cout << c->box << endl;
 				new_cells=pair<Cell*,Cell*>(bsc.bisect(*c));
 			}
 			catch (NoBisectableVariableException& ) {
@@ -305,6 +371,7 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 
 			double dist=0.0;
 			if(!atomic_box) dist=ndsH.distance(c);
+			//cout << c->box.lb() << ":" << dist << endl;
 
 			//if the box is dominated it is removed, otherwise it is paused
 			if(dist < eps || atomic_box){

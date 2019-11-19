@@ -295,10 +295,6 @@ void OptimizerMOP::pre_optimize(const IntervalVector& init_box, Cell* root){
 	buffer.flush();
 	ndsH.clear();
 
-	root->box=init_box;
-
-	root->prop.add(new BxpMOPData());
-
 	// add data required by the cell buffer
 	buffer.add_property(init_box, root->prop);
 
@@ -321,7 +317,6 @@ void OptimizerMOP::pre_optimize(const IntervalVector& init_box, Cell* root){
 
 	buffer.push(root);
 
-    max_dist_eps = NEG_INFINITY;
 }
 
 OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {

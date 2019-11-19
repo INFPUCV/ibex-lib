@@ -141,6 +141,11 @@ public:
 	 */
 	virtual Status optimize(const IntervalVector& init_box);
 
+	virtual Status optimize(const IntervalVector& init_box, string input_file) {
+		cout << "Optimizing with an input_file is not implemented" << endl;
+		exit(0);
+	};
+
 	/* =========================== Output ============================= */
 
 	/**
@@ -238,7 +243,7 @@ public:
 		return boxy;
 	}
 
-	
+
 
 
 	/**
@@ -280,9 +285,6 @@ public:
 
 	//Termination criteria for the hamburger algorithm (dist < rh*ini_dist)
 	static double _rh;
-
-  //max distance of cells rejected by eps-close
-   double max_dist_eps;
 
 	//NDS mode: POINTS or SEGMENTS
 	Mode nds_mode;

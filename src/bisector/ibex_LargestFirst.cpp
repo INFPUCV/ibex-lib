@@ -1,5 +1,5 @@
 //============================================================================
-//                                  I B E X                                   
+//                                  I B E X
 // File        : ibex_LargestFirst.cpp
 // Author      : Bertrand Neveu, Gilles Chabert
 // Copyright   : IMT Atlantique (France)

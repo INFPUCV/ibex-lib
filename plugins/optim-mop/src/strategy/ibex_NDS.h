@@ -10,6 +10,7 @@
 #include <map>
 #include <list>
 #include "ibex_BxpMOPData.h"
+#include "ibex_OptimizerMOP.h"
 
 #ifndef OPTIM_MOP_SRC_STRATEGY_IBEX_NDS_H_
 #define OPTIM_MOP_SRC_STRATEGY_IBEX_NDS_H_
@@ -33,35 +34,39 @@ struct sorty2{
 
 class NDS_data{
 public:
-	NDS_data() : x1(NULL), x2(NULL){ }
+	NDS_data() : x1(1), x2(1){ n=0; }
 
-	NDS_data(const Vector& x1) : x1(new Vector(x1)),  x2(NULL) { }
+	NDS_data(const Vector& x1) : x1(x1),  x2(1) { n=1;}
 
-	NDS_data(const Vector& x1, const Vector& x2) : x1(new Vector(x1)),  x2(new Vector(x2)) { }
+	NDS_data(const Vector& x1, const Vector& x2) : x1(x1),  x2(x2) { n=2; }
 
+/*
 	NDS_data(const NDS_data& other) {
 		x1=NULL; x2=NULL;
 		if(other.x1) x1=new Vector(*other.x1);
 		if(other.x2) x2=new Vector(*other.x2);
 	}
+*/
 
-	NDS_data& operator=(NDS_data& other){
+	/*NDS_data& operator=(NDS_data& other){
 		if(this != &other){
-			if(x1) delete x1;
-			if(x2) delete x2;
+			//if(x1) delete x1;
+			//if(x2) delete x2;
 			x1=NULL; x2=NULL;
 			if(other.x1) x1=new Vector(*other.x1);
 			if(other.x2) x2=new Vector(*other.x2);
 		}
 		return *this;
-	}
+	}*/
 
 	~NDS_data(){
-		if(x1) delete x1;
-		if(x2) delete x2;
+		//if(x1) delete x1;
+		//if(x2) delete x2;
 	}
-	Vector* x1;
-	Vector* x2;
+
+  int n; //number of valid vectors
+	Vector x1;
+	Vector x2;
 };
 
 /**
@@ -190,20 +195,7 @@ public:
 
 
 	// Agrega el lowerbound de una caja al NDS
-	pair <Vector, Vector> add_lb(Cell& c){
-		IntervalVector box_y=get_box_y(&c);
-
-		pair <Vector, Vector> segment = get_segment(box_y.lb(),
-					-1/((BxpMOPData*) c.prop[BxpMOPData::id])->a,
-					((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a);
-
-
-		addPoint(segment.first);
-		addPoint(segment.second);
-		addSegment(segment);
-		return segment;
-
-	}
+	pair <Vector, Vector> add_lb(Cell& c);
 
     struct NoIntersectionException : public exception {
        const char * what () const throw () {

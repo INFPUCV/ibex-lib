@@ -12,6 +12,29 @@ namespace ibex {
 	 //map< pair <double, double>, IntervalVector, sorty2 > NDS_seg::NDS2;
 	 bool NDS_seg::_trace;
 
+ 	// Agrega el lowerbound de una caja al NDS
+ 	pair <Vector, Vector> NDS_seg::add_lb(Cell& c){
+ 		IntervalVector box_y=get_box_y(&c);
+		cout << box_y << endl;
+		cout << ((BxpMOPData*) c.prop[BxpMOPData::id])->a << "," <<
+		((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb << endl;
+
+ 		if(OptimizerMOP::cy_contract_var){
+ 			pair <Vector, Vector> segment = get_segment(box_y.lb(),
+ 						-1/((BxpMOPData*) c.prop[BxpMOPData::id])->a,
+ 						((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a);
+
+ 			addPoint(segment.first);
+ 			addPoint(segment.second);
+ 			addSegment(segment);
+ 			return segment;
+ 		}else{
+ 			addPoint(box_y.lb());
+ 			return make_pair(box_y.lb(), box_y.lb());
+ 		}
+
+ 	}
+
 	bool NDS_seg::is_dominated(const Vector& new_p){
 		if(new_p[0] == POS_INFINITY && new_p[1] == POS_INFINITY) return false;
 
@@ -165,14 +188,17 @@ namespace ibex {
 		Vector aux_y(2);
 
 		aux_y[0]=new_y[0]; aux_y[1]=POS_INFINITY;
-		Vector intersection1 = pointIntersection(it1->first, first_dom, new_y, aux_y);
-		aux_y[0]=POS_INFINITY; aux_y[1]=new_y[1];
-		Vector intersection2 = pointIntersection(last_dom, it2->first, new_y, aux_y);
 
-		// se agregan el punto y los dos obtenidos anteriormente
-		NDS2.insert(make_pair(new_y, data));
-		NDS2.insert(make_pair(intersection1, NDS_data()));
-		NDS2.insert(make_pair(intersection2, next_data));
+		try{
+			Vector intersection1 = pointIntersection(it1->first, first_dom, new_y, aux_y);
+			aux_y[0]=POS_INFINITY; aux_y[1]=new_y[1];
+			Vector intersection2 = pointIntersection(last_dom, it2->first, new_y, aux_y);
+
+			// se agregan el punto y los dos obtenidos anteriormente
+			NDS2.insert(make_pair(new_y, data));
+			NDS2.insert(make_pair(intersection1, NDS_data()));
+			NDS2.insert(make_pair(intersection2, next_data));
+		}catch(NoIntersectionException& e) {  }
 
 	}
 

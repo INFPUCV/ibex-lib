@@ -52,6 +52,7 @@ int main(int argc, char** argv){
 	args::Flag _server_mode(parser, "server", "Server Mode (some options are discativated).",{"server_mode"});
 	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
 	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
+	args::ValueFlag<std::string> _input_file(parser, "string", "Loading file", {"input_file"});
 
 
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
@@ -316,7 +317,10 @@ int main(int argc, char** argv){
 	o->timeout=timelimit;
 
 	// the search itself
-	o->optimize(ext_sys.box);
+	if(!_input_file)
+		o->optimize(ext_sys.box);
+	else
+	  o->optimize(ext_sys.box, _input_file.Get());
 
 
 	// printing the results
