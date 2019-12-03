@@ -38,6 +38,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _bisector(parser, "string", "the bisection method (default: largestfirst)", {'b', "bis"});
 	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy (default: NDSdist)", {'s', "search"});
 	args::ValueFlag<double> _eps(parser, "float", "the desired precision (default: 0.01)", {"eps"});
+	args::ValueFlag<double> _eps_rpm(parser, "float", "precision of the relative point method (default: 1e-5)", {"eps_rpm"});
 	args::ValueFlag<double> _eps_r(parser, "float", "the desired relative precision (default: 0.01)", {"eps_r"});
 	args::ValueFlag<double> _timelimit(parser, "float", "timelimit (default: 100)", {'t',"timelimit"});
 	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
@@ -113,6 +114,7 @@ int main(int argc, char** argv){
 	string bisection= (_bisector)? _bisector.Get() : "largestfirst";
 	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
 	double eps= (_eps)? _eps.Get() : 0.01 ;
+	double eps_rpm= (_eps_rpm)? _eps_rpm.Get() : 0.01 ;
 	double rel_eps= (_server_mode && !_eps_r)? 0.01: ((_eps_r)? _eps_r.Get() : 0.0 );
 	double eps_x= 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
@@ -299,7 +301,7 @@ int main(int argc, char** argv){
 	}else{
 		o = new OptimizerMOP_S(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
-							OptimizerMOP::MIDPOINT,	eps, rel_eps);
+							OptimizerMOP::MIDPOINT,	eps, rel_eps, eps_rpm);
 		OptimizerMOP_S::_rh=rh;
 		OptimizerMOP_S::output_file= (_output_file)? _output_file.Get():"output2.txt";
 		OptimizerMOP_S::instructions_file=(_instructions_file)? _instructions_file.Get():"instructions.txt";

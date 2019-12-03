@@ -236,7 +236,7 @@ public:
 	static const double default_eps;
 
 
-	static IntervalVector get_boxy(IntervalVector& v, int n){
+	static IntervalVector get_boxy(const IntervalVector& v, int n){
 		IntervalVector boxy(2);
 		boxy[0]=v[n];
 		boxy[1]=v[n+1];

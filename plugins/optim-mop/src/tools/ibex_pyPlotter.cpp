@@ -29,8 +29,12 @@ void py_Plotter::offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
 
 	map< Vector, NDS_data > :: iterator ub=NDS.begin();
 	for(;ub!=NDS.end();ub++){
-		if(!focus || (*focus).contains(ub->first))
-			output << "(" << ub->first[0] << "," << ub->first[1] << "),";
+		if(!focus || (*focus).contains(ub->first)){
+			//output << "(" << ub->first[0] << "," << ub->first[1] << "),";
+
+      output  << "(" << ub->first[0] << " ; " << ub->first[1] << ")_" <<
+                ((ub->second.n==1)? ub->second.x1:0.0) << ",";
+    }
 	}
 
   output << "]" << endl;

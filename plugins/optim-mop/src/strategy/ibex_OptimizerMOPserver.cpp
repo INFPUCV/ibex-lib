@@ -25,39 +25,38 @@ namespace ibex {
 string OptimizerMOP_S::instructions_file="";
 string OptimizerMOP_S::output_file="";
 
+Vector rpm_compare::ref(2);
+
 OptimizerMOP_S::OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
 		Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
-		Mode nds_mode, Mode split_mode, double eps, double rel_eps) :
-		OptimizerMOP(n, f1, f2, ctc, bsc, buffer, finder, nds_mode, split_mode, eps, rel_eps), sstatus(STAND_BY_SEARCH){
+		Mode nds_mode, Mode split_mode, double eps, double rel_eps, double eps_rpm) :
+		OptimizerMOP(n, f1, f2, ctc, bsc, buffer, finder, nds_mode, split_mode, eps, rel_eps),
+		eps_rpm(eps_rpm), sstatus(STAND_BY_SEARCH), rp(2), x_rpm(n), y_rpm(2){
 
 }
 
 
-void OptimizerMOP_S::zoom(string instruction, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus, ifstream& myfile){
+void OptimizerMOP_S::zoom(string instruction, IntervalVector& focus, ifstream& myfile){
 
 	focus[0]=BxpMOPData::y1_init;
 	focus[1]=BxpMOPData::y2_init;
 
 	double y1_lb,y1_ub,y2_lb,y2_ub;
 
-	if(instruction != "aspiration_level"){
-		myfile >> y1_lb >> y1_ub;
-	  myfile >> y2_lb >> y2_ub;
-		focus[0] = Interval(y1_lb,y1_ub);
-		focus[1] = Interval(y2_lb,y2_ub);
-	}else{
-		myfile >> y1_ub >> y2_ub;
-		focus[0] = Interval(focus[0].lb(),y1_ub);
-		focus[1] = Interval(focus[1].lb(),y2_ub);
+	myfile >> y1_ub >> y2_ub;
+	focus[0] = Interval(focus[0].lb(),y1_ub);
+	focus[1] = Interval(focus[1].lb(),y2_ub);
+
+	if(sstatus == RPM){
+		if(!focus.contains(rp))
+		    rpm_stop();
 	}
-
-
 
 
 	if(instruction == "zoom_out"){
 		focus[0]=BxpMOPData::y1_init;
 		focus[1]=BxpMOPData::y2_init;
-		update_focus(cells, paused_cells, focus);
+		update_focus(focus);
 	}
 
 	for(auto cc:paused_cells){
@@ -129,8 +128,7 @@ void OptimizerMOP_S::get_solution(ifstream& myfile){
 }
 
 
-
-void OptimizerMOP_S::read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+void OptimizerMOP_S::read_instructions(IntervalVector& focus){
 	//se lee el archivo de instrucciones y se elimina
 	string line; ifstream myfile;
 	myfile.open(instructions_file);
@@ -138,27 +136,23 @@ void OptimizerMOP_S::read_instructions(set<Cell*>& cells, set<Cell*>& paused_cel
 		string instruction;
 		while(myfile >> instruction){
 			cout << instruction << endl;
-			if(instruction=="zoom_in" || instruction=="zoom_out" || instruction == "aspiration_level"){
-				zoom(instruction, cells, paused_cells, focus, myfile);
-				if(instruction=="zoom_in" || instruction == "aspiration_level") sstatus=FOCUS_SEARCH;
-				else{
-					if(sstatus = STAND_BY_FOCUS) sstatus==STAND_BY_SEARCH;
-					if(sstatus = FOCUS_SEARCH) sstatus==SEARCH;
-				}
-
+			if(instruction=="zoom_in" || instruction=="zoom_out"){
+				zoom(instruction, focus, myfile);
 			}else if(instruction=="upper_envelope"){
 				get_solution(myfile);
-
+			}else if(instruction == "rpm"){
+				sstatus = RPM;
+				rpm_init(myfile);
 			}else if(instruction=="save"){
 				string filename;
 				myfile >> filename;
-				save_state_in_file(filename, cells, paused_cells);
+				save_state_in_file(filename);
 			}else if(instruction=="pause"){
 				 if(sstatus==SEARCH) sstatus=STAND_BY_SEARCH;
-				 else if(sstatus==FOCUS_SEARCH) sstatus=STAND_BY_FOCUS;
+				 if(sstatus==RPM) sstatus=STAND_BY_RPM;
 			}else if(instruction=="continue"){
 				 if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
-				 else if(sstatus==STAND_BY_FOCUS) sstatus=FOCUS_SEARCH;
+				 if(sstatus==STAND_BY_RPM) sstatus=RPM;
 			}else if(instruction=="finish"){
 				 sstatus=FINISHED;
 			}
@@ -170,7 +164,7 @@ void OptimizerMOP_S::read_instructions(set<Cell*>& cells, set<Cell*>& paused_cel
 
 }
 
-void OptimizerMOP_S::write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+void OptimizerMOP_S::write_envelope(IntervalVector& focus){
 	//escritura de archivos
 	//dormir 1 segundo y lectura de instrucciones
 	cout << "escritura de archivo" << endl;
@@ -178,16 +172,17 @@ void OptimizerMOP_S::write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells,
 	NDS_seg LBaux;
 	NDS_seg UBaux=ndsH;
 
-	update_focus(cells, paused_cells, focus);
+	update_focus(focus);
 
 	for(auto cc:cells)	LBaux.add_lb(*cc);
 	for(auto cc:paused_cells) LBaux.add_lb(*cc);
+	for(auto cc:rpm_cells) LBaux.add_lb(*cc);
 
 	//se escribe el archivo de salida
 	IntervalVector focus2(2);
 	focus2[0]=BxpMOPData::y1_init;
 	focus2[1]=BxpMOPData::y2_init;
-	update_focus(cells, paused_cells, focus2);
+	update_focus(focus2);
 	cout << 3 << endl;
 	py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
 }
@@ -196,18 +191,72 @@ void OptimizerMOP_S::write_status(double rel_prec){
 	ofstream output;
 	output.open( (output_file+".state").c_str());
 	switch(sstatus){
-		case STAND_BY_SEARCH:
-		case STAND_BY_FOCUS: output << "STAND_BY" ; break;
+		case STAND_BY_SEARCH: output << "STAND_BY" ; break;
+		case STAND_BY_RPM: output << "STAND_BY_RPM" ; break;
 		case REACHED_PRECISION: output << "REACHED_PRECISION" ; break;
 		case SEARCH: output << "SEARCH" ; break;
-		case FOCUS_SEARCH: output << "FOCUS_SEARCH" ; break;
+		case RPM: output << "RPM" ; break;
 		case FINISHED: output << "FINISHED" ; break;
 	}
 	output << "," << rel_prec << endl;
 	output.close();
 }
 
-void OptimizerMOP_S::update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus){
+void OptimizerMOP_S::rpm_stop(){
+	for(auto cc:rpm_cells){
+			buffer.push(cc);
+			cells.insert(cc);
+	}
+	rpm_cells.clear();
+
+	for(auto cc:paused_cells){
+			buffer.push(cc);
+			cells.insert(cc);
+	}
+	paused_cells.clear();
+
+	if(sstatus == RPM) sstatus=SEARCH;
+	else if(sstatus == STAND_BY_RPM) sstatus=STAND_BY_SEARCH;
+}
+
+double OptimizerMOP_S::rpm_init(ifstream& myfile){
+	myfile >> rpm_file;
+
+	myfile >> rp[0];
+	myfile >> rp[1];
+	
+	rpm_compare::ref = rp;
+	cout << rp << endl;
+	ub_rpm = POS_INFINITY;
+	// we compute the best point in Y'
+	for (auto point:ndsH.NDS2){
+		 double d = rpm_compare::distance(point.first,rp);
+		 //cout << d << endl;
+		 if (d<ub_rpm) ub_rpm = d;
+		 x_rpm = point.second.x1;
+	}
+	cout << ub_rpm << endl;
+
+	// Boxes in cells + cells_pause are revised
+	// boxes with lb < ub_rpm-eps_rpm are put into cells_rpm
+	rpm_cells.clear();
+	for(auto cc:paused_cells){
+		if(rpm_compare::distance(get_boxy(cc->box,n).lb(),rp) < ub_rpm-eps_rpm){
+			rpm_cells.insert(cc);
+		  paused_cells.erase(cc);
+		}
+	}
+
+	while(!buffer.empty()){
+		Cell* cc=buffer.pop();
+		if(rpm_compare::distance(get_boxy(cc->box,n).lb(),rp) < ub_rpm-eps_rpm)
+			rpm_cells.insert(cc);
+		else paused_cells.insert(cc);
+	}
+	cells.clear();
+}
+
+void OptimizerMOP_S::update_focus(IntervalVector& focus){
 
 	IntervalVector new_focus(2);
 	new_focus.set_empty();
@@ -240,9 +289,9 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box, 
 	y2_ub.second=POS_INFINITY;
 	time=0;
 
-	set<Cell*> cells;
+	cells.clear();
 
-	load_state_from_file(filename, init_box, cells);
+	load_state_from_file(filename, init_box);
 
 
 	for(auto c:cells){
@@ -254,18 +303,18 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box, 
 	focus[1]=BxpMOPData::y2_init;
 
 	set<Cell*> paused_cells;
-	update_focus(cells, paused_cells, focus);
+	update_focus(focus);
 	cout << focus << endl;
 
   sstatus=SEARCH;
-	return _optimize(cells, init_box, focus);
+	return _optimize(init_box, focus);
 
 }
 
 OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) {
 	Cell* root=new Cell(IntervalVector(n+2));
 	pre_optimize(init_box, root);
-	set<Cell*> cells;
+	cells.clear();
 	cells.insert(root);
   sstatus=SEARCH;
 
@@ -273,128 +322,193 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) 
 	focus[0]=BxpMOPData::y1_init;
 	focus[1]=BxpMOPData::y2_init;
 
-	return _optimize(cells, init_box, focus);
+	return _optimize(init_box, focus);
 }
 
+bool OptimizerMOP_S::upper_bounding_rpm(const IntervalVector& box, Vector& rp, double& ub_rpm) {
 
-OptimizerMOP_S::Status OptimizerMOP_S::_optimize(set<Cell*>& cells, const IntervalVector& init_box, IntervalVector& focus) {
+	//We attempt to find two feasible points which minimize both objectives
+	//and the middle point between them
+	IntervalVector box2(box); box2.resize(n);
+	IntervalVector x(n);
+	finder.clear();
+
+	list< pair <double, double> > points;
+	list< pair< pair< double, double> , pair< double, double> > > segments;
+
+	Vector mid=box2.mid();
+	if (finder.norm_sys.is_inner(mid)){
+		Vector v(2); v[0]=eval_goal(goal1,mid,n).ub(); v[1]=eval_goal(goal2,mid,n).ub();
+		ndsH.addPoint(v, NDS_data(mid));
+		double rp_d = rpm_compare::distance(v,rp);
+		if(rp_d < ub_rpm) {
+			ub_rpm=rp_d;
+			x_rpm=mid;
+			y_rpm=v;
+		}
+	}
+
+
+	try{
+			x = finder.find(box2,box2,POS_INFINITY).first;
+			Vector v(2); v[0]=eval_goal(goal1,x,n).ub(); v[1]=eval_goal(goal2,x,n).ub();
+			ndsH.addPoint(v, NDS_data(x.mid()));
+			double rp_d = rpm_compare::distance(v,rp);
+			if(rp_d < ub_rpm) {
+				ub_rpm=rp_d;
+				x_rpm=mid;
+				y_rpm=v;
+			}
+	}catch (LoupFinder::NotFound& ) {
+		return true;
+	}
+
+	return true;
+
+}
+
+OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box, IntervalVector& focus) {
 
 	Timer timer;
 	timer.start();
 
 	Timer timer_stand_by;
-	set<Cell*> paused_cells;
+	paused_cells.clear();
+	rpm_cells.clear();
 
 	double current_precision = POS_INFINITY;
 
 	int iter = 1;
 	try {
 		bool server_pause=false;
-		while (!buffer.empty() || !paused_cells.empty()) {
+		while (!buffer.empty() || !paused_cells.empty() || !rpm_cells.empty()) {
 			cout << 2 << endl;
 			if(iter%5==0) server_pause=true;
-			while(buffer.empty() || sstatus==REACHED_PRECISION || sstatus==STAND_BY_FOCUS || sstatus==STAND_BY_SEARCH || server_pause){
-        if (sstatus == SEARCH || sstatus== FOCUS_SEARCH) timer_stand_by.restart();
+			while( (buffer.empty() && rpm_cells.empty()) || sstatus==REACHED_PRECISION || sstatus==STAND_BY_SEARCH || server_pause){
+        if (sstatus == SEARCH) timer_stand_by.restart();
 				if(server_pause) {
 			    	cout << "buffer size:" << buffer.size() << endl;
 			    	cout << "eps:" << eps << endl;
-						write_envelope(cells, paused_cells, focus);
+						write_envelope(focus);
 				}
 				sleep(2);
-				read_instructions(cells, paused_cells, focus);
+				read_instructions(focus);
+
+        if(sstatus == RPM){
+					cout << "initialized: reference point method" << endl;
+					cout << rpm_cells.size() << "," << cells.size() << "," << paused_cells.size() << endl;
+				}
+
+
 				write_status(current_precision);
 
-				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty()) || timer_stand_by.get_time()>1000 ){
+				if(sstatus == FINISHED || (buffer.empty() && paused_cells.empty() && rpm_cells.empty() ) || timer_stand_by.get_time()>1000 ){
 					 sstatus = FINISHED;
 					 write_status(current_precision);
 					 exit(0);
 				}
-				if(buffer.empty()) sstatus = REACHED_PRECISION;
+
+				if(buffer.empty() && rpm_cells.empty()) sstatus = REACHED_PRECISION;
 				server_pause=false; iter++;
-			}
-			cout <<4 << endl;
-			Cell *c = buffer.top();
 
-			current_precision=cdata->ub_distance;
-			buffer.pop();
-			cells.erase(c);
-
-			if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
-
-
-
-
-			//server stuff
-			IntervalVector boxy(2); boxy[0]=c->box[n]; boxy[1]=c->box[n+1];
-			list< Vector > inner_segments = ndsH.non_dominated_points(focus.lb());
-			dominance_peeler2(focus,inner_segments);
-
-			if(focus[0].ub()<boxy[0].lb() || focus[1].ub()<boxy[1].lb() ){
-				paused_cells.insert(c);
-				continue;
-			}
-			cout << cdata->ub_distance << endl;
-			if(cdata->ub_distance <= eps){
-				 //server stuff: the cell is paused
-				 while(!buffer.empty())
-				   paused_cells.insert(buffer.pop());
-
-				 cells.clear();
-				 continue;
-				 //break;
 			}
 
+      //Iteration of the solver
+			Cell* c=NULL;
 
+			if(!rpm_cells.empty()){ // reference point method
+			  c = *rpm_cells.begin();
+				rpm_cells.erase(rpm_cells.begin());
+				cout << "rpm_distance:" << rpm_compare::distance(get_boxy(c->box,n).lb(),rp) << "(" << ub_rpm << ")" << endl;
+				if(cdata->ub_distance <= eps) {
+					paused_cells.insert(c);
+					continue;
+				}
+			}else{ //normal strategy
+				c = buffer.top();
+				buffer.pop();
+				cells.erase(c);
+				current_precision=cdata->ub_distance;
+
+				//update focus & epsilon
+				list< Vector > inner_segments = ndsH.non_dominated_points(focus.lb());
+				dominance_peeler2(focus,inner_segments);
+				if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
+
+				IntervalVector boxy(2); boxy[0]=c->box[n]; boxy[1]=c->box[n+1];
+				if(focus[0].ub()<boxy[0].lb() || focus[1].ub()<boxy[1].lb() ){
+					paused_cells.insert(c);
+					continue;
+				}
+
+				cout << cdata->ub_distance << endl;
+				if(current_precision <= eps){
+					 while(!buffer.empty())
+						 paused_cells.insert(buffer.pop());
+
+					 cells.clear();
+					 continue;
+				}
+			}
 
 			nb_cells++;
 			iter++;
 
+      //Contraction
 			contract_and_bound(*c, init_box);
-
 			if (c->box.is_empty()) {
 				delete c;
 				continue;
 			}
 
+      if(sstatus != RPM){
+	      //upper_bounding
+				upper_bounding(c->box);
+	      //Discarding by using distance and epsilon
+				double dist=ndsH.distance(c);
+				if(dist < eps){
+					if(dist>=0.0) paused_cells.insert(c);
+					else delete c;
+					continue;
+				}
+			}else{ //Discarding by reference point distance
+			   upper_bounding_rpm(c->box,rp,ub_rpm);
+				 double rp_d = ub_rpm-rpm_compare::distance(get_boxy(c->box,n).lb(),rp);
+				 if(rp_d < eps_rpm){
+					 paused_cells.insert(c);
+				   continue;
+				 }
 
-			upper_bounding(c->box);
+				 if(ub_rpm<0.0){
+					  rpm_stop();
+						ofstream output;
+						output.open(rpm_file,ios_base::app);
+            output << y_rpm[0] << " " << y_rpm[1] << " ";
+						output << x_rpm << endl;
+				 }
+			}
 
+      //Bisection
 			pair<Cell*,Cell*> new_cells;
-			bool atomic_box=false;
 			try {
-				cout << c->box << endl;
 				new_cells=pair<Cell*,Cell*>(bsc.bisect(*c));
+				delete c; // deletes the cell.
 			}
 			catch (NoBisectableVariableException& ) {
-				atomic_box=true;
+				throw NoBisectableVariableException();
 			}
 
-			double dist=0.0;
-			if(!atomic_box) dist=ndsH.distance(c);
-			//cout << c->box.lb() << ":" << dist << endl;
 
-			//if the box is dominated it is removed, otherwise it is paused
-			if(dist < eps || atomic_box){
+			if(sstatus == RPM){
+				rpm_cells.insert(new_cells.first);
+				rpm_cells.insert(new_cells.second);
+			}else{
+				buffer.push(new_cells.first);
+				cells.insert(new_cells.first);
 
-				if(new_cells.first){
-					delete new_cells.first;
-					delete new_cells.second;
-				}
-
-				if(dist>=0.0){
-					paused_cells.insert(c);
-				}else delete c;
-
-				continue;
+				buffer.push(new_cells.second);
+				cells.insert(new_cells.second);
 			}
-
-			delete c; // deletes the cell.
-
-			buffer.push(new_cells.first);
-			cells.insert(new_cells.first);
-
-			buffer.push(new_cells.second);
-			cells.insert(new_cells.second);
 
 
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done

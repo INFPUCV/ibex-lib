@@ -16,15 +16,44 @@
 
 namespace ibex {
 
+/**
+ * Criteria for bi-objective problems
+ */
+struct rpm_compare {
+
+  static double distance(const Vector& v, const Vector& rp){
+     double d1 = (v[0]-rp[0]);// / BxpMOPData::y1_init.diam();
+  	 double d2 = (v[1]-rp[1]);// / BxpMOPData::y2_init.diam();
+
+  	 double dist = std::min(d1, d2);
+  	 return dist;
+  }
+
+	bool operator() (const Cell* c1, const Cell* c2){
+     int n = c1->box.size();
+     Vector y1 = OptimizerMOP::get_boxy(c1->box,n).lb();
+     Vector y2 = OptimizerMOP::get_boxy(c2->box,n).lb();
+
+     double d1 = distance(y1,ref);
+     double d2 = distance(y2,ref);
+
+     return d1 < d2;
+	}
+
+  static Vector ref;
+};
+
+
 class OptimizerMOP_S : public OptimizerMOP {
 public:
 
 
-    typedef enum {STAND_BY_FOCUS, STAND_BY_SEARCH, REACHED_PRECISION, SEARCH, FOCUS_SEARCH, FINISHED} ServerStatus;
+    typedef enum {STAND_BY_SEARCH, STAND_BY_RPM, REACHED_PRECISION, SEARCH, RPM, FINISHED} ServerStatus;
 
 	OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
 			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
-			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
+			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0,
+    double eps_rpm=0.0);
 
 	virtual ~OptimizerMOP_S() { }
 
@@ -45,9 +74,11 @@ public:
 
   virtual Status optimize(const IntervalVector& init_box, string filename);
 
-  Status _optimize(set<Cell*>& cells, const IntervalVector& init_box, IntervalVector& focus) ;
+  Status _optimize(const IntervalVector& init_box, IntervalVector& focus) ;
 
-  void save_state_in_file(string filename, set<Cell*>& cells, set<Cell*>& paused_cells){
+  bool upper_bounding_rpm(const IntervalVector& box, Vector& rp, double& ub_rpm);
+
+    void save_state_in_file(string filename){
      //write object into the file
      // Object to write in file
      ofstream file_obj;
@@ -90,7 +121,7 @@ public:
      file_obj.close();
   }
 
-  void load_state_from_file(string filename, const IntervalVector& init_box, set<Cell*>& cells){
+  void load_state_from_file(string filename, const IntervalVector& init_box){
     // Object to read from file
     ifstream file_obj;
 
@@ -166,7 +197,7 @@ public:
     *    \param focus 				   a
     */
 
- 	void write_envelope(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus);
+ 	void write_envelope(IntervalVector& focus);
 
 
 	/*
@@ -180,7 +211,7 @@ public:
     *    \param focus 				   a
     */
 
-	void read_instructions(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus);
+	void read_instructions(IntervalVector& focus);
 
 
 	/*
@@ -194,17 +225,34 @@ public:
     *    \param focus 				   a
     */
 
-	void update_focus(set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus);
+	void update_focus(IntervalVector& focus);
 
-	void zoom(string instruction, set<Cell*>& cells, set<Cell*>& paused_cells, IntervalVector& focus, ifstream& myfile);
+	void zoom(string instruction, IntervalVector& focus, ifstream& myfile);
 
 	void get_solution(ifstream& myfile);
+
+  double rpm_init(ifstream& myfile);
+
+  void rpm_stop();
+
+  set<Cell*> cells;
+  set<Cell*> paused_cells;
+  multiset<Cell*, rpm_compare> rpm_cells;
 
   //server variables
 	static string instructions_file;
 	static string output_file;
 
 	ServerStatus sstatus;
+
+  // Precision of the reference point method
+  double eps_rpm;
+  // Reference point
+  Vector rp;
+  Vector x_rpm;
+  Vector y_rpm;
+  double ub_rpm;
+  string rpm_file;
 
 };
 
