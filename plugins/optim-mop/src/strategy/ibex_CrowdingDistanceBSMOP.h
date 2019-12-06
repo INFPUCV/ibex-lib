@@ -101,14 +101,14 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
  public:
 
 	//RECORDAR CAMBIAR NEXTBUFFERSIZE POR CURRENTBUFFERMAXSIZE (EN EL MAIN), TAMBIEN CON EL AUXILIAR
-	CrowdingDistanceBSMOP(int currentBufferMaxSize, double bs_tolerance, bool crowding) : CellBufferOptim(),
-	depth(0), currentBufferMaxSize(currentBufferMaxSize), bs_tolerance(bs_tolerance), crowding(crowding){
+	CrowdingDistanceBSMOP(int currentBufferMaxSize, int maxBSHeight, bool crowding) : CellBufferOptim(),
+	depth(0), currentBufferMaxSize(currentBufferMaxSize), maxBSHeight(maxBSHeight), crowding(crowding){
 
 	}
 
    int currentBufferMaxSize=8;
    int currentBufferSizeAux=0;
-   double bs_tolerance=0.5;
+   int maxBSHeight=10;
    int T=1;
    bool crowding=false;
    static int bs_level;
@@ -116,6 +116,12 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
 
    //static int nn;
    int iterBS=0;
+
+   struct Point 
+    { 
+        double x, y; 
+    };
+
     
         //static std::multiset<Cell*,max_distanceBeam> getCrowdingDistance(
    void crowdingDistance(
@@ -127,7 +133,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
 
     static bool dominates(Cell* a, Cell* c);
 
-
+    static bool doOverlap(Point l1, Point r1, Point l2, Point r2);
 
     void nonDominatedSort(
             std::multiset<Cell*, max_distanceCrowding>& nextBuffer,
@@ -139,7 +145,7 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
     void extractNonDominated(
         std::multiset<Cell*, max_distanceCrowding>& nextBuffer, std::multiset<Cell*, max_distanceCrowding>& nonDominated);
 
-
+    
 
 
 
@@ -201,6 +207,10 @@ class CrowdingDistanceBSMOP : public CellBufferOptim {
     mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding > currentBuffer;
 	//mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distanceBeam > nextBuffer;
     mutable std::multiset <Cell*, max_distanceCrowding> nextBuffer;
+    mutable std::multiset <Cell*, max_distanceCrowding> intersectedCells;
+    mutable std::multiset <Cell*, max_distanceCrowding> g_pausedCells;
+    mutable std::multiset <Cell*, max_distanceCrowding> c_pausedCells;
+    mutable std::multiset <Cell*, max_distanceCrowding> n_pausedCells;
 
   NDS_seg* nds=NULL;
   double* pruebaprom=NULL;

@@ -1,7 +1,7 @@
-algos:std bs0 bs4_ERRORBS0.5 bs4_ERRORBS0.75 bs4_ERRORBS1 bs4_ERRORBS1.25 bs8_ERRORBS0.5 bs8_ERRORBS0.75 bs8_ERRORBS1 bs8_ERRORBS1.25 
-gains (average relative times):1.000000 0.432512 0.522365 0.536028 0.512510 0.520929 0.502290 0.513963 0.505232 0.496118 
-gains (total time)            :1.000000 0.240069 0.337835 0.322773 0.323800 0.319276 0.337242 0.327681 0.316957 0.318296 
-compared instances: 19  19  19  19  19  19  19  19  19  19 
-runs    : 19  19  19  19  19  19  19  19  19  19 
-L:  0  15  13  13  13  13  15  14  14  14 
-W:  0   0   0   1   0   1   0   0   0   0 
+algos:std bs0 bs4_ERRORBS5 bs4_ERRORBS10 bs4_ERRORBS15 bs8_ERRORBS5 bs8_ERRORBS10 bs8_ERRORBS15 
+gains (average relative times):1.000000 0.946359 0.952482 0.976231 0.945108 0.921918 0.869895 0.895832 
+gains (total time)            :1.000000 0.901108 0.903078 0.957706 0.983368 0.894428 0.860134 0.949939 
+compared instances: 19  19  19  19  19  19  19  19 
+runs    : 19  19  19  19  19  19  19  19 
+L:  0   1   3   2   3   3   5   4 
+W:  0   0   2   2   1   2   0   1 

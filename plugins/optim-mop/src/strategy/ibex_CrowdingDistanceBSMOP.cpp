@@ -9,6 +9,9 @@
 #include "ibex_OptimizerMOP.h"
 #include "ibex_NDS.h"
 #include <algorithm>    // std::min_element, std::max_element
+#include <iostream>
+#include <string>
+
 
 
 
@@ -24,9 +27,11 @@ namespace ibex {
 		while (!currentBuffer.empty()) {
 			delete pop();
 		}
-		while (!nextBuffer.empty()) {
-			nextBuffer.erase(nextBuffer.begin());
-		}
+		nextBuffer.clear();
+		intersectedCells.clear();
+		g_pausedCells.clear();
+		c_pausedCells.clear();
+		n_pausedCells.clear();
 	}
 
 	unsigned int CrowdingDistanceBSMOP::size() const {
@@ -42,7 +47,6 @@ namespace ibex {
 	}
 
 	void CrowdingDistanceBSMOP::push(Cell* cell) {
-		
 		if(bs_level==0) {
 			
 			//hv=nds->hypervolume(CellMOP::y1_init,CellMOP::y2_init).mid();
@@ -58,10 +62,10 @@ namespace ibex {
 
 		}
 
-		if(initial_reduction<0){
+		/*if(initial_reduction<0){
 			cout << "error" << endl;
 			getchar();
-		}
+		}*/
 
         double dist=nds->distance(cell);
 
@@ -84,7 +88,7 @@ namespace ibex {
 	//NDS + crowding distance se realiza cuando no hay elementos en el currentBuffer
 	Cell* CrowdingDistanceBSMOP::pop() {
 
-		Cell *c = NULL;
+		Cell *c,*c2 = NULL;
 		
 		//SI el current esta vacio y el next tiene elementos, se pasan del next al current
 		if(currentBuffer.empty() && !nextBuffer.empty() /*&& bs_state*/){
@@ -94,7 +98,7 @@ namespace ibex {
 			}
 			depthTotal++;
 			bs_level++;
-			if(nextBuffer.size()<currentBufferMaxSize){
+			if(nextBuffer.size()<=currentBufferMaxSize){
 				while(!nextBuffer.empty()){
 					c=*nextBuffer.begin();
 					currentBuffer.push(*nextBuffer.begin());
@@ -112,7 +116,7 @@ namespace ibex {
 
 		}
 		
-		if(bs_level>10){
+		/*if(bs_level>maxBSHeight){
 			while(!nextBuffer.empty()){
 				c=*nextBuffer.begin();
 				globalBuffer.push(*nextBuffer.begin());
@@ -124,7 +128,176 @@ namespace ibex {
 				currentBuffer.pop();
 
 			}
+		}*/
+
+		double x1,x2,y1,y2;
+		std::ifstream selectedSpace;
+		selectedSpace.open("selectedSpace.txt");
+ 		char output[100];
+		vector<string> points;
+ 		if (selectedSpace.is_open()) {
+ 			while (!selectedSpace.eof()) {
+
+
+    			selectedSpace >> output;
+   				//cout<<output;
+				char * pch;
+     			pch = strtok (output," ,");
+      			while (pch != NULL){
+        			//printf ("%s\n",pch);
+					points.push_back(pch);
+        			pch = strtok (NULL, " , ");
+      			}
+
+
+ 			}
 		}
+		selectedSpace.close();
+
+		//for (int i=0; i<points.size(); i++)     
+        //	cout << points[i] << "\n";
+
+		if(points.size()==4){
+			//cout << "inter " << intersectedCells.size() << endl;
+			//cout << "g_paused " << g_pausedCells.size() << endl;
+			//cout << "c_paused " << c_pausedCells.size() << endl;
+			//cout << "n_paused " << n_pausedCells.size() << endl;
+			//cout << "global " << globalBuffer.size() << endl;
+			//cout << "current " << currentBuffer.size() << endl;
+			//cout << "next " << nextBuffer.size() << endl;
+			//cout << "dentro if point size" << endl;
+			x1 = ::atof(points[0].c_str());
+			x2 = ::atof(points[1].c_str());
+			y1 = ::atof(points[2].c_str());
+			y2 = ::atof(points[3].c_str());
+			//cout << "nextbuffer size: " << nextBuffer.size() << endl;
+			//cout << "current size: " << currentBuffer.size() << endl;
+			Point l2 = {x1, y2}, r2 = {x2, y1};
+			for(auto nextrec: nextBuffer){
+				cout << "recorriendo next" << endl;
+				int n = nextrec->box.size();
+				Point l1 = {nextrec->box[n-1].lb(), nextrec->box[n-2].ub()}, r1 = {nextrec->box[n-1].ub(), nextrec->box[n-2].lb()}; 				
+				 
+				//cout << l1.x << "," << l1.y << endl;
+				//cout << r1.x << "," << r1.y << endl;
+				//cout << l2.x << "," << l2.y << endl;
+				//cout << r2.x << "," << r2.y << endl;
+				if (doOverlap(l1, r1, l2, r2)){
+					//cout << "Rectangles Overlap" << endl;
+					intersectedCells.insert(nextrec);
+					//getchar();
+				}else{
+					//cout << "Rectangles don't Overlap" << endl;
+					n_pausedCells.insert(nextrec);
+				}	
+			}
+			nextBuffer.clear();
+
+			while(!currentBuffer.empty()){
+				Cell *currentrec= NULL;
+				cout << "recorriendo current" << endl;
+				currentrec=currentBuffer.top();
+				currentBuffer.pop();
+				//cout << c->box << endl;
+				int n = currentrec->box.size();
+				Point l1 = {currentrec->box[n-1].lb(), currentrec->box[n-2].ub()}, r1 = {currentrec->box[n-1].ub(), currentrec->box[n-2].lb()}; 
+
+				if (doOverlap(l1, r1, l2, r2)){
+					//cout << "Rectangles Overlap" << endl;
+					intersectedCells.insert(currentrec);
+					//getchar();
+				}else{
+					//cout << "Rectangles don't Overlap" << endl;
+					c_pausedCells.insert(currentrec);
+				}
+
+			}
+
+			while(!globalBuffer.empty()){
+				Cell *globalrec= NULL;
+				cout << "recorriendo global" << endl;
+				globalrec=globalBuffer.top();
+				globalBuffer.pop();
+				int n = globalrec->box.size();
+				Point l1 = {globalrec->box[n-1].lb(), globalrec->box[n-2].ub()}, r1 = {globalrec->box[n-1].ub(), globalrec->box[n-2].lb()}; 
+
+				if (doOverlap(l1, r1, l2, r2)){
+					//cout << "Rectangles Overlap" << endl;
+					intersectedCells.insert(globalrec);
+					//getchar();
+				}else{
+					//cout << "Rectangles don't Overlap" << endl;
+					g_pausedCells.insert(globalrec);
+
+				}
+			}
+
+			if(!intersectedCells.empty()){
+				cout << "intersected not empty" << endl;
+				while (!globalBuffer.empty()) {
+					globalBuffer.pop();
+				}
+				while (!currentBuffer.empty()) {
+					currentBuffer.pop();
+				}
+				nextBuffer.clear();
+			}else{
+				cout << "intersected empty" << endl;
+				for(auto el:g_pausedCells)
+					globalBuffer.push(el);
+				g_pausedCells.clear();
+				
+				for(auto el:c_pausedCells)
+					currentBuffer.push(el);
+				c_pausedCells.clear();
+
+				for(auto el:n_pausedCells)
+					nextBuffer.insert(el);
+				n_pausedCells.clear();
+			}
+		
+  		}
+
+		for(auto caja: nextBuffer){
+
+		}
+
+		while(!intersectedCells.empty()){
+			c=*intersectedCells.begin();
+			intersectedCells.erase(intersectedCells.begin());
+			c2=*intersectedCells.begin();
+			*c.box&=*c2.box;
+		}
+
+		//cout << "inter " << intersectedCells.size() << endl;
+		//cout << "g_paused " << g_pausedCells.size() << endl;
+		//cout << "c_paused " << c_pausedCells.size() << endl;
+		//cout << "n_paused " << n_pausedCells.size() << endl;
+		//cout << "global " << globalBuffer.size() << endl;
+		//cout << "current " << currentBuffer.size() << endl;
+		//cout << "next " << nextBuffer.size() << endl;
+
+		//cout << "Value of x1 : " << x1 << endl; 
+		//cout << "Value of x2 : " << x2 << endl; 
+		//cout << "Value of y1 : " << y1 << endl; 
+		//cout << "Value of y2 : " << y2 << endl; 
+
+		//cout << "pausa" << endl;
+		//getchar();
+
+
+
+
+
+
+
+
+		//Si el archivo contiene algo
+		//if(selectedSpace.peek() != std::ifstream::traits_type::eof()){
+			
+		//}
+
+
 
 		//Si current y next estan vacios, se popea del global
 		if(currentBuffer.empty() && nextBuffer.empty() && !globalBuffer.empty()){
@@ -168,6 +341,27 @@ namespace ibex {
 			c = currentBuffer.top();
 			currentBuffer.pop();
 
+		}else if(!intersectedCells.empty()){
+
+			c = *intersectedCells.begin();
+			intersectedCells.erase(intersectedCells.begin());
+
+			if(intersectedCells.empty()){
+
+				for(auto el:g_pausedCells)
+					globalBuffer.push(el);
+				g_pausedCells.clear();
+				
+				for(auto el:c_pausedCells)
+					currentBuffer.push(el);
+				c_pausedCells.clear();
+
+				for(auto el:n_pausedCells)
+					nextBuffer.insert(el);
+				n_pausedCells.clear();
+
+			}
+
 		}
 		return c;
 	}
@@ -201,15 +395,14 @@ namespace ibex {
         std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
         int currentBufferMaxSize
         ){
-
+		std::multiset<Cell*, max_distanceCrowding> nonDominated;
 		//nonDominatedSort
 
 		//1. en cada iteracion se extraen los nodos no dominados del nextBuffer y se guardan en nonDominated
 		//2. se verifica que los no dominados quepan en currentBuffer, si caben se vuelve a 1
 		//3. Si no caben se llama al crowdingDistance para filtrar el nonDominated
 		while(currentBuffer.size()<currentBufferMaxSize && nextBuffer.size()>0){
-
-			std::multiset<Cell*, max_distanceCrowding> nonDominated;
+			
 			extractNonDominated(nextBuffer, nonDominated);
 
 			//Si la cantidad de no dominados es menor o igual que el tama������o disponible del current, se pasan todos y se borran del next buffer
@@ -258,6 +451,15 @@ namespace ibex {
 			}
         }
 
+		if(nonDominated.size()==0){
+			Cell* c=NULL;
+            while(!nextBuffer.empty()){
+				c=*nextBuffer.begin();
+				nonDominated.insert(*nextBuffer.begin());
+				nextBuffer.erase(nextBuffer.begin());
+			}
+		}
+
 		/*cout << "nondominated: " << endl;
 		for(auto b : nonDominated){
 			int n = b->box.size();
@@ -280,7 +482,7 @@ namespace ibex {
 	        std::priority_queue<Cell*, std::vector<Cell*>, max_distanceCrowding >& globalBuffer,
 	        int currentBufferMaxSize
 	        ){
-
+		
 		Cell *c = NULL;	
 		std::multiset <CDBox*>::iterator it;
 		std::multiset<CDBox*, sortByCrowdingDistance> cdSet;
@@ -356,5 +558,17 @@ namespace ibex {
 		int m = b->box.size();
         return (a->box[n-1].lb() <= b->box[m-1].lb() && a->box[n-2].lb() <= b->box[m-2].lb());
     }
+
+	bool CrowdingDistanceBSMOP::doOverlap(Point l1, Point r1, Point l2, Point r2){ 
+    	// If one rectangle is on left side of other 
+		if (l1.x > r2.x || l2.x > r1.x) 
+			return false; 
+	
+		// If one rectangle is above other 
+		if (l1.y < r2.y || l2.y < r1.y) 
+			return false; 
+	
+		return true; 
+	} 
 
 } // end namespace ibex

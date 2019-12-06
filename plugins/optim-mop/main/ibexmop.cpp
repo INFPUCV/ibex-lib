@@ -58,6 +58,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<int> _cSize(parser, "int", "currentBuffer size (default: 4)", {"cSize"});
 
 	args::ValueFlag<double> _bsTolerance(parser, "float", "tolerance condition to finish one level of beam search (default: 0.5)", {"bsTolerance"});
+	args::ValueFlag<int> _maxBSHeight(parser, "int", "Max height for beam search (default: 10)", {"maxBSHeight"});
 
 	args::Flag _maxdist(parser, "hamburger", "Bisection in the maximum distance vector.", {"MAXsplit"});
 	args::Flag _3split(parser, "hamburger", "Trisection.", {"3split"});
@@ -131,6 +132,7 @@ int main(int argc, char** argv){
 	int cSize= (_cSize)? _cSize.Get() : 4 ;
 
 	double bsTolerance= (_bsTolerance)? _bsTolerance.Get() : 0.5 ;
+	int maxBSHeight= (_maxBSHeight)? _maxBSHeight.Get() : 10 ;
 
 	OptimizerMOP::_plot = _plot;
 
@@ -207,7 +209,7 @@ int main(int argc, char** argv){
 	else if(strategy=="BS")
 	  buffer = new BeamSearchBufferMOP(cSize,bsTolerance);
 	else if(strategy=="crowdingBS")
-		buffer = new CrowdingDistanceBSMOP(cSize,bsTolerance,true);
+		buffer = new CrowdingDistanceBSMOP(cSize,maxBSHeight,true);
 
 	//CrowdingDistanceBSMOP::nn = sys.nb_var;
 
@@ -351,6 +353,8 @@ int main(int argc, char** argv){
 
 	cout << "problem?" << endl;
 	// the search itself
+	//cout << ext_sys << endl;
+	//getchar();
 	o.optimize(ext_sys.box);
 
 

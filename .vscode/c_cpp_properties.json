@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "C:\\Python\\include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

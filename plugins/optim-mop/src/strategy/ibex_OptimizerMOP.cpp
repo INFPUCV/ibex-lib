@@ -318,7 +318,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	list<IntervalVector> B; //list of discarded boxes Y
 
-
+	//cout << root->box << endl;
+	//getchar();
 
 	// add data required by the bisector
 	bsc.add_backtrackable(*root);
@@ -359,15 +360,25 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			  cout << "buffer_size:" << buffer.size() << endl;
 		  }*/
 		  iter++;
-		  if(iter%10==0){
-				cout << iter << endl;
-				py_Plotter::offline_plot(NULL, ndsH.NDS2);
-				getchar();
-			}
 
+		  /*if(iter%10==0){
+				//cout << iter << endl;
+				py_Plotter::offline_plot(NULL, ndsH.NDS2);
+				//sleep(2);
+				//getchar();
+				system("python3 plugins/optim-mop/main/plotscript.py");
+				//sleep(2);
+
+			}*/
+																			
 		  if (trace >= 2) cout << buffer;
 
 			Cell *c = buffer.pop();
+			int n = c->box.size();
+			//cout << c->box << endl;
+			cout << "pop " << c->box[n-1].lb() << " " << c->box[n-1].ub() << endl;
+			cout << "pop " << c->box[n-2].lb() << " " << c->box[n-2].ub() << endl;
+			getchar();
 
 			/*if (CrowdingDistanceBSMOP::bs_level==0) {
 				py_Plotter::offline_plot(NULL, ndsH.NDS2);
@@ -454,6 +465,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				delete c;
 			else{
 			    update_NDS2(c->box);
+				cout << "push1" << endl;
 			    buffer.push(c);
 			}
 
@@ -465,6 +477,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 				delete c;
 			else{
 				update_NDS2(c->box);
+				cout << "push2" << endl;
 				buffer.push(c);
 			}
 
