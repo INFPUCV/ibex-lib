@@ -10,9 +10,11 @@
 
 #include <set>
 #include <map>
+#include <unordered_map>
 #include "ibex_BxpMOPData.h"
 #include "ibex_Cell.h"
 #include "ibex_NDS.h"
+#include "ibex_NDS2.h"
 
 using namespace std;
 namespace ibex {
@@ -35,6 +37,9 @@ public:
 	static void offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
 		map< Vector, NDS_data, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus=NULL);
 
+
+	static void offline_plot(unordered_map< Vector, NDS_X, MyHashFunction >& NDS,
+			unordered_map< Vector, NDS_X, MyHashFunction >* NDS2, const char* output_file_pareto, const char* output_file_solutions, IntervalVector* focus=NULL);
 };
 
 } /* namespace ibex */
