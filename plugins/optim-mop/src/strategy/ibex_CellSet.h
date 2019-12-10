@@ -124,43 +124,6 @@ namespace ibex {
 	  }
 	};
 
-	/**
-	 * OC4 in https://tel.archives-ouvertes.fr/tel-01146856/document
-	 * decreasing value of hypervolume of the point y
-	 */
-	struct OC4 {
-	  bool operator() (const Cell* c1, const Cell* c2) const
-	  {
-//		  cout<<"BxpMOPData::y1_init.ub() = "<<BxpMOPData::y1_init.ub()<<"\n";
-		  int n = c1->box.size();
-
-//		  double hyper1=(BxpMOPData::y1_init.ub()-c1->box[n-1].lb())*(BxpMOPData::y2_init.ub()-c1->box[n-2].lb());
-//		  double hyper2=(BxpMOPData::y1_init.ub()-c1->box[n-1].lb())*(BxpMOPData::y2_init.ub()-c1->box[n-2].lb());
-
-//		  if(hyper1 != hyper2) return (hyper1 < hyper2);
-		  return (c1->depth < c2->depth);
-	  }
-	};
-
-	/**
-	 * Criteria for bi-objective problems used in the paper by Martin et al. (2016)
-	 */
-	struct weighted_sum {
-	  bool operator() (const Cell* c1, const Cell* c2) const
-	  {
-		  int n = c1->box.size();
-		  double c1_ev,c2_ev;
-//		  double c1_ev= (c1->box[n-2].lb()-BxpMOPData::y1_init.lb())/BxpMOPData::y1_init.diam() +
-//				  (c1->box[n-1].lb()-BxpMOPData::y2_init.lb())/BxpMOPData::y2_init.diam();
-//
-//		  double c2_ev= (c2->box[n-2].lb()-BxpMOPData::y1_init.lb())/BxpMOPData::y1_init.diam() +
-//				  (c2->box[n-1].lb()-BxpMOPData::y2_init.lb())/BxpMOPData::y2_init.diam();
-
-		  return c1_ev < c2_ev;
-	  }
-	};
-
-
 
 	template<class T>
 	CellSet<T>::CellSet() {
