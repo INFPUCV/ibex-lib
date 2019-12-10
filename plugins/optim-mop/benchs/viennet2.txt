@@ -1,0 +1,19 @@
+constants
+
+variables
+x in [ -4, 4];
+y in [ -4, 4];
+z1 in [-1e8, 1e8];
+z2 in [-1e8, 1e8];
+z3 in [-1e8, 1e8];
+
+
+constraints
+
+//objective functions
+( (x-2)^2 ) / 2 + ( (y+1)^2 ) / 13 + 3 = z1;
+( (x+y-3)^2 ) / 36 + ( (-x+y+2)^2 ) / 8 - 17 = z2;
+( (x+2*y-1)^2 ) / 175 + ( (2*y-x)^2 ) / 17 - 13 = z3;
+
+
+end
