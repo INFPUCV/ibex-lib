@@ -20,7 +20,7 @@
 const double default_relax_ratio = 0.2;
 
 using namespace std;
-using namespace ibex;
+using namespace ibex ;
 int main(int argc, char** argv){
 
 
@@ -219,10 +219,6 @@ int main(int argc, char** argv){
 	CellBufferOptim* buffer;
 	if(strategy=="OC3")
 	  buffer = new CellSet<OC3>;
-	else if(strategy=="OC4")
-	  buffer = new CellSet<OC4>;
-	else if(strategy=="weighted_sum")
-	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
 
@@ -234,8 +230,11 @@ int main(int argc, char** argv){
 
 	Vector p(ext_sys.nb_var, eps_x);
 	if(no_bisect_y){
-		p[ext_sys.nb_var-2]=POS_INFINITY;
-		p[ext_sys.nb_var-1]=POS_INFINITY;
+		for(int i= 0; i<nFuncObj; i++)	p[ext_sys.nb_var-(i+1)]=POS_INFINITY;
+
+//		p[ext_sys.nb_var-3]=POS_INFINITY;
+//		p[ext_sys.nb_var-2]=POS_INFINITY;
+//		p[ext_sys.nb_var-1]=POS_INFINITY;
 	}
 
 	if (bisection=="roundrobin")
@@ -316,11 +315,6 @@ int main(int argc, char** argv){
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP* o;
 	if(!_server_mode){
-		/*
-		o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
-							OptimizerMOP::MIDPOINT,	eps, rel_eps);
-		*/
 		o = new OptimizerMOP(sys.nb_var, f, *ctcxn,*bs,*buffer,finder,
 						(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
 						OptimizerMOP::MIDPOINT,	eps, rel_eps);
@@ -329,9 +323,6 @@ int main(int argc, char** argv){
 		/*o = new OptimizerMOP_S(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
 							OptimizerMOP::MIDPOINT,	eps, rel_eps);
-
-
-
 		OptimizerMOP_S::_rh=rh;
 		OptimizerMOP_S::output_file= (_output_file)? _output_file.Get():"output2.txt";
 		OptimizerMOP_S::instructions_file=(_instructions_file)? _instructions_file.Get():"instructions.txt";
@@ -340,7 +331,9 @@ int main(int argc, char** argv){
 
 
 	if(strategy=="NDSdist"){
-		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
+
+		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsh2, nFuncObj);
+//		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
 	}
 
 	// the trace
