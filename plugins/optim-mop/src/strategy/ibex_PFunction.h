@@ -24,7 +24,7 @@ namespace ibex {
 class PFunction{
 
 public:
-	PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb);
+	PFunction(const Function& f1, const Function& f2, const Array<const Function> &fn, const IntervalVector& xa, const IntervalVector& xb);
 
 	/**
 	 * convert pf.t to t in inter
@@ -72,6 +72,7 @@ private:
 
 	const Function& f1;
 	const Function& f2;
+	const Array<const Function> &fn;
 	IntervalVector xa;
 	IntervalVector xb;
 

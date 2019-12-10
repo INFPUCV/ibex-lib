@@ -17,8 +17,8 @@ double PFunction::_min_newton_step=0.1; //25% of the current diameter
 double PFunction::_min_diam=0.1; //15% of the initial diameter
 double PFunction::_eps_opt=1e-7;
 
-PFunction::PFunction(const Function& f1, const Function& f2, const IntervalVector& xa, const IntervalVector& xb):
-		f1(f1),f2(f2), xa(xa), xb(xb), last_f(F1) { }
+PFunction::PFunction(const Function& f1, const Function& f2, const Array<const Function>& fn, const IntervalVector& xa, const IntervalVector& xb):
+		f1(f1),f2(f2), fn(fn), xa(xa), xb(xb), last_f(F1) { }
 
 /**
  * convert pf.t to t in inter
@@ -43,11 +43,11 @@ Interval PFunction::eval(const Interval& t, const Interval& m, bool minimize, fu
 	IntervalVector xt = xa+t*(xb-xa);
 	Interval result;
 	if(f==F1)
-		result = OptimizerMOP::eval_goal(f1,xt,  xt.size());
+		result = OptimizerMOP::eval_goal(f1,xt,  xt.size(), fn.size());
 	else if(f==F2)
-		result = OptimizerMOP::eval_goal(f2,xt,  xt.size());
+		result = OptimizerMOP::eval_goal(f2,xt,  xt.size(), fn.size());
 	else
-		result = OptimizerMOP::eval_goal(f2,xt, xt.size()) - m*OptimizerMOP::eval_goal(f1, xt,  xt.size());
+		result = OptimizerMOP::eval_goal(f2,xt, xt.size(), fn.size()) - m*OptimizerMOP::eval_goal(f1, xt,  xt.size(), fn.size());
 
 	if( minimize ){
 		evals[t.mid()]=-result;
@@ -80,8 +80,8 @@ Interval PFunction::deriv(const Interval& t, const Interval& m, bool minimize, f
 IntervalVector PFunction::get_point(const Interval& t) const{
 	IntervalVector y(2);
 	IntervalVector xt = xa+t*(xb-xa);
-	y[0]=OptimizerMOP::eval_goal(f1,xt,  xt.size());
-	y[1]=OptimizerMOP::eval_goal(f2,xt,  xt.size());
+	y[0]=OptimizerMOP::eval_goal(f1,xt,  xt.size(), fn.size());
+	y[1]=OptimizerMOP::eval_goal(f2,xt,  xt.size(), fn.size());
 	return y;
 }
 
