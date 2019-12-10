@@ -1,0 +1,21 @@
+constants
+
+variables
+x in [ -10, 10];
+y in [ -10, 10];
+z1 in [-1e8, 1e8];
+z2 in [-1e8, 1e8];
+z3 in [-1e8, 1e8];
+
+
+constraints
+
+//objective functions
+1.5 - x*( 1 - y )    = z1;
+2.25 - x*( 1 - y^2 ) = z2;
+2.625 - x*( 1 - y^3 )= z3;
+
+// constraints
+-x^2 - (y - 0.5)^2 + 9 <= 0;
+(x - 1)^2 + (y - 0.5)^2 - 6.25 <= 0;
+end
