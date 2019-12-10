@@ -20,6 +20,8 @@
 #include "ibex_PFunction.h"
 #include "ibex_NDS.h"
 
+#include "ibex_NDS2.h"
+
 #include <set>
 #include <map>
 #include <list>
@@ -209,6 +211,7 @@ public:
 	BxpMOPData *MOPData;
 
 
+
 	/**
 	 * \brief Contractor for the extended system.
 	 *
@@ -246,12 +249,12 @@ public:
 
 
 	//MOPServer use this function...
-	static IntervalVector get_boxy(IntervalVector& v, int n){
-		IntervalVector boxy(2);
-		boxy[0]=v[n];
-		boxy[1]=v[n+1];
-		return boxy;
-	}
+//	static IntervalVector get_boxy(IntervalVector& v, int n){
+//		IntervalVector boxy(2);
+//		boxy[0]=v[n];
+//		boxy[1]=v[n+1];
+//		return boxy;
+//	}
 
 	IntervalVector get_box_y(IntervalVector &box);
 
@@ -298,8 +301,10 @@ public:
 	//Termination criteria for the hamburger algorithm (dist < rh*ini_dist)
 	static double _rh;
 
+	//TODO testing variables
 	//Number of objective function
 	static int nb_ObjFunc;
+	static bool imprimir;
 
   //max distance of cells rejected by eps-close
    double max_dist_eps;
@@ -313,7 +318,7 @@ public:
 	/**
 	 * \brief Evaluate the goal in the point x
 	 */
-	static Interval eval_goal(const Function& goal, const IntervalVector& x, int n);
+	static Interval eval_goal(const Function& goal, const IntervalVector& x, int n, int nFuncObj);
 
 	/**
 	 * \brief Gradient of the goal in the point x
@@ -326,6 +331,9 @@ public:
 
 	// Hamburger
 	NDS_seg ndsH;
+
+	//New nds for n objectives
+	NDS_XY ndsh2;
 
 protected:
 
@@ -370,6 +378,12 @@ protected:
 	 */
 	void dominance_peeler2(IntervalVector &box, list < Vector >& inpoints);
 
+	/*Todo
+	 * Adaptation of dominance_peeler to n objective functions
+	 *
+	 */
+	void dominance_peeler_n(IntervalVector &box, list < pair< Vector, int > >& cuttingPoints);
+
     /**
      *  \brief returns true if the facet orthogonal to the i direction of the box is feasible.
      *
@@ -407,7 +421,7 @@ protected:
 	/**
 	 * min feasible value found for each objective
 	 */
-    pair <double, double> y1_ub, y2_ub;
+   // pair <double, double> y1_ub, y2_ub;
 
 
     /*
