@@ -401,6 +401,8 @@ public:
 	map< Vector, NDS_data, sorty2 > NDS2;
 };
 
+
+
 } /* namespace ibex */
 
 #endif /* OPTIM_MOP_SRC_STRATEGY_IBEX_NDS_H_ */

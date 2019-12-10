@@ -6,6 +6,9 @@
  */
 
 #include "ibex_NDS.h"
+#include "ibex_NDS2.h"
+//for testing
+#include "ibex_OptimizerMOP.h"
 
 namespace ibex {
 
@@ -51,8 +54,6 @@ namespace ibex {
 		return false;
 	}
 
-
-
 	bool NDS_seg::addSegment(const pair<Vector, Vector>& y1y2, const NDS_data& data) {
 
 		const Vector& y1=y1y2.first;
@@ -88,6 +89,9 @@ namespace ibex {
 			if( c_ub < (Interval(it1->first[1]) - m*Interval(it1->first[0])).lb()
 			 && y1[0] < it1->first[0] && y2[1] < it1->first[1]){
 				aux = it1; ++aux;
+//testing
+//				if(it1->first.size() == 3) std::cout<<"segmento elimina a "<<it1->first<<endl;
+
 				NDS2.erase(it1);
 				it1 = aux;
 
@@ -153,6 +157,10 @@ namespace ibex {
 				first=false;
 				last_dom=it1->first;
 				next_data = it1->second;
+
+//Testing
+//				if(it1->first.size() == 3) std::cout<<"NDS2 punto eliminado "<<it1->first<<endl;
+
 				NDS2.erase(it1);
 				it1 = aux;
 			} else ++it1;
@@ -173,7 +181,6 @@ namespace ibex {
 		NDS2.insert(make_pair(new_y, data));
 		NDS2.insert(make_pair(intersection1, NDS_data()));
 		NDS2.insert(make_pair(intersection2, next_data));
-
 	}
 
 
@@ -277,6 +284,169 @@ namespace ibex {
 		Vector v(2); v[0]=i.first; v[1]=i.second;
 		return v;
 
+	}
+
+//TODO: Handle of ndsh2
+
+//Return True si y esta dominado por algun punto de NDS
+	bool NDS_XY::is_dominated(const Vector& new_point_y){
+		for(auto itr = NDS.begin(); itr != NDS.end(); ++itr) {
+			if(is_dominated(new_point_y, itr->first)) return true;
+		}
+		return false;
+	}
+
+//Return True si y_prime es dominado por y
+	bool NDS_XY::is_dominated(const Vector& y_prime, const Vector& y){
+		for(int i=0; i < y_prime.size(); i++){
+			if(y[i] <= y_prime[i]){
+
+			}else{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void NDS_XY::addPoint(const Vector& new_y, const NDS_X& data){
+		if (is_dominated(new_y)) return;
+
+		//Removes from NDS the points dominated by new_y
+		auto it = NDS.begin();
+		while ( it != NDS.end()){
+			if(is_dominated(it->first, new_y)){
+//				std::cout<<"eliminar "<<it->first<<endl;
+				it = NDS.erase(it);
+			}else
+				++it;
+		}
+
+		NDS.insert(make_pair(new_y, data));
+
+//		print_NDS_y();
+	}
+
+
+	IntervalVector get_box_y(const IntervalVector &box, int nFuncObj){
+		IntervalVector box_y(nFuncObj);
+		int n=box.size()-nFuncObj;
+		for(int i=0; i< nFuncObj; i++) box_y[i]=box[n+i];
+		return box_y;
+	}
+	double NDS_XY::distance(const IntervalVector& box){
+		if(OptimizerMOP::imprimir) std::cout<<"\t Distance ++++++++++++++ \n";
+		auto itr = NDS.begin();
+//		int nFuncObj = itr->first.size();
+//		std::cout<<"nFuncObj = "<<nFuncObj<<endl;
+		Vector y( get_box_y(box, nObjFunc).lb() );
+		if(OptimizerMOP::imprimir) std::cout <<"box_y = "<<y<<endl;
+		//Descarta la caja si boxy.lb se encuentra dominado por un punto de ndsh
+		if (is_dominated(y)) {
+//			std::cout<<"caja eliminada Distance dominated\n";
+			return -1;
+		}
+//		std::cout <<"lb of boxy = "<<y<<endl;
+//		double maxDistance=0.0;
+//		double maxDistance = NEG_INFINITY;
+		/*
+		 * Para cada punto en ndsh
+		 * 		Primero se calcula la distancia entre ndsh[i] con boxy_lb en cada dimension
+		 * 		Luego, para cada distancia obtenida en cada dimension (conponent_distance) se verifica,
+		 * 			Si la caja boxy_lb + component_distance se encuentra dominada por el punto ndsh[i] (la distancia es factible)
+		 * 		Para cada distancia factible se selecciona la menor entre ellas (minDistance)
+		 * Finalmente  entre todas las minDistance obtenidas, se selecciona el mayor valor entre ellas (maxDistance)
+		 */
+		double maxDistance=POS_INFINITY;
+		for(auto itr = NDS.begin(); itr != NDS.end(); ++itr){
+			if(OptimizerMOP::imprimir) std::cout<<"Punto no dominado = "<<itr->first<<endl;
+			double PartialMaxDistance = NEG_INFINITY;
+			for(int i=0; i<itr->first.size(); i++){
+				//calculo de distancia de cada dimension
+				double component_distance = itr->first[i] - y[i];
+				if(OptimizerMOP::imprimir) std::cout <<"component_distance = "<<component_distance<<endl;
+				if(component_distance > 0){
+					//Verificar que el punto ndsh[i] domine al punto box_lb + distancia ( y[0]+dist, y[1]+dist, ...)
+					Vector y_aux(y); for(int i=0; i<y.size(); i++) y_aux[i] = y_aux[i] + component_distance;
+					if(/*is_dominated(y_aux, itr->first)*/ is_dominated(y_aux)){
+						if(OptimizerMOP::imprimir) std::cout<<"box_y + component distance is dominated"<<endl;
+						//Obtain minDistance
+						if(component_distance > PartialMaxDistance) {
+							if(OptimizerMOP::imprimir) std::cout<<"component_distance < minDistance"<<endl;
+							PartialMaxDistance = component_distance;
+							if(OptimizerMOP::imprimir) std::cout<<"PartialMaxDistance = "<<PartialMaxDistance<<endl;
+						}
+					}
+				}
+			}
+			//Save maxDistance
+			if( (maxDistance > PartialMaxDistance) /*&& (minDistance != POS_INFINITY)*/ ) maxDistance = PartialMaxDistance;
+		}
+
+		if(OptimizerMOP::imprimir) std::cout <<"maxDistance final = "<<maxDistance<<endl;
+
+		return maxDistance;
+	}
+
+	list< pair< Vector, int> > NDS_XY::cutting_points(const Vector& boxy_lb, const Vector& boxy_ub){
+
+		//Initialize best cutting points
+		Array< Vector > cp(boxy_lb.size());
+		Vector init(boxy_lb.size(), POS_INFINITY);
+		for(int i=0; i<boxy_lb.size(); i++) cp.set_ref(i, init);
+
+		for(auto it=NDS.begin(); it != NDS.end(); ++it){
+			if(OptimizerMOP::imprimir) std::cout<<"\t Ndsh point = "<<it->first<<endl;
+			int sum = 0;
+			int dim = 0;
+
+			for(int i=0; i< boxy_lb.size(); i++){
+				//We take the points outside of the box with these two conditions
+				//first condition
+				if( boxy_ub[i] > it->first[i]) {
+						if(OptimizerMOP::imprimir)	std::cout<<"Primera condicion"<<endl;
+						if(OptimizerMOP::imprimir) std::cout<<boxy_ub[i]<<" > "<< it->first[i] <<endl;
+					//second condition
+					if(boxy_lb[i] >= it->first[i]) {
+						if(OptimizerMOP::imprimir)std::cout<<"Segunda condicion"<<endl;
+						if(OptimizerMOP::imprimir) std::cout<<boxy_lb[i]<<" >= "<<it->first[i]<<endl;
+						sum++;
+					}
+					else dim = i;
+				}else {
+					i = boxy_lb.size();
+					sum = 0;
+				}
+			}
+			//We add the points only if for every component of the point ndsh hold
+			//- Satisfy the first condition
+			//- Satisfy the second condition nFuncObj-1 times
+			if (sum == boxy_lb.size() - 1) {
+				Vector aux = cp[dim];
+				if(it->first[dim] < aux[dim]) cp.set_ref(dim, (Vector &)it->first);
+//				cutting_points.push_back(it->first);
+//				std::cout<<"Punto valido = "<<it->first<<endl;
+//				std::cout<<"dimension = "<<dim<<endl;
+			}
+		}
+
+		list< pair<Vector, int>> cutting_points;
+		for(int i=0; i<boxy_lb.size(); i++){
+			double aux = POS_INFINITY;
+			Vector aux2 = cp[i];
+			if(aux2[0] != aux){
+				cutting_points.push_back(make_pair(cp[i], i));
+			}
+
+		}
+
+//print cutting_points
+		for(auto itr=cutting_points.begin(); itr != cutting_points.end(); ++itr)
+			if(OptimizerMOP::imprimir) std::cout<<"cutting_points = "<<itr->first<<"\n";
+
+		if(OptimizerMOP::imprimir) std::cout<<"size cutting_points = "<<cutting_points.size()<<endl;
+
+
+		return cutting_points;
 	}
 
 } /* namespace ibex */
