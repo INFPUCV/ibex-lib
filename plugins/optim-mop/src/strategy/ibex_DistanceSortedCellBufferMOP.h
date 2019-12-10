@@ -31,9 +31,10 @@ struct max_distance {
 
 	bool operator() (const Cell* c1, const Cell* c2){
 	   int n = c1->box.size();
+//	   std::cout<<"entra a operator, nObjFunc = "<<OptimizerMOP::nb_ObjFunc<<endl;
 	   if(c1data->ub_distance != c2data->ub_distance)
 		   return (c1data->ub_distance < c2data->ub_distance);
-	   else if(c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()) return true;
+	   else if( c1->box[n-3].lb() >= c2->box[n-3].lb() && c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()  ) return true;
 	   else return false;
 	}
 
@@ -48,9 +49,13 @@ struct max_distance {
 class DistanceSortedCellBufferMOP : public CellBufferOptim {
  public:
 
-   void set(NDS_seg& nds) {
+   void set(NDS_XY& nds, int& nObjFunc) {
 		 this->nds=&nds;
+		 this->nObjFunc=&nObjFunc;
 	 }
+//	void set(NDS_seg& nds) {
+//			 this->nds=&nds;
+//		 }
 
   /** Flush the buffer.
    * All the remaining cells will be *deleted* */
@@ -93,9 +98,13 @@ class DistanceSortedCellBufferMOP : public CellBufferOptim {
 	/**
 	 * A heap data structure for keeping the cells sorted by distance
 	 */
-	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distance > cells;
+	mutable std::priority_queue< Cell*, std::vector<Cell*>, max_distance > cells;
 
-    NDS_seg* nds;
+
+
+
+	NDS_XY* nds;
+	int* nObjFunc;
 
 };
 
