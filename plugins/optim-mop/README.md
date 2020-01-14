@@ -40,7 +40,7 @@ Example of using ub2 for finding an upper envelope for the blue feasible curve i
 ## Download
 ````
 git clone https://github.com/INFPUCV/ibex-lib.git
-git checkout -t origin/mop-server
+git checkout -t origin/ibexmop-plugin
 ````
 
 ## Installation
