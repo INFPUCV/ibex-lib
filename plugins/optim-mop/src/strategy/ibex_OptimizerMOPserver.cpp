@@ -145,8 +145,8 @@ void OptimizerMOP_S::read_instructions(IntervalVector& focus){
 				zoom(instruction, focus, myfile);
 				if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
 				if(sstatus==STAND_BY_RPM) sstatus=RPM;
-			}else if(instruction=="upper_envelope"){
-				get_solution(myfile);
+			}//else if(instruction=="upper_envelope"){
+			//	get_solution(myfile);
 			}else if(instruction == "rpm"){
 				sstatus = RPM;
 				rpm_init(myfile);
@@ -326,7 +326,7 @@ OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box, 
 }
 
 OptimizerMOP_S::Status OptimizerMOP_S::optimize(const IntervalVector& init_box) {
-	Cell* root=new Cell(IntervalVector(n+2));
+	Cell* root=new Cell(IntervalVector(n+2)); //crea nodo raiz
 	pre_optimize(init_box, root);
 	cells.clear();
 	cells.insert(root);
@@ -402,10 +402,10 @@ OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box,
 				if(server_pause) {
 			    	cout << "buffer size:" << buffer.size() << endl;
 			    	cout << "eps:" << eps << endl;
-						write_envelope(focus);
+						write_envelope(focus); //escribe el envelope en archivo par front-end
 				}
 				sleep(2);
-				read_instructions(focus);
+				read_instructions(focus); //lee instrucciones en archivo de entrada
 
         if(sstatus == RPM || sstatus==STAND_BY_RPM){
 					cout << "initialized: reference point method" << endl;
@@ -456,6 +456,8 @@ OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box,
 				dominance_peeler2(focus,inner_segments);
 				if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
 
+        //X: c->box[0], c->box[1],..., c->box[n-1]
+				//y1: c->box[n], y2:c->box[n+1]
 				IntervalVector boxy(2); boxy[0]=c->box[n]; boxy[1]=c->box[n+1];
 				if(focus[0].ub()<boxy[0].lb() || focus[1].ub()<boxy[1].lb() ){
 					paused_cells.insert(c);

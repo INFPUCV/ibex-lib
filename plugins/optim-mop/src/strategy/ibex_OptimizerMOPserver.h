@@ -47,7 +47,14 @@ struct rpm_compare {
 class OptimizerMOP_S : public OptimizerMOP {
 public:
 
-
+    /* Status del servidor
+      SEARCH = buscando...
+      STAND_BY_SEARCH = en pausa de búsqueda
+      RPM = método que intenta buscar soluciones que dominan a un punto dado
+      STAND_BY_RPM = en pausa mientras realiza RPM
+      REACHED_PRECISION = en pausa porque se alcanzó la precisión
+      FINISHED = proceso terminado, ya no se puede continuar
+    */
     typedef enum {STAND_BY_SEARCH, STAND_BY_RPM, REACHED_PRECISION, SEARCH, RPM, FINISHED} ServerStatus;
 
 	OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
