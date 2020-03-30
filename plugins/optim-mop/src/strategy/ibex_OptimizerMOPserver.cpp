@@ -38,18 +38,23 @@ OptimizerMOP_S::OptimizerMOP_S(int n, const Function &f1,  const Function &f2,
 
 void OptimizerMOP_S::zoom(string instruction, IntervalVector& focus, ifstream& myfile){
 
-	focus[0]=BxpMOPData::y1_init;
-	focus[1]=BxpMOPData::y2_init;
+	//focus[0]=BxpMOPData::y1_init;
+	//focus[1]=BxpMOPData::y2_init;
+
 
 	double y1_lb,y1_ub,y2_lb,y2_ub;
 
-	myfile >> y1_ub >> y2_ub;
-	focus[0] = Interval(focus[0].lb(),y1_ub);
-	focus[1] = Interval(focus[1].lb(),y2_ub);
+  myfile >> y1_lb >> y1_ub;
+	myfile >> y2_lb >> y2_ub;
+	focus[0] = Interval(y1_lb,y1_ub);
+	focus[1] = Interval(y2_lb,y2_ub);
 
-	if(sstatus == RPM){
-		if(!focus.contains(rp))
+	cout << focus << endl;
+
+	if(sstatus == STAND_BY_RPM){
+		if(!focus.contains(rp)){
 		    rpm_stop();
+		}
 	}
 
 
@@ -138,11 +143,15 @@ void OptimizerMOP_S::read_instructions(IntervalVector& focus){
 			cout << instruction << endl;
 			if(instruction=="zoom_in" || instruction=="zoom_out"){
 				zoom(instruction, focus, myfile);
+				if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
+				if(sstatus==STAND_BY_RPM) sstatus=RPM;
 			}else if(instruction=="upper_envelope"){
 				get_solution(myfile);
 			}else if(instruction == "rpm"){
 				sstatus = RPM;
 				rpm_init(myfile);
+			}else if(instruction == "rpm_stop"){
+				rpm_stop();
 			}else if(instruction=="save"){
 				string filename;
 				myfile >> filename;
@@ -191,18 +200,19 @@ void OptimizerMOP_S::write_status(double rel_prec){
 	ofstream output;
 	output.open( (output_file+".state").c_str());
 	switch(sstatus){
-		case STAND_BY_SEARCH: output << "STAND_BY" ; break;
-		case STAND_BY_RPM: output << "STAND_BY_RPM" ; break;
-		case REACHED_PRECISION: output << "REACHED_PRECISION" ; break;
-		case SEARCH: output << "SEARCH" ; break;
-		case RPM: output << "RPM" ; break;
-		case FINISHED: output << "FINISHED" ; break;
+		case STAND_BY_SEARCH: cout << "STAND_BY" << endl;  output << "STAND_BY" ; break;
+		case STAND_BY_RPM: cout << "STAND_BY_RPM" << endl; output << "STAND_BY_RPM" ; break;
+		case REACHED_PRECISION: cout << "REACHED_PRECISION" << endl; output << "REACHED_PRECISION" ; break;
+		case SEARCH: cout << "SEARCH" << endl; output << "SEARCH" ; break;
+		case RPM: cout << "RPM" << endl; output << "RPM" ; break;
+		case FINISHED: cout << "FINISHED" << endl; output << "FINISHED" ; break;
 	}
 	output << "," << rel_prec << endl;
 	output.close();
 }
 
 void OptimizerMOP_S::rpm_stop(){
+	cout << "rpm_stop" << endl;
 	for(auto cc:rpm_cells){
 			buffer.push(cc);
 			cells.insert(cc);
@@ -217,6 +227,7 @@ void OptimizerMOP_S::rpm_stop(){
 
 	if(sstatus == RPM) sstatus=SEARCH;
 	else if(sstatus == STAND_BY_RPM) sstatus=STAND_BY_SEARCH;
+	cout << "rpm_stop_end" << endl;
 }
 
 double OptimizerMOP_S::rpm_init(ifstream& myfile){
@@ -224,16 +235,19 @@ double OptimizerMOP_S::rpm_init(ifstream& myfile){
 
 	myfile >> rp[0];
 	myfile >> rp[1];
-	
+	cout << rp << endl;
+
 	rpm_compare::ref = rp;
 	cout << rp << endl;
 	ub_rpm = POS_INFINITY;
 	// we compute the best point in Y'
-	for (auto point:ndsH.NDS2){
-		 double d = rpm_compare::distance(point.first,rp);
-		 //cout << d << endl;
+	list< Vector > inner_segments = ndsH.non_dominated_points(rp, false);
+
+	for (auto point:inner_segments){
+		 double d = rpm_compare::distance(point,rp);
+
 		 if (d<ub_rpm) ub_rpm = d;
-		 x_rpm = point.second.x1;
+		 //x_rpm = point.second.x1;
 	}
 	cout << ub_rpm << endl;
 
@@ -382,7 +396,6 @@ OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box,
 	try {
 		bool server_pause=false;
 		while (!buffer.empty() || !paused_cells.empty() || !rpm_cells.empty()) {
-			cout << 2 << endl;
 			if(iter%5==0) server_pause=true;
 			while( (buffer.empty() && rpm_cells.empty()) || sstatus==REACHED_PRECISION || sstatus==STAND_BY_SEARCH || server_pause){
         if (sstatus == SEARCH) timer_stand_by.restart();
@@ -394,11 +407,19 @@ OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box,
 				sleep(2);
 				read_instructions(focus);
 
-        if(sstatus == RPM){
+        if(sstatus == RPM || sstatus==STAND_BY_RPM){
 					cout << "initialized: reference point method" << endl;
 					cout << rpm_cells.size() << "," << cells.size() << "," << paused_cells.size() << endl;
+					if(rpm_cells.empty() && !paused_cells.empty()){
+						rpm_stop();
+						ofstream output;
+						output.open(rpm_file,ios_base::app);
+						output << y_rpm[0] << " " << y_rpm[1] << " ";
+						output << x_rpm << endl;
+						cout << "distance:" << ub_rpm << endl;
+						cout << "solution:" << y_rpm[0] << " " << y_rpm[1] << " ;" << x_rpm << endl;
+					}
 				}
-
 
 				write_status(current_precision);
 
@@ -408,7 +429,7 @@ OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box,
 					 exit(0);
 				}
 
-				if(buffer.empty() && rpm_cells.empty()) sstatus = REACHED_PRECISION;
+				if(buffer.empty() && (sstatus == SEARCH || sstatus == STAND_BY_SEARCH)) sstatus = REACHED_PRECISION;
 				server_pause=false; iter++;
 
 			}
@@ -416,7 +437,7 @@ OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box,
       //Iteration of the solver
 			Cell* c=NULL;
 
-			if(!rpm_cells.empty()){ // reference point method
+			if(sstatus == RPM){ // reference point method
 			  c = *rpm_cells.begin();
 				rpm_cells.erase(rpm_cells.begin());
 				cout << "rpm_distance:" << rpm_compare::distance(get_boxy(c->box,n).lb(),rp) << "(" << ub_rpm << ")" << endl;
@@ -480,11 +501,15 @@ OptimizerMOP_S::Status OptimizerMOP_S::_optimize(const IntervalVector& init_box,
 				 }
 
 				 if(ub_rpm<0.0){
+					  paused_cells.insert(c);
 					  rpm_stop();
 						ofstream output;
 						output.open(rpm_file,ios_base::app);
             output << y_rpm[0] << " " << y_rpm[1] << " ";
 						output << x_rpm << endl;
+						cout << ub_rpm << endl;
+						cout << "solution:" << y_rpm[0] << " " << y_rpm[1] << " ;" << x_rpm << endl;
+						continue;
 				 }
 			}
 

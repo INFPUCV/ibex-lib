@@ -25,7 +25,7 @@ struct rpm_compare {
      double d1 = (v[0]-rp[0]);// / BxpMOPData::y1_init.diam();
   	 double d2 = (v[1]-rp[1]);// / BxpMOPData::y2_init.diam();
 
-  	 double dist = std::min(d1, d2);
+  	 double dist = std::max(d1, d2);
   	 return dist;
   }
 

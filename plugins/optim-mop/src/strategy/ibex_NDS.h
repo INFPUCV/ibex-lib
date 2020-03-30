@@ -204,29 +204,29 @@ public:
     };
 
 	//returns a list of points non-dominated by lb
-	list< Vector > non_dominated_points(const Vector& lb){
+	list< Vector > non_dominated_points(const Vector& lb, bool cutting_points=true){
 		list < Vector > inpoints;
 
-		Vector firstp(2);
-		Vector lastp(2);
 
 		//first potential dominated point
 		Vector v(2); v[0]=lb[0]; v[1]=NEG_INFINITY;
 		map< Vector, NDS_data >:: iterator ent1=NDS2.upper_bound(v);
 		Vector v11 = ent1->first; ent1--;
-
 		//last point before x=lbx
 		Vector v10 = ent1->first;
 
-		//x-point cutting lbx
-	    Vector v1(2); v1[0]=lb[0]; v1[1]=v11[1];
-	    Vector v2(2); v2[0]=lb[0]; v2[1]=v10[1];
-	    firstp = pointIntersection( v10, v11, v1, v2);
-	   	if(firstp[1] <= lb[1] ){
-	   		return inpoints; //empty list
-	   	}
+		Vector v1(2); v1[0]=lb[0]; v1[1]=v11[1];
+		Vector v2(2); v2[0]=lb[0]; v2[1]=v10[1];
 
-		inpoints.push_back(firstp);
+		//x-point cutting lbx
+		if(cutting_points){
+			  Vector firstp(2);
+		    firstp = pointIntersection( v10, v11, v1, v2);
+		   	if(firstp[1] <= lb[1] ){
+		   		return inpoints; //empty list
+		   	}
+		   inpoints.push_back(firstp);
+	  }
 
 		ent1++;
 		//points dominated by lb
@@ -235,19 +235,21 @@ public:
 			ent1++;
 		}
 
-		//last potential dominated point
-		ent1--;
-		Vector v21 = ent1->first;
-		//first point after y=lby
-		ent1++;
-		Vector v20 = ent1->first;
+		if(cutting_points){
+	    Vector lastp(2);
+			//last potential dominated point
+			ent1--;
+			Vector v21 = ent1->first;
+			//first point after y=lby
+			ent1++;
+			Vector v20 = ent1->first;
 
-		//x-point cutting lby
-	    v1[0]=v20[0]; v1[1]=lb[1];
-	    v2[0]=v21[0]; v2[1]=lb[1];
-		lastp = pointIntersection( v20, v21, v1, v2);
-
-		inpoints.push_back(lastp);
+			//x-point cutting lby
+		    v1[0]=v20[0]; v1[1]=lb[1];
+		    v2[0]=v21[0]; v2[1]=lb[1];
+			lastp = pointIntersection( v20, v21, v1, v2);
+			inpoints.push_back(lastp);
+	 }
 
 		return inpoints;
 	}
