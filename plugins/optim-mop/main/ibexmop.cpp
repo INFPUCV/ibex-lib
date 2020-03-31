@@ -54,6 +54,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
 	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
 	args::ValueFlag<std::string> _input_file(parser, "string", "Loading file", {"input_file"});
+	args::ValueFlag<std::string> _demo(parser, "string", "Demo file", {"demo"});
 
 
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
@@ -83,8 +84,17 @@ int main(int argc, char** argv){
 		return 1;
 	}
 
+  string file = filename.Get();
+  ifstream myfile;
+
+	if(_demo){
+		string line;
+		myfile.open(_demo.Get());
+		myfile >> file;
+	}
+
   //original system: 2 objective functions and constraints
-	System ext_sys(filename.Get().c_str());
+	System ext_sys(file.c_str());
 
   //for accing the cy envelope constraint
 	SystemFactory fac2;
@@ -125,7 +135,7 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::_plot = _plot;
 
-	int nb_ub_sols = 50 ;
+	int nb_ub_sols = 10 ;
 	OptimizerMOP::_min_ub_dist = 0.1;
 	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
@@ -298,51 +308,49 @@ int main(int argc, char** argv){
 		o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 					(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
 					OptimizerMOP::MIDPOINT,	eps, rel_eps);
+		if(strategy=="NDSdist")
+			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
+
 	}else{
-		o = new OptimizerMOP_S(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
+		OptimizerMOP_I* o;
+		o = new OptimizerMOP_I(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
 							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
-							OptimizerMOP::MIDPOINT,	eps, rel_eps, eps_rpm);
-		OptimizerMOP_S::_rh=rh;
-		OptimizerMOP_S::output_file= (_output_file)? _output_file.Get():"output2.txt";
-		OptimizerMOP_S::instructions_file=(_instructions_file)? _instructions_file.Get():"instructions.txt";
+							OptimizerMOP::MIDPOINT);
+		if(strategy=="NDSdist")
+			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
+
+		// the trace
+		o->trace=(_trace)? _trace.Get() : false;
+		// the allowed time for search
+		o->timeout=timelimit;
+
+		IntervalVector focus = o->load(ext_sys.box);
+		cout << "Focus:" << focus << endl;
+
+    if(_demo){
+			string line;
+			//myfile.open(_demo.Get());
+			double iters; double eps; Vector ref(2);
+			myfile >> iters >> eps;
+			cout << iters << ", " << eps << endl;
+			o->run(iters, eps);
+			while(myfile >> iters >> eps >> ref[0] >> ref[1]){
+				 cout << iters << ", " << eps << "," << ref << endl;
+			   o->update_refpoint(ref);
+			   o->run(iters, eps);
+
+			}
+		  o->write_envelope("output2.txt");
+			o->report(verbose);
+			cout << o->current_precision << endl;
+		}
 	}
-
-
-	if(strategy=="NDSdist"){
-		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
-	}
-
-	// the trace
-	o->trace=(_trace)? _trace.Get() : false;
-
-	// the allowed time for search
-	o->timeout=timelimit;
-
-	// the search itself
-	if(!_input_file)
-		o->optimize(ext_sys.box);
-	else
-	  o->optimize(ext_sys.box, _input_file.Get());
 
 
 	// printing the results
-	o->report(verbose);
 
 
 
-/*
-	delete bs;
-	delete buffer;
-	delete _ext_sys;
-	if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn") {
-		delete lr;
-	    delete ctcxn;
-	    delete cxn;
-	    delete cxn_poly;
-	    delete cxn_compo;
-	}
-
-*/
 
 	return 0;
 

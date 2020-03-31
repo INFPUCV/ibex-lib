@@ -1,0 +1,4 @@
+plugins/optim-mop/benchs/osy.txt
+50 0.1
+500 1e-2 -255 52
+500 1e-2 -118 20

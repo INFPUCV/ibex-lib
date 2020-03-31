@@ -1,0 +1,4 @@
+plugins/optim-mop/benchs/tan.txt
+1000 1e-1
+1000 1e-4 0.9 0.6
+1000 1e-4 0.25 1.0

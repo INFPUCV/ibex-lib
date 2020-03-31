@@ -145,8 +145,8 @@ void OptimizerMOP_S::read_instructions(IntervalVector& focus){
 				zoom(instruction, focus, myfile);
 				if(sstatus==STAND_BY_SEARCH) sstatus=SEARCH;
 				if(sstatus==STAND_BY_RPM) sstatus=RPM;
-			}//else if(instruction=="upper_envelope"){
-			//	get_solution(myfile);
+			}else if(instruction=="upper_envelope"){
+				get_solution(myfile);
 			}else if(instruction == "rpm"){
 				sstatus = RPM;
 				rpm_init(myfile);
