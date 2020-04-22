@@ -338,9 +338,16 @@ int main(int argc, char** argv){
 				 cout << iters << ", " << eps << "," << ref << endl;
 			   o->update_refpoint(ref);
 			   o->run(iters, eps);
-
+				 list < pair < bool, Vector> > changes = o->ndsH.get_and_clear_changes();
+	 			 /*for(auto p:changes){
+	 			 	  if( p.second.size()>0)
+	 					  cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
+	 				  else
+	 				    cout << "clear" << endl;
+	 			}*/
 			}
-		  o->write_envelope("output2.txt");
+
+		  //o->write_envelope("output2.txt");
 			o->report(verbose);
 			cout << o->current_precision << endl;
 		}

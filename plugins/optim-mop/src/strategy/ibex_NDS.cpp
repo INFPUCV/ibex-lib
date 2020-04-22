@@ -111,7 +111,7 @@ namespace ibex {
 			if( c_ub < (Interval(it1->first[1]) - m*Interval(it1->first[0])).lb()
 			 && y1[0] < it1->first[0] && y2[1] < it1->first[1]){
 				aux = it1; ++aux;
-				NDS2.erase(it1);
+				NDS2_erase(it1);
 				it1 = aux;
 
 			} else it1++;
@@ -131,9 +131,9 @@ namespace ibex {
 
 				Vector point = pointIntersection(prev.first, next.first, y1, y2);
 				if(m2<m.mid())
-				   NDS2.insert(make_pair(point,prev.second));
+				   NDS2_insert(make_pair(point,prev.second));
 				else
-				   NDS2.insert(make_pair(point,data));
+				   NDS2_insert(make_pair(point,data));
 				intersections++;
 			}catch(NoIntersectionException& e) {  }
 
@@ -176,7 +176,7 @@ namespace ibex {
 				first=false;
 				last_dom=it1->first;
 				next_data = it1->second;
-				NDS2.erase(it1);
+				NDS2_erase(it1);
 				it1 = aux;
 			} else ++it1;
 		}
@@ -195,9 +195,9 @@ namespace ibex {
 			Vector intersection2 = pointIntersection(last_dom, it2->first, new_y, aux_y);
 
 			// se agregan el punto y los dos obtenidos anteriormente
-			NDS2.insert(make_pair(new_y, data));
-			NDS2.insert(make_pair(intersection1, NDS_data()));
-			NDS2.insert(make_pair(intersection2, next_data));
+			NDS2_insert(make_pair(new_y, data));
+			NDS2_insert(make_pair(intersection1, NDS_data()));
+			NDS2_insert(make_pair(intersection2, next_data));
 		}catch(NoIntersectionException& e) {  }
 
 	}

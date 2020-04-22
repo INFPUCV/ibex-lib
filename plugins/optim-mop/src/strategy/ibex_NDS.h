@@ -84,16 +84,16 @@ public:
 
 
 	void clear(){
-		NDS2.clear();
+		NDS2_clear();
 		//the first point
 		Vector v(2); v[0]=NEG_INFINITY; v[1]=POS_INFINITY;
-		NDS2.insert(make_pair(v, NDS_data()));
+		NDS2_insert(make_pair(v, NDS_data()));
 		//the middle point
 		v[0]=POS_INFINITY;
-		NDS2.insert(make_pair(v, NDS_data()));
+		NDS2_insert(make_pair(v, NDS_data()));
 		//the last point
 		v[1]=NEG_INFINITY;
-		NDS2.insert(make_pair(v, NDS_data()));
+		NDS2_insert(make_pair(v, NDS_data()));
 	}
 
 	Vector lb(){
@@ -388,11 +388,38 @@ public:
 		return *it;
 	}
 
+	list < pair < bool, Vector> > get_and_clear_changes(){
+		list < pair < bool, Vector> > ch = changes;
+		changes.clear();
+		return ch;
+	}
+
+	void NDS2_clear(){
+		NDS2.clear();
+		changes.push_back(make_pair(false,Vector(0)));
+	}
+
+	void NDS2_insert(pair<Vector, NDS_data> p){
+		std::pair<std::map<Vector, NDS_data>::iterator,bool> ret;
+		ret=NDS2.insert(p);
+		if(ret.second==true)
+		    changes.push_back(make_pair(true,p.first));
+	}
+
+	void NDS2_erase(std::map<Vector, NDS_data >::iterator it){
+		pair< Vector, NDS_data > p= *it;
+		NDS2.erase(it);
+		changes.push_back(make_pair(false,p.first));
+	}
+
 
 	// The current non-dominated set sorted by increasing y1
     // el valor (vector xl, vector xr) corresponde al final del segmento anterior
 	// (resp. comienzo del segmento siguiente) en x.
 	map< Vector, NDS_data, sorty2 > NDS2;
+
+  //list for maintaining the last adding and removing of points
+	list < pair < bool, Vector> > changes;
 };
 
 } /* namespace ibex */

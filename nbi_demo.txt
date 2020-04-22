@@ -1,3 +1,5 @@
 plugins/optim-mop/benchs/nbi.txt
-1000 1e-1
-1000 1e-2 8 -2
+10 1e-1
+10 1e-2 8 -2
+10 1e-2 8 -2
+10 1e-2 8 -2
