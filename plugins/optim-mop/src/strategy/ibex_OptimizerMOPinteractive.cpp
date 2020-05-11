@@ -31,6 +31,32 @@ OptimizerMOP_I::OptimizerMOP_I(int n, const Function &f1,  const Function &f2,
 
 }
 
+list  < pair < bool, Vector> > OptimizerMOP_I::changes_lower_envelope(){
+	list  < pair < bool, Vector> > changes;
+	NDS_seg LBseg_new;
+	for(auto cc:cells)	LBseg_new.add_lb(*cc);
+	for(auto cc:paused_cells) LBseg_new.add_lb(*cc);
+	list  < pair< Vector, NDS_data> > add_changes;
+	list  <  pair< Vector, NDS_data> > rem_changes;
+	std::set_difference( LBseg_new.NDS2.begin(), LBseg_new.NDS2.end(),
+    LBseg.begin(), LBseg.end(),
+    std::back_inserter(add_changes), sorty2() );
+
+	std::set_difference( LBseg.begin(), LBseg.end(),
+	    LBseg_new.NDS2.begin(), LBseg_new.NDS2.end(),
+	    std::back_inserter(rem_changes), sorty2() );
+
+	for (auto ch : rem_changes)
+				changes.push_back(make_pair(false, ch.first));
+
+	for (auto ch : add_changes)
+		changes.push_back(make_pair(true, ch.first));
+
+  LBseg = LBseg_new.NDS2;
+
+	return changes;
+}
+
 void OptimizerMOP_I::write_envelope(string output_file){
 	NDS_seg LBaux;
 	NDS_seg UBaux=ndsH;

@@ -405,6 +405,8 @@ protected:
 	/** Number of cells pushed into the heap (which passed through the contractors) */
 	int nb_cells;
 
+	set<Cell*> cells;
+
 };
 
 inline OptimizerMOP::Status OptimizerMOP::get_status() const { return status; }

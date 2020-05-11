@@ -20,17 +20,6 @@ using namespace std;
 namespace ibex {
 
 
-/**
- * comparation function for sorting NDS2 by increasing x and decreasing by y
- */
-struct sorty2{
-	bool operator()(const Vector& y1, const Vector& y2){
-		if(y1[0] != y2[0])
-			return y1[0]<y2[0];
-		return y1[1]>y2[1];
-
-	}
-};
 
 class NDS_data{
 public:
@@ -68,6 +57,27 @@ public:
 	Vector x1;
 	Vector x2;
 };
+
+
+/**
+ * comparation function for sorting NDS2 by increasing x and decreasing by y
+ */
+struct sorty2{
+	bool operator()(const Vector& y1, const Vector& y2){
+		if(y1[0] != y2[0])
+			return y1[0]<y2[0];
+		return y1[1]>y2[1];
+
+	}
+
+	bool operator()(pair <const Vector, NDS_data>& y1, pair <const Vector, NDS_data>& y2){
+		if(y1.first[0] != y2.first[0])
+			return y1.first[0]<y2.first[0];
+		return y1.first[1]>y2.first[1];
+
+	}
+};
+
 
 /**
  * \brief Segment based non-dominated set

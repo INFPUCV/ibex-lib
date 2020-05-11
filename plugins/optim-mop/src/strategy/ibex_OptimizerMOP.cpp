@@ -329,7 +329,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	Timer timer;
 	timer.start();
 
-	set<Cell*> cells;
+	cells.clear();
 	cells.insert(root);
 
 	IntervalVector focus(2);

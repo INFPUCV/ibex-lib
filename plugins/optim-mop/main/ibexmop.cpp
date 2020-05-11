@@ -325,7 +325,9 @@ int main(int argc, char** argv){
 		o->timeout=timelimit;
 
 		IntervalVector focus = o->load(ext_sys.box);
+		double ini_eps = focus.size() / 100.0;
 		cout << "Focus:" << focus << endl;
+		cout << "Eps:" << ini_eps << endl;
 
     if(_demo){
 			string line;
@@ -333,18 +335,19 @@ int main(int argc, char** argv){
 			double iters; double eps; Vector ref(2);
 			myfile >> iters >> eps;
 			cout << iters << ", " << eps << endl;
-			o->run(iters, eps);
+			o->run(iters, ini_eps);
 			while(myfile >> iters >> eps >> ref[0] >> ref[1]){
 				 cout << iters << ", " << eps << "," << ref << endl;
 			   o->update_refpoint(ref);
 			   o->run(iters, eps);
-				 list < pair < bool, Vector> > changes = o->ndsH.get_and_clear_changes();
-	 			 /*for(auto p:changes){
+				 //list < pair < bool, Vector> > changes = o->changes_upper_envelope();
+				 list < pair < bool, Vector> > changes = o->changes_lower_envelope();
+				 for(auto p:changes){
 	 			 	  if( p.second.size()>0)
 	 					  cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
 	 				  else
 	 				    cout << "clear" << endl;
-	 			}*/
+	 			}
 			}
 
 		  //o->write_envelope("output2.txt");
