@@ -350,7 +350,7 @@ int main(int argc, char** argv){
 	 			}
 			}
 
-		  //o->write_envelope("output2.txt");
+		  o->write_envelope("output2.txt");
 			o->report(verbose);
 			cout << o->current_precision << endl;
 		}

@@ -351,6 +351,8 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			cells.erase(c);
 
 			if(cdata->ub_distance <= eps){
+				IntervalVector box_y=NDS_seg::get_box_y(c);
+				cout << box_y.lb() << "dist:" << cdata->ub_distance << endl;
 				delete c;
 
 				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)) break;
@@ -379,9 +381,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			double dist=0.0;
 			if(!atomic_box) dist=ndsH.distance(c);
 
+
 			//se elimina la caja
 			if(dist < eps || atomic_box){
-
+				IntervalVector box_y=NDS_seg::get_box_y(c);
+				cout << box_y.lb() << "dist:" << dist << endl;
 				if(new_cells.first){
 					delete new_cells.first;
 					delete new_cells.second;

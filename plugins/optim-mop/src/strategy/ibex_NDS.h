@@ -9,6 +9,7 @@
 #include "ibex_pyPlotter.h"
 #include <map>
 #include <list>
+#include <unordered_set>
 #include "ibex_BxpMOPData.h"
 #include "ibex_OptimizerMOP.h"
 
@@ -75,6 +76,23 @@ struct sorty2{
 			return y1.first[0]<y2.first[0];
 		return y1.first[1]>y2.first[1];
 
+	}
+};
+
+
+struct compare_segments{
+	bool operator()(const pair <Vector, Vector>& y1, const pair <Vector, Vector>& y2) const{
+		if(y1.first[0] == y2.first[0] && y1.first[1] == y2.first[1] &&
+		  y1.second[0] == y2.second[0] && y1.second[1] == y2.second[1]) return true;
+		return false;
+	}
+};
+
+struct hasher {
+	std::size_t operator()(const pair <const Vector, const Vector>& y) const{
+		size_t  a = std::hash<double>()(y.first[0]);
+		size_t  b = std::hash<double>()(y.first[1]);
+		return a+b;
 	}
 };
 
@@ -427,6 +445,8 @@ public:
     // el valor (vector xl, vector xr) corresponde al final del segmento anterior
 	// (resp. comienzo del segmento siguiente) en x.
 	map< Vector, NDS_data, sorty2 > NDS2;
+
+  std::unordered_set< pair<Vector, Vector>, hasher, compare_segments > segments;
 
   //list for maintaining the last adding and removing of points
 	list < pair < bool, Vector> > changes;
