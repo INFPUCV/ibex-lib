@@ -198,6 +198,7 @@ int main(int argc, char** argv){
 	  buffer = new DistanceSortedCellBufferMOP;
 
 
+
 	// Build the bisection heuristic
 	// --------------------------
 
@@ -300,6 +301,20 @@ int main(int argc, char** argv){
 
 	// the allowed time for search
 	o->timeout=timelimit;
+
+/** SearchEfficient para buscar solucion eficiente, minf1 y minf2**/
+  CellBufferOptim* buff = new CellSet<manhattan>;
+	LoupFinderMOP finder2(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f, 1e-8, 3);
+	SearchEfficient* se = new SearchEfficient(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f,
+		 *ctcxn, *bs, *buff, finder2, eps, rel_eps);
+  cout << "search efficient" << endl;
+	se->optimize(ext_sys.box, SearchEfficient::EFFICIENT);
+	cout << se->efficient[0] << ";" << se->efficient[1] << endl;
+	se->optimize(ext_sys.box, SearchEfficient::MINF1);
+	cout << se->efficient[0] << ";" << se->efficient[1] << endl;
+	se->optimize(ext_sys.box, SearchEfficient::MINF2);
+	cout << se->efficient[0] << ";" << se->efficient[1] << endl;
+/*********************/
 
 	// the search itself
 	o->optimize(ext_sys.box);
