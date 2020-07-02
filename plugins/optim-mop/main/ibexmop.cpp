@@ -12,6 +12,15 @@
 #include "ibex.h"
 #include "args.hxx"
 
+// Server side C/C++ program to demonstrate Socket programming 
+#include <unistd.h> 
+#include <stdio.h> 
+#include <sys/socket.h> 
+#include <stdlib.h> 
+#include <netinet/in.h> 
+#include <string.h>
+#include <cstring>
+
 
 #ifndef _IBEX_WITH_OPTIM_MOP_
 #error "You need the plugin Optim MOP to run this example."
@@ -30,6 +39,8 @@ int main(int argc, char** argv){
 		cerr << "usage: optimizer04 filename filtering linear_relaxation bisection strategy prec timelimit "  << endl;
 		exit(1);
 	}
+
+	char* fns = "fns";
 
 	args::ArgumentParser parser("********* IbexMop *********.", "Solve a NLBOOP (Minibex file).");
 	args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -56,6 +67,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _input_file(parser, "string", "Loading file", {"input_file"});
 	args::ValueFlag<std::string> _demo(parser, "string", "Demo file", {"demo"});
 
+	args::ValueFlag<int> _port(parser, "int", "Port for connection with the API", {"port"});
 
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
@@ -84,17 +96,26 @@ int main(int argc, char** argv){
 		return 1;
 	}
 
-  string file = filename.Get();
-  ifstream myfile;
+  	string file = filename.Get();
+  	ifstream myfile;
 
-	if(_demo){
-		string line;
-		myfile.open(_demo.Get());
-		myfile >> file;
+
+	int port= 0;
+
+	while(port == 0){
+
+		if(_port){
+			port = _port.Get();
+			printf("port: %i\n", port);
+		}
 	}
+
+	// aqui tira el error 
 
   //original system: 2 objective functions and constraints
 	System ext_sys(file.c_str());
+
+
 
   //for accing the cy envelope constraint
 	SystemFactory fac2;
@@ -116,6 +137,8 @@ int main(int argc, char** argv){
 	if(OptimizerMOP::cy_contract_var)	_ext_sys=new System(ext_sys, System(fac2));
 	else _ext_sys =new System(ext_sys);
 
+
+	
 
 	//cout << *_ext_sys << endl;
 
@@ -215,6 +238,8 @@ int main(int argc, char** argv){
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
 
+	
+
 
 	// Build the bisection heuristic
 	// --------------------------
@@ -242,6 +267,48 @@ int main(int argc, char** argv){
 	//else if (bisection=="lsmear")
 	//  bs = new LSmear(ext_sys,p);
 	else {cout << bisection << " is not an implemented  bisection mode "  << endl; return -1;}
+
+	//Definicion de variables para el servidor
+	int server_fd, new_socket, valread; 
+    struct sockaddr_in address; 
+    int opt = 1; 
+    int addrlen = sizeof(address); 
+    char bufferserver[1024] = {0}; 
+    string instruction = "run" ;
+	// Creating socket file descriptor 
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
+    { 
+        perror("socket failed"); 
+        exit(EXIT_FAILURE); 
+    } 
+
+    // Forcefully attaching socket to the port 8080 
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, 
+                                                  &opt, sizeof(opt))) 
+    { 
+        perror("setsockopt"); 
+        exit(EXIT_FAILURE); 
+    }
+ 
+    address.sin_family = AF_INET; 
+    address.sin_addr.s_addr = INADDR_ANY; 
+    address.sin_port = htons( port ); 
+       
+    // Forcefully attaching socket to the port 8080 
+    if (bind(server_fd, (struct sockaddr *)&address,  
+                                 sizeof(address))<0) 
+    { 
+        perror("bind failed"); 
+        exit(EXIT_FAILURE); 
+    } 
+    if (listen(server_fd, 3) < 0) 
+    { 
+        perror("listen"); 
+        exit(EXIT_FAILURE); 
+    }
+
+
+
 
 	// The contractors
 
@@ -329,45 +396,125 @@ int main(int argc, char** argv){
 		cout << "Focus:" << focus << endl;
 		cout << "Eps:" << ini_eps << endl;
 
-    if(_demo){
+    	if(_server_mode){
 			string line;
+			string mensaje;
+			std::string respuesta;
+			string upper = "";
+			string lower = "";
+			char *response = "";
+			int data;
 			//myfile.open(_demo.Get());
 			double iters; double eps; Vector ref(2);
 			myfile >> iters >> eps;
 			cout << iters << ", " << eps << endl;
 			o->run(iters, ini_eps);
-			while(myfile >> iters >> eps >> ref[0] >> ref[1]){
-				 cout << iters << ", " << eps << "," << ref << endl;
-			   o->update_refpoint(ref);
-			   o->run(iters, eps);
-				 //list < pair < bool, Vector> > changes = o->changes_upper_envelope();
-				 list < pair < bool, Vector> > changes = o->changes_lower_envelope();
-				 for(auto p:changes){
-	 			 	  if( p.second.size()>0)
-	 					  cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
-	 				  else
-	 				    cout << "clear" << endl;
-	 			}
-			}
+			while(instruction != "fns"){
 
-		  o->write_envelope("output2.txt");
-			o->report(verbose);
-			cout << o->current_precision << endl;
+				if ((new_socket = accept(server_fd, (struct sockaddr *)&address,  
+								(socklen_t*)&addrlen))<0) 
+				{ 
+					perror("accept"); 
+					exit(EXIT_FAILURE); 
+				}	
+
+				
+
+				//timeout 
+				// Traduccion de instruccion
+				valread = read( new_socket , bufferserver, 1024); 
+				std::string resp (bufferserver);
+				mensaje = resp;
+				instruction = "";
+				instruction = instruction + mensaje [0];
+				instruction = instruction + mensaje [1];
+				instruction = instruction + mensaje [2];
+
+				// En el caso de que se solicitan los datos
+				if( instruction == "glw"){
+					respuesta = "";
+					list < pair < bool, Vector> > changes_lower = o->changes_lower_envelope();
+
+					lower = "";
+					for(auto p:changes_lower){
+						if( p.second.size()>0){
+							//cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
+							lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";		
+						}
+					}
+
+					respuesta = lower;
+					response = new char[respuesta.size()];
+					strcpy(response, respuesta.c_str());
+					send(new_socket , response , strlen(response) , 0 );
+					response = "";
+					lower = "";
+					continue;
+
+				}
+				// En el caso de que se solicitan los datos
+				if( instruction == "gup"){
+					respuesta = "";
+					list < pair < bool, Vector> > changes_upper = o->changes_upper_envelope();
+
+					for(auto p:changes_upper){
+						if( p.second.size()>0){
+							upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
+						}
+					}
+
+					respuesta = upper;
+					response = new char[respuesta.size()];
+					strcpy(response, respuesta.c_str());
+					send(new_socket , response , strlen(response) , 0 );
+					response = "";
+					upper = "";
+					continue;
+
+				}
+
+				// En el caso de que quieren el espacio de búsqueda
+				if( instruction == "zoo"){
+					string t = mensaje;
+					istringstream iss(t);
+					string word;
+					int x; int y;
+
+					iss>> word; iss >> x; iss >> y;
+					
+					ref[0] = x;
+					ref[1] = y;
+
+					cout << "ref: " << ref << endl;
+					o->update_refpoint(ref);
+					response = "esta fue tu respuesta al zo";
+					send(new_socket , response , strlen(response) , 0 );
+					continue;
+				}
+
+				if( instruction == "run"){
+					string t = mensaje;
+					istringstream iss(t);
+					string word;
+
+					iss>> word; iss >> iters; iss >> eps;
+
+					o->run(iters, eps);
+
+					response = "run ejecutado";
+					send(new_socket , response , strlen(response) , 0 );
+
+				}
+			}
 		}
 	}
-
-
-	// printing the results
-
-
+	}
+	catch(ibex::SyntaxError& e) {
+	  cout << e << endl;
+	}
 
 
 	return 0;
 
-	}
-
-
-	catch(ibex::SyntaxError& e) {
-	  cout << e << endl;
-	}
+		
 }
