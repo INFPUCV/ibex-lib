@@ -12,12 +12,12 @@
 #include "ibex.h"
 #include "args.hxx"
 
-// Server side C/C++ program to demonstrate Socket programming 
-#include <unistd.h> 
-#include <stdio.h> 
-#include <sys/socket.h> 
-#include <stdlib.h> 
-#include <netinet/in.h> 
+// Server side C/C++ program to demonstrate Socket programming
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
 #include <string.h>
 #include <cstring>
 
@@ -97,20 +97,18 @@ int main(int argc, char** argv){
 	}
 
   	string file = filename.Get();
-  	ifstream myfile;
+
 
 
 	int port= 0;
 
-	while(port == 0){
-
-		if(_port){
+	if(_port){
 			port = _port.Get();
 			printf("port: %i\n", port);
-		}
 	}
 
-	// aqui tira el error 
+
+	// aqui tira el error
 
   //original system: 2 objective functions and constraints
 	System ext_sys(file.c_str());
@@ -138,7 +136,7 @@ int main(int argc, char** argv){
 	else _ext_sys =new System(ext_sys);
 
 
-	
+
 
 	//cout << *_ext_sys << endl;
 
@@ -238,7 +236,7 @@ int main(int argc, char** argv){
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
 
-	
+
 
 
 	// Build the bisection heuristic
@@ -268,44 +266,6 @@ int main(int argc, char** argv){
 	//  bs = new LSmear(ext_sys,p);
 	else {cout << bisection << " is not an implemented  bisection mode "  << endl; return -1;}
 
-	//Definicion de variables para el servidor
-	int server_fd, new_socket, valread; 
-    struct sockaddr_in address; 
-    int opt = 1; 
-    int addrlen = sizeof(address); 
-    char bufferserver[1024] = {0}; 
-    string instruction = "run" ;
-	// Creating socket file descriptor 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
-    { 
-        perror("socket failed"); 
-        exit(EXIT_FAILURE); 
-    } 
-
-    // Forcefully attaching socket to the port 8080 
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, 
-                                                  &opt, sizeof(opt))) 
-    { 
-        perror("setsockopt"); 
-        exit(EXIT_FAILURE); 
-    }
- 
-    address.sin_family = AF_INET; 
-    address.sin_addr.s_addr = INADDR_ANY; 
-    address.sin_port = htons( port ); 
-       
-    // Forcefully attaching socket to the port 8080 
-    if (bind(server_fd, (struct sockaddr *)&address,  
-                                 sizeof(address))<0) 
-    { 
-        perror("bind failed"); 
-        exit(EXIT_FAILURE); 
-    } 
-    if (listen(server_fd, 3) < 0) 
-    { 
-        perror("listen"); 
-        exit(EXIT_FAILURE); 
-    }
 
 
 
@@ -377,6 +337,13 @@ int main(int argc, char** argv){
 					OptimizerMOP::MIDPOINT,	eps, rel_eps);
 		if(strategy=="NDSdist")
 			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
+			// the trace
+			o->trace=(_trace)? _trace.Get() : false;
+			// the allowed time for search
+			o->timeout=timelimit;
+			o->optimize(ext_sys.box);
+			o->report();
+
 
 	}else{
 		OptimizerMOP_I* o;
@@ -386,17 +353,46 @@ int main(int argc, char** argv){
 		if(strategy=="NDSdist")
 			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
 
-		// the trace
-		o->trace=(_trace)? _trace.Get() : false;
-		// the allowed time for search
-		o->timeout=timelimit;
+		//Definicion de variables para el servidor
+		int server_fd, new_socket, valread;
+	    struct sockaddr_in address;
+	    int opt = 1;
+	    int addrlen = sizeof(address);
+	    char bufferserver[1024] = {0};
+	    string instruction = "run" ;
+		// Creating socket file descriptor
+	    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+	    {
+	        perror("socket failed");
+	        exit(EXIT_FAILURE);
+	    }
 
-		IntervalVector focus = o->load(ext_sys.box);
-		double ini_eps = focus.size() / 100.0;
-		cout << "Focus:" << focus << endl;
-		cout << "Eps:" << ini_eps << endl;
+	    // Forcefully attaching socket to the port 8080
+	    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+	                                                  &opt, sizeof(opt)))
+	    {
+	        perror("setsockopt");
+	        exit(EXIT_FAILURE);
+	    }
 
-    	if(_server_mode){
+	    address.sin_family = AF_INET;
+	    address.sin_addr.s_addr = INADDR_ANY;
+	    address.sin_port = htons( port );
+
+	    // Forcefully attaching socket to the port 8080
+	    if (bind(server_fd, (struct sockaddr *)&address,
+	                                 sizeof(address))<0)
+	    {
+	        perror("bind failed");
+	        exit(EXIT_FAILURE);
+	    }
+	    if (listen(server_fd, 3) < 0)
+	    {
+	        perror("listen");
+	        exit(EXIT_FAILURE);
+	    }
+
+
 			string line;
 			string mensaje;
 			std::string respuesta;
@@ -404,25 +400,29 @@ int main(int argc, char** argv){
 			string lower = "";
 			char *response = "";
 			int data;
-			//myfile.open(_demo.Get());
-			double iters; double eps; Vector ref(2);
-			myfile >> iters >> eps;
-			cout << iters << ", " << eps << endl;
+
+			IntervalVector focus = o->load(ext_sys.box);
+			double ini_eps = focus.size() / 100.0;
+			double iters=10;
+			cout << "Focus:" << focus << endl;
+			cout << "Iters:" << iters << endl;
+			cout << "Eps:" << ini_eps << endl;
+
+			double eps; Vector ref(2);
 			o->run(iters, ini_eps);
 			while(instruction != "fns"){
+				close(new_socket);
 
-				if ((new_socket = accept(server_fd, (struct sockaddr *)&address,  
-								(socklen_t*)&addrlen))<0) 
-				{ 
-					perror("accept"); 
-					exit(EXIT_FAILURE); 
-				}	
+				if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
+								(socklen_t*)&addrlen))<0)
+				{
+					perror("accept");
+					exit(EXIT_FAILURE);
+				}
 
-				
-
-				//timeout 
+				//timeout
 				// Traduccion de instruccion
-				valread = read( new_socket , bufferserver, 1024); 
+				valread = read( new_socket , bufferserver, 1024);
 				std::string resp (bufferserver);
 				mensaje = resp;
 				instruction = "";
@@ -430,58 +430,72 @@ int main(int argc, char** argv){
 				instruction = instruction + mensaje [1];
 				instruction = instruction + mensaje [2];
 
+				int max_nb_changes = 10;
+
 				// En el caso de que se solicitan los datos
 				if( instruction == "glw"){
 					respuesta = "";
-					list < pair < bool, Vector> > changes_lower = o->changes_lower_envelope();
 
-					lower = "";
-					for(auto p:changes_lower){
-						if( p.second.size()>0){
-							//cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
-							lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";		
+					list < pair < bool, Vector> > changes_lower;
+					do{
+					  changes_lower = o->changes_lower_envelope(max_nb_changes);
+
+						lower = "";
+						cout << "start of message" << endl;
+						for(auto p:changes_lower){
+							if( p.second.size()>0){
+								cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
+								lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";
+							}
 						}
-					}
+						cout << "end of message" << endl;
 
-					respuesta = lower;
-					response = new char[respuesta.size()];
-					strcpy(response, respuesta.c_str());
-					send(new_socket , response , strlen(response) , 0 );
-					response = "";
-					lower = "";
-					continue;
+						respuesta = lower;
+						response = new char[respuesta.size()];
+						strcpy(response, respuesta.c_str());
+						send(new_socket , response , strlen(response) , 0 );
+						response = "";
+						lower = "";
+				  }while(changes_lower.size() == max_nb_changes);
 
 				}
 				// En el caso de que se solicitan los datos
-				if( instruction == "gup"){
+				else if( instruction == "gup"){
 					respuesta = "";
-					list < pair < bool, Vector> > changes_upper = o->changes_upper_envelope();
+					list < pair < bool, Vector> > changes_upper;
+					do{
+						changes_upper = o->changes_upper_envelope(max_nb_changes);
 
-					for(auto p:changes_upper){
-						if( p.second.size()>0){
-							upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
+            cout << "start of message" << endl;
+						for(auto p:changes_upper){
+							if( p.second.size()>0){
+								cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
+								upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
+							}
 						}
-					}
+						cout << "end of message" << endl;
 
-					respuesta = upper;
-					response = new char[respuesta.size()];
-					strcpy(response, respuesta.c_str());
-					send(new_socket , response , strlen(response) , 0 );
-					response = "";
-					upper = "";
-					continue;
+
+						respuesta = upper;
+						response = new char[respuesta.size()];
+						strcpy(response, respuesta.c_str());
+						send(new_socket , response , strlen(response) , 0 );
+						response = "";
+						upper = "";
+				  }while(changes_upper.size() == max_nb_changes);
+
 
 				}
 
 				// En el caso de que quieren el espacio de búsqueda
-				if( instruction == "zoo"){
+				else if( instruction == "zoo"){
 					string t = mensaje;
 					istringstream iss(t);
 					string word;
 					int x; int y;
 
 					iss>> word; iss >> x; iss >> y;
-					
+
 					ref[0] = x;
 					ref[1] = y;
 
@@ -489,10 +503,10 @@ int main(int argc, char** argv){
 					o->update_refpoint(ref);
 					response = "esta fue tu respuesta al zo";
 					send(new_socket , response , strlen(response) , 0 );
-					continue;
+
 				}
 
-				if( instruction == "run"){
+				else if( instruction == "run"){
 					string t = mensaje;
 					istringstream iss(t);
 					string word;
@@ -507,14 +521,12 @@ int main(int argc, char** argv){
 				}
 			}
 		}
-	}
-	}
-	catch(ibex::SyntaxError& e) {
+	}catch(ibex::SyntaxError& e) {
 	  cout << e << endl;
 	}
 
 
 	return 0;
 
-		
+
 }

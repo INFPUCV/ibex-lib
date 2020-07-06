@@ -416,9 +416,17 @@ public:
 		return *it;
 	}
 
-	list < pair < bool, Vector> > get_and_clear_changes(){
-		list < pair < bool, Vector> > ch = changes;
-		changes.clear();
+	list < pair < bool, Vector> > get_and_clear_changes(int nb_changes=-1){
+		list < pair < bool, Vector> > ch ;
+		if(nb_changes==-1){
+      ch=changes;
+			changes.clear();
+		}else{
+			for(int i=0; i<nb_changes && !changes.empty() ;i++){
+			  ch.push_back(changes.front());
+				changes.pop_front();
+			}
+		}
 		return ch;
 	}
 

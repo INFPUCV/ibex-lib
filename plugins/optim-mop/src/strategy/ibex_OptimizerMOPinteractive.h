@@ -57,13 +57,13 @@ public:
 
   /*Return a list of pairs. The first element indicates if the second has
 	to be inserted or removed from the upper_envelope */
-	list  < pair < bool, Vector> > changes_upper_envelope(){
-		return ndsH.get_and_clear_changes();
+	list  < pair < bool, Vector> > changes_upper_envelope(int nb_changes=-1){
+		return ndsH.get_and_clear_changes(nb_changes);
 	}
 
 	/* Return a list of pairs. The first element indicates if the second has
 	to be inserted or removed from the lower_envelope */
-	list  < pair < bool, Vector> > changes_lower_envelope();
+	list  < pair < bool, Vector> > changes_lower_envelope(int nb_changes=-1);
 
  	void write_envelope(string output_file);
 
@@ -81,6 +81,7 @@ public:
 	map< Vector, NDS_data, sorty2 > LBseg;
 
   Timer timer;
+	list  < pair < bool, Vector> > changes_lower;
 
 };
 

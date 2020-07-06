@@ -31,30 +31,42 @@ OptimizerMOP_I::OptimizerMOP_I(int n, const Function &f1,  const Function &f2,
 
 }
 
-list  < pair < bool, Vector> > OptimizerMOP_I::changes_lower_envelope(){
-	list  < pair < bool, Vector> > changes;
-	NDS_seg LBseg_new;
-	for(auto cc:cells)	LBseg_new.add_lb(*cc);
-	for(auto cc:paused_cells) LBseg_new.add_lb(*cc);
-	list  < pair< Vector, NDS_data> > add_changes;
-	list  <  pair< Vector, NDS_data> > rem_changes;
-	std::set_difference( LBseg_new.NDS2.begin(), LBseg_new.NDS2.end(),
-    LBseg.begin(), LBseg.end(),
-    std::back_inserter(add_changes), sorty2() );
+list  < pair < bool, Vector> > OptimizerMOP_I::changes_lower_envelope(int nb_changes){
+	if(changes_lower.empty()){
+		NDS_seg LBseg_new;
+		for(auto cc:cells)	LBseg_new.add_lb(*cc);
+		for(auto cc:paused_cells) LBseg_new.add_lb(*cc);
+		list  < pair< Vector, NDS_data> > add_changes;
+		list  <  pair< Vector, NDS_data> > rem_changes;
+		std::set_difference( LBseg_new.NDS2.begin(), LBseg_new.NDS2.end(),
+	    LBseg.begin(), LBseg.end(),
+	    std::back_inserter(add_changes), sorty2() );
 
-	std::set_difference( LBseg.begin(), LBseg.end(),
-	    LBseg_new.NDS2.begin(), LBseg_new.NDS2.end(),
-	    std::back_inserter(rem_changes), sorty2() );
+		std::set_difference( LBseg.begin(), LBseg.end(),
+		    LBseg_new.NDS2.begin(), LBseg_new.NDS2.end(),
+		    std::back_inserter(rem_changes), sorty2() );
 
-	for (auto ch : rem_changes)
-				changes.push_back(make_pair(false, ch.first));
+		for (auto ch : rem_changes)
+					changes_lower.push_back(make_pair(false, ch.first));
 
-	for (auto ch : add_changes)
-		changes.push_back(make_pair(true, ch.first));
+		for (auto ch : add_changes)
+			changes_lower.push_back(make_pair(true, ch.first));
 
-  LBseg = LBseg_new.NDS2;
+	  LBseg = LBseg_new.NDS2;
+	}
 
-	return changes;
+  list < pair < bool, Vector> > ch ;
+	if(nb_changes==-1){
+		ch=changes_lower;
+		changes_lower.clear();
+	}else{
+		for(int i=0; i<nb_changes && !changes_lower.empty() ;i++){
+			ch.push_back(changes_lower.front());
+			changes_lower.pop_front();
+    }
+  }
+
+	return ch;
 }
 
 void OptimizerMOP_I::write_envelope(string output_file){

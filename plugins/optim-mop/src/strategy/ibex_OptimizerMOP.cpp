@@ -385,7 +385,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			//se elimina la caja
 			if(dist < eps || atomic_box){
 				IntervalVector box_y=NDS_seg::get_box_y(c);
-				cout << box_y.lb() << "dist:" << dist << endl;
+				//cout << box_y.lb() << "dist:" << dist << endl;
 				if(new_cells.first){
 					delete new_cells.first;
 					delete new_cells.second;
