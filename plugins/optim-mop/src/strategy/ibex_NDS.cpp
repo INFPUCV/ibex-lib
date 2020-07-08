@@ -24,8 +24,8 @@ namespace ibex {
  						-1/((BxpMOPData*) c.prop[BxpMOPData::id])->a,
  						((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a);
 
-      cout << "add:" << box_y.lb() << endl;
-			cout << "segment:" << segment.first[1] << "," << segment.second[0] << endl;
+      //cout << "add:" << box_y.lb() << endl;
+			//cout << "segment:" << segment.first[1] << "," << segment.second[0] << endl;
 
 			if(segments.find(segment) == segments.end()){ //debug
 				segments.insert(segment);

@@ -424,13 +424,14 @@ int main(int argc, char** argv){
 				// Traduccion de instruccion
 				valread = read( new_socket , bufferserver, 1024);
 				std::string resp (bufferserver);
-				mensaje = resp;
-				instruction = "";
-				instruction = instruction + mensaje [0];
-				instruction = instruction + mensaje [1];
-				instruction = instruction + mensaje [2];
+				cout << "message:" << resp << endl;
+				stringstream message;
+				message << resp;
 
 				int max_nb_changes = 10;
+
+        string instruction;
+				message >> instruction;
 
 				// En el caso de que se solicitan los datos
 				if( instruction == "glw"){
@@ -494,30 +495,31 @@ int main(int argc, char** argv){
 					string word;
 					int x; int y;
 
-					iss>> word; iss >> x; iss >> y;
+					iss>> word; iss >> x; iss >> y; iss >> eps;
 
 					ref[0] = x;
 					ref[1] = y;
 
 					cout << "ref: " << ref << endl;
-					o->update_refpoint(ref);
+					o->update_refpoint(ref, eps);
 					response = "esta fue tu respuesta al zo";
 					send(new_socket , response , strlen(response) , 0 );
 
 				}
 
 				else if( instruction == "run"){
-					string t = mensaje;
-					istringstream iss(t);
-					string word;
+					message >> iters;
+					message >> eps;
 
-					iss>> word; iss >> iters; iss >> eps;
+					OptimizerMOP_I::IStatus status = o->run(iters, eps);
+          cout << "run:" << status << endl;
+					cout << "current_precision:" << o->current_precision << endl;
 
-					o->run(iters, eps);
-
-					response = "run ejecutado";
+					response = "run ejecutado\n";
 					send(new_socket , response , strlen(response) , 0 );
 
+				}else if(instruction == "plot"){
+					o->plot();
 				}
 			}
 		}

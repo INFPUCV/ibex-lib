@@ -53,7 +53,9 @@ public:
 
 	IStatus run(int maxiter=5, double eps=1e-1);
 
-  void update_refpoint(Vector& refpoint);
+  void update_refpoint(Vector& refpoint, double eps);
+
+	void plot();
 
   /*Return a list of pairs. The first element indicates if the second has
 	to be inserted or removed from the upper_envelope */

@@ -31,6 +31,14 @@ OptimizerMOP_I::OptimizerMOP_I(int n, const Function &f1,  const Function &f2,
 
 }
 
+void OptimizerMOP_I::plot(){
+	NDS_seg LBseg;
+	for(auto cc:cells)	LBseg.add_lb(*cc);
+	for(auto cc:paused_cells) LBseg.add_lb(*cc);
+
+	py_Plotter::offline_plot(ndsH.NDS2, &LBseg.NDS2, "output2.txt");
+}
+
 list  < pair < bool, Vector> > OptimizerMOP_I::changes_lower_envelope(int nb_changes){
 	if(changes_lower.empty()){
 		NDS_seg LBseg_new;
@@ -237,16 +245,17 @@ void OptimizerMOP_I::load_state_from_file(string filename, const IntervalVector&
 	file_obj.close();
 }
 
-void OptimizerMOP_I::update_refpoint(Vector& refpoint){
-	this->refpoint = refpoint;
-  //we move from paused_cells to cells, all the boxes with lb dominated by refpoint
-	for(auto cc:paused_cells){
-		IntervalVector boxy=get_boxy(cc->box,n);
 
-		if(refpoint[0] > boxy[0].lb() && refpoint[1] > boxy[1].lb() ){
-			buffer.push(cc);
-			cells.insert(cc);
-			paused_cells.erase(cc);
+void OptimizerMOP_I::update_refpoint(Vector& refpoint, double eps){
+	this->refpoint = refpoint;
+
+	for(auto c:paused_cells){
+		IntervalVector boxy=get_boxy(c->box,n);
+
+		if(refpoint[0] > boxy[0].lb() && refpoint[1] > boxy[1].lb() &&  cdata->ub_distance > eps){
+			buffer.push(c);
+			cells.insert(c);
+			paused_cells.erase(c);
 		}
 	}
 
@@ -255,6 +264,9 @@ void OptimizerMOP_I::update_refpoint(Vector& refpoint){
 }
 
 OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
+	if(current_precision < eps) return STOPPED;
+	else update_refpoint(refpoint, eps);
+
   current_precision = eps;
 
 
