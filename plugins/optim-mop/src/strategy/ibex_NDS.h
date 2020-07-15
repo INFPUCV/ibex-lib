@@ -304,8 +304,8 @@ public:
 		double dist;
 		IntervalVector points(4);
 		if(a!=0){
-			pair<Vector, Vector> points = get_segment(box_y.lb(),-1/a, w_lb/a);
-			dist= distance(points.first, points.second, -1/a, w_lb/a);
+			pair<Vector, Vector> points = get_segment(box_y.lb(),-1.0/a, w_lb/a);
+			dist= distance(points.first, points.second, -1.0/a, w_lb/a);
 		}else{
 			pair<Vector, Vector> points = get_segment(box_y.lb());
 			dist= distance(points.first, points.second);
@@ -315,7 +315,7 @@ public:
 	}
 
 	//returns the segment yA--yB of the line y_2=m*y_2+c dominated by lb
-    pair <Vector, Vector> get_segment(const Vector& lb, double m=POS_INFINITY, double c=POS_INFINITY){
+    static pair <Vector, Vector> get_segment(const Vector& lb, double m=POS_INFINITY, double c=POS_INFINITY){
 		double max_dist=NEG_INFINITY;
 
 		Interval Ay=lb[1];
@@ -351,6 +351,7 @@ public:
 
 		Vector lb(2); lb[0]=yA[0], lb[1]=yB[1];
 		list< Vector> inner_segments= non_dominated_points(lb);
+
 		Vector* p0=NULL;
 
 		bool Adist=false;
@@ -362,11 +363,15 @@ public:
 			Interval dist;
 			//up-left point
 			if((p[0]-Ax).lb() < (p[1]-Ay).ub() || p[1]==POS_INFINITY){
+				cout << "up-left" << endl;
 				dist=p[0]-Interval(Ax);
+				cout << dist << endl;
 			}
 			//bottom-right point
 			else if((p[1]-By).lb() < (p[0]-Bx).ub() || p[0]==POS_INFINITY){
+				cout << "bottom-right" << endl;
 				dist=p[1]-Interval(By);
+				cout << dist << endl;
 				if(!Bdist && p0){
 					Interval mm=NEG_INFINITY;
 					if(p[0]-(*p0)[0] != 0)
@@ -374,6 +379,7 @@ public:
 
 					if(mm.lb() > -1 && mm.lb() < 0.0 ){
 						Interval cc= p[1] - mm*p[0];
+						cout << ((mm*Ax - Ay + cc)/(1.0-mm)).lb() << endl;
 						dist=std::max(dist.ub(), ((mm*Ax - Ay + cc)/(1.0-mm)).lb());
 						Bdist=true;
 					}

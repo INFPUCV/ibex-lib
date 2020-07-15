@@ -396,8 +396,8 @@ int main(int argc, char** argv){
 			string line;
 			string mensaje;
 			std::string respuesta;
-			string upper = "";
-			string lower = "";
+
+
 			char *response = "";
 			int data;
 
@@ -409,7 +409,7 @@ int main(int argc, char** argv){
 			cout << "Eps:" << ini_eps << endl;
 
 			double eps; Vector ref(2);
-			o->run(iters, ini_eps);
+			//o->run(iters, ini_eps);
 			while(instruction != "fns"){
 				close(new_socket);
 
@@ -435,13 +435,12 @@ int main(int argc, char** argv){
 
 				// En el caso de que se solicitan los datos
 				if( instruction == "glw"){
-					respuesta = "";
-
 					list < pair < bool, Vector> > changes_lower;
 					do{
 					  changes_lower = o->changes_lower_envelope(max_nb_changes);
-
-						lower = "";
+						char response[1024];
+						string lower = "";
+						
 						cout << "start of message" << endl;
 						for(auto p:changes_lower){
 							if( p.second.size()>0){
@@ -451,20 +450,20 @@ int main(int argc, char** argv){
 						}
 						cout << "end of message" << endl;
 
-						respuesta = lower;
-						response = new char[respuesta.size()];
-						strcpy(response, respuesta.c_str());
+						//respuesta = lower;
+						//response = new char[respuesta.size()];
+						strcpy(response, lower.c_str());
 						send(new_socket , response , strlen(response) , 0 );
-						response = "";
-						lower = "";
 				  }while(changes_lower.size() == max_nb_changes);
 
 				}
 				// En el caso de que se solicitan los datos
 				else if( instruction == "gup"){
-					respuesta = "";
+
 					list < pair < bool, Vector> > changes_upper;
 					do{
+						string upper = "";
+						char response[1024];
 						changes_upper = o->changes_upper_envelope(max_nb_changes);
 
             cout << "start of message" << endl;
@@ -476,13 +475,9 @@ int main(int argc, char** argv){
 						}
 						cout << "end of message" << endl;
 
-
-						respuesta = upper;
-						response = new char[respuesta.size()];
-						strcpy(response, respuesta.c_str());
+						//response = new char[respuesta.size()];
+						strcpy(response, upper.c_str());
 						send(new_socket , response , strlen(response) , 0 );
-						response = "";
-						upper = "";
 				  }while(changes_upper.size() == max_nb_changes);
 
 
