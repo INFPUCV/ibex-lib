@@ -428,9 +428,9 @@ int main(int argc, char** argv){
 				stringstream message;
 				message << resp;
 
-				int max_nb_changes = 10;
+				int max_nb_changes = 800;
 
-        string instruction;
+        		string instruction;
 				message >> instruction;
 
 				// En el caso de que se solicitan los datos
@@ -442,14 +442,11 @@ int main(int argc, char** argv){
 					  changes_lower = o->changes_lower_envelope(max_nb_changes);
 
 						lower = "";
-						cout << "start of message" << endl;
 						for(auto p:changes_lower){
 							if( p.second.size()>0){
-								cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
 								lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";
 							}
 						}
-						cout << "end of message" << endl;
 
 						respuesta = lower;
 						response = new char[respuesta.size()];
@@ -467,14 +464,11 @@ int main(int argc, char** argv){
 					do{
 						changes_upper = o->changes_upper_envelope(max_nb_changes);
 
-            cout << "start of message" << endl;
 						for(auto p:changes_upper){
 							if( p.second.size()>0){
-								cout << p.first << " " << p.second[0] << "," << p.second[1] << endl;
 								upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
 							}
 						}
-						cout << "end of message" << endl;
 
 
 						respuesta = upper;
@@ -508,17 +502,21 @@ int main(int argc, char** argv){
 				}
 
 				else if( instruction == "run"){
-					message >> iters;
-					message >> eps;
+					string t = mensaje;
+					istringstream iss(t);
+					string word;
+
+					iss>> word; iss >> iters; iss >> eps; 
+
 
 					OptimizerMOP_I::IStatus status = o->run(iters, eps);
-          cout << "run:" << status << endl;
-					cout << "current_precision:" << o->current_precision << endl;
+          			cout << "run:" << status << endl;
 
 					response = "run ejecutado\n";
 					send(new_socket , response , strlen(response) , 0 );
 
-				}else if(instruction == "plot"){
+				}
+				else if(instruction == "plot"){
 					o->plot();
 				}
 			}
