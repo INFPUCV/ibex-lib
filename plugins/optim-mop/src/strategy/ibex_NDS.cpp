@@ -21,11 +21,14 @@ namespace ibex {
 
  		if(OptimizerMOP::cy_contract_var){
  			pair <Vector, Vector> segment = get_segment(box_y.lb(),
- 						-1/((BxpMOPData*) c.prop[BxpMOPData::id])->a,
+ 						-1.0/((BxpMOPData*) c.prop[BxpMOPData::id])->a,
  						((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a);
-
-      //cout << "add:" << box_y.lb() << endl;
-			//cout << "segment:" << segment.first[1] << "," << segment.second[0] << endl;
+      Vector v(2);
+			v[0]=-246; v[1]=44;
+      if(box_y.contains(v)){
+      	cout << "add:" << box_y << endl;
+				cout << "segment:" << segment.first[1] << "," << segment.second[0] << endl;
+			}
 
 			if(segments.find(segment) == segments.end()){ //debug
 				segments.insert(segment);

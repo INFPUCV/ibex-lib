@@ -206,8 +206,8 @@ void OptimizerMOP::cy_contract2(Cell& c, list < Vector >& inpoints){
 
 	//Pent of cy
 
-	if(firstp!=lastp)
-		box3[n+3] = (lastp[0]-firstp[0])/(firstp[1]-lastp[1]);
+	//if(firstp!=lastp)
+	//	box3[n+3] = (lastp[0]-firstp[0])/(firstp[1]-lastp[1]);
 	if(box3[n+3]==0.0 || box3[n+3]==1.0 || box3[n+3].is_empty())
 		box3[n+3] = box[n].diam()/box[n+1].diam(); // a
 
@@ -239,6 +239,7 @@ void OptimizerMOP::cy_contract2(Cell& c, list < Vector >& inpoints){
 	ctc.contract(box3);
 	((BxpMOPData*) c.prop[BxpMOPData::id])->a = box3[n+3].mid();
 	((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb = box3[n+2].lb();
+	cout << ((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a << endl;
 
 	box=box3;
 	box.resize(n+2);
