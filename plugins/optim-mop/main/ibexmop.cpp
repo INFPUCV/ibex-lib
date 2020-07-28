@@ -40,7 +40,7 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
-	char* fns = "fns";
+	char fns[4] = "fns";
 
 	args::ArgumentParser parser("********* IbexMop *********.", "Solve a NLBOOP (Minibex file).");
 	args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -398,7 +398,6 @@ int main(int argc, char** argv){
 			std::string respuesta;
 
 
-			char *response = "";
 			int data;
 
 			IntervalVector focus = o->load(ext_sys.box);
@@ -428,9 +427,9 @@ int main(int argc, char** argv){
 				stringstream message;
 				message << resp;
 
-				int max_nb_changes = 800;
+				int max_nb_changes = 10;
 
-        		string instruction;
+        string instruction;
 				message >> instruction;
 
 				// En el caso de que se solicitan los datos
@@ -438,19 +437,17 @@ int main(int argc, char** argv){
 					list < pair < bool, Vector> > changes_lower;
 					do{
 					  changes_lower = o->changes_lower_envelope(max_nb_changes);
-
-						char response[1024];
+						//char response[1024];
 						string lower = "";
 						
-						cout << "start of message" << endl;
 						for(auto p:changes_lower){
 							if( p.second.size()>0){
 								lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";
 							}
 						}
 
-						//respuesta = lower;
-						//response = new char[respuesta.size()];
+						respuesta = lower;
+						char response [respuesta.size()];
 						strcpy(response, lower.c_str());
 						send(new_socket , response , strlen(response) , 0 );
 				  }while(changes_lower.size() == max_nb_changes);
@@ -462,7 +459,7 @@ int main(int argc, char** argv){
 					list < pair < bool, Vector> > changes_upper;
 					do{
 						string upper = "";
-						char response[1024];
+						//char response[1024];
 						changes_upper = o->changes_upper_envelope(max_nb_changes);
 
 						for(auto p:changes_upper){
@@ -471,16 +468,16 @@ int main(int argc, char** argv){
 							}
 						}
 
-						//response = new char[respuesta.size()];
+						respuesta = upper;
+						char response [respuesta.size()];
 						strcpy(response, upper.c_str());
 						send(new_socket , response , strlen(response) , 0 );
 				  }while(changes_upper.size() == max_nb_changes);
-
-
 				}
 
 				// En el caso de que quieren el espacio de búsqueda
 				else if( instruction == "zoo"){
+					char response [1024];
 					string t = mensaje;
 					istringstream iss(t);
 					string word;
@@ -493,27 +490,26 @@ int main(int argc, char** argv){
 
 					cout << "ref: " << ref << endl;
 					o->update_refpoint(ref, eps);
-					response = "esta fue tu respuesta al zo";
+					strcpy(response, "Respuesta al zoo");
 					send(new_socket , response , strlen(response) , 0 );
 
 				}
 
 				else if( instruction == "run"){
-					string t = mensaje;
-					istringstream iss(t);
-					string word;
+					char response [1024];
 
-					iss>> word; iss >> iters; iss >> eps; 
-
+					message >> iters;
+					message >> eps;
 
 					OptimizerMOP_I::IStatus status = o->run(iters, eps);
-          			cout << "run:" << status << endl;
+          			//cout << "run:" << status << endl;
+					//cout << "current_precision:" << o->current_precision << endl;
 
-					response = "run ejecutado\n";
+					
+					strcpy(response, "run ejecutado\n");
 					send(new_socket , response , strlen(response) , 0 );
 
-				}
-				else if(instruction == "plot"){
+				}else if(instruction == "plot"){
 					o->plot();
 				}
 			}

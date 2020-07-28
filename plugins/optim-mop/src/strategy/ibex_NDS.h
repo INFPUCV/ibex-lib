@@ -363,15 +363,15 @@ public:
 			Interval dist;
 			//up-left point
 			if((p[0]-Ax).lb() < (p[1]-Ay).ub() || p[1]==POS_INFINITY){
-				cout << "up-left" << endl;
+				//cout << "up-left" << endl;
 				dist=p[0]-Interval(Ax);
-				cout << dist << endl;
+				//cout << dist << endl;
 			}
 			//bottom-right point
 			else if((p[1]-By).lb() < (p[0]-Bx).ub() || p[0]==POS_INFINITY){
-				cout << "bottom-right" << endl;
+				//cout << "bottom-right" << endl;
 				dist=p[1]-Interval(By);
-				cout << dist << endl;
+				//cout << dist << endl;
 				if(!Bdist && p0){
 					Interval mm=NEG_INFINITY;
 					if(p[0]-(*p0)[0] != 0)
@@ -379,7 +379,7 @@ public:
 
 					if(mm.lb() > -1 && mm.lb() < 0.0 ){
 						Interval cc= p[1] - mm*p[0];
-						cout << ((mm*Ax - Ay + cc)/(1.0-mm)).lb() << endl;
+						//cout << ((mm*Ax - Ay + cc)/(1.0-mm)).lb() << endl;
 						dist=std::max(dist.ub(), ((mm*Ax - Ay + cc)/(1.0-mm)).lb());
 						Bdist=true;
 					}
