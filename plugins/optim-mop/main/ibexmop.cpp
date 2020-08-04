@@ -391,21 +391,15 @@ int main(int argc, char** argv){
 	        perror("listen");
 	        exit(EXIT_FAILURE);
 	    }
-
-
 			string line;
 			string mensaje;
 			std::string respuesta;
-
 
 			int data;
 
 			IntervalVector focus = o->load(ext_sys.box);
 			double ini_eps = focus.size() / 100.0;
 			double iters=10;
-			cout << "Focus:" << focus << endl;
-			cout << "Iters:" << iters << endl;
-			cout << "Eps:" << ini_eps << endl;
 
 			double eps; Vector ref(2);
 			//o->run(iters, ini_eps);
@@ -419,7 +413,6 @@ int main(int argc, char** argv){
 					exit(EXIT_FAILURE);
 				}
 
-				//timeout
 				// Traduccion de instruccion
 				valread = read( new_socket , bufferserver, 1024);
 				std::string resp (bufferserver);
@@ -429,7 +422,7 @@ int main(int argc, char** argv){
 
 				int max_nb_changes = 10;
 
-        string instruction;
+        		string instruction;
 				message >> instruction;
 
 				// En el caso de que se solicitan los datos
@@ -483,7 +476,11 @@ int main(int argc, char** argv){
 					string word;
 					int x; int y;
 
-					iss>> word; iss >> x; iss >> y; iss >> eps;
+					message >> x;
+					message >> y;
+					message >> eps;
+
+					//iss>> word; iss >> x; iss >> y; iss >> eps;
 
 					ref[0] = x;
 					ref[1] = y;
@@ -498,16 +495,27 @@ int main(int argc, char** argv){
 				else if( instruction == "run"){
 					char response [1024];
 
+					cout << "se cae aca en el run" << endl;
+
 					message >> iters;
 					message >> eps;
 
+					cout << "se cae aca en el run 2" << endl;
+
 					OptimizerMOP_I::IStatus status = o->run(iters, eps);
-          			//cout << "run:" << status << endl;
-					//cout << "current_precision:" << o->current_precision << endl;
 
 					
+					cout << "se cae aca en el run 3" << endl;
+
 					strcpy(response, "run ejecutado\n");
+
+
+					cout << "se cae aca en el run4" << endl;
+
 					send(new_socket , response , strlen(response) , 0 );
+
+
+					cout << "se cae aca en el run5" << endl;
 
 				}else if(instruction == "plot"){
 					o->plot();
