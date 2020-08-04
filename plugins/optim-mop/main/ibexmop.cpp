@@ -502,6 +502,9 @@ int main(int argc, char** argv){
 
 					cout << "se cae aca en el run 2" << endl;
 
+					cout << "iters: " << iters << endl;
+					cout << "eps: " << eps << endl;
+
 					OptimizerMOP_I::IStatus status = o->run(iters, eps);
 
 					
