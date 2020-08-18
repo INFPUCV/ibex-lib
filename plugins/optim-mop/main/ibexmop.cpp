@@ -439,11 +439,13 @@ int main(int argc, char** argv){
 							}
 						}
 
-						respuesta = lower;
-						char response [respuesta.size()];
+						char response [lower.size()];
 						strcpy(response, lower.c_str());
 						send(new_socket , response , strlen(response) , 0 );
 				  }while(changes_lower.size() == max_nb_changes);
+					char response [1024];
+					strcpy(response, "fs");
+					send(new_socket, response, strlen(response), 0);
 
 				}
 				// En el caso de que se solicitan los datos
@@ -461,11 +463,13 @@ int main(int argc, char** argv){
 							}
 						}
 
-						respuesta = upper;
-						char response [respuesta.size()];
+						char response [upper.size()];
 						strcpy(response, upper.c_str());
 						send(new_socket , response , strlen(response) , 0 );
-				  }while(changes_upper.size() == max_nb_changes);
+				  	}while(changes_upper.size() == max_nb_changes);
+					char response [1024];
+					strcpy(response, "fs");
+					send(new_socket, response, strlen(response), 0);
 				}
 
 				// En el caso de que quieren el espacio de búsqueda
