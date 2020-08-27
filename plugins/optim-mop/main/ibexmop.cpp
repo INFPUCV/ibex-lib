@@ -304,16 +304,23 @@ int main(int argc, char** argv){
 
 /** SearchEfficient para buscar solucion eficiente, minf1 y minf2**/
   CellBufferOptim* buff = new CellSet<manhattan>;
-	LoupFinderMOP finder2(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f, 1e-8, 3);
+	LoupFinderMOP finder2(sys, ext_sys.ctrs[0].f, ext_sys.ctrs[1].f, 1e-5, 3);
 	SearchEfficient* se = new SearchEfficient(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f,
 		 *ctcxn, *bs, *buff, finder2, eps, rel_eps);
+
+  int n = sys.nb_var;
   cout << "search efficient" << endl;
+	ext_sys.box[n] = interval(0, 1);
+  ext_sys.box[n+1] = interval(0.000183095 , 36.8);
+	cout << "example box(ctp2-3.txt):" << ext_sys.box[n] << ";" << ext_sys.box[n+1] << endl;
 	se->optimize(ext_sys.box, SearchEfficient::EFFICIENT);
-	cout << se->efficient[0] << ";" << se->efficient[1] << endl;
+	cout << "EFFICIENT:" << se->efficient[0] << ";" << se->efficient[1] << endl;
+
 	se->optimize(ext_sys.box, SearchEfficient::MINF1);
-	cout << se->efficient[0] << ";" << se->efficient[1] << endl;
+	cout << "MINF1:" << se->efficient[0] << ";" << se->efficient[1] << endl;
+
 	se->optimize(ext_sys.box, SearchEfficient::MINF2);
-	cout << se->efficient[0] << ";" << se->efficient[1] << endl;
+	cout << "MINF2:" << se->efficient[0] << ";" << se->efficient[1] << endl;
 /*********************/
 
 	// the search itself

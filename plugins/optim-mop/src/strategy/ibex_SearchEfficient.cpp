@@ -96,15 +96,18 @@ bool SearchEfficient::upper_bounding(const IntervalVector& box, const IntervalVe
 		v[1]=eval_goal(goal2,mid,n).ub();
 
 
+
 		if((mode==MINF1 && efficient[0] > v[0]) ||
 			 (mode==MINF2 && efficient[1] > v[1]) ||
 			 (mode==EFFICIENT && efficient[0] >= v[0] && efficient [1] >= v[1]))
 		{
-			efficient[0]=std::max(v[0], init_box[n].lb());
-			efficient[1]=std::max(v[1], init_box[n+1].lb());
+			//bajo el ub de la caja
+			if(v[0] <= init_box[n].ub() && v[1] <= init_box[n+1].ub()){
+			   efficient[0]=std::max(v[0], init_box[n].lb());
+			   efficient[1]=std::max(v[1], init_box[n+1].lb());
+			}
 
-			//cout << "esto es dentro del finder" << endl;
-			//cout << efficient[0] << "," << efficient[1] << endl;
+
 		}
 	}
 
@@ -112,6 +115,9 @@ bool SearchEfficient::upper_bounding(const IntervalVector& box, const IntervalVe
 	try{
 		while(true){
 			xa = finder.find(box2,box2,POS_INFINITY).first;
+
+      //from phase 2, the points are in the line segment, thus more centered
+			if(mode==EFFICIENT && finder.get_phase()<2)  continue;
 
 			Vector v(2);
 			v[0]=eval_goal(goal1,xa,n).ub();
@@ -124,8 +130,11 @@ bool SearchEfficient::upper_bounding(const IntervalVector& box, const IntervalVe
 				   (mode==MINF2 && efficient[1] > v[1]) ||
 				   (mode==EFFICIENT && efficient[0] >= v[0] && efficient [1] >= v[1]))
 				{
-					efficient[0]= std::max(v[0], init_box[n].lb());
-					efficient[1]= std::max(v[1], init_box[n+1].lb());
+					//bajo el ub de la caja
+					if(v[0] <= init_box[n].ub() && v[1] <= init_box[n+1].ub()){
+					   efficient[0]= std::max(v[0], init_box[n].lb());
+					   efficient[1]= std::max(v[1], init_box[n+1].lb());
+				  }
 					//cout << "esto dentro del while true (?)" << endl;
 					//cout << efficient[0] << "," << efficient[1] << endl;
 
@@ -242,8 +251,8 @@ SearchEfficient::Status SearchEfficient::optimize(const IntervalVector& init_box
 
 
 
-	efficient[0]= BxpMOPData::y1_init.ub();
-	efficient[1]= BxpMOPData::y2_init.ub();
+	efficient[0]= POS_INFINITY;
+	efficient[1]= POS_INFINITY;
 	manhattan::efficient=efficient;
 	manhattan::mode = mode;
 
