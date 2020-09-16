@@ -306,9 +306,6 @@ public:
 		if(a!=0){
 			pair<Vector, Vector> points = get_segment(box_y.lb(),-1.0/a, w_lb/a);
 			dist= distance(points.first, points.second, -1.0/a, w_lb/a);
-			//dist = std::max(dist, distance(points.first, points.first));
-			//dist = std::max(dist, distance(points.second, points.second));
-			//cout << dist << endl;
 		}else{
 			pair<Vector, Vector> points = get_segment(box_y.lb());
 			dist= distance(points.first, points.second);
