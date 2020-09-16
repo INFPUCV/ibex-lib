@@ -286,26 +286,14 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
     //we verify that the box_lb dominates the ref_point, otherwise it is paused
 		IntervalVector boxy = get_boxy(c->box,n);
 
-		Vector v(2);
-		v[0]=-246; v[1]=44;
-		if(boxy.contains(v)){
-			cout << "boxy:" << boxy << endl;
-			pair <Vector, Vector> segment = NDS_seg::get_segment(boxy.lb(),
- 						-1/((BxpMOPData*) c->prop[BxpMOPData::id])->a,
- 						((BxpMOPData*) c->prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c->prop[BxpMOPData::id])->a);
-			cout << "segment:" << segment.first[1] << "," << segment.second[0] << endl;
-
-			cout << "dist:" << cdata->ub_distance << endl;
-		}
-
 
 		if(refpoint[0] < boxy[0].lb() || refpoint[1] < boxy[1].lb() ){
 			paused_cells.insert(c);
 			continue;
 		}
 
-    //we verify that the boxes in the search tree are not eps-dominated
-    current_precision=cdata->ub_distance;
+    	//we verify that the boxes in the search tree are not eps-dominated
+    	current_precision=cdata->ub_distance;
 		if(current_precision <= eps){
 			 if(current_precision <= 0.0) delete c;
 			 else paused_cells.insert(c);
@@ -330,19 +318,6 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
 
     //Discarding by using distance and epsilon
 		double dist=ndsH.distance(c);
-
-		if(boxy.contains(v)){
-			boxy = get_boxy(c->box,n);
-			cout << "boxy:" << boxy << endl;
-			pair <Vector, Vector> segment = NDS_seg::get_segment(boxy.lb(),
- 						-1/((BxpMOPData*) c->prop[BxpMOPData::id])->a,
- 						((BxpMOPData*) c->prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c->prop[BxpMOPData::id])->a);
-			cout << "segment:" << segment.first << "," << segment.second << endl;
-      cout << "m:" << 1/((BxpMOPData*) c->prop[BxpMOPData::id])->a << " c:" <<
-			 ((BxpMOPData*) c->prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c->prop[BxpMOPData::id])->a << endl;
-			cout << "dist:" << dist << endl;
-			if(dist==0) {cells.clear(); paused_cells.clear(); paused_cells.insert(c); return STOPPED;}
-		}
 
     if(dist <= 0.0) {delete c; continue; }
 		if(dist <= eps){ paused_cells.insert(c); continue; }

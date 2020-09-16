@@ -15,7 +15,7 @@ namespace ibex {
  	// Agrega el lowerbound de una caja al NDS
  	pair <Vector, Vector> NDS_seg::add_lb(Cell& c){
  		IntervalVector box_y=get_box_y(&c);
-		//cout << box_y << endl;
+		cout << box_y << endl;
 		//cout << ((BxpMOPData*) c.prop[BxpMOPData::id])->a << "," <<
 		//((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb << endl;
 
@@ -23,10 +23,10 @@ namespace ibex {
  			pair <Vector, Vector> segment = get_segment(box_y.lb(),
  						-1.0/((BxpMOPData*) c.prop[BxpMOPData::id])->a,
  						((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a);
-      Vector v(2);
+      		Vector v(2);
 			v[0]=-246; v[1]=44;
-      if(box_y.contains(v)){
-      	cout << "add:" << box_y << endl;
+      		if(box_y.contains(v)){
+      			cout << "add:" << box_y << endl;
 				cout << "segment:" << segment.first[1] << "," << segment.second[0] << endl;
 			}
 
