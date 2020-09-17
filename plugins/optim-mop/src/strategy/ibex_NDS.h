@@ -363,21 +363,21 @@ public:
 			Interval dist;
 			//up-left point
 			if((p[0]-Ax).lb() < (p[1]-Ay).ub() || p[1]==POS_INFINITY){
-				cout << "up-left: " << p[0] << "," << p[1] << endl;
+				//cout << "up-left: " << p[0] << "," << p[1] << endl;
 				dist=p[0]-Interval(Ax);
-				cout << dist << endl;
+				//cout << dist << endl;
 			}
 			//bottom-right point
 			else if((p[1]-By).lb() < (p[0]-Bx).ub() || p[0]==POS_INFINITY){
-				cout << "bottom-right: " << p[0] << "," << p[1] << endl;
+				//cout << "bottom-right: " << p[0] << "," << p[1] << endl;
 				dist=p[1]-Interval(By);
-				cout << dist << endl;
+				//cout << dist << endl;
 				if(!Bdist && p0){
 					Interval mm=NEG_INFINITY;
 					if(p[0]-(*p0)[0] != 0)
 						mm= (Interval(p[1])-(*p0)[1])/(Interval(p[0])-(*p0)[0]);
 
-                     cout << mm << endl;
+                     //cout << mm << endl;
 					if(/*mm.lb() > -1 &&*/ mm.lb() < 0.0 ){
 						Interval cc= p[1] - mm*p[0];
 						//cout << ((mm*Ax - Ay + cc)/(1.0-mm)).lb() << endl;
@@ -388,7 +388,7 @@ public:
 			}
 			//cy-45-degree zone
 			else{
-				cout << "45 zone: " << p[0] << "," << p[1] << endl;
+				//cout << "45 zone: " << p[0] << "," << p[1] << endl;
 				dist= -(m*p[0] - p[1]+c)/(1.0-m);
 				if(!Adist && p0){
 					Interval mm=NEG_INFINITY;

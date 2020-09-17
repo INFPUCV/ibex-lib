@@ -247,16 +247,27 @@ void OptimizerMOP_I::load_state_from_file(string filename, const IntervalVector&
 
 
 void OptimizerMOP_I::update_refpoint(Vector& refpoint, double eps){
+	cout << "princi update_ref" << endl;
+
 	this->refpoint = refpoint;
 
+	set<Cell*> paused_cells_to_erase;	
+
 	for(auto c:paused_cells){
+
 		IntervalVector boxy=get_boxy(c->box,n);
 
 		if(refpoint[0] > boxy[0].lb() && refpoint[1] > boxy[1].lb() &&  cdata->ub_distance > eps){
+
 			buffer.push(c);
 			cells.insert(c);
-			paused_cells.erase(c);
+			paused_cells_to_erase.insert(c);
+			//paused_cells.erase(c);
 		}
+	}
+
+	for(auto c:paused_cells_to_erase){
+		paused_cells.erase(c);
 	}
 
 	if(!cells.empty()) istatus=READY;
@@ -264,8 +275,10 @@ void OptimizerMOP_I::update_refpoint(Vector& refpoint, double eps){
 }
 
 OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
+
 	if(current_precision < eps) return STOPPED;
 	else update_refpoint(refpoint, eps);
+
 
   current_precision = eps;
 
@@ -282,11 +295,9 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
 		buffer.pop();
 		cells.erase(c);
 
-
     //we verify that the box_lb dominates the ref_point, otherwise it is paused
 		IntervalVector boxy = get_boxy(c->box,n);
-
-
+		
 		if(refpoint[0] < boxy[0].lb() || refpoint[1] < boxy[1].lb() ){
 			paused_cells.insert(c);
 			continue;
@@ -318,7 +329,6 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
 
     //Discarding by using distance and epsilon
 		double dist=ndsH.distance(c);
-
     if(dist <= 0.0) {delete c; continue; }
 		if(dist <= eps){ paused_cells.insert(c); continue; }
 
@@ -344,7 +354,8 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
 
 	}
 
-
+  
+  
   time = timer.get_time();
 	return READY;
 }

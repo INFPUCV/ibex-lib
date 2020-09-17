@@ -439,11 +439,13 @@ int main(int argc, char** argv){
 							}
 						}
 
-						respuesta = lower;
-						char response [respuesta.size()];
+						char response [lower.size()];
 						strcpy(response, lower.c_str());
 						send(new_socket , response , strlen(response) , 0 );
 				  }while(changes_lower.size() == max_nb_changes);
+					char response [1024];
+					strcpy(response, "fs");
+					send(new_socket, response, strlen(response), 0);
 
 				}
 				// En el caso de que se solicitan los datos
@@ -461,15 +463,18 @@ int main(int argc, char** argv){
 							}
 						}
 
-						respuesta = upper;
-						char response [respuesta.size()];
+						char response [upper.size()];
 						strcpy(response, upper.c_str());
 						send(new_socket , response , strlen(response) , 0 );
-				  }while(changes_upper.size() == max_nb_changes);
+				  	}while(changes_upper.size() == max_nb_changes);
+					char response [1024];
+					strcpy(response, "fs");
+					send(new_socket, response, strlen(response), 0);
 				}
 
 				// En el caso de que quieren el espacio de búsqueda
 				else if( instruction == "zoo"){
+					cout << "entra al waf" << endl;
 					char response [1024];
 					string t = mensaje;
 					istringstream iss(t);
@@ -480,14 +485,16 @@ int main(int argc, char** argv){
 					message >> y;
 					message >> eps;
 
-					//iss>> word; iss >> x; iss >> y; iss >> eps;
+					cout << "x: " << x << endl;
+					cout << "y: " << y << endl;
+					cout << "eps: " << eps << endl;
 
 					ref[0] = x;
 					ref[1] = y;
 
 					cout << "ref: " << ref << endl;
 					o->update_refpoint(ref, eps);
-					strcpy(response, "Respuesta al zoo");
+					strcpy(response, "Puntos de referencia actualizados");
 					send(new_socket , response , strlen(response) , 0 );
 
 				}
@@ -495,27 +502,19 @@ int main(int argc, char** argv){
 				else if( instruction == "run"){
 					char response [1024];
 
-					cout << "se cae aca en el run" << endl;
 
 					message >> iters;
 					message >> eps;
 
-					cout << "se cae aca en el run 2" << endl;
+					cout << "iters: " << iters << endl;
+					cout << "eps: " << eps << endl;
 
 					OptimizerMOP_I::IStatus status = o->run(iters, eps);
 
-					
-					cout << "se cae aca en el run 3" << endl;
-
 					strcpy(response, "run ejecutado\n");
-
-
-					cout << "se cae aca en el run4" << endl;
 
 					send(new_socket , response , strlen(response) , 0 );
 
-
-					cout << "se cae aca en el run5" << endl;
 
 				}else if(instruction == "plot"){
 					o->plot();

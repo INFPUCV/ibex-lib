@@ -239,7 +239,7 @@ void OptimizerMOP::cy_contract2(Cell& c, list < Vector >& inpoints){
 	ctc.contract(box3);
 	((BxpMOPData*) c.prop[BxpMOPData::id])->a = box3[n+3].mid();
 	((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb = box3[n+2].lb();
-	cout << ((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a << endl;
+	//cout << ((BxpMOPData*) c.prop[BxpMOPData::id])->w_lb/((BxpMOPData*) c.prop[BxpMOPData::id])->a << endl;
 
 	box=box3;
 	box.resize(n+2);
@@ -353,7 +353,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			if(cdata->ub_distance <= eps){
 				IntervalVector box_y=NDS_seg::get_box_y(c);
-				cout << box_y.lb() << "dist:" << cdata->ub_distance << endl;
+				//cout << box_y.lb() << "dist:" << cdata->ub_distance << endl;
 				delete c;
 
 				if(dynamic_cast<DistanceSortedCellBufferMOP*>(&buffer)) break;
