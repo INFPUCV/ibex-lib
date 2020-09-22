@@ -459,6 +459,8 @@ int main(int argc, char** argv){
 
 						for(auto p:changes_upper){
 							if( p.second.size()>0){
+								cout << p.second[0] << endl;
+								cout << std::to_string(p.second[0]) << endl;
 								upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
 							}
 						}
