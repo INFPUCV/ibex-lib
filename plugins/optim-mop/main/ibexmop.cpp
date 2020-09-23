@@ -20,6 +20,9 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <cstring>
+#include <set> 
+#include <iterator>
+#include <vector>
 
 
 #ifndef _IBEX_WITH_OPTIM_MOP_
@@ -30,6 +33,34 @@ const double default_relax_ratio = 0.2;
 
 using namespace std;
 using namespace ibex;
+
+string Print_Vector(vector<double> Vec) 
+{ 
+	string vector = "";
+    for (int i = 0; i < Vec.size(); i++) { 
+		vector = vector + std::to_string(Vec[i]);
+        cout << "Vec[" << i <<"]: " << Vec[i] << " "; 
+		if( i == 0){
+			vector = vector + ",";
+		}else{
+			vector = vector + "/";
+		}
+    } 
+    return vector; 
+} 
+
+
+struct graph_compare {
+    bool operator() (const vector<double>& a, const vector<double>& b) const {
+        if( a[0] != b[0]){
+            return a[0] < b[0];
+        }else{
+            return a[1] > b[1];
+        }
+        return true;
+    }
+};
+
 int main(int argc, char** argv){
 
 
@@ -353,6 +384,11 @@ int main(int argc, char** argv){
 		if(strategy=="NDSdist")
 			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
 
+
+		//Definición de sets vacíos para upper bound y lower bound
+    	set<vector<double>, graph_compare> upperSet; 
+    	set<vector<double>, graph_compare> lowerSet; 
+
 		//Definicion de variables para el servidor
 		int server_fd, new_socket, valread;
 	    struct sockaddr_in address;
@@ -360,6 +396,7 @@ int main(int argc, char** argv){
 	    int addrlen = sizeof(address);
 	    char bufferserver[1024] = {0};
 	    string instruction = "run" ;
+
 		// Creating socket file descriptor
 	    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
 	    {
@@ -432,15 +469,33 @@ int main(int argc, char** argv){
 					  changes_lower = o->changes_lower_envelope(max_nb_changes);
 						//char response[1024];
 						string lower = "";
-						
+						string newlower = "";
 						for(auto p:changes_lower){
 							if( p.second.size()>0){
-								lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";
+								//lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";
+								if(p.first == 1){
+									vector<double> aux_vector {p.second[0], p.second[1]};  
+									lowerSet.insert(aux_vector);
+								}else{
+									vector<double> aux_vector {p.second[0], p.second[1]};  
+									lowerSet.erase(aux_vector);
+								}
 							}
 						}
 
-						char response [lower.size()];
-						strcpy(response, lower.c_str());
+						// printing all the unique vectors in set 
+						int count = 0;
+
+						for (auto it = lowerSet.begin(); it != lowerSet.end(); it++){ 
+							count = count + 1;
+							newlower = newlower + Print_Vector(*it); 
+						} 
+
+						cout << "set size: " << lowerSet.size() << endl;
+						cout << "count: " << count << endl;
+
+						char response [newlower.size()];
+						strcpy(response, newlower.c_str());
 						send(new_socket , response , strlen(response) , 0 );
 				  }while(changes_lower.size() == max_nb_changes);
 					char response [1024];
@@ -454,19 +509,36 @@ int main(int argc, char** argv){
 					list < pair < bool, Vector> > changes_upper;
 					do{
 						string upper = "";
+						string newUpper = "";
 						//char response[1024];
 						changes_upper = o->changes_upper_envelope(max_nb_changes);
 
 						for(auto p:changes_upper){
 							if( p.second.size()>0){
-								cout << p.second[0] << endl;
-								cout << std::to_string(p.second[0]) << endl;
-								upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
+								//upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
+								if(p.first == 1){
+									vector<double> aux_vector {p.second[0], p.second[1]};  
+									upperSet.insert(aux_vector);
+								}else{
+									vector<double> aux_vector {p.second[0], p.second[1]};  
+									upperSet.erase(aux_vector);
+								}
 							}
 						}
 
-						char response [upper.size()];
-						strcpy(response, upper.c_str());
+						// coping all items from the set in to a string
+						cout << "upperSet.size()" << upperSet.size() << endl;
+
+						int count = 0;
+						for (auto it = upperSet.begin(); it != upperSet.end(); it++){ 
+							count = count + 1;
+							newUpper = newUpper + Print_Vector(*it); 
+						} 
+
+						cout << "count: " << count << endl;
+
+						char response [newUpper.size()];
+						strcpy(response, newUpper.c_str());
 						send(new_socket , response , strlen(response) , 0 );
 				  	}while(changes_upper.size() == max_nb_changes);
 					char response [1024];
