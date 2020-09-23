@@ -39,7 +39,6 @@ string Print_Vector(vector<double> Vec)
 	string vector = "";
     for (int i = 0; i < Vec.size(); i++) { 
 		vector = vector + std::to_string(Vec[i]);
-        cout << "Vec[" << i <<"]: " << Vec[i] << " "; 
 		if( i == 0){
 			vector = vector + ",";
 		}else{
