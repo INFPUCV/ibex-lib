@@ -50,7 +50,7 @@ public:
 
 	//LoupFinderMOP(const System& sys, const Function& goal1, const Function& goal2, const Array<const Function> goals, double eqeps=NormalizedSystem::default_eps_h, int nb_sol=50);
 
-	LoupFinderMOP(const System& sys, const Array<const Function> goals, double eqeps=NormalizedSystem::default_eps_h, int nb_sol=50);
+	LoupFinderMOP(const System& sys, const Array<const Function> goals, double eqeps=NormalizedSystem::default_eps_h, int nb_sol=50, int nds_simplex=1);
 
 
 	/**
@@ -69,6 +69,9 @@ public:
 	 */
 	virtual std::pair<IntervalVector, double> find(const IntervalVector& box, const IntervalVector& loup_point, double loup=POS_INFINITY);
 
+
+
+	virtual std::pair<IntervalVector, double> find2(const IntervalVector& box, const IntervalVector& loup_point, double loup=POS_INFINITY);
 
 	/**
 	 * \brief True if equalities are accepted.
@@ -102,6 +105,30 @@ public:
 	 */
 	double static _weight2;
 
+
+	bool isSaved(Vector loup_point);
+
+	void add_external_vertex(Vector base_point, list<Vector> simplex_points, list<Vector>& external_vertex, IntervalVector box_y);
+
+	void add_nondominated_point(pair<Vector,Vector> point, list<pair<Vector,Vector>>& list);
+
+	bool is_dominated(const Vector& y_prime, const Vector& y);
+
+	int get_nds_simplex();
+
+	int get_nb_sol();
+
+	//testing another method
+	void add_external_vertex2(pair<Vector,Vector> base_point, list<pair<Vector,Vector>> list_points, list<Vector> & external_vertex, IntervalVector box_y);
+
+	Vector find_minimum(IntervalVector box, Vector hyperplane_coefficients, int dim_goal);
+
+	bool is_dominated_hyperplane_add(list< pair<IntervalVector, Vector> > upper_envelope, IntervalVector box_y, Vector hyperplane_coefficients);
+
+    bool is_dominated_hyperplane(IntervalVector box, Vector hyperplane_coefficients, IntervalVector box_prime, Vector hyperplane_coefficients_prime);
+
+    void print_hyperplane_intersection(IntervalVector caja_comp, Vector hyp_comp, IntervalVector caja_add, Vector hyp_add, IntervalVector caja_int, list<Vector> puntos_min_add, list<Vector> puntos_min_comp);
+
 protected:
 
 	/**
@@ -112,16 +139,10 @@ protected:
 
 
 	/**
-	 * \brief Objective function f1
-	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
-	 * evaluate them we have to set z1 and z2 to [0,0].
+	 * \brief Objective function fi
+	 * Functions have the form: fi - zi. Thus, in order to
+	 * evaluate them we have to set zi [0,0].
 	 */
-	//const Function& goal1;
-
-	/**
-	 * \brief Objective function f2
-	 */
-	//const Function& goal2;
 
 	/*
 	 * Array of objective funcion fn
@@ -145,12 +166,19 @@ private:
 	//number of solutions to find
 	int nb_sol;
 
+	//number of solution to be added
+	int nds_simplex;
+
 	//0: means the first solution of the polytope (or the midpoint)
 	//1: means the second solution of the polytope
 	//>=2: means the solutions in the line
 	int phase;
 	Vector vec1; //the first solution of the poltytope
 	Vector vec2; //the second solution of the polytope
+
+
+	//The index of the objective function and its solution is saved
+	list <pair<Vector, int>> solutions; //Solution of each objective function in the polytope
 
 
 

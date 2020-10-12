@@ -48,6 +48,9 @@ int main(int argc, char** argv){
 	//args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::ValueFlag<std::string> _upperbounding(parser, "string", "Upper bounding strategy (no|ub1|ub2) (default: no).", {"ub"});
+
+	args::ValueFlag<std::string> _ub_solutions(parser, "string", "Max number of solutions added in non dominated set in each box (mid|d|n) (default: mid).", {"nb_sol"});
+
 	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the ub2 algorithm (dist < rh*ini_dist)", {"rh"});
 	args::Flag _server_mode(parser, "server", "Server Mode (some options are discativated).",{"server_mode"});
 	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
@@ -84,6 +87,8 @@ int main(int argc, char** argv){
   //original system: 2 objective functions and constraints
 	System ext_sys(filename.Get().c_str());
 
+
+
   //for accing the cy envelope constraint
 	SystemFactory fac2;
 
@@ -105,7 +110,6 @@ int main(int argc, char** argv){
 	else _ext_sys =new System(ext_sys);
 
 
-	//cout << *_ext_sys << endl;
 
 	string filtering = (_filtering)? _filtering.Get() : "acidhc4";
 	string linearrelaxation= (_linear_relax)? _linear_relax.Get() : "compo";
@@ -122,7 +126,22 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::_plot = _plot;
 
-	int nb_ub_sols = 50 ;
+	//Obtain num objective function from variables
+	int nFuncObj = 0;
+	for(int i=0; i<ext_sys.args.size(); i++){
+		string aux(ext_sys.args[i].name);
+		//check if variable contain z (reference to objective function) and count it!
+		if(aux.find("z")==0) nFuncObj++;
+
+	}
+
+	int nb_ub_sols = 10 ;//Max number of solutions added by the inner-polytope algorithm
+	int nds_simplex;
+	if(_ub_solutions.Get()=="mid" && !_segments) nds_simplex = 1;
+	if(_ub_solutions.Get()=="mid" && _segments) nds_simplex = nFuncObj; //default
+	if(_ub_solutions.Get()=="d" && _segments)   nds_simplex = nFuncObj;
+	if(_ub_solutions.Get()=="n" && _segments)   nds_simplex = nb_ub_sols;
+
 	OptimizerMOP::_min_ub_dist = 0.1;
 	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
@@ -145,6 +164,7 @@ int main(int argc, char** argv){
 	cout << "rel_eps: " << rel_eps << endl;
 	cout << "eps_x: " << eps_x << endl;
 	cout << "nb_ub_sols: " << nb_ub_sols << endl;
+	cout << "nds_simplex: "<<nds_simplex<<endl; //midpoint , d points (goals.size), N points choosen
 	cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
 	cout << "plot: " <<  ((OptimizerMOP::_plot)? "yes":"no") << endl;
 	cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
@@ -155,27 +175,15 @@ int main(int argc, char** argv){
 	cout << "hamburger?: " << ((_hamburger)? "yes":"no") << endl;
 
 
-	//Obtain num objective function from variables
-	int nFuncObj = 0;
-	for(int i=0; i<ext_sys.args.size(); i++){
-		string aux(ext_sys.args[i].name);
-		//check if variable contain z (reference to objective function) and count it!
-		if(aux.find("z")==0) nFuncObj++;
-		//cout <<"ext_sys.args["<<i<<"].name = "<< ext_sys.args[i].name << "\n";
-	}
-//	cout<<"num funciones objetivos "<<nFuncObj<<"\n";
-//	cout<<"ext_sys.args.size() "<<ext_sys.args.size()<<"\n";
-//	cout <<"ext_sys.nb_ctr "<<ext_sys.nb_ctr<<"\n";
-//	cout <<"\n";
 
 	//Create Array of objective function
 	Array<const Function> f;
 	f.resize(nFuncObj);
 	//Add every objective function into Array of Objective functions
-	for(int j=0 ;j<nFuncObj;j++){
+	for(int j=0 ;j<nFuncObj;j++)
 		f.set_ref(j, ext_sys.ctrs[j].f);
-		//cout<<"objective function = "<<f[j]<<"\n";
-	}
+
+
 
 
 	SystemFactory fac;
@@ -198,7 +206,7 @@ int main(int argc, char** argv){
 		const ExprNode& new_e = ExprCopy().copy(_x1x2, symbs, e);
 		ExprCtr cc(new_e, ext_sys.ctrs[j].op);
 		fac.add_ctr(cc);
-		//delete &new_e;
+
 
 	}
 
@@ -208,13 +216,15 @@ int main(int argc, char** argv){
 		sys.box[i] = ext_sys.box[i];
 
 
-	//cout << sys << endl;
 
 	IntervalVector box = ext_sys.box.mid();
 	box[sys.nb_var]=0;
 	box[sys.nb_var+1]=0;
 
-	LoupFinderMOP finder(sys,f, 1e-8, nb_ub_sols);
+	LoupFinderMOP finder(sys,f, 1e-8, nb_ub_sols,nds_simplex);
+
+
+
 
 	CellBufferOptim* buffer;
 	if(strategy=="OC3")
@@ -231,10 +241,6 @@ int main(int argc, char** argv){
 	Vector p(ext_sys.nb_var, eps_x);
 	if(no_bisect_y){
 		for(int i= 0; i<nFuncObj; i++)	p[ext_sys.nb_var-(i+1)]=POS_INFINITY;
-
-//		p[ext_sys.nb_var-3]=POS_INFINITY;
-//		p[ext_sys.nb_var-2]=POS_INFINITY;
-//		p[ext_sys.nb_var-1]=POS_INFINITY;
 	}
 
 	if (bisection=="roundrobin")
@@ -333,7 +339,7 @@ int main(int argc, char** argv){
 	if(strategy=="NDSdist"){
 
 		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsh2, nFuncObj);
-//		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
+
 	}
 
 	// the trace

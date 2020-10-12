@@ -15,6 +15,7 @@
 #include "ibex_Cell.h"
 #include "ibex_NDS.h"
 #include "ibex_NDS2.h"
+#include <list>
 
 using namespace std;
 namespace ibex {
@@ -40,6 +41,16 @@ public:
 
 	static void offline_plot(unordered_map< Vector, NDS_X, MyHashFunction >& NDS,
 			unordered_map< Vector, NDS_X, MyHashFunction >* NDS2, const char* output_file_pareto, const char* output_file_solutions, IntervalVector* focus=NULL);
+
+
+
+
+	static void timer_save(list<pair<double, pair<double, double>> >  t_checkdominance, list<pair<double, pair<double, double>> >  t_distance, list<pair<double, pair<double, double>> >  t_upperbounding);
+
+
+	static void timer_save_component(const char* nombre, list<pair<double, pair<double, double>> > data);
+
+	static void upper_envelope_save(list< pair<IntervalVector, Vector> >upper_envelope);
 };
 
 } /* namespace ibex */

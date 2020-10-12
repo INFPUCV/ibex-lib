@@ -118,10 +118,6 @@ public:
 	 * We are assuming that the objective variables are n and n+1
 	 *
 	 */
-//
-//	OptimizerMOP(int n, const Function &f1,  const Function &f2,
-//			Ctc& ctc, Bsc& bsc, CellBufferOptim& buffer, LoupFinderMOP& finder,
-//			Mode nds_mode=POINTS, Mode split_mode=MIDPOINT, double eps=default_eps, double rel_eps=0.0);
 
 
 
@@ -203,8 +199,7 @@ public:
 	 * Functions have the form: f1 - z1  and f2 - z2. Thus, in order to
 	 * evaluate them we have to set z1 and z2 to [0,0].
 	 */
-//	const Function& goal1;
-//	const Function& goal2;
+
 
 	const Array<const Function> goals;
 
@@ -247,6 +242,10 @@ public:
 	/** Default precision: 0.01 */
 	static const double default_eps;
 
+	//Upper_envelope segment representation ( list of boxes with hyperplanes)
+	list< pair<IntervalVector, Vector> >upper_envelope;
+
+
 
 	//MOPServer use this function...
 //	static IntervalVector get_boxy(IntervalVector& v, int n){
@@ -256,9 +255,17 @@ public:
 //		return boxy;
 //	}
 
+	void update_upper_envelope(IntervalVector box_y, Vector hyperplane_coefficients);
+
+	void update_upper_envelope2(IntervalVector box_y, Vector hyperplane_coefficients,list <pair <Vector, Vector> > points_box);
+
+	//update upper envelope when only add mid point
+	void update_upper_envelope_mid(Vector point);
+
 	IntervalVector get_box_y(IntervalVector &box);
 
 	void set_box_y(IntervalVector &box, IntervalVector &box_y);
+
 
 
 	/**
@@ -304,6 +311,8 @@ public:
 	//TODO testing variables
 	//Number of objective function
 	static int nb_ObjFunc;
+
+
 	static bool imprimir;
 
   //max distance of cells rejected by eps-close
@@ -413,7 +422,7 @@ protected:
 	 * <li> add the segment to NDS
 	 * </ul>
 	 */
-	bool upper_bounding(const IntervalVector& box);
+	bool upper_bounding(const IntervalVector& box, double timer);
 
 
 

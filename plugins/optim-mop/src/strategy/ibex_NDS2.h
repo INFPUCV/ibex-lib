@@ -70,10 +70,8 @@ public:
 		if(nObjFunc != 0){
 			Vector init_point(nObjFunc);
 			for(int i=0; i<nObjFunc; i++) init_point[i] = POS_INFINITY;
-			std::cout<<"init_point = "<<init_point<<endl;
 			NDS.insert(make_pair(init_point, NDS_X()));
 		}
-
 	}
 
 	/*
@@ -101,7 +99,6 @@ public:
 	/*
 	 * Return the minimum dimension of the maximum distance  of a point "y" to the "NDS set"
 	 */
-//	double distance(const Vector& y);
 	double distance(const IntervalVector& y);
 
 	/*

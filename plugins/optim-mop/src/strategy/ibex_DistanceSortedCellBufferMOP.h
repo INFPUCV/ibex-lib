@@ -31,7 +31,6 @@ struct max_distance {
 
 	bool operator() (const Cell* c1, const Cell* c2){
 	   int n = c1->box.size();
-//	   std::cout<<"entra a operator, nObjFunc = "<<OptimizerMOP::nb_ObjFunc<<endl;
 	   if(c1data->ub_distance != c2data->ub_distance)
 		   return (c1data->ub_distance < c2data->ub_distance);
 	   else if( c1->box[n-3].lb() >= c2->box[n-3].lb() && c1->box[n-2].lb() >= c2->box[n-2].lb() && c1->box[n-1].lb() >= c2->box[n-1].lb()  ) return true;
