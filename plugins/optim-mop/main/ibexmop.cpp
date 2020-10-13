@@ -463,6 +463,12 @@ int main(int argc, char** argv){
 
 				// En el caso de que se solicitan los datos
 				if( instruction == "glw"){
+					double eps;
+					message >> eps;
+					cout << "eps: " << eps << endl;
+
+					//Set auxiliar utilizado en caso de que la presicion no sea 1e-2, la cual es la de por defecto
+					set<vector<double>, graph_compare> auxSet; 
 					list < pair < bool, Vector> > changes_lower;
 					do{
 					  changes_lower = o->changes_lower_envelope(max_nb_changes);
@@ -475,24 +481,34 @@ int main(int argc, char** argv){
 								if(p.first == 1){
 									vector<double> aux_vector {p.second[0], p.second[1]};  
 									lowerSet.insert(aux_vector);
+									if( eps != 1e-2){
+										auxSet.insert(aux_vector);
+									}
 								}else{
 									vector<double> aux_vector {p.second[0], p.second[1]};  
 									lowerSet.erase(aux_vector);
+									if( eps != 1e-2){
+										auxSet.erase(aux_vector);
+									}
 								}
 							}
 						}
 
 						// printing all the unique vectors in set 
 						int count = 0;
+						if( eps != 1e-2){
+							for (auto it = auxSet.begin(); it != auxSet.end(); it++){ 
+								count = count + 1;
+								newlower = newlower + Print_Vector(*it); 
+							}
 
-						for (auto it = lowerSet.begin(); it != lowerSet.end(); it++){ 
-							count = count + 1;
-							newlower = newlower + Print_Vector(*it); 
-						} 
-
-						cout << "set size: " << lowerSet.size() << endl;
-						cout << "count: " << count << endl;
-
+						}else{
+							for (auto it = lowerSet.begin(); it != lowerSet.end(); it++){ 
+								count = count + 1;
+								newlower = newlower + Print_Vector(*it); 
+							}
+						}
+						
 						char response [newlower.size()];
 						strcpy(response, newlower.c_str());
 						send(new_socket , response , strlen(response) , 0 );
@@ -504,6 +520,10 @@ int main(int argc, char** argv){
 				}
 				// En el caso de que se solicitan los datos
 				else if( instruction == "gup"){
+					double eps;
+					message >> eps;
+					//Set auxiliar utilizado en caso de que la presicion no sea 1e-2, la cual es la de por defecto
+					set<vector<double>, graph_compare> auxSet; 
 
 					list < pair < bool, Vector> > changes_upper;
 					do{
@@ -518,24 +538,40 @@ int main(int argc, char** argv){
 								if(p.first == 1){
 									vector<double> aux_vector {p.second[0], p.second[1]};  
 									upperSet.insert(aux_vector);
+									if( eps != 1e-2){
+										auxSet.insert(aux_vector);
+									}
 								}else{
 									vector<double> aux_vector {p.second[0], p.second[1]};  
 									upperSet.erase(aux_vector);
+									if( eps != 1e-2){
+										auxSet.erase(aux_vector);
+									}
 								}
 							}
 						}
 
 						// coping all items from the set in to a string
-						cout << "upperSet.size()" << upperSet.size() << endl;
 
 						int count = 0;
-						for (auto it = upperSet.begin(); it != upperSet.end(); it++){ 
-							count = count + 1;
-							newUpper = newUpper + Print_Vector(*it); 
-						} 
-
-						cout << "count: " << count << endl;
-
+						if( eps != 1e-2){
+							for (auto it = upperSet.begin(); it != upperSet.end(); it++){ 
+								count = count + 1;
+								newUpper = newUpper + Print_Vector(*it); 
+							}
+							/*
+							for (auto it = auxSet.begin(); it != auxSet.end(); it++){ 
+								count = count + 1;
+								newUpper = newUpper + Print_Vector(*it); 
+							}
+							*/
+						}else{
+							for (auto it = upperSet.begin(); it != upperSet.end(); it++){ 
+								count = count + 1;
+								newUpper = newUpper + Print_Vector(*it); 
+							}
+						}
+						
 						char response [newUpper.size()];
 						strcpy(response, newUpper.c_str());
 						send(new_socket , response , strlen(response) , 0 );
@@ -547,17 +583,15 @@ int main(int argc, char** argv){
 
 				// En el caso de que quieren el espacio de búsqueda
 				else if( instruction == "zoo"){
-					cout << "entra al waf" << endl;
+					cout << "entro al zoo" << endl;
 					char response [1024];
 					string t = mensaje;
 					istringstream iss(t);
 					string word;
 					int x; int y;
-
 					message >> x;
 					message >> y;
 					message >> eps;
-
 					cout << "x: " << x << endl;
 					cout << "y: " << y << endl;
 					cout << "eps: " << eps << endl;
@@ -584,8 +618,12 @@ int main(int argc, char** argv){
 
 					OptimizerMOP_I::IStatus status = o->run(iters, eps);
 
-					strcpy(response, "run ejecutado\n");
+					float precision = o->current_precision;
+					cout << "precision: " << precision << endl;
+					cout << "status: " << status << endl;
 
+
+					strcpy(response, "Run executed\n");
 					send(new_socket , response , strlen(response) , 0 );
 
 
