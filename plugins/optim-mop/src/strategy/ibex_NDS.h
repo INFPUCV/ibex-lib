@@ -468,6 +468,8 @@ public:
 	list < pair < bool, Vector> > changes;
 };
 
+  std::ostream& operator<<(std::ostream &strm, NDS_seg &nds);
+
 } /* namespace ibex */
 
 #endif /* OPTIM_MOP_SRC_STRATEGY_IBEX_NDS_H_ */
