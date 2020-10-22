@@ -310,10 +310,6 @@ namespace ibex {
 
 	}
 
-  std::ostream& operator<<(std::ostream &strm, NDS_seg &nds) {
-      for (auto v : nds.NDS2)
-		  strm << v.first[0] << "," << v.first[0] << "/";
-	  return strm;
-  }
+
 
 } /* namespace ibex */

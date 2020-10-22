@@ -466,9 +466,24 @@ public:
 
   //list for maintaining the last adding and removing of points
 	list < pair < bool, Vector> > changes;
+
+  void to_string(std::ostream &strm, double eps) {
+	  double prev0 = NEG_INFINITY;
+	  double prev1 = POS_INFINITY;
+	  strm << "[" ;
+      for (auto v : NDS2){
+		  if(v.first[0] - prev0 > eps || prev1 - v.first[1] > eps ){
+		  	strm << "(" << prev0 << "," << prev1 << "),";
+			prev0 = v.first[0];
+			prev1 = v.first[1];
+		  }else //the point is removed
+		    prev1 = v.first[1];
+	  }
+	  strm << "(" << prev0 << "," << prev1 << ")]";
+  }
+
 };
 
-  std::ostream& operator<<(std::ostream &strm, NDS_seg &nds);
 
 } /* namespace ibex */
 

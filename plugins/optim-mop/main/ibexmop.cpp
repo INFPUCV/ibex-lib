@@ -524,9 +524,14 @@ int main(int argc, char** argv){
 					message >> eps;
 					//Set auxiliar utilizado en caso de que la presicion no sea 1e-2, la cual es la de por defecto
 					set<vector<double>, graph_compare> auxSet; 
-
 					list < pair < bool, Vector> > changes_upper;
+					
+					//cout << "-------START--------" << endl;
+					//o->ndsH.to_string(cout, eps);
+					//cout << "--------END---------" << endl;
+
 					do{
+
 						string upper = "";
 						string newUpper = "";
 						//char response[1024];
