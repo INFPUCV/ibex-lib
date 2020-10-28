@@ -467,19 +467,20 @@ public:
   //list for maintaining the last adding and removing of points
 	list < pair < bool, Vector> > changes;
 
+/* This function generate a string of the envelope with the desired precision  */
   void to_string(std::ostream &strm, double eps) {
-	  double prev0 = NEG_INFINITY;
+	  double prev0 = NEG_INFINITY, prevx = NEG_INFINITY;
 	  double prev1 = POS_INFINITY;
 	  strm << "[" ;
       for (auto v : NDS2){
 		  if(v.first[0] - prev0 > eps || prev1 - v.first[1] > eps ){
-		  	strm << "(" << prev0 << "," << prev1 << "),";
-			prev0 = v.first[0];
+		  	strm << "(" << prevx << "," << prev1 << "),";
+			prev0 = prevx; prevx = v.first[0];
 			prev1 = v.first[1];
 		  }else //the point is removed
-		    prev1 = v.first[1];
+		    prevx = v.first[0];
 	  }
-	  strm << "(" << prev0 << "," << prev1 << ")]";
+	  strm << "(" << prevx << "," << prev1 << "),]";
   }
 
 };

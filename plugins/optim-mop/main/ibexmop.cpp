@@ -526,9 +526,10 @@ int main(int argc, char** argv){
 					set<vector<double>, graph_compare> auxSet; 
 					list < pair < bool, Vector> > changes_upper;
 					
-					//cout << "-------START--------" << endl;
-					//o->ndsH.to_string(cout, eps);
-					//cout << "--------END---------" << endl;
+					
+					cout << "-------START--------" << endl;
+					o->ndsH.to_string(cout, eps);
+					cout << "--------END---------" << endl;
 
 					do{
 
