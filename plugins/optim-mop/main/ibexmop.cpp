@@ -528,7 +528,9 @@ int main(int argc, char** argv){
 					
 					
 					cout << "-------START--------" << endl;
-					o->ndsH.to_string(cout, eps);
+					o->upper_envelope_tostring(cout, eps);
+					cout << endl;
+					o->lower_envelope_tostring(cout, eps);
 					cout << "--------END---------" << endl;
 
 					do{
