@@ -537,6 +537,7 @@ int main(int argc, char** argv){
 						string newUpper = "";
 						//char response[1024];
 						changes_upper = o->changes_upper_envelope(max_nb_changes);
+					
 
 						for(auto p:changes_upper){
 							if( p.second.size()>0){
