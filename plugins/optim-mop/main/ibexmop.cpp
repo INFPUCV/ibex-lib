@@ -462,11 +462,15 @@ int main(int argc, char** argv){
 				// En el caso de que se solicitan los datos
 				if( instruction == "glw"){
 					list<vector<double>> lowerList;
-					double eps;
+					double eps, a, b, c, d;
 					message >> eps;
+					message >> a >> b >> c >> d;
+					IntervalVector box(2);
+					box[0] = Interval(a,b);
+					box[1] = Interval(c,d);
+					o->generate_lower_envelope(lowerList, eps, box);
+
 					string newlower = "";
-					o->generate_lower_envelope(lowerList, eps);
-					
 					for (auto it = lowerList.begin(); it != lowerList.end(); it++){ 
 						newlower = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
 						char response [newlower.size()];
@@ -480,12 +484,15 @@ int main(int argc, char** argv){
 				}
 				else if( instruction == "gup"){
 					list<vector<double>> upperList; 
-					double eps;
+					double eps, a, b, c, d;
 					message >> eps;
-					cout << "eps: " << eps << endl;
-					string newUpper = "";
-					o->generate_upper_envelope(upperList, eps);
+					message >> a >> b >> c >> d;
+					IntervalVector box(2);
+					box[0] = Interval(a,b);
+					box[1] = Interval(c,d);
+					o->generate_upper_envelope(upperList, eps, box);
 					
+					string newUpper = "";
 					for (auto it = upperList.begin(); it != upperList.end(); it++){ 
 						newUpper = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
 						char response [newUpper.size()];

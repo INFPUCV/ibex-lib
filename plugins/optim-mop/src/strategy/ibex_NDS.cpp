@@ -310,47 +310,64 @@ namespace ibex {
 
 	}
 
-    void NDS_seg::generate(list<vector<double> > &envelope, double eps, bool upper) {
-	  if(upper){
+    void NDS_seg::generate(list<vector<double> > &envelope, double eps, bool upper, IntervalVector box) {
+	  Vector lb(2); lb[0]=box[0].lb(); lb[1]=NEG_INFINITY;
+	  map< Vector, NDS_data, sorty2 >::iterator prev = NDS2.begin();
 
-	  double prev0 = NEG_INFINITY, prevx = NEG_INFINITY;
-	  double prev1 = POS_INFINITY;
-
-	  map< Vector, NDS_data, sorty2 >::iterator v;
-	  for(v=NDS2.begin(); v!=NDS2.end(); v++){
-		  auto next_v = v; next_v++;
-		 
-		  if(next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps ){
-			vector<double> aux_vector {prevx, prev1};
-			envelope.push_back(aux_vector);
-			prev0 = prevx = v->first[0];
-			prev1 = v->first[1];
-		  }else //the point is removed
-		    prevx = v->first[0];
+	  //the prev->next is the first vector inside the box
+	  if(!box.is_empty()){
+		prev=NDS2.upper_bound(lb);
+		prev--;
+		while(!box.contains(prev->first)){
+			prev++;
+		}
+		prev--;
+		cout << prev->first << endl;
 	  }
-	  vector<double> aux_vector {prevx, prev1};	
-	  envelope.push_back(aux_vector);
+	  
+	  if(upper){
+		double prev0 = prev->first[0] , prevx = prev0;
+		double prev1 = prev->first[1];
+
+		map< Vector, NDS_data, sorty2 >::iterator v;
+		for(v=prev; v!=NDS2.end(); v++){
+			auto next_v = v; next_v++;
+			
+			if(v==prev || (next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps)){
+				vector<double> aux_vector {prevx, prev1};
+				envelope.push_back(aux_vector);
+				Vector aux(2, &aux_vector[0]);
+				if(!box.is_empty() && !box.contains(aux) && envelope.size()>2) return;
+				prev0 = prevx = v->first[0];
+				prev1 = v->first[1];
+			}else //the point is removed
+				prevx = v->first[0];
+		}
+
+		vector<double> aux_vector {prevx, prev1};	
+		envelope.push_back(aux_vector);
 
 	  }else{
-
-	  double prev0 = NEG_INFINITY, nextx = NEG_INFINITY;
-	  double prev1 = POS_INFINITY;
-	  bool first;
-	  map< Vector, NDS_data, sorty2 >::iterator v;
-	  for(v=NDS2.begin(); v!=NDS2.end(); v++){
-		  auto next_v = v; next_v++;
-		  if(next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps ){
-			vector<double> aux_vector {nextx, v->first[1]};	
-			envelope.push_back(aux_vector);
-			prev0 = nextx = v->first[0];
-			prev1 = v->first[1];
-			first=true;
-		  }else{ //the point is removed
-		    if(first)
-		       nextx = v->first[0];
-			first =false;
-		  }
-	  }
+		double prev0 = prev->first[0] , nextx = prev0;
+		double prev1 = prev->first[1];
+		bool first;
+		map< Vector, NDS_data, sorty2 >::iterator v;
+		for(v=prev; v!=NDS2.end(); v++){
+			auto next_v = v; next_v++;
+			if(v==prev || (next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps )){
+				vector<double> aux_vector {nextx, v->first[1]};	
+				envelope.push_back(aux_vector);
+				Vector aux(2, &aux_vector[0]);
+				if(!box.is_empty() && !box.contains(aux) && envelope.size()>2) return;
+				prev0 = nextx = v->first[0];
+				prev1 = v->first[1];
+				first=true;
+			}else{ //the point is removed
+				if(first)
+				nextx = v->first[0];
+				first =false;
+			}
+		}
 	  } 
     }
 

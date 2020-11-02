@@ -67,16 +67,18 @@ public:
 	to be inserted or removed from the lower_envelope */
 	list  < pair < bool, Vector> > changes_lower_envelope(int nb_changes=-1);
 
-	void generate_lower_envelope(list<vector<double> > &lowerList, double eps){
+	void generate_lower_envelope(list<vector<double> > &lowerList, double eps,
+			IntervalVector box=IntervalVector::empty(2)){
 		//the envelope is generated
 		NDS_seg LBseg;
 		for(auto cc:cells)	LBseg.add_lb(*cc);
 		for(auto cc:paused_cells) LBseg.add_lb(*cc);
-		LBseg.generate(lowerList, eps, false);
+		LBseg.generate(lowerList, eps, false,  box);
 	}
 
-	void generate_upper_envelope(list<vector<double> > &upperList, double eps){
-		ndsH.generate(upperList, eps, true);
+	void generate_upper_envelope(list<vector<double> > &upperList, double eps,
+			IntervalVector box=IntervalVector::empty(2)){
+		ndsH.generate(upperList, eps, true,  box);
 	}
 
  	void write_envelope(string output_file);

@@ -468,7 +468,8 @@ public:
 	list < pair < bool, Vector> > changes;
 
 /* This function generate a string of the envelope with the desired precision  */
-  void generate(list<vector<double> > &envelope, double eps, bool upper=true);
+  void generate(list<vector<double> > &envelope, double eps, bool upper=true, 
+  								IntervalVector box=IntervalVector::empty(2));
 
 
 };
