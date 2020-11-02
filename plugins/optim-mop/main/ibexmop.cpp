@@ -465,7 +465,7 @@ int main(int argc, char** argv){
 					double eps;
 					message >> eps;
 					string newlower = "";
-					o->lower_envelope_tostring(lowerList, eps);
+					o->generate_lower_envelope(lowerList, eps);
 					
 					for (auto it = lowerList.begin(); it != lowerList.end(); it++){ 
 						newlower = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
@@ -484,7 +484,7 @@ int main(int argc, char** argv){
 					message >> eps;
 					cout << "eps: " << eps << endl;
 					string newUpper = "";
-					o->upper_envelope_tostring(upperList, eps);
+					o->generate_upper_envelope(upperList, eps);
 					
 					for (auto it = upperList.begin(); it != upperList.end(); it++){ 
 						newUpper = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 

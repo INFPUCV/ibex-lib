@@ -67,16 +67,16 @@ public:
 	to be inserted or removed from the lower_envelope */
 	list  < pair < bool, Vector> > changes_lower_envelope(int nb_changes=-1);
 
-	void lower_envelope_tostring(list<vector<double> > &lowerList, double eps){
+	void generate_lower_envelope(list<vector<double> > &lowerList, double eps){
 		//the envelope is generated
 		NDS_seg LBseg;
 		for(auto cc:cells)	LBseg.add_lb(*cc);
 		for(auto cc:paused_cells) LBseg.add_lb(*cc);
-		LBseg.to_string(lowerList, eps, false);
+		LBseg.generate(lowerList, eps, false);
 	}
 
-	void upper_envelope_tostring(list<vector<double> > &upperList, double eps){
-		ndsH.to_string(upperList, eps, true);
+	void generate_upper_envelope(list<vector<double> > &upperList, double eps){
+		ndsH.generate(upperList, eps, true);
 	}
 
  	void write_envelope(string output_file);

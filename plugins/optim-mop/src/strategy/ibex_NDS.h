@@ -468,7 +468,7 @@ public:
 	list < pair < bool, Vector> > changes;
 
 /* This function generate a string of the envelope with the desired precision  */
-  void to_string(list<vector<double> > &envelope, double eps, bool upper=true) {
+  void generate(list<vector<double> > &envelope, double eps, bool upper=true) {
 	  if(upper){
 
 	  double prev0 = NEG_INFINITY, prevx = NEG_INFINITY;
