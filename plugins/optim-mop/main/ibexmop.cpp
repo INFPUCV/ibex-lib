@@ -384,9 +384,7 @@ int main(int argc, char** argv){
 			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
 
 
-		//Definición de sets vacíos para upper bound y lower bound
-    	set<vector<double>, graph_compare> upperSet; 
-    	set<vector<double>, graph_compare> lowerSet; 
+		
 
 		//Definicion de variables para el servidor
 		int server_fd, new_socket, valread;
@@ -463,130 +461,39 @@ int main(int argc, char** argv){
 
 				// En el caso de que se solicitan los datos
 				if( instruction == "glw"){
+					list<vector<double>> lowerList;
 					double eps;
 					message >> eps;
-					cout << "eps: " << eps << endl;
-
-					//Set auxiliar utilizado en caso de que la presicion no sea 1e-2, la cual es la de por defecto
-					set<vector<double>, graph_compare> auxSet; 
-					list < pair < bool, Vector> > changes_lower;
-					do{
-					  changes_lower = o->changes_lower_envelope(max_nb_changes);
-						//char response[1024];
-						string lower = "";
-						string newlower = "";
-						for(auto p:changes_lower){
-							if( p.second.size()>0){
-								//lower = lower + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) +"/";
-								if(p.first == 1){
-									vector<double> aux_vector {p.second[0], p.second[1]};  
-									lowerSet.insert(aux_vector);
-									if( eps != 1e-2){
-										auxSet.insert(aux_vector);
-									}
-								}else{
-									vector<double> aux_vector {p.second[0], p.second[1]};  
-									lowerSet.erase(aux_vector);
-									if( eps != 1e-2){
-										auxSet.erase(aux_vector);
-									}
-								}
-							}
-						}
-
-						// printing all the unique vectors in set 
-						int count = 0;
-						if( eps != 1e-2){
-							for (auto it = auxSet.begin(); it != auxSet.end(); it++){ 
-								count = count + 1;
-								newlower = newlower + Print_Vector(*it); 
-							}
-
-						}else{
-							for (auto it = lowerSet.begin(); it != lowerSet.end(); it++){ 
-								count = count + 1;
-								newlower = newlower + Print_Vector(*it); 
-							}
-						}
-						
+					string newlower = "";
+					o->lower_envelope_tostring(lowerList, eps);
+					
+					for (auto it = lowerList.begin(); it != lowerList.end(); it++){ 
+						newlower = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
 						char response [newlower.size()];
 						strcpy(response, newlower.c_str());
 						send(new_socket , response , strlen(response) , 0 );
-				  }while(changes_lower.size() == max_nb_changes);
+					}
 					char response [1024];
-					strcpy(response, "fs");
+					strcpy(response, "/fs");
 					send(new_socket, response, strlen(response), 0);
-
+	
 				}
-				// En el caso de que se solicitan los datos
 				else if( instruction == "gup"){
+					list<vector<double>> upperList; 
 					double eps;
 					message >> eps;
-					//Set auxiliar utilizado en caso de que la presicion no sea 1e-2, la cual es la de por defecto
-					set<vector<double>, graph_compare> auxSet; 
-					list < pair < bool, Vector> > changes_upper;
+					cout << "eps: " << eps << endl;
+					string newUpper = "";
+					o->upper_envelope_tostring(upperList, eps);
 					
-					
-					cout << "-------START--------" << endl;
-					o->upper_envelope_tostring(cout, eps);
-					cout << endl;
-					o->lower_envelope_tostring(cout, eps);
-					cout << "--------END---------" << endl;
-
-					do{
-
-						string upper = "";
-						string newUpper = "";
-						//char response[1024];
-						changes_upper = o->changes_upper_envelope(max_nb_changes);
-					
-
-						for(auto p:changes_upper){
-							if( p.second.size()>0){
-								//upper = upper + std::to_string(p.first) + "," + to_string(p.second[0]) + "," + to_string(p.second[1]) + "," + "/";
-								if(p.first == 1){
-									vector<double> aux_vector {p.second[0], p.second[1]};  
-									upperSet.insert(aux_vector);
-									if( eps != 1e-2){
-										auxSet.insert(aux_vector);
-									}
-								}else{
-									vector<double> aux_vector {p.second[0], p.second[1]};  
-									upperSet.erase(aux_vector);
-									if( eps != 1e-2){
-										auxSet.erase(aux_vector);
-									}
-								}
-							}
-						}
-
-						// coping all items from the set in to a string
-
-						int count = 0;
-						if( eps != 1e-2){
-							for (auto it = upperSet.begin(); it != upperSet.end(); it++){ 
-								count = count + 1;
-								newUpper = newUpper + Print_Vector(*it); 
-							}
-							/*
-							for (auto it = auxSet.begin(); it != auxSet.end(); it++){ 
-								count = count + 1;
-								newUpper = newUpper + Print_Vector(*it); 
-							}
-							*/
-						}else{
-							for (auto it = upperSet.begin(); it != upperSet.end(); it++){ 
-								count = count + 1;
-								newUpper = newUpper + Print_Vector(*it); 
-							}
-						}
-						
+					for (auto it = upperList.begin(); it != upperList.end(); it++){ 
+						newUpper = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
 						char response [newUpper.size()];
 						strcpy(response, newUpper.c_str());
 						send(new_socket , response , strlen(response) , 0 );
-				  	}while(changes_upper.size() == max_nb_changes);
+					}
 					char response [1024];
-					strcpy(response, "fs");
+					strcpy(response, "/fs");
 					send(new_socket, response, strlen(response), 0);
 				}
 

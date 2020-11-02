@@ -468,36 +468,38 @@ public:
 	list < pair < bool, Vector> > changes;
 
 /* This function generate a string of the envelope with the desired precision  */
-  void to_string(std::ostream &strm, double eps, bool upper=true) {
+  void to_string(list<vector<double> > &envelope, double eps, bool upper=true) {
 	  if(upper){
 
 	  double prev0 = NEG_INFINITY, prevx = NEG_INFINITY;
 	  double prev1 = POS_INFINITY;
-	  strm << "[" ;
+
 	  map< Vector, NDS_data, sorty2 >::iterator v;
 	  for(v=NDS2.begin(); v!=NDS2.end(); v++){
 		  auto next_v = v; next_v++;
 		 
 		  if(next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps ){
-		  	strm << "(" << prevx << "," << prev1 << "),";
+			vector<double> aux_vector {prevx, prev1};
+			envelope.push_back(aux_vector);
 			prev0 = prevx = v->first[0];
 			prev1 = v->first[1];
 		  }else //the point is removed
 		    prevx = v->first[0];
 	  }
-	  strm << "(" << prevx << "," << prev1 << "),]";	 
+	  vector<double> aux_vector {prevx, prev1};	
+	  envelope.push_back(aux_vector);
 
 	  }else{
 
 	  double prev0 = NEG_INFINITY, nextx = NEG_INFINITY;
 	  double prev1 = POS_INFINITY;
 	  bool first;
-	  strm << "[" ;
 	  map< Vector, NDS_data, sorty2 >::iterator v;
 	  for(v=NDS2.begin(); v!=NDS2.end(); v++){
 		  auto next_v = v; next_v++;
 		  if(next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps ){
-		  	strm << "(" << nextx << "," <<  v->first[1] << "),";
+			vector<double> aux_vector {nextx, v->first[1]};	
+			envelope.push_back(aux_vector);
 			prev0 = nextx = v->first[0];
 			prev1 = v->first[1];
 			first=true;
@@ -507,8 +509,6 @@ public:
 			first =false;
 		  }
 	  }
-	  strm << "]" ;
-
 	  } 
   }
 
