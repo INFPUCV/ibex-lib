@@ -310,6 +310,50 @@ namespace ibex {
 
 	}
 
+    void NDS_seg::generate(list<vector<double> > &envelope, double eps, bool upper) {
+	  if(upper){
+
+	  double prev0 = NEG_INFINITY, prevx = NEG_INFINITY;
+	  double prev1 = POS_INFINITY;
+
+	  map< Vector, NDS_data, sorty2 >::iterator v;
+	  for(v=NDS2.begin(); v!=NDS2.end(); v++){
+		  auto next_v = v; next_v++;
+		 
+		  if(next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps ){
+			vector<double> aux_vector {prevx, prev1};
+			envelope.push_back(aux_vector);
+			prev0 = prevx = v->first[0];
+			prev1 = v->first[1];
+		  }else //the point is removed
+		    prevx = v->first[0];
+	  }
+	  vector<double> aux_vector {prevx, prev1};	
+	  envelope.push_back(aux_vector);
+
+	  }else{
+
+	  double prev0 = NEG_INFINITY, nextx = NEG_INFINITY;
+	  double prev1 = POS_INFINITY;
+	  bool first;
+	  map< Vector, NDS_data, sorty2 >::iterator v;
+	  for(v=NDS2.begin(); v!=NDS2.end(); v++){
+		  auto next_v = v; next_v++;
+		  if(next_v==NDS2.end() || next_v->first[0] - prev0 > eps || prev1 - next_v->first[1] > eps ){
+			vector<double> aux_vector {nextx, v->first[1]};	
+			envelope.push_back(aux_vector);
+			prev0 = nextx = v->first[0];
+			prev1 = v->first[1];
+			first=true;
+		  }else{ //the point is removed
+		    if(first)
+		       nextx = v->first[0];
+			first =false;
+		  }
+	  }
+	  } 
+    }
+
 
 
 } /* namespace ibex */
