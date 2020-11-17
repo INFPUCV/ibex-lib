@@ -34,6 +34,9 @@ public:
 	 */
 	static void offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
 		map< Vector, NDS_data, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus=NULL);
+	
+	static void offline_plot(list<vector<double> > &upperList, list<vector<double> > &lowerList, 
+		const char* output_file);
 
 };
 

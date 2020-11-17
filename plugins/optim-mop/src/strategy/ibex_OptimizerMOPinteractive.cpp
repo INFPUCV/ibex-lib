@@ -39,6 +39,10 @@ void OptimizerMOP_I::plot(){
 	py_Plotter::offline_plot(ndsH.NDS2, &LBseg.NDS2, "output2.txt");
 }
 
+void OptimizerMOP_I::plot(list<vector<double> > &upperList, list<vector<double> > &lowerList){
+	py_Plotter::offline_plot(upperList, lowerList, "output2.txt");
+}
+
 list  < pair < bool, Vector> > OptimizerMOP_I::changes_lower_envelope(int nb_changes){
 	if(changes_lower.empty()){
 		NDS_seg LBseg_new;
@@ -125,7 +129,7 @@ IntervalVector OptimizerMOP_I::load(const IntervalVector& init_box) {
 	pre_optimize(init_box, root);
 	cells.clear();
 	cells.insert(root);
-  istatus=READY;
+  istatus=PAUSED;
 
 	IntervalVector focus(2);
 	focus[0]=BxpMOPData::y1_init;
@@ -270,13 +274,13 @@ void OptimizerMOP_I::update_refpoint(Vector& refpoint, double eps){
 		paused_cells.erase(c);
 	}
 
-	if(!cells.empty()) istatus=READY;
-	else istatus=STOPPED;
+	if(!cells.empty()) istatus=PAUSED;
+	else istatus=REACHED_PRECISION;
 }
 
 OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
 
-	if(current_precision < eps) return STOPPED;
+	if(current_precision < eps) return REACHED_PRECISION;
 	else update_refpoint(refpoint, eps);
 
 
@@ -287,7 +291,7 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
 		time = timer.get_time();
 
     if(buffer.empty() && paused_cells.empty()) return FINISHED;
-		if(buffer.empty()) return STOPPED;
+		if(buffer.empty()) return REACHED_PRECISION;
 
 		Cell* c=NULL;
 
@@ -311,7 +315,7 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
 
 			 while(!buffer.empty()) paused_cells.insert(buffer.pop());
 			 cells.clear();
-			 return STOPPED;
+			 return REACHED_PRECISION;
 		}
 
     iter++;
@@ -357,7 +361,7 @@ OptimizerMOP_I::IStatus OptimizerMOP_I::run(int maxiter, double eps) {
   
   
   time = timer.get_time();
-	return READY;
+	return PAUSED;
 }
 
 

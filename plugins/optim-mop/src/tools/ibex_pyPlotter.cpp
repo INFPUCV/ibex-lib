@@ -56,4 +56,25 @@ void py_Plotter::offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
 
 }
 
+
+void py_Plotter::offline_plot(list<vector<double> > &upperList, 
+list<vector<double> > &lowerList, const char* output_file){
+  ofstream output;
+  output.open(output_file);
+
+  output << "[";
+  for(vector<double> v : upperList)
+	output << "(" << v[0] << "," << v[1] << "),";
+  output << "]" << endl;
+
+   output << "[";
+  for(vector<double> v : lowerList)
+	output << "(" << v[0] << "," << v[1] << "),";
+  output << "]" << endl;
+
+  output.close();
+
+}
+
+
 } /* namespace ibex */

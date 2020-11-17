@@ -43,7 +43,13 @@ public:
   * \brief perform maxiter iterations and returns SUCCESS (if the search is )
   */
 
-  typedef enum {NONE, READY, STOPPED, FINISHED} IStatus;
+  /**
+   * REACHED_PRECISION: means that the precision has been reached in the current focus. 
+   * The search can continue if the precision is increased or the focus is changes.
+   * PAUSED_: means that you can call run and continue searching
+   * FINISHED_: all the boxes has been removed, thus, no more things to do
+   */ 
+  typedef enum {NONE, REACHED_PRECISION, PAUSED, FINISHED} IStatus;
 
   /*Funciones para interactuar con la api */
 
@@ -56,6 +62,8 @@ public:
   void update_refpoint(Vector& refpoint, double eps);
 
 	void plot();
+
+	void plot(list<vector<double> > &upper, list<vector<double> > &lower);
 
   /*Return a list of pairs. The first element indicates if the second has
 	to be inserted or removed from the upper_envelope */

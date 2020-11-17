@@ -551,7 +551,17 @@ int main(int argc, char** argv){
 
 
 				}else if(instruction == "plot"){
-					o->plot();
+					list<vector<double>> upperList; 
+					list<vector<double>> lowerList;
+					message >> eps;
+					double a,b,c,d;
+					message >> a >> b >> c >> d;
+					IntervalVector box(2);
+					box[0] = Interval(a,b);
+					box[1] = Interval(c,d);
+					o->generate_upper_envelope(upperList, eps, box);
+					o->generate_lower_envelope(lowerList, eps, box);
+					o->plot(upperList, lowerList);
 				}
 			}
 		}
