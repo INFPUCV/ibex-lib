@@ -44,7 +44,7 @@ SearchEfficient::SearchEfficient(int n, const Function &f1,  const Function &f2,
 		 double eps, double rel_eps) : n(n),
                 				ctc(ctc), bsc(bsc), buffer(buffer), goal1(f1), goal2(f2),
 								finder(finder), trace(false), timeout(-1), status(SUCCESS),
-                				time(0), nb_cells(0), eps(eps) {
+                				time(0), nb_cells(0), eps(eps), efficient_solution(n) {
 
 	if (trace) cout.precision(12);
 }
@@ -105,6 +105,7 @@ bool SearchEfficient::upper_bounding(const IntervalVector& box, const IntervalVe
 			if(v[0] <= init_box[n].ub() && v[1] <= init_box[n+1].ub()){
 			   efficient[0]=std::max(v[0], init_box[n].lb());
 			   efficient[1]=std::max(v[1], init_box[n+1].lb());
+			   efficient_solution = mid;
 			}
 
 
@@ -125,8 +126,8 @@ bool SearchEfficient::upper_bounding(const IntervalVector& box, const IntervalVe
 			v[1]=eval_goal(goal2,xa,n).ub();
 			//cout << "dentro del while eterno (?):"<< v[1] << endl;
 			//verificar que el vector este dentro de la caja actual
-			if (finder.norm_sys.is_inner(mid)){
-	      if((mode==MINF1 && efficient[0] > v[0]) ||
+			if (finder.norm_sys.is_inner(xa.mid())){
+	         	if((mode==MINF1 && efficient[0] > v[0]) ||
 				   (mode==MINF2 && efficient[1] > v[1]) ||
 				   (mode==EFFICIENT && efficient[0] >= v[0] && efficient [1] >= v[1]))
 				{
@@ -134,13 +135,10 @@ bool SearchEfficient::upper_bounding(const IntervalVector& box, const IntervalVe
 					if(v[0] <= init_box[n].ub() && v[1] <= init_box[n+1].ub()){
 					   efficient[0]= std::max(v[0], init_box[n].lb());
 					   efficient[1]= std::max(v[1], init_box[n+1].lb());
+					   efficient_solution = xa.mid();
 				  }
-					//cout << "esto dentro del while true (?)" << endl;
-					//cout << efficient[0] << "," << efficient[1] << endl;
-
-					// << "PASANDO POR UN LOOOOP DDD:" << endl;
 				}
-		  }
+		    }
 		}
 	}catch (LoupFinder::NotFound& ) {
 		return true;
@@ -253,6 +251,7 @@ SearchEfficient::Status SearchEfficient::optimize(const IntervalVector& init_box
 
 	efficient[0]= POS_INFINITY;
 	efficient[1]= POS_INFINITY;
+
 	manhattan::efficient=efficient;
 	manhattan::mode = mode;
 

@@ -341,7 +341,8 @@ public:
 		return NDS_seg::distance(c);
 	}*/
 
-	double efficient[2];
+	double efficient[2]; // eval of the efficient solution
+	Vector efficient_solution;
 
 protected:
 
