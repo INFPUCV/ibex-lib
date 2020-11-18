@@ -16,17 +16,28 @@ def connect(host):
     ssh.connect(host, port, username, password)
 
 
-def search_efficient(instance, boxy, mode="efficient", prec=1e-5):
-    boxy_str = [str(y) for y in boxy]
-    stdin, stdout, stderr = ssh.exec_command(home+"/__build__/plugins/optim-mop/search_efficient "+ home + \
+def search_efficient(instance, box_y, mode="efficient", prec=1e-5, box_x=None):
+    boxy_str = [str(y) for y in box_y]
+    if box_x:
+        boxx_str = [str(x) for x in box_x]
+    
+    if box_x==None:
+        stdin, stdout, stderr = ssh.exec_command(home+"/__build__/plugins/optim-mop/search_efficient "+ home + \
                 "/plugins/optim-mop/benchs/" + instance + " --eps=" + str(prec) + \
                 " --box=\"" + " ".join(boxy_str) +"\" --se_mode=" + mode)
+    else:
+         stdin, stdout, stderr = ssh.exec_command(home+"/__build__/plugins/optim-mop/search_efficient "+ home + \
+                "/plugins/optim-mop/benchs/" + instance + " --eps=" + str(prec) + \
+                " --box=\"" + " ".join(boxy_str) + "\" --box_x=\"" + " ".join(boxx_str) + "\" --se_mode=" + mode)
     lines = stdout.readlines()
     values_str = lines[0].split()
     values = [float(v) for v in values_str]
     y = np.array(values[0:2])
     x = np.array(values[2:len(values)])
     time = float(lines[1].strip())
+    
+    #TODO: verificar que "y" sea una solución eficiente 
+    
     return x, y, time
 
 #llama al solver para encontrar frontera de pareto
