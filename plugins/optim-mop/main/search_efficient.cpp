@@ -51,6 +51,7 @@ int main(int argc, char** argv){
 	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the ub2 algorithm (dist < rh*ini_dist)", {"rh"});
 
 	args::ValueFlag<std::string> _box(parser, "string", "bounds of box y (y1_lb y1_ub y2_lb y2_ub)", {"box"});
+	args::ValueFlag<std::string> _box_x(parser, "string", "bounds of box x (x1_lb x1_ub x2_lb x2_ub...)", {"box_x"});
 	args::ValueFlag<std::string> _se_mode(parser, "string", "Search Efficient Mode (efficient|minf1|minf2)", {"se_mode"});
 
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
@@ -309,6 +310,16 @@ int main(int argc, char** argv){
 		box_str >> a >> b >> c >> d;
 		ext_sys.box[n] = interval(a, b);
 		ext_sys.box[n+1] = interval(c, d);
+	}
+
+	
+	if(_box_x){
+		std::istringstream box_str(_box_x.Get());
+		for(int i=0; i<n; i++){
+			double a, b, c, d;
+			box_str >> a >> b;
+			ext_sys.box[i] = interval(a, b);
+		}
 	}
 
 	string se_mode="efficient";
