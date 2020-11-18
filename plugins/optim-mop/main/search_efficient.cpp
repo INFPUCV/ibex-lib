@@ -323,8 +323,8 @@ int main(int argc, char** argv){
 		se->optimize(ext_sys.box, SearchEfficient::MINF2);
 	
 	cout << se->efficient[0] << " " << se->efficient[1] << " ";
-	for(int i=0; i<sys.nb_var ;i++) cout << se->efficient_solution[i] << " ";
-
+	for(int i=0; i<sys.nb_var ;i++) cout << se->efficient_solution[i] << " " ;
+    cout << endl << se->get_time();
 	return 0;
 
 	}
