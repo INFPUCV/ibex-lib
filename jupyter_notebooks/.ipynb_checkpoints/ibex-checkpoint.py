@@ -2,6 +2,8 @@ import paramiko
 import getpass
 import numpy as np
 
+print("Cargando ibex...")
+
 home = "/home/iaraya/ibex/ibex-lib"
 
 ssh = None
