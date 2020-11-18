@@ -99,6 +99,8 @@ public:
 	 */
 	double static _weight2;
 
+	int get_phase() const { return phase; } 
+
 protected:
 
 	/**
@@ -130,6 +132,7 @@ protected:
 
 	/** linear solver */
 	LPSolver lp_solver;
+
 
 private:
 

@@ -13,8 +13,11 @@
 #include "args.hxx"
 
 // Server side C/C++ program to demonstrate Socket programming
+#include <unistd.h>
 #include <stdio.h>
+#include <sys/socket.h>
 #include <stdlib.h>
+#include <netinet/in.h>
 #include <string.h>
 #include <cstring>
 #include <set> 
@@ -88,6 +91,7 @@ int main(int argc, char** argv){
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
 	args::ValueFlag<std::string> _upperbounding(parser, "string", "Upper bounding strategy (no|ub1|ub2) (default: no).", {"ub"});
 	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the ub2 algorithm (dist < rh*ini_dist)", {"rh"});
+	args::Flag _server_mode(parser, "server", "Server Mode (some options are discativated).",{"server_mode"});
 	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
 	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
 	args::ValueFlag<std::string> _input_file(parser, "string", "Loading file", {"input_file"});
@@ -172,7 +176,7 @@ int main(int argc, char** argv){
 	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
 	double eps= (_eps)? _eps.Get() : 0.01 ;
 	double eps_rpm= (_eps_rpm)? _eps_rpm.Get() : 0.01 ;
-	double rel_eps= (_eps_r)? _eps_r.Get() : 0.0 ;
+	double rel_eps= (_server_mode && !_eps_r)? 0.01: ((_eps_r)? _eps_r.Get() : 0.0 );
 	double eps_x= 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
 	double eqeps= 1.e-8;
@@ -187,6 +191,7 @@ int main(int argc, char** argv){
 	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
+	if(_server_mode) OptimizerMOP::_eps_contract = false;
 
 	if(bisection=="largestfirst_noy"){
 		bisection="largestfirst";
@@ -356,21 +361,210 @@ int main(int argc, char** argv){
 
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
 	OptimizerMOP* o;
+	if(!_server_mode){
+		o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
+					(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+					OptimizerMOP::MIDPOINT,	eps, rel_eps);
+		if(strategy=="NDSdist")
+			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
+			// the trace
+			o->trace=(_trace)? _trace.Get() : false;
+			// the allowed time for search
+			o->timeout=timelimit;
+			o->optimize(ext_sys.box);
+			o->report();
 
-	o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-				(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
-				OptimizerMOP::MIDPOINT,	eps, rel_eps);
-	if(strategy=="NDSdist")
-		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
-		// the trace
-		o->trace=(_trace)? _trace.Get() : false;
-		// the allowed time for search
-		o->timeout=timelimit;
-		o->optimize(ext_sys.box);
-		o->report();
+
+	}else{
+		OptimizerMOP_I* o;
+		o = new OptimizerMOP_I(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
+							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+							OptimizerMOP::MIDPOINT);
+		if(strategy=="NDSdist")
+			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
 
 
+		
+
+		//Definicion de variables para el servidor
+		int server_fd, new_socket, valread;
+	    struct sockaddr_in address;
+	    int opt = 1;
+	    int addrlen = sizeof(address);
+	    char bufferserver[1024] = {0};
+	    string instruction = "run" ;
+
+		// Creating socket file descriptor
+	    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+	    {
+	        perror("socket failed");
+	        exit(EXIT_FAILURE);
+	    }
+
+	    // Forcefully attaching socket to the port 8080
+	    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+	                                                  &opt, sizeof(opt)))
+	    {
+	        perror("setsockopt");
+	        exit(EXIT_FAILURE);
+	    }
+
+	    address.sin_family = AF_INET;
+	    address.sin_addr.s_addr = INADDR_ANY;
+	    address.sin_port = htons( port );
+
+	    // Forcefully attaching socket to the port 8080
+	    if (bind(server_fd, (struct sockaddr *)&address,
+	                                 sizeof(address))<0)
+	    {
+	        perror("bind failed");
+	        exit(EXIT_FAILURE);
+	    }
+	    if (listen(server_fd, 3) < 0)
+	    {
+	        perror("listen");
+	        exit(EXIT_FAILURE);
+	    }
+			string line;
+			string mensaje;
+			std::string respuesta;
+
+			int data;
+
+			IntervalVector focus = o->load(ext_sys.box);
+			double ini_eps = focus.size() / 100.0;
+			double iters=10;
+
+			double eps; Vector ref(2);
+			//o->run(iters, ini_eps);
+			while(instruction != "fns"){
+				close(new_socket);
+
+				if ((new_socket = accept(server_fd, (struct sockaddr *)&address,
+								(socklen_t*)&addrlen))<0)
+				{
+					perror("accept");
+					exit(EXIT_FAILURE);
+				}
+
+				// Traduccion de instruccion
+				valread = read( new_socket , bufferserver, 1024);
+				std::string resp (bufferserver);
+				cout << "message:" << resp << endl;
+				stringstream message;
+				message << resp;
+
+				int max_nb_changes = 10;
+
+        		string instruction;
+				message >> instruction;
+
+				// En el caso de que se solicitan los datos
+				if( instruction == "glw"){
+					list<vector<double>> lowerList;
+					double eps, a, b, c, d;
+					message >> eps;
+					message >> a >> b >> c >> d;
+					IntervalVector box(2);
+					box[0] = Interval(a,b);
+					box[1] = Interval(c,d);
+					o->generate_lower_envelope(lowerList, eps, box);
+
+					string newlower = "";
+					for (auto it = lowerList.begin(); it != lowerList.end(); it++){ 
+						newlower = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
+						char response [newlower.size()];
+						strcpy(response, newlower.c_str());
+						send(new_socket , response , strlen(response) , 0 );
+					}
+					char response [1024];
+					strcpy(response, "/fs");
+					send(new_socket, response, strlen(response), 0);
 	
+				}
+				else if( instruction == "gup"){
+					list<vector<double>> upperList; 
+					double eps, a, b, c, d;
+					message >> eps;
+					message >> a >> b >> c >> d;
+					IntervalVector box(2);
+					box[0] = Interval(a,b);
+					box[1] = Interval(c,d);
+					o->generate_upper_envelope(upperList, eps, box);
+					
+					string newUpper = "";
+					for (auto it = upperList.begin(); it != upperList.end(); it++){ 
+						newUpper = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
+						char response [newUpper.size()];
+						strcpy(response, newUpper.c_str());
+						send(new_socket , response , strlen(response) , 0 );
+					}
+					char response [1024];
+					strcpy(response, "/fs");
+					send(new_socket, response, strlen(response), 0);
+				}
+
+				// En el caso de que quieren el espacio de búsqueda
+				else if( instruction == "zoo"){
+					cout << "entro al zoo" << endl;
+					char response [1024];
+					string t = mensaje;
+					istringstream iss(t);
+					string word;
+					int x; int y;
+					message >> x;
+					message >> y;
+					message >> eps;
+					cout << "x: " << x << endl;
+					cout << "y: " << y << endl;
+					cout << "eps: " << eps << endl;
+
+					ref[0] = x;
+					ref[1] = y;
+
+					cout << "ref: " << ref << endl;
+					o->update_refpoint(ref, eps);
+					strcpy(response, "Puntos de referencia actualizados");
+					send(new_socket , response , strlen(response) , 0 );
+
+				}
+
+				else if( instruction == "run"){
+					char response [1024];
+
+
+					message >> iters;
+					message >> eps;
+
+					cout << "iters: " << iters << endl;
+					cout << "eps: " << eps << endl;
+
+					OptimizerMOP_I::IStatus status = o->run(iters, eps);
+
+					float precision = o->current_precision;
+					cout << "precision: " << precision << endl;
+					cout << "status: " << status << endl;
+
+
+					strcpy(response, "Run executed\n");
+					send(new_socket , response , strlen(response) , 0 );
+
+
+				}else if(instruction == "plot"){
+					list<vector<double>> upperList; 
+					list<vector<double>> lowerList;
+					message >> eps;
+					double a,b,c,d;
+					message >> a >> b >> c >> d;
+					IntervalVector box(2);
+					box[0] = Interval(a,b);
+					box[1] = Interval(c,d);
+					o->generate_upper_envelope(upperList, eps, box);
+					o->generate_lower_envelope(lowerList, eps, box);
+					o->plot(upperList, lowerList);
+				}
+			}
+		}
 	}catch(ibex::SyntaxError& e) {
 	  cout << e << endl;
 	}
