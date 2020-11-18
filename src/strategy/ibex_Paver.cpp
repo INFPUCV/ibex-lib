@@ -73,8 +73,7 @@ void Paver::contract(Cell& cell, SubPaving* paving) {
 
 void Paver::bisect(Cell& c) {
 
-	pair<IntervalVector,IntervalVector> boxes=bsc.bisect(c);
-	pair<Cell*,Cell*> new_cells=c.bisect(boxes.first,boxes.second);
+	pair<Cell*,Cell*> new_cells=bsc.bisect(c);
 
 	delete buffer.pop();
 	buffer.push(new_cells.first);
@@ -92,11 +91,14 @@ SubPaving* Paver::pave(const IntervalVector& init_box) {
 	Cell* root=new Cell(init_box);
 
 	// add data required by the contractors
-//	for (int i=0; i<ctc.size(); i++) {
-//		ctc[i].init_root(*root);
-//	}
+	for (int i=0; i<ctc.size(); i++) {
+		ctc[i].add_property(init_box, root->prop);
+	}
+
 	// add data required by the bisector
-	bsc.add_backtrackable(*root);
+	bsc.add_property(init_box, root->prop);
+
+	buffer.add_property(init_box, root->prop);
 
 	buffer.push(root);
 

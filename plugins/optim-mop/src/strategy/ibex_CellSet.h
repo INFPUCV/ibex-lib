@@ -11,11 +11,11 @@
 #define __IBEX_CELL_SET_H__
 
 #include "ibex_Random.h"
-#include "ibex_CellMOP.h"
 #include <set>
 #include <map>
 #include <queue>
-
+#include "ibex_BxpMOPData.h"
+#include "ibex_CellBufferOptim.h"
 
 using namespace std;
 
@@ -37,9 +37,6 @@ namespace ibex {
 
 	  void flush();
 
-	    virtual void add_backtrackable(Cell& root){
-	    	root.add<CellMOP>();
-	    }
 
 	  /** Return the size of the buffer. */
 	  unsigned int size() const;
@@ -55,7 +52,6 @@ namespace ibex {
 
 	  /** Return the next box (but does not pop it).*/
 	  Cell* top() const;
-
 
 	  virtual double minimum() const;
 
@@ -77,7 +73,7 @@ namespace ibex {
 		  int n = c1->box.size();
 
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
-		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
+		  return (c1->depth < c2->depth);
 
 	  }
 	};
@@ -93,8 +89,7 @@ namespace ibex {
 
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
 		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
-		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
-		  //return (c1->get<CellMOP>().id > c2->get<CellMOP>().id);
+		  return (c1->depth < c2->depth);
 	  }
 	};
 
@@ -109,8 +104,8 @@ namespace ibex {
 
 		  if(c1->box[n-2].lb() != c2->box[n-2].lb()) return (c1->box[n-2].lb() < c2->box[n-2].lb());
 		  if(c1->box[n-1].lb() != c2->box[n-1].lb()) return (c1->box[n-1].lb() < c2->box[n-1].lb());
-		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
-		  //return (c1->get<CellMOP>().id > c2->get<CellMOP>().id);
+		  return (c1->depth < c2->depth);
+
 	  }
 	};
 
@@ -125,7 +120,7 @@ namespace ibex {
 
 		  if(c1->box[n-1].lb() + c1->box[n-2].lb() != c2->box[n-1].lb() + c2->box[n-2].lb())
 			  return (c1->box[n-1].lb() + c1->box[n-2].lb() < c2->box[n-1].lb() + c2->box[n-2].lb());
-		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
+		  return (c1->depth < c2->depth);
 	  }
 	};
 
@@ -138,11 +133,11 @@ namespace ibex {
 	  {
 		  int n = c1->box.size();
 
-		  double hyper1=(CellMOP::y1_init.ub()-c1->box[n-1].lb())*(CellMOP::y2_init.ub()-c1->box[n-2].lb());
-		  double hyper2=(CellMOP::y1_init.ub()-c1->box[n-1].lb())*(CellMOP::y2_init.ub()-c1->box[n-2].lb());
+		  double hyper1=(BxpMOPData::y1_init.ub()-c1->box[n-1].lb())*(BxpMOPData::y2_init.ub()-c1->box[n-2].lb());
+		  double hyper2=(BxpMOPData::y1_init.ub()-c1->box[n-1].lb())*(BxpMOPData::y2_init.ub()-c1->box[n-2].lb());
 
 		  if(hyper1 != hyper2) return (hyper1 < hyper2);
-		  return (c1->get<CellMOP>().depth < c2->get<CellMOP>().depth);
+		  return (c1->depth < c2->depth);
 	  }
 	};
 
@@ -153,11 +148,11 @@ namespace ibex {
 	  bool operator() (const Cell* c1, const Cell* c2) const
 	  {
 		  int n = c1->box.size();
-		  double c1_ev= (c1->box[n-2].lb()-CellMOP::y1_init.lb())/CellMOP::y1_init.diam() +
-				  (c1->box[n-1].lb()-CellMOP::y2_init.lb())/CellMOP::y2_init.diam();
+		  double c1_ev= (c1->box[n-2].lb()-BxpMOPData::y1_init.lb())/BxpMOPData::y1_init.diam() +
+				  (c1->box[n-1].lb()-BxpMOPData::y2_init.lb())/BxpMOPData::y2_init.diam();
 
-		  double c2_ev= (c2->box[n-2].lb()-CellMOP::y1_init.lb())/CellMOP::y1_init.diam() +
-				  (c2->box[n-1].lb()-CellMOP::y2_init.lb())/CellMOP::y2_init.diam();
+		  double c2_ev= (c2->box[n-2].lb()-BxpMOPData::y1_init.lb())/BxpMOPData::y1_init.diam() +
+				  (c2->box[n-1].lb()-BxpMOPData::y2_init.lb())/BxpMOPData::y2_init.diam();
 
 		  return c1_ev < c2_ev;
 	  }

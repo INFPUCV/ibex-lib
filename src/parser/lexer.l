@@ -19,6 +19,7 @@
 #include "ibex_Scope.h"
 #include "ibex_Interval.h"
 #include "ibex_Expr.h"
+#include "ibex_ExprOperators.h"
 #include "ibex_SyntaxError.h"
 #include "ibex_P_NumConstraint.h"
 
@@ -60,6 +61,8 @@ using namespace ibex::parser;
 "parameters"|"Parameters"|"PARAMETERS"	 { return TK_PARAM; }
 "function"|"Function"|"FUNCTION"         { return TK_FUNCTION; }
 "minimize"|"Minimize"|"MINIMIZE"         { return TK_MINIMIZE; }
+
+"diff"                           { return TK_DIFF; }
 "max"                            { return TK_MAX; }
 "min"                            { return TK_MIN; }
 "atan2"                          { return TK_ATAN2; }
@@ -81,7 +84,6 @@ using namespace ibex::parser;
 "asinh"                          { return TK_ASINH; }
 "atanh"                          { return TK_ATANH; }
 "chi"                            { return TK_CHI; }
-
 "in"                             { return TK_IN;  }
 "inf"                            { return TK_INF; }
 "mid"                            { return TK_MID; }
@@ -94,6 +96,7 @@ using namespace ibex::parser;
 
 "constraints"|"Constraints"|"CONSTRAINTS" { return TK_CTRS; }
 
+"pi"							 { return TK_PI; }
 "oo"                             { return TK_INFINITY; }
 "\""[^\n\r]*"\""                 { ibexlval.str = (char*) malloc(strlen(ibextext)-1);
                                    /* copy while removing quotes */
@@ -108,8 +111,18 @@ using namespace ibex::parser;
   									  // The lexer tries to retreive this identifier from the scope, which has not
   									  // been created yet -> seg fault
   									  return TK_NEW_SYMBOL;
-  								   else
-                                      return scopes().top().token(ibextext);
+  								   else 
+  								      try {
+  								        ExprGenericUnaryOp::get_eval(ibextext); 
+  								        return TK_UNARY_OP;
+  								      } catch(SyntaxError&) {
+  								        try {
+  								          ExprGenericBinaryOp::get_eval(ibextext); 
+  								          return TK_BINARY_OP;
+  								        } catch(SyntaxError&) {
+                                          return scopes().top().token(ibextext);
+                                        }
+                                      }
                                  }
 ([0-9]{6,10}[0-9]*|([0-9][0-9]*\.[0-9]*)|(\.[0-9]+))(e(\-|\+)?[0-9]+)?|([0-9]{1,5}e(\-|\+)?[0-9]+)  {
                                    ibexlval.real = atof(ibextext); return TK_FLOAT;

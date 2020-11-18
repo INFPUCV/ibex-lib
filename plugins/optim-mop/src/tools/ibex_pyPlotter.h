@@ -10,7 +10,9 @@
 
 #include <set>
 #include <map>
-#include "ibex_CellMOP.h"
+#include "ibex_BxpMOPData.h"
+#include "ibex_Cell.h"
+#include "ibex_NDS.h"
 
 using namespace std;
 namespace ibex {
@@ -30,20 +32,11 @@ public:
 	/**
 	 * \brief writes a file (output.txt) to be read by the python3 program plot.py
 	 */
-	static void offline_plot(Cell* current, map< pair <double, double>, IntervalVector >& NDS);
-
-	/**
-	* write line commands to be interpreted by the python3 program plot.py
-	*/
-	static void plot_add_ub(pair<double, double> eval);
-	static void plot_del_ub(pair<double, double> eval);
-	static void plot_add_lb(Cell* c);
-	static void plot_add_box(Cell* c);
-	static void plot_del_box(Cell* c);
-
-
-
-	static int n;
+	static void offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
+		map< Vector, NDS_data, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus=NULL);
+	
+	static void offline_plot(list<vector<double> > &upperList, list<vector<double> > &lowerList, 
+		const char* output_file);
 
 };
 

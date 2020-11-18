@@ -12,6 +12,15 @@
 #include "ibex.h"
 #include "args.hxx"
 
+// Server side C/C++ program to demonstrate Socket programming
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <cstring>
+#include <set> 
+#include <iterator>
+#include <vector>
+
 
 #ifndef _IBEX_WITH_OPTIM_MOP_
 #error "You need the plugin Optim MOP to run this example."
@@ -21,6 +30,33 @@ const double default_relax_ratio = 0.2;
 
 using namespace std;
 using namespace ibex;
+
+string Print_Vector(vector<double> Vec) 
+{ 
+	string vector = "";
+    for (int i = 0; i < Vec.size(); i++) { 
+		vector = vector + std::to_string(Vec[i]);
+		if( i == 0){
+			vector = vector + ",";
+		}else{
+			vector = vector + "/";
+		}
+    } 
+    return vector; 
+} 
+
+
+struct graph_compare {
+    bool operator() (const vector<double>& a, const vector<double>& b) const {
+        if( a[0] != b[0]){
+            return a[0] < b[0];
+        }else{
+            return a[1] > b[1];
+        }
+        return true;
+    }
+};
+
 int main(int argc, char** argv){
 
 
@@ -31,6 +67,8 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
+	char fns[4] = "fns";
+
 	args::ArgumentParser parser("********* IbexMop *********.", "Solve a NLBOOP (Minibex file).");
 	args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 	args::ValueFlag<std::string> _filtering(parser, "string", "the filtering method (default: acidhc4)", {'f', "filt"});
@@ -38,16 +76,25 @@ int main(int argc, char** argv){
 	args::ValueFlag<std::string> _bisector(parser, "string", "the bisection method (default: largestfirst)", {'b', "bis"});
 	args::ValueFlag<std::string> _strategy(parser, "string", "the search strategy (default: NDSdist)", {'s', "search"});
 	args::ValueFlag<double> _eps(parser, "float", "the desired precision (default: 0.01)", {"eps"});
+	args::ValueFlag<double> _eps_rpm(parser, "float", "precision of the relative point method (default: 1e-5)", {"eps_rpm"});
+	args::ValueFlag<double> _eps_r(parser, "float", "the desired relative precision (default: 0.01)", {"eps_r"});
 	args::ValueFlag<double> _timelimit(parser, "float", "timelimit (default: 100)", {'t',"timelimit"});
+	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the additional constraint cy.", {"cy-contract-full"});
 	args::Flag _eps_contract(parser, "eps-contract", "Contract using eps.", {"eps-contract"});
-	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"nb_ub_sols"});
-	args::ValueFlag<double> _epsx(parser, "float", "The minimum size of boxes", {"eps_x"});
-	args::ValueFlag<double> _weight2(parser, "float", "Min distance between two non dominated points to be considered (default: 0.01)", {"w2","weight2"});
-	args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
-	//args::Flag _hv(parser, "hv", "Compute the hypervolume", {"hv"});
-	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
+	//args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"N"});
+	//args::ValueFlag<double> _weight2(parser, "float", "Weight of the second objective (default: 0.01)", {"w2","weight2"});
+	//args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
+	args::ValueFlag<std::string> _upperbounding(parser, "string", "Upper bounding strategy (no|ub1|ub2) (default: no).", {"ub"});
+	args::ValueFlag<double> _rh(parser, "float", "Termination criteria for the ub2 algorithm (dist < rh*ini_dist)", {"rh"});
+	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
+	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
+	args::ValueFlag<std::string> _input_file(parser, "string", "Loading file", {"input_file"});
+	args::ValueFlag<std::string> _demo(parser, "string", "Demo file", {"demo"});
+
+	args::ValueFlag<int> _port(parser, "int", "Port for connection with the API", {"port"});
+
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
   args::ValueFlag<int> _print_convergence(parser, "int", "Print Convergence.", {"print_convergence"});
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
@@ -76,8 +123,24 @@ int main(int argc, char** argv){
 		return 1;
 	}
 
+  	string file = filename.Get();
+
+
+
+	int port= 0;
+
+	if(_port){
+			port = _port.Get();
+			printf("port: %i\n", port);
+	}
+
+
+	// aqui tira el error
+
   //original system: 2 objective functions and constraints
-	System ext_sys(filename.Get().c_str());
+	System ext_sys(file.c_str());
+
+
 
   //for accing the cy envelope constraint
 	SystemFactory fac2;
@@ -101,6 +164,8 @@ int main(int argc, char** argv){
 	else _ext_sys =new System(ext_sys);
 
 
+
+
 	//cout << *_ext_sys << endl;
 
 	string filtering = (_filtering)? _filtering.Get() : "acidhc4";
@@ -108,16 +173,21 @@ int main(int argc, char** argv){
 	string bisection= (_bisector)? _bisector.Get() : "largestfirst";
 	string strategy= (_strategy)? _strategy.Get() : "NDSdist";
 	double eps= (_eps)? _eps.Get() : 0.01 ;
-	double eps_x= (_epsx)? _epsx.Get() : 1e-8 ;
+	double eps_rpm= (_eps_rpm)? _eps_rpm.Get() : 0.01 ;
+	double rel_eps= (_eps_r)? _eps_r.Get() : 0.0 ;
+	double eps_x= 1e-8 ;
 	double timelimit = (_timelimit)? _timelimit.Get() : 100 ;
 	double convergence = (_print_convergence)? _print_convergence.Get():0;
 	double eqeps= 1.e-8;
+	double rh=(_rh)? _rh.Get():0.1;
+	bool _segments=(_upperbounding && _upperbounding.Get()=="ub1");
+	bool _hamburger=(_upperbounding && _upperbounding.Get()=="ub2");
 
 	OptimizerMOP::_plot = _plot;
 
-	int nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get() : 50 ;
-	OptimizerMOP::_min_ub_dist = (_min_ub_dist)? _min_ub_dist.Get() : 0.1;
-	LoupFinderMOP::_weight2 = (_weight2)? _weight2.Get() : 0.01 ;
+	int nb_ub_sols = 10 ;
+	OptimizerMOP::_min_ub_dist = 0.1;
+	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
 	OptimizerMOP::_print_convergence=convergence;
@@ -135,23 +205,41 @@ int main(int argc, char** argv){
 	cout << "Bisector: " << bisection << endl;
 	cout << "Strategy: " << strategy << endl;
 	cout << "eps: " << eps << endl;
+	cout << "rel_eps: " << rel_eps << endl;
 	cout << "eps_x: " << eps_x << endl;
 	cout << "nb_ub_sols: " << nb_ub_sols << endl;
-	//cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
+	cout << "min_ub_dist: " << OptimizerMOP::_min_ub_dist << endl;
 	cout << "plot: " <<  ((OptimizerMOP::_plot)? "yes":"no") << endl;
-	//cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
+	cout << "weight f2: " << LoupFinderMOP::_weight2 << endl;
 	cout << "bisect y?: " << ((no_bisect_y)? "no":"yes") << endl;
 	cout << "cy_contract?: " << ((OptimizerMOP::cy_contract_var)? "yes":"no") << endl;
+	cout << "eps_contract?: " << ((OptimizerMOP::_eps_contract)? "yes":"no") << endl;
+	cout << "segments?: " << ((_segments)? "yes":"no") << endl;
+	cout << "hamburger?: " << ((_hamburger)? "yes":"no") << endl;
 
 
 	SystemFactory fac;
 
-	for(int i=0; i<ext_sys.nb_var-2; i++ )
-		fac.add_var(ext_sys.args[i]);
+	Array<const ExprNode> symbs;
+	Array<const ExprSymbol> _x1x2;
+	for(int i=0; i<ext_sys.args.size()-2; i++ ){
+		const ExprSymbol& x=ExprSymbol::new_(ext_sys.args[i].name);
+		fac.add_var(x);
+		symbs.add(x);
 
+	}
 
-	for(int j=2; j<ext_sys.nb_ctr; j++ )
-		fac.add_ctr(ext_sys.ctrs[j]);
+	for(int j=2; j<ext_sys.nb_ctr; j++ ){
+		const ExprNode& e = ext_sys.ctrs[j].f.expr();
+		Array<const ExprSymbol> _x1x2;
+		for(int i=0;i<ext_sys.args.size()-2;i++) _x1x2.add(ext_sys.ctrs[j].f.args()[i]);
+
+		const ExprNode& new_e = ExprCopy().copy(_x1x2, symbs, e);
+		ExprCtr cc(new_e, ext_sys.ctrs[j].op);
+		fac.add_ctr(cc);
+		//delete &new_e;
+
+	}
 
 
 	System sys(fac);
@@ -169,11 +257,7 @@ int main(int argc, char** argv){
 	finder.eps=eps;
 
 	CellBufferOptim* buffer;
-	if(strategy=="OC1")
-	  buffer = new CellSet<OC1>;
-	else if(strategy=="OC2")
-	  buffer = new CellSet<OC2>;
-	else if(strategy=="OC3")
+	if(strategy=="OC3")
 	  buffer = new CellSet<OC3>;
 	else if(strategy=="OC4")
 	  buffer = new CellSet<OC4>;
@@ -181,6 +265,8 @@ int main(int argc, char** argv){
 	  buffer = new CellSet<weighted_sum>;
 	else if(strategy=="NDSdist")
 	  buffer = new DistanceSortedCellBufferMOP;
+
+
 
 
 	// Build the bisection heuristic
@@ -209,6 +295,10 @@ int main(int argc, char** argv){
 	//else if (bisection=="lsmear")
 	//  bs = new LSmear(ext_sys,p);
 	else {cout << bisection << " is not an implemented  bisection mode "  << endl; return -1;}
+
+
+
+
 
 	// The contractors
 
@@ -267,44 +357,31 @@ int main(int argc, char** argv){
 	else
 	  ctcxn = ctc;
 
+
+
 	// the optimizer : the same precision goalprec is used as relative and absolute precision
-	OptimizerMOP o(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,eps);
-	max_distance::UB= &o.get_UB();
+	OptimizerMOP* o;
+
+	o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
+				(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+				OptimizerMOP::MIDPOINT,	eps, rel_eps);
+	if(strategy=="NDSdist")
+		dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
+		// the trace
+		o->trace=(_trace)? _trace.Get() : false;
+		// the allowed time for search
+		o->timeout=timelimit;
+		o->optimize(ext_sys.box);
+		o->report();
 
 
-	//	cout << " sys.box " << sys.box << endl;
-
-	// the trace
-	o.trace=(_trace)? _trace.Get() : false;
-
-	// the allowed time for search
-	o.timeout=timelimit;
-
-	// the search itself
-	o.optimize(ext_sys.box);
-
-	// printing the results
-	o.report(verbose);
-
-	delete bs;
-	delete buffer;
-	delete _ext_sys;
-	/*if (linearrelaxation=="compo" || linearrelaxation=="art"|| linearrelaxation=="xn") {
-		delete lr;
-	    delete ctcxn;
-	    delete cxn;
-	    delete cxn_poly;
-	    delete cxn_compo;
-	}*/
-
+	
+	}catch(ibex::SyntaxError& e) {
+	  cout << e << endl;
+	}
 
 
 	return 0;
 
-	}
 
-
-	catch(ibex::SyntaxError& e) {
-	  cout << e << endl;
-	}
 }

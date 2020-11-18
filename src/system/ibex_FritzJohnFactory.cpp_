@@ -56,7 +56,7 @@ class FritzJohnFactory : public SystemFactory {
 
 public:
 
-	static const double ACTIVE_BOUND_CEIL;
+	static constexpr double ACTIVE_BOUND_CEIL = 1e7;
 
 	/** bound_ctr is an array representing the bounds of the initial box of the system
 	 * that are less (in absolute value) than #ACTIVE_BOUND_CEIL.
@@ -178,9 +178,9 @@ public:
 
 		// -------------  Main constraint -------------------------------------------
 		// The linear dependency of the gradients
-		const ExprNode& df=ExprDiff().diff(sys.goal->args(), vars, sys.goal->expr());
+		const ExprNode& df=ExprDiff(sys.goal->args(), vars).diff(sys.goal->expr(), sys.goal->args());
 		const ExprNode* dg=NULL;
-		if (M>0 || R>0) dg=&ExprDiff().diff(sys.f_ctrs.args(), vars, sys.f_ctrs.expr());
+		if (M>0 || R>0) dg=&ExprDiff(sys.f_ctrs.args(), vars).diff(sys.f_ctrs.expr(), sys.f_ctrs.args());
 
 		// to ease memory cleanup, we represent all
 		// constraints with a single multivalued function
@@ -304,16 +304,12 @@ public:
 	~FritzJohnFactory() {
 		delete[] bound_ctr;
 
-		for (int i=0; i<args->size(); i++)
-			delete &(*args)[i];
+		for (int i=0; i<input_args.size(); i++)
+			delete &(input_args[i]);
 	}
 };
 
-
-const double FritzJohnFactory::ACTIVE_BOUND_CEIL = 1e7;
-
 } // end anonymous namespace
-
 
 } // end namespace ibex
 

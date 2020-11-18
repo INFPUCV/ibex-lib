@@ -9,6 +9,11 @@
 #include "ibex_OptimizerMOP.h"
 #include <algorithm>    // std::min_element, std::max_element
 
+#ifndef cdata
+#define cdata ((BxpMOPData*) c->prop[BxpMOPData::id])
+#endif
+
+
 namespace ibex {
 
 
@@ -30,11 +35,11 @@ namespace ibex {
 		return cells.empty();
 	}
 
-	void DistanceSortedCellBufferMOP::push(Cell* cell) {
-		double dist=OptimizerMOP::distance2(cell);
-		if(dist < cell->get<CellMOP>().ub_distance )
-			cell->get<CellMOP>().ub_distance=dist;
-		cells.push(cell);
+	void DistanceSortedCellBufferMOP::push(Cell* c) {
+		double dist=nds->distance(c);
+		if(dist < cdata->ub_distance)
+			cdata->ub_distance=dist;
+		cells.push(c);
 	}
 
 	Cell* DistanceSortedCellBufferMOP::pop() {
@@ -45,23 +50,26 @@ namespace ibex {
 		return c;
 	}
 
+  int counter=0;
 	Cell* DistanceSortedCellBufferMOP::top() const {
+
 		Cell* c = cells.top();
 		if(!c) return NULL;
 
-
-		double dist=OptimizerMOP::distance2(c);
+   	double dist=nds->distance(c);
 
 		//we update the distance and reinsert the element
-		while(dist < c->get<CellMOP>().ub_distance){
+		while(dist < cdata->ub_distance){
 			cells.pop();
-			c->get<CellMOP>().ub_distance=dist;
+			cdata->ub_distance=dist;
 			cells.push(c);
 			c = cells.top();
-			dist=OptimizerMOP::distance2(c);
+			dist=nds->distance(c);
 		}
 
-		//cout << "dist:" << dist << endl;
+    counter ++;
+		//cout << counter  <<":" <<  c->get<CellMOP>().ub_distance << endl;
+
 		return c;
 	}
 

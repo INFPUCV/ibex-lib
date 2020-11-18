@@ -1,110 +1,89 @@
-# ibexMop
+# Ibex-MOP
 
-This plugin implements *ibexMop*, an 
-interval branch & bound solver for **Nonlinear BiObjective Optimization** problems 
-in the [Ibex library](https://github.com/ibex-team/ibex-lib).
+*ibexMop* is an interval branch & bound solver for **Nonlinear BiObjective Optimization** problems.
 
-*ibexMop* returns a set of solutions X and its images Y
-guaranteeing a maximal distance *eps* between
-any *non-dominated* feasible vector and the returned set Y. 
+*ibexMop* constructs an **upper envelope** for the non-dominated set
+by following a branch & bound strategy starting with an initial *box* (containing the variable domains)
+and building a search tree. In each iteration of the algorithm,
+a node is selected and treated by *filtering*, *upper-bounding*
+and *splitting* techniques.
 
-*ibexMop* constructs an **envelope** for the non-dominated set
-by following a branch & bound strategy starting with an initial *box* (containing the variable domains) 
-and building a search tree. In each iteration of the algorithm, 
-a node is selected and treated by classical *filtering*, *upper-bounding* 
-and *splitting* techniques. 
+The solver returns a set of vectors Y' guaranteeing a maximal distance *eps* between
+any *non-dominated* feasible vector and the returned set Y'. It includes 
+some methods to take into account the *upper envelope* 
+for filtering dominated solutions (e.g., dominance peeler).
 
-*ibexMop* includes some methods to take into account the upper bound of the 
-*envelope* for filtering dominated solutions (e.g., well-known discarding tests).
+*ibexMop* includes three upper bounding methods:
 
-*ibexMop* also offers several improvements related to other NLBOO algorithms:
+  * (inner_polytope) The upper envelope Y' is represented by using a dominace-free set of *vectors*. An
+  [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf)
+  is used for finding feasible solutions. The algorithm constructs a feasible and convex polytope and then it finds
+two feasible vectors inside this polytope by minimizing a linearization of each one of the objective functions.
+Then it finds a set of N-2 (by default N=50) equidistant feasible solutions.
 
-* Uses a termination criteria directly related with the 
-precision of the *envelope*.
+  * (ub1) The upper envelope Y' is represented by using a set of *upper line segments*. 
+  It is warrantied that every vector in any segment is epsilon-dominated 
+  by at least one feasible solution. For finding upper line segments, the 
+  algorithm first finds a feasible line segment in the domain space using an inner polytope algorithm 
+  and then it generates a line segment passing over the image of this feasible line in the objective space. 
+  
+  * (ub2) The upper envelope Y' is also represented by using a set of upper line segments. 
+  The algorithm performs the same procedure than ub1 for finding upper line segments, however
+  it goes further and it is able to find the whole upper envelope related to the feasible line segment.
 
-* Includes an *additional dynamic constraint* **cy** for better defining the feasible 
-objective region related to each box. This constraint is used 
-by the filtering procedures improving the perfomance of the solver.
+![ub1](https://i.imgur.com/H6zAwpO.png)
+Example of an upper line segment.
+  
+![Cy Comparison](https://i.imgur.com/Wphf10d.png)
+Example of using ub2 for finding an upper envelope for the blue feasible curve in the objective space.
 
-![Cy Comparison](https://i.imgur.com/yLIxyUV.png)
-The *envelope* for the instance *kim* with *eps*=1. 
-In the left side the strategy without the additional constraint **cy**. 
-In the right side the strategy using **cy** which allows 
-to approximate better the *envelope* of non-dominated solutions.
-Red points corresponds to the set of feasible vectors found by the strategies.
-Remark that no feasible vector can be found under or left the lower envelope (blue segments).
-
-* Includes *NDSdist*, a new strategy for selecting nodes. *NDSdist*
-selects in each iteration the node/box maximizing its distance to the
-upper envelope.
-*NDSdist* has an *anytime behaviour*, i.e., it can return valid solutions
-even if it is interrupted before it ends. See the figure below:
-
-![Cy Comparison](https://i.imgur.com/uyZq6gB.png)
-Comparison of the anytime behavior of the search strategies.
-Figures show the envelope of the non-dominated set for the instances 
-[*osy*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/osy.txt) 
-after 100 iterations (top) and [*tan*](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/benchs/tan.txt) 
-after 50 iterations (down), 
-using the [OC search strategy](http://www.sciencedirect.com/science/article/pii/S0377221716303824) (left) 
-and the *NDSdist* search strategy (right).
-
-* Includes a [inner polytope algorithm](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.653.5777&rep=rep1&type=pdf) 
-for finding feasible solutions. 
-The algorithm constructs a feasible and convex polytope and then it finds 
-two feasible vectors inside this polytope by minimizing a linearization of each one of the 
-objective functions. 
-Then it finds a set of $n-2$ equidistant feasible solutions 
-between this two vectors.
+## Download
+````
+git clone https://github.com/INFPUCV/ibex-lib.git
+git checkout -t origin/mop-server
+````
 
 ## Installation
 
-### Requirements
-
-*ibexMop* is a plugin of the Ibex Library, so if you already have the library, 
-you only have to add this folder 
-([optim-mop.zip](https://github.com/INFPUCV/ibex-lib/blob/master/plugins/optim-mop/optim-mop-20180110.zip)) in the plugin
-folder of Ibex. 
-Otherwise you can download the entire library (including ibexMop) from [here](https://github.com/INFPUCV/ibex-lib).
-
-### Configure
-
-Once you have the plugin in the plugins' folder, you should go to the root folder of the  Ibex library 
-and run the following line in your terminal.
-
-```
-./waf configure --with-optim --with-optim-mop --with-ampl --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
-```
-```
-./waf install
-```
-
-This will configure Ibex to use the *IbexMop* plugin and then will build it in:
-```
-<ibex-root>/__build__/plugins/optim-mop/
-```
-
-## Uses
+````
+    sudo apt install python3 flex bison gcc g++ make pkg-config libz-dev zlib1g-dev python3-tk
+    pip3 install -r requirements.txt
+    
+    ./waf configure --with-optim --with-optim-mop --with-affine --prefix=. --gaol-dir= --lp-lib=soplex
+    ./waf install
+````      
+       
+## Main options
 ```
 ./__build__/plugins/optim-mop/ibexmop {OPTIONS} [filename]
 ```
-  OPTIONS (the most important ones):
+  OPTIONS:
 
       -h, --help                        Display this help menu
       -f[string], --filt=[string]       the filtering method (default: acidhc4)
-      --linear-relax=[string]           the linear relaxation method (default: compo)
-      -b[string], --bis=[string]        the bisection method (default: largestfirst)
+      --linear-relax=[string]           the linear relaxation method (default:
+                                        compo)
+      -b[string], --bis=[string]        the bisection method (default:
+                                        largestfirst)
       -s[string], --search=[string]     the search strategy (default: NDSdist)
       --eps=[float]                     the desired precision (default: 0.01)
-      -t[float], --time=[float]         timelimit (default: 100)
-      --cy-contract-full                Contract using the additional constraint cy.
+      -t[float], --timelimit=[float]    timelimit (default: 100)
+      --cy-contract                     Contract using the box y+cy, w_ub=+inf.
+      --cy-contract-full                Contract using the additional constraint
+                                        cy.
       --eps-contract                    Contract using eps.
-      --nb_ub_sols=[int]                Max number of solutions added by the
-                                        inner-polytope algorithm (default: 50)
+      --no-bisecty                      Do not bisect y variables.
+      --ub=[string]                     Upper bounding strategy (default: ub2).
+      --rh=[float]                      Termination criteria for the ub2
+                                        algorithm (dist < rh*ini_dist)
+      --server_mode                     Server Mode (some options are discativated).
+      --server_out=[string]             Server Output File
+      --server_in=[string]              Server Instructions File
       -v, --verbose                     Verbose output. Shows the dominance-free
                                         set of solutions obtained by the solver.
+      --trace                           Activate trace. Updates of loup/uplo are
+                                        printed while minimizing.
       --plot                            Save a file to be plotted by plot.py.
-
       filename                          The name of the MINIBEX file.
       "--" can be used to terminate flag options and force all following
       arguments to be treated as positional options
@@ -121,24 +100,37 @@ This will configure Ibex to use the *IbexMop* plugin and then will build it in:
 ### Bisection Method (-b):
  + largestfirst
  + roundrobin
+### Upper bounding method (-ub):
+ + inner_polytope
+ + ub1
+ + ub2
 
 ## Run an example:
 
-To run an example you can just write this line in your terminal in the root directory of the Ibex library:
-```
-./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract-full --eps-contract
-```
+     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt  --cy-contract-full --eps-contract --ub=ub2 --eps=0.0001
 
-For plotting the non-dominated vectors returned by the solver:
-```
-./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt --cy-contract-full --eps-contract --plot
-python3 plugins/optim-mop/main/plot.py 
-```
+## Run an example (server mode):
+
+    ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/tan.txt --cy-contract-full --eps_r=0.01 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
+    
+    ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt --cy-contract-full --eps_r=0.001 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
+
+The output file (server_out) contains two lists of points (segments) representing an upper and lower envelope for the optimal solutions.
+
+The input file (server_in) allows us to give instructions to the solver. For the moment two commands:
+* zoom_in y1_lb y1_ub y2_lb y2_ub
+* zoom_out y1_lb y1_ub y2_lb y2_ub
+* get_solution output_file y1 y2  (the point y=(y1,y2) belonging to a segment, the solver create a file output_file with a solution vector x and its image f(x) which dominates y)
+
+For plotting the non-dominated vectors returned by the solver
+
+     python3 plugins/optim-mop/main/plot3.py
+
 
 
 ## Format of the instances (Minibex):
 
-Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html), 
+Instances can be written in the [Minibex language](http://www.ibex-lib.org/doc/minibex.html),
 considering that the objectives *must correspond* to the first two constraints with the following syntax:
 ```
 Constraints
@@ -146,9 +138,8 @@ Constraints
 <expression of the second objective function> = z2;
 // other constraints...
 ```
-You can see some examples in [benchs](https://github.com/INFPUCV/ibex-lib/tree/master/plugins/optim-mop/benchs).
+You can see the set of instances in [plugins/optim-mop/benchs](https://github.com/INFPUCV/ibex-lib/tree/master-mop/plugins/optim-mop/benchs).
+
 
 ## Authors:
  - Ignacio Araya - <ignacio.araya@pucv.cl>
- - Damir Aliquintui - <damir.aliquintui.p@mail.ucv.cl>
- - Jose Campusano - <jose.campusano.c@mail.ucv.cl>

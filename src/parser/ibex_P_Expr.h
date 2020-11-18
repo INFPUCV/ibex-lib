@@ -72,7 +72,8 @@ public:
 		SQR, SQRT, EXP, LOG,
 		COS,  SIN,  TAN,  ACOS,  ASIN,  ATAN,
 		COSH, SINH, TANH, ACOSH, ASINH, ATANH,
-		INF, MID, SUP  // deprecated??
+		INF, MID, SUP,  // deprecated??
+		DIFF, UNARY_OP, BINARY_OP
 	} operation;
 
 	P_ExprNode(operation op) : op(op), lab(NULL), line(ibex_lineno) { }
@@ -104,9 +105,16 @@ public:
 
 	int _2int() const;
 
-	double _2dbl() const;
+	/*
+	 * Convert the expression to a double and, if necessary,
+	 * either round it downward (round_downward=true)
+	 * or upward (round_downard=false).
+	 */
+	double _2dbl(bool round_downward) const;
 
 	Domain _2domain() const;
+
+	Interval _2itv() const;
 
 	operation op;
 	Array<const P_ExprNode> arg;
@@ -261,6 +269,34 @@ public:
 	const Function& f;
 };
 
+/**
+ * \brief Unary generic operator.
+ */
+class P_ExprGenericUnaryOp : public P_ExprNode {
+public:
+	P_ExprGenericUnaryOp(const char* name, const P_ExprNode& expr);
+
+	~P_ExprGenericUnaryOp();
+
+	virtual void acceptVisitor(P_ExprVisitor& v) const { v.visit(*this); }
+
+	const char* name;
+};
+
+/**
+ * \brief Binary generic operator.
+ */
+class P_ExprGenericBinaryOp : public P_ExprNode {
+public:
+	P_ExprGenericBinaryOp(const char* name, const P_ExprNode& left, const P_ExprNode& right);
+
+	~P_ExprGenericBinaryOp();
+
+	virtual void acceptVisitor(P_ExprVisitor& v) const { v.visit(*this); }
+
+	const char* name;
+};
+
 std::ostream& operator<<(std::ostream& os, const P_ExprNode&);
 
 const P_ExprNode* apply(Function& f, const Array<const P_ExprNode>& args);
@@ -295,7 +331,7 @@ inline const P_ExprNode* col_vec(const std::vector<const P_ExprNode*>* args) {
 	return new P_ExprNode(P_ExprNode::COL_VEC,*args);
 }
 
-inline const P_ExprNode* infinity() {
+inline const P_ExprNode* dbl_infinity() {
 	return new P_ExprNode(P_ExprNode::INFTY);
 }
 
@@ -426,6 +462,11 @@ inline const P_ExprNode* mid(const P_ExprNode* exp) {
 inline const P_ExprNode* sup(const P_ExprNode* exp) {
 	return new P_ExprNode(P_ExprNode::SUP,*exp);
 }
+
+inline const P_ExprNode* diff(const std::vector<const P_ExprNode*>* args) {
+	return new P_ExprNode(P_ExprNode::DIFF,*args);
+}
+
 
 } // end namespace parser
 

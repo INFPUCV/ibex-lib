@@ -58,9 +58,9 @@ public:
 	~CellDoubleHeap();
 
 	/**
-	 * \brief Add backtrackable data required by this buffer.
+	 * \brief Add properties required by this buffer.
 	 */
-	virtual void add_backtrackable(Cell& root);
+	virtual void add_property(const IntervalVector& init_box, BoxProperties& map);
 
 	/**
 	 * \brief Flush the buffer.
@@ -123,8 +123,8 @@ protected:
 /*================================== inline implementations ========================================*/
 
 inline CellDoubleHeap::CellDoubleHeap(const ExtendedSystem& sys, int crit2_pr, CellCostFunc::criterion crit2) :
-		DoubleHeap<Cell>(*new CellCostVarLB(sys.goal_var()), false,
-				*CellCostFunc::get_cost(crit2, sys.goal_var()), true /* TODO: give right value */, crit2_pr),
+		DoubleHeap<Cell>(*new CellCostVarLB(sys, sys.goal_var()), false,
+				*CellCostFunc::get_cost(sys, crit2, sys.goal_var()), true /* TODO: give right value */, crit2_pr),
 		sys(sys) {
 }
 
@@ -151,9 +151,9 @@ inline CellCostFunc& CellDoubleHeap::cost1()      { return (CellCostFunc&) heap1
 
 inline CellCostFunc& CellDoubleHeap::cost2()      { return (CellCostFunc&) heap2->costf; }
 
-inline void CellDoubleHeap::add_backtrackable(Cell& root) {
+inline void CellDoubleHeap::add_property(const IntervalVector& init_box, BoxProperties& map) {
       // add data "pu" and "pf" (if required)
-       cost2().add_backtrackable(root);
+       cost2().add_property(map);
 }
 
 inline void CellDoubleHeap::flush()               { DoubleHeap<Cell>::flush(); }
@@ -164,7 +164,7 @@ inline bool CellDoubleHeap::empty() const         { return DoubleHeap<Cell>::emp
 
 inline void CellDoubleHeap::push(Cell* cell) {
        // we know cost1() does not require OptimData
-       cost2().set_optim_data(*cell,sys);
+       cost2().set_optim_data(*cell);
 
        // the cell is put into the 2 heaps
        DoubleHeap<Cell>::push(cell);
@@ -172,18 +172,21 @@ inline void CellDoubleHeap::push(Cell* cell) {
 
 }
 
-
 inline Cell* CellDoubleHeap::pop()                { return DoubleHeap<Cell>::pop(); }
 inline Cell* CellDoubleHeap::top() const          { return DoubleHeap<Cell>::top(); }
 
 inline double CellDoubleHeap::minimum() const     { return DoubleHeap<Cell>::minimum(); }
 
- inline std::ostream& CellDoubleHeap::print(std::ostream& os) const
- {    os << "==============================================================================\n";
-      os << " first heap " << " size " << heap1->size() << " top " << heap1->top()->box << std::endl;
-      os << " second heap " << " size " << heap2->size() << " top " << heap2->top()->box ;
-     return  os << std::endl;
- }
+inline std::ostream& CellDoubleHeap::print(std::ostream& os) const {
+	os << "==============================================================================\n";
+	if (empty()) {
+		return os << " EMPTY heap" << std::endl;
+	} else {
+		os << " first heap " << " size " << heap1->size() << " top " << heap1->top()->box << std::endl;
+		os << " second heap " << " size " << heap2->size() << " top " << heap2->top()->box ;
+		return  os << std::endl;
+	}
+}
 
 
 } // namespace ibex

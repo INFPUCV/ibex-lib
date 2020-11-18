@@ -78,6 +78,11 @@ public:
 		return false;
 	}
 
+	virtual void clear() {
+		lp_solver.clean_ctrs();
+		phase=0;
+	}
+
 	/**
 	 * \brief Delete this.
 	 */
@@ -95,6 +100,7 @@ public:
 	double static _weight2;
 
 	double eps;
+	int get_phase() const { return phase; } 
 
 protected:
 
@@ -127,6 +133,7 @@ protected:
 
 	/** linear solver */
 	LPSolver lp_solver;
+
 
 private:
 

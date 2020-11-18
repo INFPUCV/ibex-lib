@@ -43,12 +43,11 @@ doc/_build
 *~
 
 # files in examples
+**/examples/*
 !**/examples/*cpp
 !**/examples/makefile
 
-optimizer-mop
-ibexmop
-output.txt
 
-.ftpconfig
-.ftpignore
+.vscode/c_cpp_properties.json
+
+.vscode/

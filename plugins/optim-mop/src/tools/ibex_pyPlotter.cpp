@@ -7,76 +7,73 @@
 
 #include "ibex_pyPlotter.h"
 #include "ibex_OptimizerMOP.h"
+
 #include <iostream>
+
+#ifndef cdata
+#define cdata ((BxpMOPData*) c->prop[BxpMOPData::id])
+#endif
+
+
+#include "ibex_OptimizerMOP.h"
 
 namespace ibex {
 
-int py_Plotter::n=0;
 
-void py_Plotter::plot_add_ub(pair<double, double> eval){
-	std::cout << "add ub: {\"pts\": (" << eval.first << "," << eval.second << ")}" << endl;
-}
-
-void py_Plotter::plot_del_ub(pair<double, double> eval){
-	std::cout << "del ub: {\"pts\": (" << eval.first << "," << eval.second << ")}" << endl;
-}
-
-void py_Plotter::plot_add_lb(Cell* c){
-	std::cout << "add lb: {\"id\":" << c->get<CellMOP>().id;
-	std::cout << ", 'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << ")";
-	std::cout << "}" << endl;
-
-}
-
-void py_Plotter::plot_add_box(Cell* c){
-	std::cout << "add: {\"id\":" << c->get<CellMOP>().id;
-	std::cout << ", 'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
-	std::cout << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam();
-	std::cout << ", 'pA':(" << c->box[n].lb() <<"," <<  (((c)->get<CellMOP>().w_lb-c->box[n].lb())/(c)->get<CellMOP>().a)   << "),";
-	std::cout << "'pB':(" << (c->get<CellMOP>().w_lb-c->get<CellMOP>().a*c->box[n+1].lb()) <<"," <<  c->box[n+1].lb()  << ")";
-	std::cout << "}" << endl;
-}
-
-void py_Plotter::plot_del_box(Cell* c){
-	std::cout << "del: {\"id\":" << c->get<CellMOP>().id;
-	std::cout << "}" << endl;
-}
-void py_Plotter::offline_plot(Cell* c, map< pair <double, double>, IntervalVector >& NDS){
+void py_Plotter::offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
+ map< Vector, NDS_data, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus){
 	ofstream output;
-	output.open("output.txt");
-	//set<  Cell* > :: iterator cell=buffer_cells.begin();
-/*
-	output << "(";
-	if(c){
-		output << "{'pts':(" << c->box[n].lb() << "," <<  c->box[n+1].lb() << "),";
-		output << "'diam_x': " <<  c->box[n].diam() << ",'diam_y': " << c->box[n+1].diam()<< ",";
-		output << "'pA':(" << c->box[n].lb() <<"," <<  (((c)->get<CellMOP>().w_lb-c->box[n].lb())/(c)->get<CellMOP>().a)   << "),";
-		output << "'pB':(" << (c->get<CellMOP>().w_lb-c->get<CellMOP>().a*c->box[n+1].lb()) <<"," <<  c->box[n+1].lb()  << ")";
-		output << "},";
-  }
-
-	for(;cell!=buffer_cells.end();cell++){
-		//if(distance2(*cell) < 0){continue;}
-
-		output << "{'pts':(" << (*cell)->box[n].lb() << "," <<  (*cell)->box[n+1].lb() << "),";
-		output << "'diam_x': " <<  (*cell)->box[n].diam() << ",'diam_y': " <<  (*cell)->box[n+1].diam() << ",";
-		output << "'pA':(" << (*cell)->box[n].lb() <<"," <<  (((*cell)->get<CellMOP>().w_lb-(*cell)->box[n].lb())/(*cell)->get<CellMOP>().a)   << "),";
-		output << "'pB':(" << ((*cell)->get<CellMOP>().w_lb-(*cell)->get<CellMOP>().a*(*cell)->box[n+1].lb()) <<"," <<  (*cell)->box[n+1].lb()  << ")";
-		output << "},";
-	}
-	output << ")" << endl;
-*/
+	output.open(output_file);
 
 	output << "[";
 
-	map< pair <double, double>, IntervalVector > :: iterator ub=NDS.begin();
+	map< Vector, NDS_data > :: iterator ub=NDS.begin();
 	for(;ub!=NDS.end();ub++){
-		output << "(" << ub->first.first << "," << ub->first.second << "),";
+		if(!focus || (*focus).contains(ub->first)){
+			output << "(" << ub->first[0] << "," << ub->first[1] << "),";
+
+      
+      //output  << "(" << ub->first[0] << " ; " << ub->first[1] << ")_" <<
+        //        ((ub->second.n==1)? ub->second.x1:0.0) << ",";
+    }
 	}
-output << "]" << endl;
+
+  output << "]" << endl;
+
+  if(NDS2){
+		output << "[";
+		ub=NDS2->begin();
+		for(;ub!=NDS2->end();ub++){
+			if(!focus || (*focus).contains(ub->first))
+				output << "(" << ub->first[0] << "," << ub->first[1] << "),";
+		}
+
+	  output << "]" << endl;
+  }else
+		output << "[]" << endl;
 
 	output.close();
-	// system("python3 plot.py");
+
+}
+
+
+void py_Plotter::offline_plot(list<vector<double> > &upperList, 
+list<vector<double> > &lowerList, const char* output_file){
+  ofstream output;
+  output.open(output_file);
+
+  output << "[";
+  for(vector<double> v : upperList)
+	output << "(" << v[0] << "," << v[1] << "),";
+  output << "]" << endl;
+
+   output << "[";
+  for(vector<double> v : lowerList)
+	output << "(" << v[0] << "," << v[1] << "),";
+  output << "]" << endl;
+
+  output.close();
+
 }
 
 

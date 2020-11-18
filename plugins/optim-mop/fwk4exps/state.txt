@@ -1,7 +1,0 @@
-algos:cy cy-full eps-ctc ndist 
-gains (average relative times):1.000000 1.071877 1.500869 1.835658 
-gains (total time)            :1.000000 1.060748 3.100704 4.157288 
-compared instances: 20  20  20  20 
-runs    : 20  20  20  20 
-L:  0   1   0   1 
-W:  0   4  11  16 

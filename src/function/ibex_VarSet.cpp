@@ -116,7 +116,7 @@ VarSet& VarSet::operator=(const VarSet& v) {
 
 void VarSet::init_bitset(const Function& f, const Array<const ExprNode>& x, bool var) {
 	assert(x.size()>0);
-	assert(f.nb_var()>x.size());
+	assert(f.nb_var()>=x.size());
 	BitSet& is_var = ((BitSet&) this->is_var);
 
 	if (var) {
@@ -129,7 +129,7 @@ void VarSet::init_bitset(const Function& f, const Array<const ExprNode>& x, bool
 	}
 
 	for (int i=0; i<x.size(); i++) {
-		int shift=0; // by default (if x[i] is a symbol)
+		//int shift=0; // by default (if x[i] is a symbol)
 
 		const ExprSymbol* symbol = dynamic_cast<const ExprSymbol*>(&x[i]);
 		bool** mask;

@@ -102,7 +102,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 	if(dynamic_nb_sol && phase==0) nb_sol=2;
 
 	//phase 0 or 1: call to simplex
-    if(phase < nb_sol && phase<=1 && (lp_solver.default_limit_diam_box.contains(box.max_diam()))){
+    if(phase < nb_sol && phase<=1 && lp_solver.default_max_bound > box.max_diam() ){
 
 
 		lp_solver.clean_ctrs();
@@ -110,10 +110,13 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 
 		IntervalVector box2(box);
 		box2.resize(n+2);
-		box2[n]=0.0; box2[n+1]=0.0;
-		IntervalVector ig= (phase==0 && (nb_sol>1 || rand()%2==0))?
+		box2[n]=0.0; box2[n+1]=0.0; 
+		IntervalVector ig= (phase==0)?
 				(goal1.gradient(box2.mid())+ _weight2*goal2.gradient(box2.mid())) :
 				(goal2.gradient(box2.mid())+ _weight2*goal1.gradient(box2.mid()));
+
+    if(nb_sol==1)
+       ig = goal1.gradient(box2.mid()) + goal2.gradient(box2.mid()) ;
 
 		if (ig.is_empty()){ // unfortunately, at the midpoint the function is not differentiable
 			phase = 0;
@@ -142,8 +145,8 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 
 		if (stat == LPSolver::OPTIMAL) {
 			//the linear solution is mapped to intervals
-			Vector loup_point(n);
-			lp_solver.get_primal_sol(loup_point);
+			Vector loup_point(lp_solver.get_primal_sol());
+
 
 			if(dynamic_nb_sol){
 				if(phase==0){
@@ -162,6 +165,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 			//std::cout << " simplex result " << loup_point << std::endl;
 
 			//std::cout << box << endl;
+			
 
 			//correct the point
 			for(int i=0;i<box.size();i++){
