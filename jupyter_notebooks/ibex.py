@@ -21,11 +21,13 @@ def search_efficient(instance, boxy, mode="efficient", prec=1e-5):
     stdin, stdout, stderr = ssh.exec_command(home+"/__build__/plugins/optim-mop/search_efficient "+ home + \
                 "/plugins/optim-mop/benchs/" + instance + " --eps=" + str(prec) + \
                 " --box=\"" + " ".join(boxy_str) +"\" --se_mode=" + mode)
-    values_str = stdout.readlines()[0].split()
+    lines = stdout.readlines()
+    values_str = lines[0].split()
     values = [float(v) for v in values_str]
     y = np.array(values[0:2])
     x = np.array(values[2:len(values)])
-    return x, y
+    time = float(lines[1].strip())
+    return x, y, time
 
 #llama al solver para encontrar frontera de pareto
 def solve(instance, prec=1e-1):
@@ -61,6 +63,8 @@ def get_instances():
     for line in stdout.readlines():
         print(line.strip())
         
+
+## MOP-SERVER ###
 def init_mopserver(instance, port=8000):
     transport = ssh.get_transport()
     channel = transport.open_session()
