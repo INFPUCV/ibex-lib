@@ -79,19 +79,31 @@ def get_instances():
 
 ## MOP-SERVER ###
 def init_mopserver(instance, port=8000):
+    cmd = "killall ibexmop-server; "+home+"/__build__/plugins/optim-mop/ibexmop-server "+home+"/plugins/optim-mop/benchs/"+instance+ \
+                     " --cy-contract-full --port="+str(port)+" --server_mode --ub=ub1"
+    print(cmd)
     transport = ssh.get_transport()
     channel = transport.open_session()
-    channel.exec_command("killall ibexmop-server; "+home+"/__build__/plugins/optim-mop/ibexmop-server "+home+"/plugins/optim-mop/benchs/"+instance+
-                     " --cy-contract-full --port="+str(port)+" --server_mode --ub=ub1")
+    channel.exec_command(cmd)
     return channel
 
 def close_mopserver(port=8000):
     stdin, stdout, stderr = ssh.exec_command("echo fns | netcat localhost "+str(port))
     print(stdout.readlines())
+
+def print_lines(stdout):
+    for line in stdout.readlines():
+        print(line)
     
 def run(iters, prec=1e-2, port=8000):
     print("echo run "+str(iters)+" "+str(prec)+" | netcat localhost "+str(port))
     stdin, stdout, stderr = ssh.exec_command("echo run "+str(iters)+" "+str(prec)+" | netcat localhost "+str(port))
+    print_lines(stdout)
+    
+    
+def update_refpoint(y1, y2, prec=1e-8, port=8000):
+    stdin, stdout, stderr = ssh.exec_command("echo zoo "+str(y1)+ " "+str(y2)+" "+ str(prec) +" | netcat localhost "+str(port))
+    print_lines(stdout)
     
 def get_envelope(prec=1e-8, port=8000, l1=-1e8, l2=1e8, u1=-1e8, u2=1e8):
     u1 = []; u2 = []
@@ -111,3 +123,23 @@ def get_envelope(prec=1e-8, port=8000, l1=-1e8, l2=1e8, u1=-1e8, u2=1e8):
             l2.append(float(ll2))
     
     return np.array(l1),np.array(l2), np.array(u1),np.array(u2) 
+
+import matplotlib.patches as patches
+
+def get_boxes(port=8000):
+    stdin, stdout, stderr = ssh.exec_command("echo get_boxes | netcat localhost "+str(port))
+    boxes = []
+    for line in stdout.readlines() :
+        r = [float(x) for x in line.split(' ')]
+        r = np.array(r)
+        boxes.append(r)
+        
+    return np.array(boxes)
+
+def add_boxes(boxes, plt):
+    # Create figure and axes
+    fig,ax = plt.subplots(1)
+    for r in boxes:
+        rect = patches.Rectangle( ( r[0], r[2]) ,(r[1]-r[0]),(r[3]-r[2]), linewidth=1,edgecolor='r', facecolor=None, alpha=0.1) # ,facecolor='r', alpha=0.1)
+        # Add the patch to the Axes
+        ax.add_patch(rect)
