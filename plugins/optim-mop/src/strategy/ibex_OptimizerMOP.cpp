@@ -151,7 +151,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 		ndsH.addPoint(v, NDS_data(xa.mid()));
 		return true;
 	}
-
+	
 	//Y_SEGMENTS
 	if(nds_mode==Y_SEGMENTS){
 		cout << xa.mid() << ", " << xb.mid() << endl;
