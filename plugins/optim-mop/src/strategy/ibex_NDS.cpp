@@ -326,6 +326,10 @@ namespace ibex {
 	  }
 	  
 	  if(upper){
+		for (auto v : NDS2){
+			envelope.push_back({v.first[0], v.first[1]});
+		}
+		/*
 		double prev0 = prev->first[0] , prevx = prev0;
 		double prev1 = prev->first[1];
 
@@ -346,9 +350,12 @@ namespace ibex {
 
 		vector<double> aux_vector {prevx, prev1};	
 		envelope.push_back(aux_vector);
-
+		*/
 	  }else{
-		double prev0 = prev->first[0] , nextx = prev0;
+		for (auto v : NDS2){
+			envelope.push_back({v.first[0], v.first[1]});
+		}
+		/*double prev0 = prev->first[0] , nextx = prev0;
 		double prev1 = prev->first[1];
 		bool first;
 		map< Vector, NDS_data, sorty2 >::iterator v;
@@ -367,7 +374,7 @@ namespace ibex {
 				nextx = v->first[0];
 				first =false;
 			}
-		}
+		}*/
 	  } 
     }
 

@@ -90,7 +90,7 @@ public:
 	 */
 	typedef enum {SUCCESS, INFEASIBLE, NO_FEASIBLE_FOUND, UNBOUNDED_OBJ, TIME_OUT, UNREACHED_PREC} Status;
 
-	typedef enum {POINTS, SEGMENTS, HAMBURGER, /* splitting strategies */ MIDPOINT, MAXDIST, ALL} Mode;
+	typedef enum {POINTS, SEGMENTS, Y_SEGMENTS, HAMBURGER, /* splitting strategies */ MIDPOINT, MAXDIST, ALL} Mode;
 
 
 	/**
@@ -299,6 +299,11 @@ public:
 	 */
 	static Interval eval_goal(const Function& goal, const IntervalVector& x, int n);
 
+	static inline Interval eval_fl(pair<Vector, double> fl, const IntervalVector& x){
+		return fl.first*x - fl.second;
+
+	}
+
 	/**
 	 * \brief Gradient of the goal in the point x
 	 */
@@ -307,6 +312,8 @@ public:
 	/*double distance(const Cell* c){
 		return NDS_seg::distance(c);
 	}*/
+
+	static pair<Vector, double> linearize_goal(const IntervalVector& box, IntervalVector& corner, const IntervalVector& dg_box, const Interval& g_corner, int n);
 
 	// Hamburger
 	NDS_seg ndsH;

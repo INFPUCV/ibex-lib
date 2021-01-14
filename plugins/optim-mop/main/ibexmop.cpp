@@ -185,7 +185,7 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::_plot = _plot;
 
-	int nb_ub_sols = 10 ;
+	int nb_ub_sols = 100 ;
 	OptimizerMOP::_min_ub_dist = 0.1;
 	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;

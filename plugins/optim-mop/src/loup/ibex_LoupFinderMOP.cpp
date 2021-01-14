@@ -21,7 +21,7 @@ LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Fun
 		goal1(goal1), goal2(goal2), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var),
 		y11(0.0), y12(0.0), y21(0.0), y22(0.0), dynamic_nb_sol(false), max_nb_sol(nb_sol) {
 
-	dynamic_nb_sol=true;
+	//dynamic_nb_sol=true;
 
 
 	if (sys.nb_ctr>0)
@@ -115,8 +115,8 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 				(goal1.gradient(box2.mid())+ _weight2*goal2.gradient(box2.mid())) :
 				(goal2.gradient(box2.mid())+ _weight2*goal1.gradient(box2.mid()));
 
-    if(nb_sol==1)
-       ig = goal1.gradient(box2.mid()) + goal2.gradient(box2.mid()) ;
+    	if(nb_sol==1)
+       		ig = goal1.gradient(box2.mid()) + goal2.gradient(box2.mid()) ;
 
 		if (ig.is_empty()){ // unfortunately, at the midpoint the function is not differentiable
 			phase = 0;
@@ -134,12 +134,14 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 			lp_solver.set_obj_var(j,g[j]);
 
 		int count = lr.linearize(box,lp_solver);
+		
 
 		if (count==-1) {
 			lp_solver.clean_ctrs();
 			phase = 0;
 			throw NotFound();
 		}
+		lp_solver.set_epsilon (1e-6);
 
 		LPSolver::Status_Sol stat = lp_solver.solve();
 
@@ -160,7 +162,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 				}
 			}
 
-
+			cout << "restr:" << lp_solver.get_rows()*loup_point  - lp_solver.get_lhs_rhs() << endl ;
 
 			//std::cout << " simplex result " << loup_point << std::endl;
 
@@ -169,7 +171,15 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 
 			//correct the point
 			for(int i=0;i<box.size();i++){
-				if(loup_point[i] < box[i].lb())  loup_point[i] = box[i].lb();
+
+				if(loup_point[i] < box[i].lb() || loup_point[i] > box[i].ub()){
+					cout << loup_point << endl;
+					phase=0;
+					throw NotFound();
+				}
+
+				
+				if(loup_point[i] < box[i].lb()) loup_point[i] = box[i].lb();
 				if(loup_point[i] > box[i].ub())  loup_point[i] = box[i].ub();
 			}
 

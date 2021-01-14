@@ -35,11 +35,6 @@ public:
 	virtual IntervalVector load(const IntervalVector& init_box);
 
   /**
-	 * \brief Load the nodes in the search tree and returns the image hull y
-	 */
-  virtual IntervalVector load(const IntervalVector& init_box, string filename);
-
-  /**
   * \brief perform maxiter iterations and returns SUCCESS (if the search is )
   */
 
@@ -51,15 +46,9 @@ public:
    */ 
   typedef enum {NONE, REACHED_PRECISION, PAUSED, FINISHED} IStatus;
 
-  /*Funciones para interactuar con la api */
+  IStatus run(int maxiter=5, double eps=1e-1);
 
-  void save_state_in_file(string filename);
-
-  void load_state_from_file(string filename, const IntervalVector& init_box);
-
-	IStatus run(int maxiter=5, double eps=1e-1);
-
-  void update_refpoint(Vector& refpoint, double eps);
+  void update_refpoint(Vector refpoint, double eps);
 
 	void plot();
 

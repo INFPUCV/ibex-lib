@@ -78,7 +78,29 @@ IntervalVector OptimizerMOP::deriv_goal(const Function& goal, const IntervalVect
 	return g;
 }
 
+pair<Vector, double> OptimizerMOP::linearize_goal(const IntervalVector& box, IntervalVector& corner, const IntervalVector& dg_box, const Interval& g_corner, int n) {
+	Vector a(n); // vector of coefficients
 
+	if (dg_box.max_diam() > LPSolver::max_box_diam) {
+		// we also also avoid this way to deal with infinite bounds (see below)
+		throw LPException();
+	}
+
+	// ========= compute matrix of coefficients ===========
+	// Fix each coefficient to the lower/upper bound of the
+	// constraint gradient, depending on the position of the
+	// corresponding component of the corner and the
+	// linearization mode.
+	for (int j=0; j<n; j++) 
+		a[j]=dg_box[j].ub();
+	
+	// =====================================================
+
+	Interval rhs = -g_corner + a*corner;
+
+	double b = rhs.lb() - 1e-6 ;
+	return make_pair(a,b);
+}
 
 bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 
@@ -98,14 +120,20 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 	}
 
 	if(nds_mode==POINTS) {
+		int k=0;
 		try{
+			
 			while(true){
 				xa = finder.find(box2,box2,POS_INFINITY).first;
 				Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
 				ndsH.addPoint(v, NDS_data(xa.mid()));
+				k++;
 			}
+			
 		}catch (LoupFinder::NotFound& ) {
+			cout << k << endl;
 			return true;
+			
 		}
 	}
 
@@ -124,7 +152,64 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 		return true;
 	}
 
-	hamburger(xa, xb);
+	//Y_SEGMENTS
+	if(nds_mode==Y_SEGMENTS){
+		cout << xa.mid() << ", " << xb.mid() << endl;
+		IntervalVector box1(xa);
+		box1 |= xb;
+
+		IntervalVector box2(box1);
+		box2.resize(n+2);
+		box2[n]=0.0; box2[n+1]=0.0; 
+
+		IntervalVector corner = box1.lb();
+		Interval g_corner1 = eval_goal(goal1,corner,n);
+		Interval g_corner2 = eval_goal(goal2,corner,n);
+		IntervalVector J1 = goal1.gradient(box2);
+		IntervalVector J2 = goal2.gradient(box2);
+		J1.resize(n); J2.resize(n);
+
+		pair <Vector, int> fl1 = linearize_goal(box1,corner,J1,g_corner1, n);
+		pair <Vector, int> fl2 = linearize_goal(box1,corner,J2,g_corner2, n);
+		
+		//cout << J1.max_diam() << endl;
+		//cout << "fl_1(xa):" << eval_fl(fl1, xa) << endl;
+		//cout << "f_1(xa):" << eval_goal(goal1,xa,n) << endl;
+		//cout << goal1 << endl;
+
+		//cout << fl1.first << " b: " << fl1.second << endl;
+		IntervalVector ev(2);
+		IntervalVector ev2(2);
+
+		ev[0] = eval_fl(fl1, xa); ev[1]= eval_fl(fl2, xa);
+		ev2[0] = eval_fl(fl1, xb); ev2[1]= eval_fl(fl2, xb);
+
+		ndsH.addPoint( ev, NDS_data(xa.mid()));
+		if(ev[0].ub() != ev2[0].ub() || ev[1].ub() != ev2[1].ub()){
+			ndsH.addPoint( ev2, NDS_data(xb.mid()));
+			
+			if(ev[0].ub() <= ev2[0].ub() && ev[1].ub() >= ev2[1].ub())	{
+				ndsH.addSegment(make_pair(ev.ub(),ev2.ub()));
+			}else if(ev2[0].ub() <= ev[0].ub() && ev2[1].ub() >= ev[1].ub()){
+				ndsH.addSegment(make_pair(ev2.ub(),ev.ub()));
+				}
+		}
+
+		/*
+		IntervalVector xa_c(xa), xb_c(xb);
+		if(finder.ub_correction(xa.mid(),xa_c) && finder.ub_correction(xb.mid(),xb_c)){
+			xa=xa_c; xb=xb_c;
+			for(double k=0.0;k<1.0;k+=0.02){
+				IntervalVector xm=k*xa.mid()+(1-k)*xb.mid();
+				ev[0]=eval_goal(goal1,xm,n); ev[1]=eval_goal(goal2,xm,n);
+				//ev[0] = eval_fl(fl1, xm); ev[1]= eval_fl(fl2, xm);
+				ndsH.addPoint( ev, NDS_data(xb.mid()));
+			}
+		}*/
+	}
+
+
+	if(nds_mode==SEGMENTS)hamburger(xa, xb);
 
 	return true;
 

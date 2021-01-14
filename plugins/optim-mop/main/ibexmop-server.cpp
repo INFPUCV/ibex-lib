@@ -183,11 +183,12 @@ int main(int argc, char** argv){
 	double rh=(_rh)? _rh.Get():0.1;
 	bool _segments=(_upperbounding && _upperbounding.Get()=="ub1");
 	bool _hamburger=(_upperbounding && _upperbounding.Get()=="ub2");
+	bool _ysegments=(_upperbounding && _upperbounding.Get()=="ub3");
 
 	OptimizerMOP::_plot = _plot;
 
-	int nb_ub_sols = 10 ;
-	OptimizerMOP::_min_ub_dist = 0.1;
+	int nb_ub_sols = (_segments || _hamburger || _ysegments)? 2:10 ;
+	OptimizerMOP::_min_ub_dist = 1e-7;
 	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
 	OptimizerMOP::_eps_contract = _eps_contract;
@@ -363,7 +364,8 @@ int main(int argc, char** argv){
 	OptimizerMOP* o;
 	if(!_server_mode){
 		o = new OptimizerMOP(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-					(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+					(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? 
+					OptimizerMOP::SEGMENTS:(_ysegments)?OptimizerMOP::Y_SEGMENTS:OptimizerMOP::POINTS,
 					OptimizerMOP::MIDPOINT,	eps, rel_eps);
 		if(strategy=="NDSdist")
 			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
@@ -378,12 +380,13 @@ int main(int argc, char** argv){
 	}else{
 		OptimizerMOP_I* o;
 		o = new OptimizerMOP_I(sys.nb_var,ext_sys.ctrs[0].f,ext_sys.ctrs[1].f, *ctcxn,*bs,*buffer,finder,
-							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? OptimizerMOP::SEGMENTS:OptimizerMOP::POINTS,
+							(_hamburger)?  OptimizerMOP::HAMBURGER: (_segments)? 
+							OptimizerMOP::SEGMENTS:(_ysegments)?OptimizerMOP::Y_SEGMENTS:OptimizerMOP::POINTS,
 							OptimizerMOP::MIDPOINT);
 		if(strategy=="NDSdist")
 			dynamic_cast<DistanceSortedCellBufferMOP*>(buffer)->set(o->ndsH);
 
-
+		int n=sys.nb_var;
 		
 
 		//Definicion de variables para el servidor
@@ -475,14 +478,22 @@ int main(int argc, char** argv){
 						newlower = "/" + to_string((*it)[0]) + "," +to_string((*it)[1]); 
 						char response [newlower.size()];
 						strcpy(response, newlower.c_str());
+						cout << response << endl;
 						send(new_socket , response , strlen(response) , 0 );
 					}
 					char response [1024];
 					strcpy(response, "/fs");
 					send(new_socket, response, strlen(response), 0);
 	
-				}
-				else if( instruction == "gup"){
+				}else if( instruction == "get_boxes"){
+					std::ostringstream response;
+					for (auto c:o->cells)
+						response << c->box[n].lb() << " " << c->box[n].ub() << " " << c->box[n+1].lb() << " " << c->box[n+1].ub() << endl;
+					for (auto c:o->paused_cells)
+						response << c->box[n].lb() << " " << c->box[n].ub() << " " << c->box[n+1].lb() << " " << c->box[n+1].ub() << endl;
+					
+					 send(new_socket , response.str().c_str() , response.str().size() , 0 ); 
+				}else if( instruction == "gup"){
 					list<vector<double>> upperList; 
 					double eps, a, b, c, d;
 					message >> eps;
@@ -511,7 +522,7 @@ int main(int argc, char** argv){
 					string t = mensaje;
 					istringstream iss(t);
 					string word;
-					int x; int y;
+					double x; double y;
 					message >> x;
 					message >> y;
 					message >> eps;
@@ -530,9 +541,6 @@ int main(int argc, char** argv){
 				}
 
 				else if( instruction == "run"){
-					char response [1024];
-
-
 					message >> iters;
 					message >> eps;
 
@@ -544,10 +552,14 @@ int main(int argc, char** argv){
 					float precision = o->current_precision;
 					cout << "precision: " << precision << endl;
 					cout << "status: " << status << endl;
-
-
-					strcpy(response, "Run executed\n");
-					send(new_socket , response , strlen(response) , 0 );
+					
+					std::ostringstream response;
+					if(o->refpoint[0]< POS_INFINITY && o->ndsH.distance(o->refpoint, o->refpoint) < eps)
+						response << "refpoint dominated!";
+					else
+						response << "run executed";
+					
+					 send(new_socket , response.str().c_str() , response.str().size() , 0 ); 
 
 
 				}else if(instruction == "plot"){
