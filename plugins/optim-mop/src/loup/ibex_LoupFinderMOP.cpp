@@ -162,7 +162,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 				}
 			}
 
-			cout << "restr:" << lp_solver.get_rows()*loup_point  - lp_solver.get_lhs_rhs() << endl ;
+			//cout << "restr:" << lp_solver.get_rows()*loup_point  - lp_solver.get_lhs_rhs() << endl ;
 
 			//std::cout << " simplex result " << loup_point << std::endl;
 
@@ -173,7 +173,7 @@ std::pair<IntervalVector, double> LoupFinderMOP::find(const IntervalVector& box,
 			for(int i=0;i<box.size();i++){
 
 				if(loup_point[i] < box[i].lb() || loup_point[i] > box[i].ub()){
-					cout << loup_point << endl;
+					//cout << loup_point << endl;
 					phase=0;
 					throw NotFound();
 				}
