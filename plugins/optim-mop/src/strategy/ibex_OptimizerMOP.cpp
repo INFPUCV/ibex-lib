@@ -154,7 +154,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 	
 	//Y_SEGMENTS
 	if(nds_mode==Y_SEGMENTS){
-		cout << xa.mid() << ", " << xb.mid() << endl;
+		//cout << xa.mid() << ", " << xb.mid() << endl;
 		IntervalVector box1(xa);
 		box1 |= xb;
 
