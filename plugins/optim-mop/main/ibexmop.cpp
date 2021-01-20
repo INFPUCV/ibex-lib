@@ -55,6 +55,8 @@ int main(int argc, char** argv){
 	args::Flag _server_mode(parser, "server", "Server Mode (some options are discativated).",{"server_mode"});
 	args::ValueFlag<std::string> _output_file(parser, "string", "Server Output File ", {"server_out"});
 	args::ValueFlag<std::string> _instructions_file(parser, "string", "Server Instructions File", {"server_in"});
+	args::Flag _print_nds(parser, "flag", "Print the non-dominated set (points).",{"print-nds"});
+	
 
 
 	args::Flag verbose(parser, "verbose", "Verbose output. Shows the dominance-free set of solutions obtained by the solver.",{'v',"verbose"});
@@ -355,6 +357,10 @@ int main(int argc, char** argv){
 	// printing the results
 	o->report(verbose);
 
+	if(_print_nds)
+		o->ndsh2.print_NDS();
+	cout << "end" << endl;
+	
 
 
 /*

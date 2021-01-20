@@ -72,7 +72,6 @@ public:
 };
 
 
-
 /**
  * \brief Global biObjetive Optimizer (ibexMOP).
  *
@@ -334,6 +333,8 @@ public:
 	 */
 	static IntervalVector deriv_goal(const Function& goal, const IntervalVector& x, int n);
 
+	
+
 	/*double distance(const Cell* c){
 		return NDS_seg::distance(c);
 	}*/
@@ -461,6 +462,27 @@ inline double OptimizerMOP::get_time() const { return time; }
 inline double OptimizerMOP::get_nb_cells() const { return nb_cells; }
 
 
+
+class cells_map : public map<Cell*, int>{
+	public:
+		cells_map() : map<Cell*, int>() { }
+
+		virtual pair<iterator,bool> insert(const pair<Cell*, int>& p, int gsize=3){
+			cout << "insert:" << p.second << ":";
+			int n=p.first->box.size()-gsize;
+			for(int i=0; i<gsize; i++)
+				cout << p.first->box[n+i].lb() << " " << p.first->box[n+i].ub() << " ";
+
+			cout << endl;
+			return map<Cell*,int>::insert(p);
+		}
+
+		virtual size_type erase (Cell* c){
+			cout << "erase:" << (*this)[c] << endl;
+			return map<Cell*,int>::erase(c);
+
+		}
+};
 
 
 } // end namespace ibex

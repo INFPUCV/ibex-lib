@@ -109,12 +109,15 @@ public:
 /*Testing functions
  * */
 	void print_NDS(){
+		cout << "NDS:" << endl;
 		for(auto itr = NDS.begin(); itr != NDS.end(); ++itr) {
-			cout<<"y= ";
-			cout<<itr->first;
-			cout<<" x= ";
-			cout<<*itr->second.x1;
-			cout<<"\n";
+			for(int i= 0; i<itr->first.size(); i++ )
+				cout <<itr->first[i] << " ";
+			cout << endl;
+			
+			//cout<<" x= ";
+			//cout<<*itr->second.x1;
+			//cout<<"\n";
 		}
 
 	}

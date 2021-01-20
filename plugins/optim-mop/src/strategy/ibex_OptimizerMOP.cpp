@@ -40,13 +40,12 @@ bool OptimizerMOP::imprimir = true;
 
 
 
-
-
-
-
-
-
-
+void print_sol(Vector& v){
+	cout << "feasible_solution:";
+	for(int i=0; i<v.size(); i++)
+		cout << v[i] << " ";
+	cout << endl;
+}
 
 
 
@@ -115,6 +114,8 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box, double timer) {
 
 		//addPoint ndsh2
 		ndsh2.addPoint(v, NDS_X(mid));
+		print_sol(v);
+		
 
 	}
 
@@ -162,64 +163,9 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box, double timer) {
 				}
 
 			}catch (LoupFinder::NotFound& ) {
+
+				
 				if(points.size() >= 3){
-					//Generate Hyperplane normal lb->ub
-					Vector normal = box2_y.ub()-box2_y.lb();
-					Vector hyperplane_coefficients(goals.size() + 1);
-					double position=0;
-					for(int i=0; i<goals.size();i++){
-						hyperplane_coefficients[i] = normal[i];
-						position = position + normal[i]*-box2_y.lb()[i];
-					}
-					hyperplane_coefficients[goals.size()] = position;
-
-
-					//Generate vertex_points
-					list <Vector> vertex_points;
-					for(auto itr = points.begin(); itr != points.end(); ++itr)
-						finder.add_external_vertex2(*itr,points, vertex_points, box2_y);
-
-
-					//Move hyperplane
-					double maxPosition = NEG_INFINITY;
-					for(auto itr = vertex_points.begin(); itr != vertex_points.end(); ++itr ){
-						position = 0;
-						Vector vertex_point(*itr);
-
-						for(int i=0; i<goals.size();i++){
-							position += hyperplane_coefficients[i] * vertex_point[i];
-						}
-						if(maxPosition < position) maxPosition = position;
-					}
-					hyperplane_coefficients[goals.size()] = -maxPosition;
-
-
-					/*
-					 * Generate box HC4
-					 */
-					IntervalVector box_hyp_hull(box2_y);
-					for(int dim=0; dim< box_hyp_hull.size(); dim++){
-						Interval sum(-hyperplane_coefficients[goals.size()]);
-						//Sumatory of coeficients evaluated inside of interval
-						int itr=dim;
-						bool check = true;
-						while(check){
-							if(itr+1 > hyperplane_coefficients.size()-2 ){
-								itr = 0;
-							}else{
-								itr++;
-							}
-							if(itr == dim) check=false;
-							if(check) {
-								sum += -hyperplane_coefficients[itr]*box2_y[itr];
-							}
-						}
-						sum /= hyperplane_coefficients[dim];
-						sum &= box2_y[dim];
-						box_hyp_hull[dim] = sum;
-					}
-
-
 
 					/*
 					 * Add points to ndsh2
@@ -229,6 +175,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box, double timer) {
 					if(finder.get_nds_simplex() == finder.get_nb_sol()){
 						for(auto itr = points.begin(); itr != points.end(); ++itr){
 							ndsh2.addPoint(itr->second, NDS_X(itr->first));
+							print_sol(itr->second);
 						}
 					}
 
@@ -236,14 +183,9 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box, double timer) {
 					if(finder.get_nds_simplex() != finder.get_nb_sol()){
 						for(auto itr = simplex_vertex.begin(); itr != simplex_vertex.end(); ++itr ){
 							ndsh2.addPoint(itr->second, NDS_X(itr->first));
+							print_sol(itr->second);
 						}
 					}
-
-
-
-
-					//update_upper_envelope(box_hyp_hull, hyperplane_coefficients);
-					update_upper_envelope2(box_hyp_hull, hyperplane_coefficients, points);
 
 
 				}else{
@@ -253,6 +195,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box, double timer) {
 					for(int i=0; i<goals.size(); i++)	v[i] = eval_goal(goals[i], mid, n, goals.size()).ub();
 					if(finder.norm_sys.is_inner(mid)){
 						update_upper_envelope_mid(v);
+						print_sol(v);
 					}
 
 
@@ -505,8 +448,11 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	pre_optimize(init_box, root);
 	Timer timer;
 	timer.start();
-	set<Cell*> cells;
-	cells.insert(root);
+	cells_map cells;
+	int id=0;
+	cells.insert(make_pair(root,id++));
+	//map<Cell*, int> idbox;
+	
 
 	IntervalVector focus(goals.size());
 
@@ -523,7 +469,9 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 		while (!buffer.empty()) {
 
 			if(buffer.empty()) break;
-			Cell *c = buffer.top();//
+			Cell *c = buffer.top(); 
+
+			
 			//if(rel_eps>0.0)	eps=std::max(focus[0].diam(),focus[1].diam())*rel_eps;
 			buffer.pop();
 			cells.erase(c);
@@ -574,10 +522,10 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			delete c; // deletes the cell.
 
 			buffer.push(new_cells.first);
-			cells.insert(new_cells.first);
+			cells.insert(make_pair(new_cells.first,id++));
 
 			buffer.push(new_cells.second);
-			cells.insert(new_cells.second);
+			cells.insert(make_pair(new_cells.second,id++));
 
 			if (timeout>0) timer.check(timeout); // TODO: not reentrant, JN: done
 			time = timer.get_time();
@@ -590,7 +538,15 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 	if(!buffer.empty()){
 		Cell *c = buffer.top();
+		cout << "left_boxes:" << endl;
+		for(auto cc : cells){
+			for(int i=0; i<goals.size(); i++)
+				cout << cc.first->box[n+i].lb() << " " << cc.first->box[n+i].ub() << " ";
+			cout << endl;
+		}
+		cout << "end" << endl;
 	}
+
 
 
 	timer.stop();
