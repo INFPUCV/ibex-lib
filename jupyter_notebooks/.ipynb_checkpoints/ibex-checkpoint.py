@@ -16,6 +16,7 @@ def connect(host):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(host, port, username, password)
+    return ssh
 
 
 def search_efficient(instance, box_y, mode="efficient", prec=1e-5, box_x=None):
@@ -78,9 +79,9 @@ def get_instances():
         
 
 ## MOP-SERVER ###
-def init_mopserver(instance, port=8000):
+def init_mopserver(instance, ub='no', port=8000):
     cmd = "killall ibexmop-server; "+home+"/__build__/plugins/optim-mop/ibexmop-server "+home+"/plugins/optim-mop/benchs/"+instance+ \
-                     " --cy-contract-full --port="+str(port)+" --server_mode --ub=ub1"
+                     " --port="+str(port)+" --server_mode --ub="+ub+" --cy-contract-full"
     print(cmd)
     transport = ssh.get_transport()
     channel = transport.open_session()
