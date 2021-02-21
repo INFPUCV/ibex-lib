@@ -156,6 +156,7 @@ int main(int argc, char** argv){
 	}
 
 	RNG::srand(0);
+	srand(0);
 
 	cout << "Instance: " << argv[1] << endl;
 	cout << "Filtering: " << filtering << endl;
