@@ -40,7 +40,6 @@ Example of using ub2 for finding an upper envelope for the blue feasible curve i
 ## Download
 ````
 git clone https://github.com/INFPUCV/ibex-lib.git
-git checkout -t origin/ibexmop-plugin
 ````
 
 ## Installation
@@ -107,25 +106,11 @@ git checkout -t origin/ibexmop-plugin
 
 ## Run an example:
 
-     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt  --cy-contract-full --eps-contract --ub=ub2 --eps=0.0001
-
-## Run an example (server mode):
-
-    ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/tan.txt --cy-contract-full --eps_r=0.01 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
-    
-    ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/osy.txt --cy-contract-full --eps_r=0.001 --ub=ub2 --server_mode --server_in=intructions.txt --server_out=output2.txt
-
-The output file (server_out) contains two lists of points (segments) representing an upper and lower envelope for the optimal solutions.
-
-The input file (server_in) allows us to give instructions to the solver. For the moment two commands:
-* zoom_in y1_lb y1_ub y2_lb y2_ub
-* zoom_out y1_lb y1_ub y2_lb y2_ub
-* get_solution output_file y1 y2  (the point y=(y1,y2) belonging to a segment, the solver create a file output_file with a solution vector x and its image f(x) which dominates y)
+     ./__build__/plugins/optim-mop/ibexmop plugins/optim-mop/benchs/binh.txt  --cy-contract-full --eps-contract --ub=ub1 --eps=0.1
 
 For plotting the non-dominated vectors returned by the solver
 
      python3 plugins/optim-mop/main/plot3.py
-
 
 
 ## Format of the instances (Minibex):
@@ -143,3 +128,5 @@ You can see the set of instances in [plugins/optim-mop/benchs](https://github.co
 
 ## Authors:
  - Ignacio Araya - <ignacio.araya@pucv.cl>
+ - Damir Aliquintui
+ - Matías Campusano
