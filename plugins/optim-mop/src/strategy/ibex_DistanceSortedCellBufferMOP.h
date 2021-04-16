@@ -11,7 +11,7 @@
 
 
 #include "ibex_CellSet.h"
-#include "ibex_NDS.h"
+#include "ibex_NDSrp.h"
 #include <queue>
 #include <map>
 #include "ibex_BxpMOPData.h"
@@ -48,7 +48,7 @@ struct max_distance {
 class DistanceSortedCellBufferMOP : public CellBufferOptim {
  public:
 
-   void set(NDS_seg& nds) {
+   void set(NDSrp& nds) {
 		 this->nds=&nds;
 	 }
 
@@ -95,7 +95,7 @@ class DistanceSortedCellBufferMOP : public CellBufferOptim {
 	 */
 	mutable std::priority_queue<Cell*, std::vector<Cell*>, max_distance > cells;
 
-  NDS_seg* nds;
+  NDSrp* nds;
 
 };
 

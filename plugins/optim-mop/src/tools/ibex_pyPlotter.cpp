@@ -20,17 +20,17 @@
 namespace ibex {
 
 
-void py_Plotter::offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
- map< Vector, NDS_data, struct sorty2 >* NDS2, const char* output_file, IntervalVector* focus){
+void py_Plotter::offline_plot(set< Vector*, sort_rp >& NDS,
+ set< Vector*, sort_rp >* NDS2, const char* output_file, IntervalVector* focus){
 	ofstream output;
 	output.open(output_file);
 
 	output << "[";
 
-	map< Vector, NDS_data > :: iterator ub=NDS.begin();
+	set< Vector* > :: iterator ub=NDS.begin();
 	for(;ub!=NDS.end();ub++){
-		if(!focus || (*focus).contains(ub->first)){
-			output << "(" << ub->first[0] << "," << ub->first[1] << "),";
+		if(!focus || (*focus).contains(**ub)){
+			output << "(" << (**ub)[0] << "," << (**ub)[1] << "),";
 
       
       //output  << "(" << ub->first[0] << " ; " << ub->first[1] << ")_" <<
@@ -44,8 +44,8 @@ void py_Plotter::offline_plot(map< Vector, NDS_data, struct sorty2 >& NDS,
 		output << "[";
 		ub=NDS2->begin();
 		for(;ub!=NDS2->end();ub++){
-			if(!focus || (*focus).contains(ub->first))
-				output << "(" << ub->first[0] << "," << ub->first[1] << "),";
+			if(!focus || (*focus).contains(**ub))
+				output << "(" << (**ub)[0] << "," << (**ub)[1] << "),";
 		}
 
 	  output << "]" << endl;

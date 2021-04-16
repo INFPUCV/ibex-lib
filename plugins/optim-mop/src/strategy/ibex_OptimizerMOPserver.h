@@ -9,6 +9,7 @@
 #define __IBEX_OPTIMIZERMOP_S_H__
 
 #include "ibex_OptimizerMOP.h"
+#include "ibex_NDS.h"
 
 #ifndef cdata
 #define cdata ((BxpMOPData*) c->prop[BxpMOPData::id])
@@ -260,7 +261,7 @@ public:
   Vector y_rpm;
   double ub_rpm;
   string rpm_file;
-
+  NDS_seg ndsH;
 };
 
 } /* namespace ibex */

@@ -18,7 +18,7 @@
 #include "ibex_DistanceSortedCellBufferMOP.h"
 #include "ibex_pyPlotter.h"
 #include "ibex_PFunction.h"
-#include "ibex_NDS.h"
+#include "ibex_NDSrp.h"
 
 #include <set>
 #include <map>
@@ -309,14 +309,7 @@ public:
 	 */
 	static IntervalVector deriv_goal(const Function& goal, const IntervalVector& x, int n);
 
-	/*double distance(const Cell* c){
-		return NDS_seg::distance(c);
-	}*/
-
 	static pair<Vector, double> linearize_goal(const IntervalVector& box, IntervalVector& corner, const IntervalVector& dg_box, const Interval& g_corner, int n);
-
-	// Hamburger
-	NDS_seg ndsH;
 
 	static IntervalVector get_box_y(const Cell* c){
 		IntervalVector boxy(2);
@@ -326,6 +319,7 @@ public:
 		return boxy;
 	}
 
+	NDSrp ndsH;
 protected:
 
   double max_dist(map<Cell*, double> cell_dist);
@@ -425,6 +419,10 @@ protected:
 	int nb_cells;
 
 	set<Cell*> cells;
+
+	private:
+	// NDS for automatically removing points
+	
 
 };
 

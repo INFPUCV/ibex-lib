@@ -36,11 +36,11 @@ void OptimizerMOP_I::plot(){
 	for(auto cc:cells)	LBseg.add_lb(*cc);
 	for(auto cc:paused_cells) LBseg.add_lb(*cc);
 
-	py_Plotter::offline_plot(ndsH.NDS2, &LBseg.NDS2, "output2.txt");
+	//py_Plotter::offline_plot(ndsH.NDS2, &LBseg.NDS2, "output2.txt");
 }
 
 void OptimizerMOP_I::plot(list<vector<double> > &upperList, list<vector<double> > &lowerList){
-	py_Plotter::offline_plot(upperList, lowerList, "output2.txt");
+	//py_Plotter::offline_plot(upperList, lowerList, "output2.txt");
 }
 
 list  < pair < bool, Vector> > OptimizerMOP_I::changes_lower_envelope(int nb_changes){
@@ -86,7 +86,7 @@ void OptimizerMOP_I::write_envelope(string output_file){
 	NDS_seg UBaux=ndsH;
 	for(auto cc:cells)	LBaux.add_lb(*cc);
 	for(auto cc:paused_cells) LBaux.add_lb(*cc);
-	py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str());
+	//py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str());
 }
 
 IntervalVector OptimizerMOP_I::load(const IntervalVector& init_box) {

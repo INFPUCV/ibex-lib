@@ -193,7 +193,7 @@ void OptimizerMOP_S::write_envelope(IntervalVector& focus){
 	focus2[1]=BxpMOPData::y2_init;
 	update_focus(focus2);
 	cout << 3 << endl;
-	py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
+	//py_Plotter::offline_plot(UBaux.NDS2,  &LBaux.NDS2, output_file.c_str(), &focus2);
 }
 
 void OptimizerMOP_S::write_status(double rel_prec){

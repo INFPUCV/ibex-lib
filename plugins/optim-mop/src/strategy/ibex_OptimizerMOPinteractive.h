@@ -10,6 +10,7 @@
 
 #include "ibex_OptimizerMOP.h"
 #include "ibex_Timer.h"
+#include "ibex_NDS.h"
 
 #ifndef cdata
 #define cdata ((BxpMOPData*) c->prop[BxpMOPData::id])
@@ -95,6 +96,8 @@ public:
 
   Timer timer;
 	list  < pair < bool, Vector> > changes_lower;
+
+  NDS_seg ndsH;
 
 };
 

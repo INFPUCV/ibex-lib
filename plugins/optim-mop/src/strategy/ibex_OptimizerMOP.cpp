@@ -116,7 +116,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 	Vector mid=box2.mid();
 	if (finder.norm_sys.is_inner(mid)){
 		Vector v(2); v[0]=eval_goal(goal1,mid,n).ub(); v[1]=eval_goal(goal2,mid,n).ub();
-		ndsH.addPoint(v, NDS_data(mid));
+		ndsH.addPoint(v);
 	}
 
 	if(nds_mode==POINTS) {
@@ -126,7 +126,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 			while(true){
 				xa = finder.find(box2,box2,POS_INFINITY).first;
 				Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
-				ndsH.addPoint(v, NDS_data(xa.mid()));
+				ndsH.addPoint(v);
 				k++;
 			}
 			
@@ -148,7 +148,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 		xb = finder.find(box2,box2,POS_INFINITY).first;
 	}catch (LoupFinder::NotFound& ) {
 		Vector v(2); v[0]=eval_goal(goal1,xa,n).ub(); v[1]=eval_goal(goal2,xa,n).ub();
-		ndsH.addPoint(v, NDS_data(xa.mid()));
+		ndsH.addPoint(v);
 		return true;
 	}
 	
@@ -184,9 +184,9 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 		ev[0] = eval_fl(fl1, xa); ev[1]= eval_fl(fl2, xa);
 		ev2[0] = eval_fl(fl1, xb); ev2[1]= eval_fl(fl2, xb);
 
-		ndsH.addPoint( ev, NDS_data(xa.mid()));
+		ndsH.addPoint(ev.ub());
 		if(ev[0].ub() != ev2[0].ub() || ev[1].ub() != ev2[1].ub()){
-			ndsH.addPoint( ev2, NDS_data(xb.mid()));
+			ndsH.addPoint( ev2.ub());
 			
 			if(ev[0].ub() <= ev2[0].ub() && ev[1].ub() >= ev2[1].ub())	{
 				ndsH.addSegment(make_pair(ev.ub(),ev2.ub()));
@@ -203,7 +203,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 				IntervalVector xm=k*xa.mid()+(1-k)*xb.mid();
 				ev[0]=eval_goal(goal1,xm,n); ev[1]=eval_goal(goal2,xm,n);
 				//ev[0] = eval_fl(fl1, xm); ev[1]= eval_fl(fl2, xm);
-				ndsH.addPoint( ev, NDS_data(xb.mid()));
+				ndsH.addPoint( ev.ub());
 			}
 		}*/
 	}
@@ -350,7 +350,7 @@ void OptimizerMOP::dominance_peeler2(IntervalVector& box, list < Vector >& inpoi
 
 void OptimizerMOP::contract_and_bound(Cell& c, const IntervalVector& init_box) {
 
-  IntervalVector boxy=ndsH.get_box_y(&c);
+  IntervalVector boxy=OptimizerMOP::get_box_y(&c);
 	list< Vector > inner_segments = ndsH.non_dominated_points(boxy.lb());
 
 	dominance_peeler2(boxy,inner_segments);
@@ -442,7 +442,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 			cells.erase(c);
 
 			if(cdata->ub_distance <= eps){
-				IntervalVector box_y=NDS_seg::get_box_y(c);
+				IntervalVector box_y=get_box_y(c);
 				//cout << box_y.lb() << "dist:" << cdata->ub_distance << endl;
 				delete c;
 
@@ -475,7 +475,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 
 			//se elimina la caja
 			if(dist < eps || atomic_box){
-				IntervalVector box_y=NDS_seg::get_box_y(c);
+				IntervalVector box_y=get_box_y(c);
 				//cout << box_y.lb() << "dist:" << dist << endl;
 				if(new_cells.first){
 					delete new_cells.first;
@@ -512,7 +512,7 @@ OptimizerMOP::Status OptimizerMOP::optimize(const IntervalVector& init_box) {
 	timer.stop();
 	time = timer.get_time();
 
-	py_Plotter::offline_plot(ndsH.NDS2, NULL, "output2.txt");
+	py_Plotter::offline_plot(ndsH.NDS, NULL, "output2.txt");
 	return status;
 }
 
@@ -553,7 +553,7 @@ void OptimizerMOP::hamburger(const IntervalVector& aIV, const IntervalVector& bI
 		count++;
 
 		if(_plot) {
-			py_Plotter::offline_plot(ndsH.NDS2, NULL, "output2.txt");
+			py_Plotter::offline_plot(ndsH.NDS, NULL, "output2.txt");
 			//py_Plotter::offline_plot(NULL, LB.NDS2);
 			//getchar();
 		}
@@ -579,8 +579,8 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 	Interval yb2=ft_ub[1];
 
 	// sólo agrega información asociada al punto factible
-	ndsH.addPoint(ft_lb, NDS_data(pf.get_xa().mid()));
-	ndsH.addPoint(ft_ub, NDS_data(pf.get_xb().mid()));
+	ndsH.addPoint(ft_lb.ub());
+	ndsH.addPoint(ft_ub.ub());
 
 	if(nds_mode==POINTS) return false;
 
@@ -635,7 +635,7 @@ bool OptimizerMOP::process_node(PFunction& pf, Node_t& n_t) {
 
 		Vector v1(2); v1[0]=((ya2-c3_t3.first)/m).ub(); v1[1]=ya2.ub();
 		Vector v2(2); v2[0]=yb1.ub(); v2[1]=(yb1*m+c3_t3.first).ub();
-		bool improve=ndsH.addSegment(make_pair(v1,v2), NDS_data(pf.get_xa().mid(),pf.get_xb().mid()));
+		bool improve=ndsH.addSegment(make_pair(v1,v2));
 		//py_Plotter::offline_plot(NULL, ndsH.NDS2); getchar();
 
 		if(nds_mode==HAMBURGER){
@@ -720,8 +720,8 @@ void OptimizerMOP::report(bool verbose) {
 	
 	if(verbose){
 		cout << " solutions:" << endl;
-		for(auto ub : ndsH.NDS2)
-			cout << ub.first[0] << " " << ub.first[1]  << endl;
+		for(auto ub : ndsH.NDS)
+			cout << (*ub)[0] << " " << (*ub)[1]  << endl;
 	}
 
 
