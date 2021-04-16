@@ -35,7 +35,7 @@ class Point : public Vector{
 
         Point(double a, double b, Point* next=NULL) : Vector(2) {
             (*this)[0]=a; (*this)[1]=b;
-            if(next) push_before(next);
+            if(next) push_before(next); 
         }
 
         //create and add the point before next
@@ -46,8 +46,9 @@ class Point : public Vector{
 
         //remove the point
         ~Point(){
+            if(prev->next != this) cout << 0 << endl;
             if(prev){
-                prev->next->prev=prev;
+                if(next) next->prev=prev;
                 prev->next=next;
             }
         }
@@ -84,6 +85,7 @@ public:
 	virtual void NDS_insert(const Vector& p){
         set<Vector*>::iterator next = NDS.lower_bound((Vector*)&p);
         Point* pp = new Point(p, (Point*)(*next));
+        NDS.insert(pp);
 
         //set<Point>::iterator curr = NDS.insert(Point(p)).first;
         //next->prev->next=&(*curr);

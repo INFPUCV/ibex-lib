@@ -722,6 +722,21 @@ void OptimizerMOP::report(bool verbose) {
 		cout << " solutions:" << endl;
 		for(auto ub : ndsH.NDS)
 			cout << (*ub)[0] << " " << (*ub)[1]  << endl;
+	
+		//Debugging the linked list of points
+		/*Point* p = (Point*)*ndsH.NDS.begin();
+		Point* last; 
+
+		while(p){
+			cout << (*p)[0] << " " << (*p)[1]  << endl;
+			last=p;
+			p=p->next;
+		}
+		p=last;
+		while(p){
+			cout << (*p)[0] << " " << (*p)[1]  << endl;
+			p=p->prev;
+		}*/
 	}
 
 
