@@ -717,9 +717,12 @@ void OptimizerMOP::report(bool verbose) {
 	cout << " number of cells: " << get_nb_cells() << endl;
 
 	cout << " number of solutions: "  << ndsH.size() << endl;
-	cout << " solutions:" << endl;
-	for(auto ub : ndsH.NDS2)
-		 cout << ub.first[0] << " " << ub.first[1]  << endl;
+	
+	if(verbose){
+		cout << " solutions:" << endl;
+		for(auto ub : ndsH.NDS2)
+			cout << ub.first[0] << " " << ub.first[1]  << endl;
+	}
 
 
 }

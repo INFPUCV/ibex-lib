@@ -318,6 +318,14 @@ public:
 	// Hamburger
 	NDS_seg ndsH;
 
+	static IntervalVector get_box_y(const Cell* c){
+		IntervalVector boxy(2);
+		int n=c->box.size()-2;
+		boxy[0]=c->box[n];
+		boxy[1]=c->box[n+1];
+		return boxy;
+	}
+
 protected:
 
   double max_dist(map<Cell*, double> cell_dist);

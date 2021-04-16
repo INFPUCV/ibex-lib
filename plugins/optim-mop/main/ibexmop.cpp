@@ -100,6 +100,9 @@ int main(int argc, char** argv){
 	args::Flag _trace(parser, "trace", "Activate trace. Updates of loup/uplo are printed while minimizing.", {"trace"});
 	args::Flag _plot(parser, "plot", "Save a file to be plotted by plot.py.", {"plot"});
 	args::Positional<std::string> filename(parser, "filename", "The name of the MINIBEX file.");
+	args::Flag _noprint_nds(parser, "noprint_nds", "The NDS is not printed.", {"noprint_nds"});
+
+
 
 	try
 	{
@@ -372,7 +375,7 @@ int main(int argc, char** argv){
 		// the allowed time for search
 		o->timeout=timelimit;
 		o->optimize(ext_sys.box);
-		o->report();
+		o->report(_noprint_nds);
 
 
 	
