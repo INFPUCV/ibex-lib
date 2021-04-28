@@ -21,9 +21,13 @@ namespace ibex {
 
 class Point : public Vector{
     public:
-        double hv = 0.0;
+        double hv_contribution = 0.0;
+        //static Vector ref;
+        bool up_point;
+
         Point* next=NULL;
         Point* prev=NULL;
+
 
 
         void push_before(Point* next){
@@ -46,12 +50,37 @@ class Point : public Vector{
 
         //remove the point
         ~Point(){
+            if(!next) return;
+            
             if(prev->next != this) cout << 0 << endl;
             if(prev){
                 if(next) next->prev=prev;
                 prev->next=next;
             }
         }
+
+        double compute_m(Vector &p1, Vector &p2);
+
+        /*
+        set the variable up_point which indicates if the point is located
+        up or down de line segment connecting the previous and next point
+        */
+        void compute_location();
+
+        /*
+        compute how much the hypervolume is reduced if the point is removed
+        */
+        double compute_hv_contribution();
+
+        //Area of a triangle given its vertices
+        double compute_area(Vector& x, Vector& y, Vector& z);
+
+        bool is_upper();
+  
+
+
+
+
 
 };
 
