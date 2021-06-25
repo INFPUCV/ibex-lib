@@ -11,78 +11,19 @@
 #include <unordered_set>
 #include "ibex_BxpMOPData.h"
 #include "ibex_OptimizerMOP.h"
+#include "ibex_NDShv.h"
 
 #ifndef OPTIM_MOP_SRC_STRATEGY_IBEX_NDSRP_H_
 #define OPTIM_MOP_SRC_STRATEGY_IBEX_NDSRP_H_
+
 
 using namespace std;
 
 namespace ibex {
 
-class Point : public Vector{
-    public:
-        double hv_contribution = 0.0;
-        //static Vector ref;
-        bool up_point;
 
-        Point* next=NULL;
-        Point* prev=NULL;
+class Point;
 
-
-
-        void push_before(Point* next){
-            if(next->prev) next->prev->next=this;
-            this->prev=next->prev;
-            next->prev=this;
-            this->next=next;
-        }
-
-        Point(double a, double b, Point* next=NULL) : Vector(2) {
-            (*this)[0]=a; (*this)[1]=b;
-            if(next) push_before(next); 
-        }
-
-        //create and add the point before next
-        Point(const Vector &v, Point* next=NULL) : Vector(v){
-            if(next) push_before(next);
-            //update hv
-        }
-
-        //remove the point
-        ~Point(){
-            if(!next) return;
-            
-            if(prev->next != this) cout << 0 << endl;
-            if(prev){
-                if(next) next->prev=prev;
-                prev->next=next;
-            }
-        }
-
-        double compute_m(Vector &p1, Vector &p2);
-
-        /*
-        set the variable up_point which indicates if the point is located
-        up or down de line segment connecting the previous and next point
-        */
-        void compute_location();
-
-        /*
-        compute how much the hypervolume is reduced if the point is removed
-        */
-        double compute_hv_contribution();
-
-        //Area of a triangle given its vertices
-        double compute_area(Vector& x, Vector& y, Vector& z);
-
-        bool is_upper();
-  
-
-
-
-
-
-};
 
 /**
  * comparation function for sorting NDS by increasing x and decreasing by y
@@ -96,6 +37,8 @@ struct sort_rp{
 	}
 };
 
+
+
 /**
  * \brief Segment based non-dominated set
  */
@@ -104,30 +47,11 @@ public:
 
 	virtual void clear();
 
-	virtual void NDS_clear(){
-        for(auto p:NDS)
-            delete p;
-        
-		NDS.clear();
-	}
+	virtual void NDS_clear();
 
-	virtual void NDS_insert(const Vector& p){
-        set<Vector*>::iterator next = NDS.lower_bound((Vector*)&p);
-        Point* pp = new Point(p, (Point*)(*next));
-        NDS.insert(pp);
+	virtual void NDS_insert(const Vector& p);
 
-        //set<Point>::iterator curr = NDS.insert(Point(p)).first;
-        //next->prev->next=&(*curr);
-        //curr->prev=next->prev;
-        //next->prev=&(*curr);
-        //curr->next=&(*next);
-	}
-
-	virtual void NDS_erase(std::set<Vector*>::iterator it){
-		Vector* p= *it;
-		NDS.erase(it);
-        delete p;
-	}
+	virtual void NDS_erase(std::set<Vector*>::iterator it);
 
     inline int size() const{
 		return NDS.size();
@@ -171,7 +95,10 @@ public:
     static pair <Vector, Vector> get_segment(const Vector& lb, double m=POS_INFINITY, double c=POS_INFINITY);
 
 	// The current non-dominated set sorted by increasing y1
-	set< Vector*, sort_rp > NDS;
+	//set< Vector*, sort_rp > NDS;
+    //set<Point*, sort_hv> NDShv;
+	NDShv NDS;
+
 
     struct NoIntersectionException : public exception {
        const char * what () const throw () {

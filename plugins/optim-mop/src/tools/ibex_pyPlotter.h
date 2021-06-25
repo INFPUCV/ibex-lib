@@ -13,6 +13,8 @@
 #include "ibex_BxpMOPData.h"
 #include "ibex_Cell.h"
 #include "ibex_NDSrp.h"
+#include "ibex_NDShv.h"
+
 
 using namespace std;
 namespace ibex {
@@ -35,6 +37,9 @@ public:
 	static void offline_plot(set< Vector*, sort_rp >& NDS,
 		set< Vector*, sort_rp >* NDS2, const char* output_file, IntervalVector* focus=NULL);
 	
+	static void offline_plot(NDShv& NDS,
+		NDShv* NDS2, const char* output_file, IntervalVector* focus=NULL);
+
 	static void offline_plot(list<vector<double> > &upperList, list<vector<double> > &lowerList, 
 		const char* output_file);
 

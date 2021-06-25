@@ -19,7 +19,7 @@ LoupFinderMOP::LoupFinderMOP(const System& sys, const Function& goal1, const Fun
 		sys(sys), norm_sys(sys,eqeps), lr(norm_sys,LinearizerXTaylor::RESTRICT),
 		lp_solver(sys.nb_var, std::max((sys.nb_var)*3,LPSolver::default_max_iter)),
 		goal1(goal1), goal2(goal2), has_equality(false), nb_sol(nb_sol), phase(0), vec1(norm_sys.nb_var), vec2(norm_sys.nb_var),
-		y11(0.0), y12(0.0), y21(0.0), y22(0.0), dynamic_nb_sol(false), max_nb_sol(nb_sol) {
+		y11(0.0), y12(0.0), y21(0.0), y22(0.0), dynamic_nb_sol(true), max_nb_sol(nb_sol) {
 
 	//dynamic_nb_sol=true;
 

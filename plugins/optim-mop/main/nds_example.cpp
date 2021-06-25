@@ -34,34 +34,53 @@ using namespace ibex;
 
 int main(int argc, char** argv){
 
-    NDSrp nds;
-    nds.clear();
+    NDShv nds;
     Vector v(2);
-    auto it = nds.NDS.begin(); it++;
-    nds.NDS_erase(it);
+    v[0]=POS_INFINITY; v[1]=POS_INFINITY;
+    nds.erase(&v);
 
-    v[0]=0; v[1]=POS_INFINITY; nds.NDS_insert(v);
-    v[0]=0; v[1]=10; nds.NDS_insert(v);
-    v[0]=1; v[1]=9.5; nds.NDS_insert(v);
-    v[0]=2; v[1]=8; nds.NDS_insert(v);
-    v[0]=3; v[1]=5; nds.NDS_insert(v);
-    v[0]=4; v[1]=4.8; nds.NDS_insert(v);
-    v[0]=5; v[1]=4.5; nds.NDS_insert(v);
-    v[0]=6; v[1]=4; nds.NDS_insert(v);
-    v[0]=7; v[1]=3; nds.NDS_insert(v);
-    v[0]=8; v[1]=2.8; nds.NDS_insert(v);
-    v[0]=9; v[1]=2.7; nds.NDS_insert(v);
-    v[0]=10; v[1]=2.5; nds.NDS_insert(v);
-    v[0]=POS_INFINITY; v[1]=2.5; nds.NDS_insert(v);
+    v[0]=0; v[1]=POS_INFINITY; nds.insert(v);
+    v[0]=POS_INFINITY; v[1]=2.5; nds.insert(v);
 
-    py_Plotter::offline_plot(nds.NDS, NULL, "output2.txt");
+    v[0]=0; v[1]=10; nds.insert(v);
+    v[0]=2; v[1]=10; nds.insert(v);
+    v[0]=2; v[1]=8; nds.insert(v);
+    v[0]=3; v[1]=8; nds.insert(v);
+    v[0]=3; v[1]=5; nds.insert(v);
+    v[0]=4; v[1]=4.8; nds.insert(v);
+    v[0]=5; v[1]=4.39; nds.insert(v);
+    v[0]=6; v[1]=4; nds.insert(v);
+    v[0]=7; v[1]=3; nds.insert(v);
+    v[0]=8; v[1]=2.8; nds.insert(v);
+    v[0]=9; v[1]=2.7; nds.insert(v);
+    v[0]=10; v[1]=2.5; nds.insert(v);
+    
 
-    int i=0;
-    for(auto ub : nds.NDS){
-        if(i<3) {i++; continue;}
+    for(auto ub :  nds){
 		cout << "(" << (*ub)[0] << ", " << (*ub)[1] << ")" << endl;
-        cout << dynamic_cast<Point*>(ub)->compute_hv_contribution() << endl;
+        cout << dynamic_cast<Point*>(ub)->hv_contribution << endl;
     }
+
+    //nds.pop_front();
+    //nds.pop_front();
+    set<Vector*, sort_rp> aux;
+    for(auto ub : nds){
+		cout << "(" << (*ub)[0] << ", " << (*ub)[1] << ")" << endl;
+        aux.insert(ub);
+    }
+
+    py_Plotter::offline_plot(aux, NULL, "output2.txt");
+
+    while(  getchar() ){
+        nds.pop_front();
+        aux.clear();
+        for(auto ub : nds)   aux.insert(ub);
+        py_Plotter::offline_plot(aux, NULL, "output2.txt");
+    }
+
+
+    
+
 
 	return 0;
 

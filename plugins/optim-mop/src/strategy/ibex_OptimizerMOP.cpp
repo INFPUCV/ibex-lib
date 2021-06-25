@@ -114,10 +114,12 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 	list< pair< pair< double, double> , pair< double, double> > > segments;
 
 	Vector mid=box2.mid();
+	
 	if (finder.norm_sys.is_inner(mid)){
 		Vector v(2); v[0]=eval_goal(goal1,mid,n).ub(); v[1]=eval_goal(goal2,mid,n).ub();
 		ndsH.addPoint(v);
 	}
+
 
 	if(nds_mode==POINTS) {
 		int k=0;
@@ -130,8 +132,7 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box) {
 				k++;
 			}
 			
-		}catch (LoupFinder::NotFound& ) {
-			cout << k << endl;
+		}catch (LoupFinder::NotFound& ) {			
 			return true;
 			
 		}
@@ -722,6 +723,8 @@ void OptimizerMOP::report(bool verbose) {
 		cout << " solutions:" << endl;
 		for(auto ub : ndsH.NDS)
 			cout << (*ub)[0] << " " << (*ub)[1]  << endl;
+		
+		py_Plotter::offline_plot(ndsH.NDS, NULL, "output2.txt");
 	
 		//Debugging the linked list of points
 		/*Point* p = (Point*)*ndsH.NDS.begin();

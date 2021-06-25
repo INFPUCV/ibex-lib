@@ -9,7 +9,29 @@
 
 namespace ibex {
 
+
+	void NDSrp::NDS_clear(){
+		/*
+        for(auto p:NDS)
+            delete p;
+		NDS.clear();
+		*/
+	}
+
+	void NDSrp::NDS_insert(const Vector& p){
+        //set<Vector*>::iterator next = NDS.lower_bound((Vector*)&p);
+        //Point* pp = new Point(p);//, (Point*)(*next));
+        NDS.insert(p);
+	}
+
+	void NDSrp::NDS_erase(std::set<Vector*>::iterator it){
+		//Vector* p= *it;
+		NDS.erase(it);
+        //delete p;
+	}
+
 	void NDSrp::clear(){
+		/*
 		NDS_clear();
 		//the first point
 		Point* first=new Point(NEG_INFINITY,POS_INFINITY);
@@ -20,7 +42,7 @@ namespace ibex {
 
         NDS.insert(last);
 		NDS.insert(middle);
-		NDS.insert(first);
+		NDS.insert(first);*/
 	}
 
 	bool NDSrp::is_dominated(const Vector& new_p){

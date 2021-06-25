@@ -82,7 +82,9 @@ int main(int argc, char** argv){
 	args::Flag _cy_contract(parser, "cy-contract", "Contract using the box y+cy, w_ub=+inf.", {"cy-contract"});
 	args::Flag _cy_contract_full(parser, "cy-contract", "Contract using the additional constraint cy.", {"cy-contract-full"});
 	args::Flag _eps_contract(parser, "eps-contract", "Contract using eps.", {"eps-contract"});
-	//args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 50)", {"N"});
+	args::ValueFlag<int> _nb_ub_sols(parser, "int", "Max number of solutions added by the inner-polytope algorithm (default: 100)", {"N"});
+	args::ValueFlag<double> _min_hv(parser, "double", "Min HV for the non dominated set (default:0.0)", {"min_hv"});
+
 	//args::ValueFlag<double> _weight2(parser, "float", "Weight of the second objective (default: 0.01)", {"w2","weight2"});
 	//args::ValueFlag<double> _min_ub_dist(parser, "float", "Min distance between two non dominated points to be considered (default: eps/10)", {"min_ub_dist"});
 	args::Flag _nobisecty(parser, "nobisecty", "Do not bisect y variables.", {"no-bisecty"});
@@ -188,7 +190,8 @@ int main(int argc, char** argv){
 
 	OptimizerMOP::_plot = _plot;
 
-	int nb_ub_sols = 100 ;
+	int nb_ub_sols = (_nb_ub_sols)? _nb_ub_sols.Get(): 100 ;
+	NDShv::min_hv = (_min_hv)? _min_hv.Get(): 0.0 ;
 	OptimizerMOP::_min_ub_dist = 0.1;
 	LoupFinderMOP::_weight2 = 0.01 ;
 	bool no_bisect_y  = _nobisecty;
@@ -375,6 +378,15 @@ int main(int argc, char** argv){
 		// the allowed time for search
 		o->timeout=timelimit;
 		o->optimize(ext_sys.box);
+		/*for(int i=0;i<1200;i++){
+			cout << "hv:" << o->ndsH.NDS.pop_front() << endl;
+		}*/
+
+		//for(auto ub :  o->ndsH.NDS){
+		//cout << "(" << (*ub)[0] << ", " << (*ub)[1] << ")" << endl;
+        //cout << dynamic_cast<Point*>(ub)->hv_contribution << endl;
+    //}
+
 		o->report(_print_nds);
 
 
