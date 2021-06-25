@@ -1,5 +1,5 @@
 [base]
-test_instances = instances2.txt
+test_instances = instances3.txt
 mintime = 0.0001
 maxtime = 3600
 factors = 1 0.833 0.665 0.5 0.2 0.1
