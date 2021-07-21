@@ -92,6 +92,101 @@ IntervalVector OptimizerMOP::deriv_goal(const Function& goal, const IntervalVect
 	return g;
 }
 
+void OptimizerMOP::polytope_search(IntervalVector box2){
+	vector<IntervalVector> polytope_vertex;
+	IntervalVector point(n);
+	try{
+		finder.clear();
+		//encuentra m puntos factibles, donde m es el
+		//numero de funciones objetivo
+		for(int i=0; i<goals.size(); i++){
+			point = finder.find2(box2,box2,POS_INFINITY).first;
+			polytope_vertex.push_back(point);
+		}
+
+		//Se busca el hull de los puntos.
+		IntervalVector box_hull(n);
+		for(int j = 0 ; j < n ; j++)
+			box_hull[j] = Interval(polytope_vertex[0][j].lb(),polytope_vertex[0][j].ub());
+		for (int i = 1 ; i < polytope_vertex.size() ; i++)
+			for(int j = 0 ; j < n ; j++){
+				if (box_hull[j].lb() > polytope_vertex[i][j].lb())
+					box_hull[j] = Interval(polytope_vertex[i][j].lb(),box_hull[j].ub());
+				if (box_hull[j].ub() < polytope_vertex[i][j].ub())
+					box_hull[j] = Interval(box_hull[j].lb(),polytope_vertex[i][j].ub());
+			}
+
+		IntervalVector input_box(box_hull);
+		input_box.resize(n+goals.size());
+
+		for (int i = 0 ; i < goals.size() ; i++)
+			input_box[n+i]=0.0;
+
+		IntervalVector corner = box_hull.lb();
+		IntervalVector g_corners(goals.size());
+
+		for(int i = 0 ; i < goals.size() ; i++)
+			g_corners[i] = eval_goal(goals[i],corner,n,goals.size());
+
+		vector<IntervalVector> J_eval(goals.size());
+
+		for(int i = 0 ; i < goals.size() ; i++)
+			J_eval[i] = goals[i].gradient(input_box);
+
+		vector<pair <Vector, int> > linear_obj_f;
+
+		/*linealizacion de los objetivos*/
+		for(int i = 0 ; i < goals.size() ; i++)
+			linear_obj_f.push_back(linearize_goal(box_hull,corner,J_eval[i],g_corners[i], n));
+
+		IntervalVector p_point(goals.size());
+		vector <IntervalVector> p_points;
+
+		std::vector<std::vector<float>> vector_points;
+		vector<float> aux;
+
+		/*evaluacion de los objetivos*/
+		for (int k = 0 ; k < goals.size() ; k++){
+			for (int i = 0 ; i < goals.size() ; i++)
+				p_point[i] = eval_fl(linear_obj_f[i], polytope_vertex[k]);
+			p_points.push_back(p_point);
+		}
+
+		for (int i = 0 ; i < p_points.size() ; i++){
+			for (int j = 0 ; j < p_points[i].size() ; j++)
+				aux.push_back(p_points[i][j].ub());
+			vector_points.push_back(aux);
+			aux.clear();
+		}
+		/*ordenando puntos para poder borrar los repetidos*/
+		std::sort(vector_points.begin(), vector_points.end());
+		vector_points.erase(std::unique(vector_points.begin(), vector_points.end()), vector_points.end());
+
+		char filename[ ] = "polytope_points.txt";
+		fstream thefile;
+		/*los puntos se guardan en el archivo*/
+		thefile.open(filename, fstream::app);
+		thefile <<"(";
+		for (int i = 0 ; i < vector_points.size() ; i++){
+			thefile <<"(";
+			for (int j = 0 ; j < vector_points[i].size() ; j++){
+				thefile << vector_points[i][j];
+				if (j < vector_points[i].size()-1) thefile << ", ";
+				else thefile << ")";
+			}
+			if (i < vector_points.size()-1) thefile << ";";
+			else thefile << ")\n";
+		}
+		thefile.close();
+
+	}
+
+	catch (LoupFinder::NotFound& ) {
+
+	}
+}
+
+
 bool OptimizerMOP::upper_bounding(const IntervalVector& box, double timer) {
 	//We attempt to find two feasible points which minimize both objectives
 	//and the middle point between them
@@ -118,6 +213,9 @@ bool OptimizerMOP::upper_bounding(const IntervalVector& box, double timer) {
 		
 
 	}
+
+	/*testing Victor*/
+//	polytope_search(box2);
 
 	if(nds_mode==SEGMENTS) {
 		list<Vector> simplex_points_eval;

@@ -265,7 +265,8 @@ public:
 
 	void set_box_y(IntervalVector &box, IntervalVector &box_y);
 
-
+	//Victor: para encontrar triangulos
+	void polytope_search(IntervalVector box2);
 
 	/**
 	 * \brief Trace activation flag.
